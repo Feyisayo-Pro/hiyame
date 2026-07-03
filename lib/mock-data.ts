@@ -290,3 +290,381 @@ export const mockRoles: Role[] = [
     created_at: '2026-07-02',
   },
 ];
+
+// ── Company-side types & mock data ──────────────────────────────────
+
+export type SubscriptionPlan = 'pilot' | 'starter' | 'growth' | 'enterprise';
+
+export interface CompanyProfile {
+  id: string;
+  name: string;
+  industry: string;
+  size_band: string;
+  logo_url?: string;
+  plan: SubscriptionPlan;
+  job_slots_total: number;
+  job_slots_active: number;
+  verified: boolean;
+  created_at: string;
+}
+
+export interface CandidateVerification {
+  identity: boolean;
+  video_intro: boolean;
+  skills_assessment: boolean;
+  employer_review: boolean;
+}
+
+export interface MatchedCandidate {
+  id: string;
+  name: string;
+  title: string;
+  location_city: string;
+  location_country: string;
+  match_score: number;
+  original_score?: number; // before cap (if missing must_have skill)
+  skills: string[];
+  missing_must_have?: string[]; // skills that cap score at 50
+  rate_expectation?: number; // candidate's expected rate
+  experience_level: ExperienceLevel;
+  verified: boolean;
+  verification: CandidateVerification;
+  avatar_placeholder: string;
+  status: 'matched' | 'intro_sent' | 'intro_accepted' | 'intro_expired';
+  intro_sent_at?: string;
+}
+
+export interface CompanyRole {
+  id: string;
+  role_id: string;
+  tier: Tier;
+  title: string;
+  status: 'draft' | 'active' | 'paused' | 'closed';
+  candidates_matched: number;
+  candidates_shortlisted: number;
+  intros_sent: number;
+  intros_accepted: number;
+  created_at: string;
+  deadline_hours: number;
+}
+
+export const PLAN_CONFIG: Record<SubscriptionPlan, {
+  label: string;
+  color: string;
+  slots: number;
+  features: string[];
+}> = {
+  pilot: {
+    label: 'Pilot',
+    color: '#6B7280',
+    slots: 1,
+    features: ['1 job slot', 'Basic matching', 'Email support'],
+  },
+  starter: {
+    label: 'Starter',
+    color: '#1565C0',
+    slots: 3,
+    features: ['3 job slots', 'Priority matching', 'Chat support'],
+  },
+  growth: {
+    label: 'Growth',
+    color: '#2E7D32',
+    slots: 10,
+    features: ['10 job slots', 'Advanced analytics', 'Dedicated CSM'],
+  },
+  enterprise: {
+    label: 'Enterprise',
+    color: '#7B1FA2',
+    slots: 50,
+    features: ['Unlimited slots', 'Custom matching', 'API access', 'SLA'],
+  },
+};
+
+export const mockCompany: CompanyProfile = {
+  id: 'c1',
+  name: 'Paystack Technologies',
+  industry: 'Fintech',
+  size_band: '501-1000 employees',
+  plan: 'growth',
+  job_slots_total: 10,
+  job_slots_active: 4,
+  verified: true,
+  created_at: '2026-01-15',
+};
+
+export const mockCompanyRoles: CompanyRole[] = [
+  {
+    id: 'cr1',
+    role_id: '1',
+    tier: 'corporate',
+    title: 'Senior Backend Engineer',
+    status: 'active',
+    candidates_matched: 12,
+    candidates_shortlisted: 5,
+    intros_sent: 3,
+    intros_accepted: 2,
+    created_at: '2026-06-28',
+    deadline_hours: 72,
+  },
+  {
+    id: 'cr2',
+    role_id: '6',
+    tier: 'corporate',
+    title: 'DevOps Engineer',
+    status: 'active',
+    candidates_matched: 8,
+    candidates_shortlisted: 3,
+    intros_sent: 1,
+    intros_accepted: 0,
+    created_at: '2026-06-20',
+    deadline_hours: 72,
+  },
+  {
+    id: 'cr3',
+    role_id: '2',
+    tier: 'short_term',
+    title: 'Product Designer',
+    status: 'active',
+    candidates_matched: 15,
+    candidates_shortlisted: 5,
+    intros_sent: 4,
+    intros_accepted: 3,
+    created_at: '2026-06-30',
+    deadline_hours: 48,
+  },
+  {
+    id: 'cr4',
+    role_id: '4',
+    tier: 'short_term',
+    title: 'Mobile Developer (React Native)',
+    status: 'paused',
+    candidates_matched: 6,
+    candidates_shortlisted: 2,
+    intros_sent: 0,
+    intros_accepted: 0,
+    created_at: '2026-07-01',
+    deadline_hours: 48,
+  },
+];
+
+export const mockMatchedCandidates: MatchedCandidate[] = [
+  {
+    id: 'mc1',
+    name: 'Adaeze Okoro',
+    title: 'Senior Software Engineer',
+    location_city: 'Lagos',
+    location_country: 'Nigeria',
+    match_score: 96,
+    skills: ['Node.js', 'PostgreSQL', 'TypeScript', 'GraphQL'],
+    experience_level: 'senior',
+    verified: true,
+    avatar_placeholder: 'person',
+    status: 'intro_accepted',
+    intro_sent_at: '2026-07-01T10:00:00Z',
+    verification: { identity: true, video_intro: true, skills_assessment: true, employer_review: true },
+  },
+  {
+    id: 'mc2',
+    name: 'Kwame Asante',
+    title: 'Lead Backend Developer',
+    location_city: 'Accra',
+    location_country: 'Ghana',
+    match_score: 94,
+    skills: ['Node.js', 'PostgreSQL', 'TypeScript', 'AWS'],
+    experience_level: 'lead',
+    verified: true,
+    avatar_placeholder: 'person',
+    status: 'intro_sent',
+    intro_sent_at: '2026-07-02T14:30:00Z',
+    verification: { identity: true, video_intro: true, skills_assessment: true, employer_review: true },
+  },
+  {
+    id: 'mc3',
+    name: 'Fatima Diallo',
+    title: 'Full-Stack Engineer',
+    location_city: 'Dakar',
+    location_country: 'Senegal',
+    match_score: 91,
+    skills: ['Node.js', 'TypeScript', 'Docker', 'AWS'],
+    experience_level: 'senior',
+    verified: true,
+    avatar_placeholder: 'person',
+    status: 'intro_accepted',
+    intro_sent_at: '2026-06-30T09:15:00Z',
+    verification: { identity: true, video_intro: true, skills_assessment: true, employer_review: true },
+  },
+  {
+    id: 'mc4',
+    name: 'Tendai Moyo',
+    title: 'Backend Engineer',
+    location_city: 'Harare',
+    location_country: 'Zimbabwe',
+    match_score: 89,
+    skills: ['Node.js', 'PostgreSQL', 'GraphQL'],
+    experience_level: 'senior',
+    verified: true,
+    avatar_placeholder: 'person',
+    status: 'matched',
+    verification: { identity: true, video_intro: true, skills_assessment: true, employer_review: false },
+  },
+  {
+    id: 'mc5',
+    name: 'Amina Yusuf',
+    title: 'Software Engineer',
+    location_city: 'Nairobi',
+    location_country: 'Kenya',
+    match_score: 87,
+    skills: ['TypeScript', 'PostgreSQL', 'Docker'],
+    experience_level: 'mid',
+    verified: false,
+    avatar_placeholder: 'person',
+    status: 'matched',
+    verification: { identity: true, video_intro: false, skills_assessment: true, employer_review: false },
+    rate_expectation: 9000,
+  },
+  {
+    id: 'mc6',
+    name: 'Oluwaseun Bello',
+    title: 'Backend Developer',
+    location_city: 'Lagos',
+    location_country: 'Nigeria',
+    match_score: 84,
+    skills: ['Node.js', 'TypeScript'],
+    experience_level: 'mid',
+    verified: true,
+    avatar_placeholder: 'person',
+    status: 'matched',
+    verification: { identity: true, video_intro: true, skills_assessment: true, employer_review: true },
+  },
+  {
+    id: 'mc7',
+    name: 'Chidinma Eze',
+    title: 'API Engineer',
+    location_city: 'Abuja',
+    location_country: 'Nigeria',
+    match_score: 82,
+    skills: ['Node.js', 'PostgreSQL'],
+    experience_level: 'mid',
+    verified: true,
+    avatar_placeholder: 'person',
+    status: 'matched',
+    verification: { identity: true, video_intro: true, skills_assessment: true, employer_review: false },
+  },
+  {
+    id: 'mc8',
+    name: 'Kofi Mensah',
+    title: 'Software Developer',
+    location_city: 'Kumasi',
+    location_country: 'Ghana',
+    match_score: 79,
+    skills: ['TypeScript', 'AWS'],
+    experience_level: 'mid',
+    verified: false,
+    avatar_placeholder: 'person',
+    status: 'matched',
+    verification: { identity: true, video_intro: false, skills_assessment: false, employer_review: false },
+    missing_must_have: ['PostgreSQL'],
+    original_score: 85,
+  },
+  {
+    id: 'mc9',
+    name: 'Zainab Okafor',
+    title: 'Backend Engineer',
+    location_city: 'Port Harcourt',
+    location_country: 'Nigeria',
+    match_score: 77,
+    skills: ['Node.js', 'Docker'],
+    experience_level: 'senior',
+    verified: true,
+    avatar_placeholder: 'person',
+    status: 'intro_expired',
+    intro_sent_at: '2026-06-28T08:00:00Z',
+    verification: { identity: true, video_intro: true, skills_assessment: true, employer_review: true },
+  },
+  {
+    id: 'mc10',
+    name: 'Jabari Kamau',
+    title: 'DevOps & Backend',
+    location_city: 'Nairobi',
+    location_country: 'Kenya',
+    match_score: 75,
+    skills: ['Node.js', 'PostgreSQL', 'AWS'],
+    experience_level: 'senior',
+    verified: true,
+    avatar_placeholder: 'person',
+    status: 'matched',
+    verification: { identity: true, video_intro: true, skills_assessment: true, employer_review: true },
+  },
+  {
+    id: 'mc11',
+    name: 'Ngozi Uche',
+    title: 'Junior Engineer',
+    location_city: 'Lagos',
+    location_country: 'Nigeria',
+    match_score: 72,
+    skills: ['TypeScript', 'Node.js'],
+    experience_level: 'junior',
+    verified: false,
+    avatar_placeholder: 'person',
+    status: 'matched',
+    verification: { identity: true, video_intro: false, skills_assessment: false, employer_review: false },
+    missing_must_have: ['PostgreSQL'],
+    original_score: 80,
+  },
+  {
+    id: 'mc12',
+    name: 'Thabo Nkosi',
+    title: 'Backend Developer',
+    location_city: 'Johannesburg',
+    location_country: 'South Africa',
+    match_score: 70,
+    skills: ['PostgreSQL', 'Docker'],
+    experience_level: 'mid',
+    verified: true,
+    avatar_placeholder: 'person',
+    status: 'matched',
+    verification: { identity: true, video_intro: true, skills_assessment: true, employer_review: true },
+  },
+  {
+    id: 'mc13',
+    name: 'Binta Sow',
+    title: 'Software Engineer',
+    location_city: 'Conakry',
+    location_country: 'Guinea',
+    match_score: 68,
+    skills: ['Node.js', 'TypeScript'],
+    experience_level: 'mid',
+    verified: false,
+    avatar_placeholder: 'person',
+    status: 'matched',
+    verification: { identity: true, video_intro: false, skills_assessment: true, employer_review: false },
+  },
+  {
+    id: 'mc14',
+    name: 'Emeka Nwankwo',
+    title: 'Platform Engineer',
+    location_city: 'Lagos',
+    location_country: 'Nigeria',
+    match_score: 65,
+    skills: ['AWS', 'TypeScript', 'Docker'],
+    experience_level: 'senior',
+    verified: true,
+    avatar_placeholder: 'person',
+    status: 'matched',
+    verification: { identity: true, video_intro: true, skills_assessment: true, employer_review: true },
+  },
+  {
+    id: 'mc15',
+    name: 'Aisha Traore',
+    title: 'Junior Backend Dev',
+    location_city: 'Bamako',
+    location_country: 'Mali',
+    match_score: 62,
+    skills: ['Node.js'],
+    experience_level: 'junior',
+    verified: false,
+    avatar_placeholder: 'person',
+    status: 'matched',
+    verification: { identity: true, video_intro: false, skills_assessment: false, employer_review: false },
+  },
+];
