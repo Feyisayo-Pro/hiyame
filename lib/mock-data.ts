@@ -1,8 +1,7 @@
 // Corporate = large enterprise (500+ headcount, institutional)
-// Blue-Collar = skilled trades & hands-on roles (Welders, Mechanics, Electricians, Construction)
 // Short-Term = contract/project-based engagements
 // Gig = freelance tasks, waitlisted until matching goes live
-export type Tier = 'corporate' | 'blue_collar' | 'short_term' | 'gig';
+export type Tier = 'corporate' | 'short_term' | 'gig';
 export type ExperienceLevel = 'junior' | 'mid' | 'senior' | 'lead';
 
 export interface Role {
@@ -35,10 +34,9 @@ export const TIER_CONFIG: Record<Tier, {
   accent: string;    // badges, icons, CTAs
   icon: string;      // Ionicons name
 }> = {
-  corporate:   { label: 'Corporate',    color: '#D7F0D0', accent: '#2E7D32', icon: 'business' },
-  blue_collar:  { label: 'Blue-Collar',  color: '#BBDEFB', accent: '#1565C0', icon: 'hammer' },
-  short_term:  { label: 'Short-Term',   color: '#E1BEE7', accent: '#7B1FA2', icon: 'time' },
-  gig:         { label: 'Gig',          color: '#FFE0B2', accent: '#E65100', icon: 'flash' },
+  corporate:   { label: 'Corporate',    color: '#D1FAE5', accent: '#059669', icon: 'business' },
+  short_term:  { label: 'Short-Term',   color: '#E0E7FF', accent: '#4F46E5', icon: 'time' },
+  gig:         { label: 'Gig',          color: '#F1F5F9', accent: '#64748B', icon: 'flash' },
 };
 
 export const mockRoles: Role[] = [
@@ -91,106 +89,6 @@ export const mockRoles: Role[] = [
   },
 
   // ── BLUE-COLLAR (skilled trades & hands-on) ──
-  {
-    id: '7',
-    tier: 'blue_collar',
-    title: 'Certified Welder',
-    function: 'Skilled Trades',
-    required_skills: {
-      must_have: ['MIG Welding', 'TIG Welding', 'Blueprint Reading'],
-      nice_to_have: ['Pipe Welding', 'AWS Certification', 'CNC Cutting'],
-    },
-    experience_level: 'mid',
-    location_type: 'on_site',
-    location_city: 'Lagos',
-    location_country: 'Nigeria',
-    contract_length: 'Permanent',
-    rate_min: 1500,
-    rate_max: 3000,
-    rate_type: 'monthly',
-    start_date: '2026-08-01',
-    company_size_band: '51–200 employees',
-    company_industry: 'Manufacturing',
-    visibility_description: 'A steel fabrication company expanding its production capacity to meet growing demand across West Africa.',
-    match_score: 89,
-    status: 'matching',
-    created_at: '2026-07-01',
-  },
-  {
-    id: '8',
-    tier: 'blue_collar',
-    title: 'Automotive Mechanic',
-    function: 'Skilled Trades',
-    required_skills: {
-      must_have: ['Engine Diagnostics', 'Brake Systems', 'Electrical Systems'],
-      nice_to_have: ['Hybrid Vehicles', 'Fleet Management', 'OBD-II'],
-    },
-    experience_level: 'mid',
-    location_type: 'on_site',
-    location_city: 'Accra',
-    location_country: 'Ghana',
-    contract_length: 'Permanent',
-    rate_min: 1200,
-    rate_max: 2500,
-    rate_type: 'monthly',
-    start_date: '2026-08-15',
-    company_size_band: '11–50 employees',
-    company_industry: 'Automotive',
-    visibility_description: 'A growing fleet services company looking for experienced mechanics to maintain a 200+ vehicle fleet across Ghana.',
-    match_score: 82,
-    status: 'matching',
-    created_at: '2026-06-29',
-  },
-  {
-    id: '3',
-    tier: 'blue_collar',
-    title: 'Industrial Electrician',
-    function: 'Skilled Trades',
-    required_skills: {
-      must_have: ['Industrial Wiring', 'PLC Programming', 'Electrical Safety'],
-      nice_to_have: ['Solar Installation', 'Generator Maintenance', 'SCADA'],
-    },
-    experience_level: 'senior',
-    location_type: 'on_site',
-    location_city: 'Nairobi',
-    location_country: 'Kenya',
-    contract_length: 'Permanent',
-    rate_min: 2000,
-    rate_max: 4000,
-    rate_type: 'monthly',
-    start_date: '2026-08-15',
-    company_size_band: '201–500 employees',
-    company_industry: 'Energy',
-    visibility_description: 'A renewable energy company deploying solar and hybrid power solutions across East Africa.',
-    match_score: 91,
-    status: 'shortlisted',
-    created_at: '2026-06-25',
-  },
-  {
-    id: '9',
-    tier: 'blue_collar',
-    title: 'Construction Foreman',
-    function: 'Construction',
-    required_skills: {
-      must_have: ['Site Supervision', 'Health & Safety', 'Project Scheduling'],
-      nice_to_have: ['AutoCAD', 'Cost Estimation', 'Heavy Equipment'],
-    },
-    experience_level: 'senior',
-    location_type: 'on_site',
-    location_city: 'Cape Town',
-    location_country: 'South Africa',
-    contract_length: 'Permanent',
-    rate_min: 2500,
-    rate_max: 4500,
-    rate_type: 'monthly',
-    start_date: '2026-09-01',
-    company_size_band: '201–500 employees',
-    company_industry: 'Construction',
-    visibility_description: 'A commercial construction firm building mixed-use developments across Southern Africa, looking for experienced site leadership.',
-    match_score: 78,
-    status: 'matching',
-    created_at: '2026-06-27',
-  },
 
   // ── SHORT-TERM (contract / project-based) ──
   {

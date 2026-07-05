@@ -1,11 +1,11 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo} from 'react';
 import { Animated, Pressable, ScrollView, StyleSheet, View, Platform } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { Text } from '@/components/Themed';
 import { Ionicons } from '@expo/vector-icons';
-import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { mockRoles, Role, Tier, TIER_CONFIG } from '@/lib/mock-data';
+import { useTheme, ThemePalette } from '@/lib/theme';
 
 function formatLocation(role: Role): string {
   if (role.location_type === 'remote') return 'Remote';
@@ -16,6 +16,9 @@ function formatLocation(role: Role): string {
 }
 
 export default function RoleDetailScreen() {
+  const T = useTheme();
+  const st = useMemo(() => makeStyles(T), [T]);
+
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const role = mockRoles.find((r) => r.id === id);
@@ -36,7 +39,7 @@ export default function RoleDetailScreen() {
   if (!role) {
     return (
       <View style={st.emptyContainer}>
-        <Ionicons name="alert-circle-outline" size={40} color="#D1D5DB" />
+        <Ionicons name="alert-circle-outline" size={40} color={T.textMuted} />
         <Text style={st.emptyText}>Role not found</Text>
       </View>
     );
@@ -56,16 +59,15 @@ export default function RoleDetailScreen() {
 
   return (
     <View style={st.container}>
-      <StatusBar style="dark" />
 
       {/* Header */}
       <View style={[st.header, { paddingTop: insets.top + 8 }]}>
         <Pressable style={st.headerBtn} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={20} color="#374151" />
+          <Ionicons name="arrow-back" size={20} color={T.textPrimary} />
         </Pressable>
         <Text style={st.headerTitle}>Opportunity Details</Text>
         <Pressable style={st.headerBtn} onPress={() => setSaved(!saved)}>
-          <Ionicons name={saved ? 'bookmark' : 'bookmark-outline'} size={20} color={saved ? '#1B5E20' : '#374151'} />
+          <Ionicons name={saved ? 'bookmark' : 'bookmark-outline'} size={20} color={saved ? T.accent : T.textPrimary} />
         </Pressable>
       </View>
 
@@ -75,7 +77,7 @@ export default function RoleDetailScreen() {
           {/* Company logo */}
           <View style={st.logoSection}>
             <View style={st.logoCircle}>
-              <Ionicons name="lock-closed" size={20} color="#9CA3AF" />
+              <Ionicons name="lock-closed" size={20} color={T.textMuted} />
             </View>
           </View>
 
@@ -94,7 +96,7 @@ export default function RoleDetailScreen() {
               { icon: 'location-outline' as const, label: 'Location', value: formatLocation(role) },
             ].map((item) => (
               <View key={item.label} style={st.infoCard}>
-                <Ionicons name={item.icon} size={16} color="#6B7280" style={{ marginBottom: 6 }} />
+                <Ionicons name={item.icon} size={16} color={T.textSecondary} style={{ marginBottom: 6 }} />
                 <Text style={st.infoLabel}>{item.label}</Text>
                 <Text style={st.infoValue}>{item.value}</Text>
               </View>
@@ -105,16 +107,16 @@ export default function RoleDetailScreen() {
           <View style={st.matchCard}>
             <View style={st.matchTitleRow}>
               <View style={st.matchIconCircle}>
-                <Ionicons name="sparkles" size={16} color="#1B5E20" />
+                <Ionicons name="sparkles" size={16} color={T.accent} />
               </View>
               <Text style={st.matchTitle}>Your Compatibility</Text>
-              <View style={[st.matchScorePill, { backgroundColor: isWaitlist ? '#E65100' : '#1B5E20' }]}>
+              <View style={[st.matchScorePill, { backgroundColor: isWaitlist ? '#E65100' : T.accent }]}>
                 <Text style={st.matchScoreText}>{scoreText}</Text>
               </View>
             </View>
             {matchItems.map((item, i) => (
               <View key={i} style={st.matchRow}>
-                <Ionicons name={item.icon} size={16} color="#1B5E20" />
+                <Ionicons name={item.icon} size={16} color={T.accent} />
                 <Text style={st.matchText}>{item.label}</Text>
               </View>
             ))}
@@ -126,7 +128,7 @@ export default function RoleDetailScreen() {
             <View style={st.skillWrap}>
               {role.required_skills.must_have.map((skill) => (
                 <View key={skill} style={st.requiredSkillPill}>
-                  <Ionicons name="checkmark-circle" size={12} color="#1B5E20" />
+                  <Ionicons name="checkmark-circle" size={12} color={T.accent} />
                   <Text style={st.requiredSkillText}>{skill}</Text>
                 </View>
               ))}
@@ -159,18 +161,18 @@ export default function RoleDetailScreen() {
           {/* Company info */}
           <View style={st.companyInfoRow}>
             <View style={st.companyInfoItem}>
-              <Ionicons name="business-outline" size={15} color="#6B7280" />
+              <Ionicons name="business-outline" size={15} color={T.textSecondary} />
               <Text style={st.companyInfoText}>{role.company_size_band}</Text>
             </View>
             <View style={st.companyInfoItem}>
-              <Ionicons name="layers-outline" size={15} color="#6B7280" />
+              <Ionicons name="layers-outline" size={15} color={T.textSecondary} />
               <Text style={st.companyInfoText}>{role.company_industry}</Text>
             </View>
           </View>
 
           {/* Privacy card */}
           <View style={st.privacyCard}>
-            <Ionicons name="shield-checkmark-outline" size={18} color="#1B5E20" />
+            <Ionicons name="shield-checkmark-outline" size={18} color={T.accent} />
             <Text style={st.privacyText}>Company details revealed after mutual acceptance</Text>
           </View>
         </ScrollView>
@@ -179,7 +181,7 @@ export default function RoleDetailScreen() {
       {/* Footer CTA */}
       <View style={[st.footer, { paddingBottom: Platform.OS === 'ios' ? insets.bottom + 8 : 16 }]}>
         <Pressable style={st.bookmarkBtn} onPress={() => setSaved(!saved)}>
-          <Ionicons name={saved ? 'bookmark' : 'bookmark-outline'} size={20} color={saved ? '#1B5E20' : '#374151'} />
+          <Ionicons name={saved ? 'bookmark' : 'bookmark-outline'} size={20} color={saved ? T.accent : T.textPrimary} />
         </Pressable>
         <Animated.View style={{ flex: 1, transform: [{ scale: ctaScale }] }}>
           <Pressable
@@ -187,7 +189,7 @@ export default function RoleDetailScreen() {
             onPressIn={() => Animated.spring(ctaScale, { toValue: 0.97, useNativeDriver: true }).start()}
             onPressOut={() => Animated.spring(ctaScale, { toValue: 1, friction: 3, useNativeDriver: true }).start()}
           >
-            <Ionicons name={isWaitlist ? 'time-outline' : 'heart'} size={16} color="#FFFFFF" />
+            <Ionicons name={isWaitlist ? 'time-outline' : 'heart'} size={16} color={T.textOnAccent} />
             <Text style={st.ctaText}>{ctaLabel}</Text>
           </Pressable>
         </Animated.View>
@@ -196,61 +198,61 @@ export default function RoleDetailScreen() {
   );
 }
 
-const st = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFFFFF' },
+const makeStyles = (T: ThemePalette) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: T.bg },
 
-  header: { paddingHorizontal: 20, paddingBottom: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderBottomColor: '#F3F4F6' },
-  headerBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#F3F4F6', alignItems: 'center', justifyContent: 'center' },
-  headerTitle: { fontSize: 16, fontWeight: '700', color: '#1A1A1A' },
+  header: { paddingHorizontal: 20, paddingBottom: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: T.bg, borderBottomWidth: 1, borderBottomColor: T.border },
+  headerBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: T.card, borderWidth: 1, borderColor: T.border, alignItems: 'center', justifyContent: 'center' },
+  headerTitle: { fontSize: 16, fontWeight: '700', color: T.textPrimary },
 
   contentWrap: { flex: 1 },
   content: { paddingHorizontal: 20, paddingTop: 24, paddingBottom: 24 },
 
   logoSection: { alignItems: 'center', marginBottom: 16 },
-  logoCircle: { width: 56, height: 56, borderRadius: 28, backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#F3F4F6', alignItems: 'center', justifyContent: 'center' },
+  logoCircle: { width: 56, height: 56, borderRadius: 28, backgroundColor: T.card, borderWidth: 1, borderColor: T.border, alignItems: 'center', justifyContent: 'center' },
 
-  roleTitle: { fontSize: 22, fontWeight: '800', color: '#1A1A1A', textAlign: 'center', marginBottom: 8, letterSpacing: -0.3 },
+  roleTitle: { fontSize: 22, fontWeight: '800', color: T.textPrimary, textAlign: 'center', marginBottom: 8, letterSpacing: -0.3 },
   tierBadge: { alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 5, borderRadius: 8, marginBottom: 20 },
   tierDot: { width: 6, height: 6, borderRadius: 3 },
   tierBadgeText: { fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.4 },
 
   infoRow: { flexDirection: 'row', gap: 8, marginBottom: 20 },
-  infoCard: { flex: 1, backgroundColor: '#F9FAFB', borderRadius: 12, borderWidth: 1, borderColor: '#F3F4F6', padding: 12, alignItems: 'center' },
-  infoLabel: { fontSize: 10, color: '#9CA3AF', textTransform: 'uppercase', fontWeight: '600', letterSpacing: 0.4, marginBottom: 3 },
-  infoValue: { fontSize: 12, fontWeight: '700', color: '#1A1A1A', textAlign: 'center' },
+  infoCard: { flex: 1, backgroundColor: T.card, borderRadius: 12, borderWidth: 1, borderColor: T.border, padding: 12, alignItems: 'center' },
+  infoLabel: { fontSize: 10, color: T.textMuted, textTransform: 'uppercase', fontWeight: '600', letterSpacing: 0.4, marginBottom: 3 },
+  infoValue: { fontSize: 12, fontWeight: '700', color: T.textPrimary, textAlign: 'center' },
 
-  matchCard: { backgroundColor: '#F0F9F0', borderRadius: 14, borderWidth: 1, borderColor: '#E8F5E9', padding: 16, marginBottom: 20 },
+  matchCard: { backgroundColor: T.accentBg, borderRadius: 14, borderWidth: 1, borderColor: T.accentBg20, padding: 16, marginBottom: 20 },
   matchTitleRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 14 },
-  matchIconCircle: { width: 32, height: 32, borderRadius: 8, backgroundColor: '#E8F5E9', alignItems: 'center', justifyContent: 'center' },
-  matchTitle: { fontSize: 15, fontWeight: '700', color: '#1A1A1A', flex: 1, marginLeft: 10 },
+  matchIconCircle: { width: 32, height: 32, borderRadius: 8, backgroundColor: T.accentBg20, alignItems: 'center', justifyContent: 'center' },
+  matchTitle: { fontSize: 15, fontWeight: '700', color: T.textPrimary, flex: 1, marginLeft: 10 },
   matchScorePill: { borderRadius: 8, paddingVertical: 4, paddingHorizontal: 10 },
-  matchScoreText: { color: '#FFFFFF', fontSize: 12, fontWeight: '800' },
+  matchScoreText: { color: T.textOnAccent, fontSize: 12, fontWeight: '800' },
   matchRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
-  matchText: { fontSize: 13, color: '#374151', fontWeight: '500' },
+  matchText: { fontSize: 13, color: T.textSecondary, fontWeight: '500' },
 
   section: { marginBottom: 20 },
-  sectionTitle: { fontSize: 15, fontWeight: '700', color: '#1A1A1A', marginBottom: 10 },
+  sectionTitle: { fontSize: 15, fontWeight: '700', color: T.textPrimary, marginBottom: 10 },
   skillWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  requiredSkillPill: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: '#F0F9F0', borderWidth: 1, borderColor: '#E8F5E9', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8 },
-  requiredSkillText: { fontSize: 12, fontWeight: '600', color: '#1B5E20' },
-  optionalSkillPill: { backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#F3F4F6', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8 },
-  optionalSkillText: { fontSize: 12, color: '#6B7280', fontWeight: '500' },
+  requiredSkillPill: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: T.accentBg, borderWidth: 1, borderColor: T.accentBg20, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8 },
+  requiredSkillText: { fontSize: 12, fontWeight: '600', color: T.accent },
+  optionalSkillPill: { backgroundColor: T.card, borderWidth: 1, borderColor: T.border, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8 },
+  optionalSkillText: { fontSize: 12, color: T.textSecondary, fontWeight: '500' },
 
-  bodyText: { fontSize: 14, lineHeight: 22, color: '#6B7280' },
-  seeMore: { fontSize: 13, fontWeight: '700', color: '#1B5E20', marginTop: 6 },
+  bodyText: { fontSize: 14, lineHeight: 22, color: T.textSecondary },
+  seeMore: { fontSize: 13, fontWeight: '700', color: T.accent, marginTop: 6 },
 
   companyInfoRow: { flexDirection: 'row', gap: 16, marginBottom: 14 },
   companyInfoItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  companyInfoText: { fontSize: 12, color: '#6B7280', fontWeight: '500' },
+  companyInfoText: { fontSize: 12, color: T.textSecondary, fontWeight: '500' },
 
-  privacyCard: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#F0F9F0', borderWidth: 1, borderColor: '#E8F5E9', borderRadius: 12, padding: 14, marginBottom: 20 },
-  privacyText: { color: '#6B7280', fontSize: 12, flex: 1, fontWeight: '500' },
+  privacyCard: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: T.accentBg, borderWidth: 1, borderColor: T.accentBg20, borderRadius: 12, padding: 14, marginBottom: 20 },
+  privacyText: { color: T.textSecondary, fontSize: 12, flex: 1, fontWeight: '500' },
 
-  footer: { backgroundColor: '#FFFFFF', paddingHorizontal: 20, paddingTop: 12, flexDirection: 'row', gap: 10, borderTopWidth: 1, borderTopColor: '#F3F4F6' },
-  bookmarkBtn: { width: 48, height: 48, borderRadius: 12, backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#F3F4F6', alignItems: 'center', justifyContent: 'center' },
+  footer: { backgroundColor: T.bg, paddingHorizontal: 20, paddingTop: 12, flexDirection: 'row', gap: 10, borderTopWidth: 1, borderTopColor: T.border },
+  bookmarkBtn: { width: 48, height: 48, borderRadius: 12, backgroundColor: T.card, borderWidth: 1, borderColor: T.border, alignItems: 'center', justifyContent: 'center' },
   ctaButton: { flex: 1, height: 48, borderRadius: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
-  ctaText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700' },
+  ctaText: { color: T.textOnAccent, fontSize: 15, fontWeight: '700' },
 
-  emptyContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10 },
-  emptyText: { fontSize: 15, color: '#9CA3AF' },
+  emptyContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: T.bg },
+  emptyText: { fontSize: 15, color: T.textMuted },
 });

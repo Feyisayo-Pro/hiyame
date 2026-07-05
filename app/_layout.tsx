@@ -1,14 +1,20 @@
 import { useFonts } from 'expo-font';
-import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
+import { DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
+import { View, StatusBar as RNStatusBar, Platform } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
+import { CandidateProfileProvider } from '@/lib/candidateProfile';
+import { VerificationProvider } from '@/lib/useVerification';
+import { ApplicationProvider } from '@/lib/applicationStore';
+import { SwipeStoreProvider } from '@/lib/swipeStore';
+import { SubscriptionProvider } from '@/lib/subscriptionStore';
+import { HiyameThemeProvider, useTheme } from '@/lib/theme';
+import { ChatProvider } from '@/lib/chatStore';
 import 'react-native-reanimated';
-
-import { useColorScheme } from '@/components/useColorScheme';
 
 export { ErrorBoundary } from 'expo-router';
 
-// Start on the auth/welcome screen. Real session-based routing comes in milestone 2.
 export const unstable_settings = {
   initialRouteName: '(auth)',
 };
@@ -30,23 +36,58 @@ export default function RootLayout() {
     }
   }, [loaded]);
 
-  if (!loaded) {
-    return null;
-  }
+  if (!loaded) return null;
 
-  return <RootLayoutNav />;
+  return (
+    <HiyameThemeProvider>
+      <RootLayoutNav />
+    </HiyameThemeProvider>
+  );
 }
 
 function RootLayoutNav() {
-  const colorScheme = useColorScheme();
+  const T = useTheme();
+
+  const navTheme = useMemo(() => ({
+    ...DefaultTheme,
+    colors: {
+      ...DefaultTheme.colors,
+      background: T.bg,
+      card: T.card,
+      text: T.textPrimary,
+      border: T.border,
+      primary: T.accent,
+    },
+  }), [T]);
+
+  const statusStyle = T.mode === 'dark' ? 'light' : 'dark';
+  const barStyle = T.mode === 'dark' ? 'light-content' : 'dark-content';
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(auth)" />
-        <Stack.Screen name="(candidate)" />
-        <Stack.Screen name="(company)" />
-      </Stack>
-    </ThemeProvider>
+    <ApplicationProvider>
+      <SubscriptionProvider>
+        <SwipeStoreProvider>
+          <ChatProvider>
+            <VerificationProvider>
+              <CandidateProfileProvider>
+                <ThemeProvider value={navTheme}>
+                  <View style={{ flex: 1, backgroundColor: T.bg }}>
+                    <StatusBar style={statusStyle} />
+                    {Platform.OS === 'android' && (
+                      <RNStatusBar translucent backgroundColor="transparent" barStyle={barStyle} />
+                    )}
+                    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: T.bg } }}>
+                      <Stack.Screen name="(auth)" />
+                      <Stack.Screen name="(candidate)" />
+                      <Stack.Screen name="(company)" />
+                    </Stack>
+                  </View>
+                </ThemeProvider>
+              </CandidateProfileProvider>
+            </VerificationProvider>
+          </ChatProvider>
+        </SwipeStoreProvider>
+      </SubscriptionProvider>
+    </ApplicationProvider>
   );
 }

@@ -1,28 +1,43 @@
+import { useMemo } from 'react';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { View, StyleSheet, Platform } from 'react-native';
+import { View, Platform, OpaqueColorValue } from 'react-native';
+import { useTheme, ThemePalette } from '@/lib/theme';
+
+function ProfileAvatar({ color, focused }: { color: string | OpaqueColorValue; focused: boolean }) {
+  const T = useTheme();
+  return (
+    <View style={[{ width: 28, height: 28, borderRadius: 14, backgroundColor: T.surface, alignItems: 'center', justifyContent: 'center' }, focused && { borderWidth: 1, borderColor: T.textPrimary }]}>
+      <Ionicons name={focused ? 'person' : 'person-outline'} size={18} color={color} />
+    </View>
+  );
+}
 
 export default function CandidateTabLayout() {
+  const T = useTheme();
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#43A047',
-        tabBarInactiveTintColor: '#9CA3AF',
+        tabBarActiveTintColor: T.textPrimary,
+        tabBarInactiveTintColor: T.textMuted,
         tabBarShowLabel: true,
         tabBarLabelStyle: {
           fontSize: 11,
-          fontWeight: '600',
+          fontWeight: '700',
           marginTop: -2,
+          letterSpacing: 0.2,
         },
         tabBarStyle: {
-          backgroundColor: '#FFFFFF',
-          borderTopWidth: 0,
-          elevation: 20,
+          backgroundColor: T.tabBarBg,
+          borderTopWidth: 1,
+          borderTopColor: T.tabBarBorder,
           shadowColor: '#000',
-          shadowOffset: { width: 0, height: -4 },
-          shadowOpacity: 0.08,
-          shadowRadius: 16,
+          shadowOffset: { width: 0, height: -3 },
+          shadowOpacity: 0.3,
+          shadowRadius: 12,
+          elevation: 12,
           height: Platform.OS === 'ios' ? 88 : 64,
           paddingTop: 8,
           paddingBottom: Platform.OS === 'ios' ? 28 : 10,
@@ -34,32 +49,25 @@ export default function CandidateTabLayout() {
         options={{
           title: 'Home',
           tabBarIcon: ({ color, focused }) => (
-            <View style={focused ? styles.activeIconWrap : undefined}>
-              <Ionicons name={focused ? 'home' : 'home-outline'} size={22} color={color} />
-            </View>
+            <Ionicons name={focused ? 'home' : 'home-outline'} size={22} color={color} />
           ),
         }}
       />
       <Tabs.Screen
         name="opportunities"
         options={{
-          title: 'Opportunities',
+          title: 'Jobs',
           tabBarIcon: ({ color, focused }) => (
-            <View style={focused ? styles.activeIconWrap : undefined}>
-              <Ionicons name={focused ? 'briefcase' : 'briefcase-outline'} size={22} color={color} />
-            </View>
+            <Ionicons name={focused ? 'briefcase' : 'briefcase-outline'} size={22} color={color} />
           ),
         }}
       />
       <Tabs.Screen
-        name="notifications"
+        name="messages"
         options={{
-          title: 'Alerts',
+          title: 'Chat',
           tabBarIcon: ({ color, focused }) => (
-            <View>
-              <Ionicons name={focused ? 'notifications' : 'notifications-outline'} size={22} color={color} />
-              <View style={styles.badge} />
-            </View>
+            <Ionicons name={focused ? 'chatbubbles' : 'chatbubbles-outline'} size={22} color={color} />
           ),
         }}
       />
@@ -68,38 +76,17 @@ export default function CandidateTabLayout() {
         options={{
           title: 'Profile',
           tabBarIcon: ({ color, focused }) => (
-            <View style={focused ? styles.activeIconWrap : undefined}>
-              <Ionicons name={focused ? 'person' : 'person-outline'} size={22} color={color} />
-            </View>
+            <ProfileAvatar color={color} focused={focused} />
           ),
         }}
       />
-      <Tabs.Screen
-        name="role/[id]"
-        options={{
-          href: null, // hide from tab bar
-        }}
-      />
+
+      {/* Hidden routes */}
+      <Tabs.Screen name="verification" options={{ href: null }} />
+      <Tabs.Screen name="analytics" options={{ href: null }} />
+      <Tabs.Screen name="notifications" options={{ href: null }} />
+      <Tabs.Screen name="role/[id]" options={{ href: null }} />
+      <Tabs.Screen name="settings" options={{ href: null }} />
     </Tabs>
   );
 }
-
-const styles = StyleSheet.create({
-  activeIconWrap: {
-    backgroundColor: '#E8F5E9',
-    borderRadius: 14,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-  },
-  badge: {
-    position: 'absolute',
-    top: -1,
-    right: -4,
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-    backgroundColor: '#EF4444',
-    borderWidth: 1.5,
-    borderColor: '#FFFFFF',
-  },
-});

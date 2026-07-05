@@ -1,282 +1,506 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
-import { Animated, FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, TextInput, View } from 'react-native';
-import { router } from 'expo-router';
+import { useCallback, useRef, useState, useMemo } from 'react';
+import { Dimensions, PanResponder, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSpring, runOnJS, interpolate, Extrapolation } from 'react-native-reanimated';
 import { Text } from '@/components/Themed';
-import { Ionicons } from '@expo/vector-icons';
-import { StatusBar } from 'expo-status-bar';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { mockRoles, Role, Tier, TIER_CONFIG } from '@/lib/mock-data';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import SwipeFadeContainer from '@/components/SwipeFadeContainer';
+import SwipeHint from '@/components/SwipeHint';
+import { mockRoles, Role, Tier } from '@/lib/mock-data';
+import { useTheme, ThemePalette } from '@/lib/theme';
 
-const filters = ['All', 'Corporate', 'Blue-Collar', 'Short-Term', 'Gig'] as const;
-type FilterValue = Tier | 'all';
-const filterToTier: Record<string, FilterValue> = { All: 'all', Corporate: 'corporate', 'Blue-Collar': 'blue_collar', 'Short-Term': 'short_term', Gig: 'gig' };
+const { width: SCREEN_W } = Dimensions.get('window');
+const SWIPE_THRESHOLD = SCREEN_W * 0.25;
 
-function CompatRing({ score, size = 38, accent }: { score: number; size?: number; accent: string }) {
-  const isWaitlist = score === 0;
+// ── Filter chip data ──
+const TIERS: { key: Tier | 'all'; label: string }[] = [
+  { key: 'all', label: 'All' },
+  { key: 'corporate', label: 'Corporate' },
+  { key: 'short_term', label: 'Short-Term' },
+  { key: 'gig', label: 'Gig' },
+];
+const LOCATIONS = ['Remote', 'Hybrid', 'On-site'];
+const FIELDS = ['Engineering', 'Design', 'Finance', 'Marketing', 'Legal', 'Ops'];
+
+// ═══════════════════════════════════════
+// FILTER SETUP VIEW
+// ═══════════════════════════════════════
+function FilterSetup({ onStart }: { onStart: () => void }) {
+  const T = useTheme();
+  const fs = useMemo(() => makeFilterStyles(T), [T]);
+
+  const [selectedTier, setSelectedTier] = useState<Tier | 'all'>('all');
+  const [selectedLocations, setSelectedLocations] = useState<Set<string>>(new Set(['Remote']));
+  const [selectedFields, setSelectedFields] = useState<Set<string>>(new Set(['Engineering']));
+
+  const toggle = (set: Set<string>, val: string, setter: (s: Set<string>) => void) => {
+    const next = new Set(set);
+    if (next.has(val)) next.delete(val); else next.add(val);
+    setter(next);
+  };
+
+  const roleCount = mockRoles.filter(r => selectedTier === 'all' || r.tier === selectedTier).length;
+
   return (
-    <View style={[st.compatRing, { width: size, height: size, borderRadius: size / 2, borderColor: isWaitlist ? '#E5E7EB' : accent }]}>
-      <Text style={[st.compatNum, { color: isWaitlist ? '#9CA3AF' : accent, fontSize: size * 0.32 }]}>
-        {isWaitlist ? '—' : `${score}`}
-      </Text>
-      {!isWaitlist && <Text style={[st.compatPct, { color: accent }]}>%</Text>}
+    <ScrollView contentContainerStyle={fs.scroll} showsVerticalScrollIndicator={false}>
+      <SwipeFadeContainer>
+        {/* Header */}
+        <View style={fs.header}>
+          <View style={fs.headerIcon}>
+            <Ionicons name="compass" size={22} color={T.accent} />
+          </View>
+          <Text style={fs.headerTitle}>Discover Opportunities</Text>
+          <Text style={fs.headerSub}>Set your preferences and start exploring roles</Text>
+        </View>
+
+        {/* Role count */}
+        <View style={fs.budgetCard}>
+          <View style={fs.budgetRow}>
+            <View style={fs.budgetIcon}>
+              <Ionicons name="briefcase" size={16} color={T.accent} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={fs.budgetTitle}>Available Roles</Text>
+              <Text style={fs.budgetSub}>{roleCount} roles match your filters</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Tier */}
+        <View style={fs.filterSection}>
+          <Text style={fs.filterLabel}>Role Type</Text>
+          <View style={fs.chipRow}>
+            {TIERS.map((t) => (
+              <Pressable key={t.key} style={[fs.chip, selectedTier === t.key && fs.chipActive]} onPress={() => setSelectedTier(t.key)}>
+                <Text style={[fs.chipText, selectedTier === t.key && fs.chipTextActive]}>{t.label}</Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+
+        {/* Location */}
+        <View style={fs.filterSection}>
+          <Text style={fs.filterLabel}>Work Arrangement</Text>
+          <View style={fs.chipRow}>
+            {LOCATIONS.map((l) => (
+              <Pressable key={l} style={[fs.chip, selectedLocations.has(l) && fs.chipActive]} onPress={() => toggle(selectedLocations, l, setSelectedLocations)}>
+                <Text style={[fs.chipText, selectedLocations.has(l) && fs.chipTextActive]}>{l}</Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+
+        {/* Field */}
+        <View style={fs.filterSection}>
+          <Text style={fs.filterLabel}>Function</Text>
+          <View style={fs.chipRow}>
+            {FIELDS.map((f) => (
+              <Pressable key={f} style={[fs.chip, selectedFields.has(f) && fs.chipActive]} onPress={() => toggle(selectedFields, f, setSelectedFields)}>
+                <Text style={[fs.chipText, selectedFields.has(f) && fs.chipTextActive]}>{f}</Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+
+        {/* Start button */}
+        <Pressable style={fs.startBtn} onPress={onStart}>
+          <Ionicons name="flash" size={20} color={T.textOnAccent} />
+          <Text style={fs.startBtnText}>Start Exploring</Text>
+        </Pressable>
+      </SwipeFadeContainer>
+    </ScrollView>
+  );
+}
+
+// ═══════════════════════════════════════
+// JOB SWIPE CARD
+// ═══════════════════════════════════════
+function JobSwipeCard({
+  role,
+  isTop,
+  onPass,
+  onSave,
+  onApply,
+}: {
+  role: Role;
+  isTop: boolean;
+  onPass?: () => void;
+  onSave?: () => void;
+  onApply?: () => void;
+}) {
+  const T = useTheme();
+  const sc = useMemo(() => makeCardStyles(T), [T]);
+
+  const locationLabel = role.location_type === 'remote' ? 'Remote' :
+    role.location_type === 'hybrid' ? `Hybrid · ${role.location_city}` :
+    `${role.location_city}, ${role.location_country}`;
+
+  const rateLabel = role.rate_type === 'monthly'
+    ? `$${role.rate_min.toLocaleString()}–${role.rate_max.toLocaleString()}/mo`
+    : role.rate_type === 'hourly'
+    ? `$${role.rate_min}–${role.rate_max}/hr`
+    : `$${role.rate_min.toLocaleString()} fixed`;
+
+  const tierLabel = role.tier === 'corporate' ? 'Corporate' : role.tier === 'short_term' ? 'Short-Term' : 'Gig';
+
+  return (
+    <View style={[sc.card, !isTop && sc.cardBehind]}>
+      {/* Company header */}
+      <View style={sc.companyHeader}>
+        <View style={sc.companyAvatar}>
+          <Ionicons name="business" size={24} color={T.accent} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={sc.companyIndustry}>{role.company_industry}</Text>
+          <Text style={sc.companySize}>{role.company_size_band}</Text>
+        </View>
+        <View style={sc.matchBadge}>
+          <Ionicons name="heart" size={12} color={T.accent} />
+          <Text style={sc.matchText}>{role.match_score}%</Text>
+        </View>
+      </View>
+
+      {/* Role title */}
+      <Text style={sc.roleTitle}>{role.title}</Text>
+      <Text style={sc.roleFunction}>{role.function} · {role.experience_level}</Text>
+
+      {/* Location + Rate */}
+      <View style={sc.infoRow}>
+        <View style={sc.infoBadge}>
+          <Ionicons name="location" size={12} color={T.accent} />
+          <Text style={sc.infoText}>{locationLabel}</Text>
+        </View>
+        <View style={sc.infoBadge}>
+          <Ionicons name="cash" size={12} color={T.accent} />
+          <Text style={sc.infoText}>{rateLabel}</Text>
+        </View>
+      </View>
+
+      {/* Contract + Start */}
+      <View style={sc.detailRow}>
+        <View style={sc.detailItem}>
+          <Ionicons name="time-outline" size={14} color={T.textMuted} />
+          <Text style={sc.detailText}>{role.contract_length}</Text>
+        </View>
+        <View style={sc.detailItem}>
+          <Ionicons name="calendar-outline" size={14} color={T.textMuted} />
+          <Text style={sc.detailText}>Start: {role.start_date}</Text>
+        </View>
+      </View>
+
+      {/* Skills */}
+      <View style={sc.skillsWrap}>
+        {role.required_skills.must_have.map((s) => (
+          <View key={s} style={sc.skillChip}>
+            <Text style={sc.skillText}>{s}</Text>
+          </View>
+        ))}
+        {role.required_skills.nice_to_have.slice(0, 2).map((s) => (
+          <View key={s} style={sc.skillChipNice}>
+            <Text style={sc.skillTextNice}>{s}</Text>
+          </View>
+        ))}
+      </View>
+
+      {/* Footer */}
+      <View style={sc.footer}>
+        <View style={sc.tierPill}>
+          <Text style={sc.tierText}>{tierLabel.toUpperCase()}</Text>
+        </View>
+        <Text style={sc.visDesc} numberOfLines={2}>{role.visibility_description}</Text>
+      </View>
+
+      {/* In-card action buttons (top card only) */}
+      {isTop && onSave && onApply && (
+        <View style={sc.cardActions}>
+          <Pressable style={sc.cardActionBtn} onPress={onSave}>
+            <Ionicons name="bookmark" size={18} color={T.accent} />
+          </Pressable>
+          <Pressable style={sc.cardActionBtn} onPress={onApply}>
+            <Ionicons name="checkmark" size={18} color={T.accent} />
+          </Pressable>
+        </View>
+      )}
     </View>
   );
 }
 
-function RoleCard({ role, index, liked, onLike, onPass }: { role: Role; index: number; liked: boolean; onLike: () => void; onPass: () => void }) {
-  const cfg = TIER_CONFIG[role.tier];
-  const isGig = role.tier === 'gig';
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(20)).current;
-  const scaleAnim = useRef(new Animated.Value(1)).current;
+// ═══════════════════════════════════════
+// SWIPE DISCOVERY VIEW
+// ═══════════════════════════════════════
+function JobSwipeDiscovery({ onBack }: { onBack: () => void }) {
+  const T = useTheme();
+  const sd = useMemo(() => makeDiscoveryStyles(T), [T]);
+  const roles = mockRoles;
+  const [currentIndex, setCurrentIndex] = useState(0);
 
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 300, delay: index * 60, useNativeDriver: true }),
-      Animated.timing(slideAnim, { toValue: 0, duration: 300, delay: index * 60, useNativeDriver: true }),
-    ]).start();
+  const translateX = useSharedValue(0);
+  const translateY = useSharedValue(0);
+  const swiping = useSharedValue(false);
+
+  const currentRole = roles[currentIndex % roles.length];
+  const nextRole = roles[(currentIndex + 1) % roles.length];
+  const deckEmpty = currentIndex >= roles.length;
+
+  const advanceCard = useCallback(() => {
+    if (!swiping.value) return;
+    swiping.value = false;
+    setCurrentIndex((i) => i + 1);
+    translateX.value = 0;
+    translateY.value = 0;
+  }, [translateX, translateY]);
+
+  const advanceRef = useRef(advanceCard);
+  advanceRef.current = advanceCard;
+  const onSwipeDone = useCallback(() => {
+    advanceRef.current();
   }, []);
 
-  const location = role.location_type === 'remote' ? 'Remote' : role.location_type === 'hybrid' ? `Hybrid · ${role.location_city}` : `${role.location_city}, ${role.location_country}`;
+  const doAnimateOff = useCallback((direction: number) => {
+    if (swiping.value) return;
+    swiping.value = true;
+    translateX.value = withTiming(direction * SCREEN_W * 1.5, { duration: 300 }, (finished) => {
+      if (finished) {
+        runOnJS(onSwipeDone)();
+      } else {
+        swiping.value = false;
+      }
+    });
+  }, [translateX, onSwipeDone]);
+
+  const animateOffRef = useRef(doAnimateOff);
+  animateOffRef.current = doAnimateOff;
+
+  const panResponder = useMemo(() => PanResponder.create({
+    onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 10,
+    onPanResponderMove: (_, g) => {
+      if (swiping.value) return;
+      translateX.value = g.dx;
+      translateY.value = g.dy;
+    },
+    onPanResponderRelease: (_, g) => {
+      if (swiping.value) return;
+      if (g.dx > SWIPE_THRESHOLD) {
+        animateOffRef.current(1);
+      } else if (g.dx < -SWIPE_THRESHOLD) {
+        animateOffRef.current(-1);
+      } else {
+        translateX.value = withSpring(0);
+        translateY.value = withSpring(0);
+      }
+    },
+  }), [translateX, translateY]);
+
+  const cardAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: translateX.value },
+      { translateY: translateY.value },
+      { rotate: interpolate(translateX.value, [-SCREEN_W, 0, SCREEN_W], [-12, 0, 12]) + 'deg' },
+    ],
+  }));
+
+  const passOverlayStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(translateX.value, [-SCREEN_W * 0.5, 0], [1, 0], Extrapolation.CLAMP),
+  }));
+
+  const acceptOverlayStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(translateX.value, [0, SCREEN_W * 0.5], [0, 1], Extrapolation.CLAMP),
+  }));
 
   return (
-    <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }, { scale: scaleAnim }] }}>
-      <Pressable
-        style={st.card}
-        onPress={() => router.push({ pathname: '/(candidate)/role/[id]', params: { id: role.id } })}
-        onPressIn={() => Animated.spring(scaleAnim, { toValue: 0.98, useNativeDriver: true }).start()}
-        onPressOut={() => Animated.spring(scaleAnim, { toValue: 1, friction: 3, useNativeDriver: true }).start()}
-      >
-        <View style={st.cardTopRow}>
-          <View style={[st.tierPill, { backgroundColor: cfg.accent + '14' }]}>
-            <View style={[st.tierDot, { backgroundColor: cfg.accent }]} />
-            <Text style={[st.tierLabel, { color: cfg.accent }]}>{cfg.label}</Text>
-          </View>
-          <CompatRing score={role.match_score} accent={cfg.accent} />
+    <View style={sd.container}>
+      {/* Header */}
+      <View style={sd.header}>
+        <Pressable style={sd.backBtn} onPress={onBack}>
+          <Ionicons name="arrow-back" size={20} color={T.textPrimary} />
+        </Pressable>
+        <View style={sd.headerCenter}>
+          <Ionicons name="compass" size={16} color={T.accent} />
+          <Text style={sd.headerTitle}>Explore</Text>
         </View>
-
-        <View style={st.companyRow}>
-          <View style={st.companyIcon}>
-            <Ionicons name="lock-closed" size={14} color="#9CA3AF" />
-          </View>
-          <View style={{ flex: 1 }}>
-            <View style={st.verifiedRow}>
-              <Ionicons name="checkmark-circle" size={13} color="#1B5E20" />
-              <Text style={st.companyName}>Verified Company</Text>
-            </View>
-            <Text style={st.industryText}>{role.company_industry} · {role.company_size_band}</Text>
-          </View>
+        <View style={sd.headerRight}>
+          <Text style={sd.counterText}>{currentIndex + 1}/{roles.length}</Text>
         </View>
+      </View>
 
-        <Text style={st.roleTitle}>{role.title}</Text>
-        <Text style={st.rateText}>
-          <Text style={st.rateBold}>${role.rate_min.toLocaleString()}–${role.rate_max.toLocaleString()}</Text>
-          <Text style={st.rateSuffix}>{role.rate_type === 'monthly' ? '/mo' : role.rate_type === 'hourly' ? '/hr' : ' fixed'}</Text>
-        </Text>
-
-        <View style={st.metaRow}>
-          <View style={st.metaChip}>
-            <Ionicons name="location-outline" size={12} color="#6B7280" />
-            <Text style={st.metaText}>{location}</Text>
-          </View>
-          <View style={st.metaChip}>
-            <Ionicons name="time-outline" size={12} color="#6B7280" />
-            <Text style={st.metaText}>{role.contract_length}</Text>
-          </View>
-          <View style={st.metaChip}>
-            <Ionicons name="trending-up-outline" size={12} color="#6B7280" />
-            <Text style={st.metaText}>{role.experience_level}</Text>
-          </View>
-        </View>
-
-        <View style={st.skillsRow}>
-          {role.required_skills.must_have.slice(0, 3).map((sk) => (
-            <View key={sk} style={st.skillChip}><Text style={st.skillText}>{sk}</Text></View>
-          ))}
-          {role.required_skills.must_have.length > 3 && (
-            <Text style={st.moreSkills}>+{role.required_skills.must_have.length - 3}</Text>
-          )}
-        </View>
-
-        <View style={st.divider} />
-
-        <View style={st.actionRow}>
-          <Pressable style={st.passBtn} onPress={onPass} hitSlop={8}>
-            <Ionicons name="close" size={18} color="#9CA3AF" />
-          </Pressable>
-          <Pressable style={[st.interestedBtn, { backgroundColor: cfg.accent }]} onPress={onLike} hitSlop={4}>
-            <Ionicons name={liked ? 'heart' : 'heart-outline'} size={15} color="#FFFFFF" />
-            <Text style={st.interestedText}>{isGig ? 'Join Waitlist' : 'Interested'}</Text>
-          </Pressable>
-        </View>
-      </Pressable>
-    </Animated.View>
-  );
-}
-
-export default function OpportunitiesScreen() {
-  const insets = useSafeAreaInsets();
-  const [activeFilter, setActiveFilter] = useState<FilterValue>('all');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [likedRoles, setLikedRoles] = useState<Set<string>>(new Set());
-  const [passedRoles, setPassedRoles] = useState<Set<string>>(new Set());
-  const [refreshing, setRefreshing] = useState(false);
-
-  const filtered = mockRoles
-    .filter((r) => !passedRoles.has(r.id))
-    .filter((r) => activeFilter === 'all' || r.tier === activeFilter)
-    .filter((r) => {
-      if (!searchQuery.trim()) return true;
-      const q = searchQuery.toLowerCase();
-      return (
-        r.title.toLowerCase().includes(q) ||
-        r.company_industry.toLowerCase().includes(q) ||
-        r.required_skills.must_have.some((sk) => sk.toLowerCase().includes(q)) ||
-        r.required_skills.nice_to_have.some((sk) => sk.toLowerCase().includes(q)) ||
-        (r.location_city || '').toLowerCase().includes(q) ||
-        (r.location_country || '').toLowerCase().includes(q)
-      );
-    })
-    .sort((a, b) => b.match_score - a.match_score);
-
-  const toggleLike = useCallback((id: string) => {
-    setLikedRoles((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
-  }, []);
-  const passRole = useCallback((id: string) => { setPassedRoles((prev) => new Set(prev).add(id)); }, []);
-  const onRefresh = useCallback(() => { setRefreshing(true); setPassedRoles(new Set()); setSearchQuery(''); setTimeout(() => setRefreshing(false), 800); }, []);
-
-  return (
-    <View style={st.container}>
-      <StatusBar style="dark" />
-      <FlatList
-        data={filtered}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item, index }) => (
-          <RoleCard role={item} index={index} liked={likedRoles.has(item.id)} onLike={() => toggleLike(item.id)} onPass={() => passRole(item.id)} />
-        )}
-        contentContainerStyle={st.listContent}
-        showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#1B5E20" colors={['#1B5E20']} />}
-        ListHeaderComponent={
-          <View style={[st.headerZone, { paddingTop: insets.top + 12 }]}>
-            {/* Title row */}
-            <View style={st.headerTitleRow}>
-              <View>
-                <Text style={st.headerTitle}>Explore Matches</Text>
-                <Text style={st.headerSub}>Sorted by compatibility</Text>
+      {/* Card Stack */}
+      <View style={sd.deckWrap}>
+        {deckEmpty ? (
+          <SwipeFadeContainer>
+            <View style={sd.emptyDeck}>
+              <View style={sd.emptyIcon}>
+                <Ionicons name="search" size={32} color={T.textMuted} />
               </View>
-              <View style={st.countBadge}><Text style={st.countText}>{filtered.length}</Text></View>
+              <Text style={sd.emptyTitle}>All caught up!</Text>
+              <Text style={sd.emptySub}>You have reviewed all available opportunities. Check back later or adjust your filters.</Text>
+              <Pressable style={sd.resetBtn} onPress={onBack}>
+                <Ionicons name="refresh" size={16} color={T.textOnAccent} />
+                <Text style={sd.resetBtnText}>Adjust Filters</Text>
+              </Pressable>
             </View>
-
-            {/* Search bar */}
-            <View style={st.searchBar}>
-              <Ionicons name="search-outline" size={18} color="#9CA3AF" />
-              <TextInput
-                style={st.searchInput}
-                placeholder="Search roles, skills, locations..."
-                placeholderTextColor="#9CA3AF"
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                returnKeyType="search"
+          </SwipeFadeContainer>
+        ) : (
+          <>
+            {nextRole && <JobSwipeCard role={nextRole} isTop={false} />}
+            <Animated.View
+              style={[sd.animatedCard, cardAnimatedStyle]}
+              {...panResponder.panHandlers}
+            >
+              <JobSwipeCard
+                role={currentRole}
+                isTop={true}
+                onPass={() => animateOffRef.current(-1)}
+                onSave={() => animateOffRef.current(0.5)}
+                onApply={() => animateOffRef.current(1)}
               />
-              {searchQuery.length > 0 && (
-                <Pressable onPress={() => setSearchQuery('')} hitSlop={8}>
-                  <Ionicons name="close-circle" size={18} color="#D1D5DB" />
-                </Pressable>
-              )}
-            </View>
+              <Animated.View pointerEvents="none" style={[sd.swipeOverlay, sd.passOverlay, passOverlayStyle]}>
+                <Ionicons name="close-circle" size={48} color={T.danger} />
+              </Animated.View>
+              <Animated.View pointerEvents="none" style={[sd.swipeOverlay, sd.acceptOverlay, acceptOverlayStyle]}>
+                <Ionicons name="checkmark-circle" size={48} color={T.emerald} />
+              </Animated.View>
+            </Animated.View>
+          </>
+        )}
 
-            {/* Filter chips */}
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={st.chipRow}>
-              {filters.map((label) => {
-                const value = filterToTier[label];
-                const isActive = activeFilter === value;
-                return (
-                  <Pressable key={label} style={[st.chip, isActive && st.chipActive]} onPress={() => setActiveFilter(value)}>
-                    <Text style={[st.chipText, isActive && st.chipTextActive]}>{label}</Text>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-          </View>
-        }
-        ListEmptyComponent={
-          <View style={st.emptyWrap}>
-            <View style={st.emptyCircle}><Ionicons name="search-outline" size={32} color="#D1D5DB" /></View>
-            <Text style={st.emptyTitle}>{searchQuery ? 'No results found' : 'No matches here'}</Text>
-            <Text style={st.emptySub}>{searchQuery ? 'Try different keywords or clear filters' : 'Try a different filter or pull to refresh'}</Text>
-          </View>
-        }
-      />
+        {/* Swipe hint animation */}
+        {!deckEmpty && <SwipeHint />}
+      </View>
     </View>
   );
 }
 
-const st = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFFFFF' },
-  listContent: { paddingBottom: 24 },
+// ═══════════════════════════════════════
+// MAIN SCREEN
+// ═══════════════════════════════════════
+export default function OpportunitiesScreen() {
+  const T = useTheme();
+  const [mode, setMode] = useState<'filter' | 'swipe'>('filter');
 
-  /* Header */
-  headerZone: { paddingHorizontal: 20, paddingBottom: 16, backgroundColor: '#FFFFFF', marginBottom: 4 },
-  headerTitleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 },
-  headerTitle: { fontSize: 24, fontWeight: '800', color: '#1A1A1A', letterSpacing: -0.3 },
-  headerSub: { fontSize: 13, color: '#9CA3AF', marginTop: 2 },
-  countBadge: { backgroundColor: '#1B5E20', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 4 },
-  countText: { fontSize: 13, fontWeight: '700', color: '#FFFFFF' },
+  return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: T.bg }} edges={['top', 'left', 'right']}>
+      {mode === 'filter' ? (
+        <FilterSetup onStart={() => setMode('swipe')} />
+      ) : (
+        <JobSwipeDiscovery onBack={() => setMode('filter')} />
+      )}
+    </SafeAreaView>
+  );
+}
 
-  /* Search */
-  searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F9FAFB', borderRadius: 12, borderWidth: 1, borderColor: '#F3F4F6', paddingHorizontal: 14, height: 44, gap: 10, marginBottom: 14 },
-  searchInput: { flex: 1, fontSize: 14, color: '#1A1A1A', fontWeight: '500' },
+// ═══════════════════════════════════════
+// STYLES — Filter Setup
+// ═══════════════════════════════════════
+const makeFilterStyles = (T: ThemePalette) => StyleSheet.create({
+  scroll: { paddingHorizontal: 20, paddingBottom: 40, backgroundColor: T.bg },
+  header: { alignItems: 'center', paddingTop: 12, paddingBottom: 24 },
+  headerIcon: { width: 48, height: 48, borderRadius: 16, backgroundColor: T.accentBg, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
+  headerTitle: { fontSize: 24, fontWeight: '800', color: T.textPrimary, marginBottom: 4 },
+  headerSub: { fontSize: 14, color: T.textSecondary, textAlign: 'center' },
 
-  /* Chips */
-  chipRow: { flexDirection: 'row', gap: 8 },
-  chip: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB' },
-  chipActive: { backgroundColor: '#1B5E20', borderColor: '#1B5E20' },
-  chipText: { fontSize: 13, fontWeight: '600', color: '#374151' },
-  chipTextActive: { color: '#FFFFFF' },
+  budgetCard: { backgroundColor: T.card, borderRadius: 16, padding: 16, marginBottom: 24, borderWidth: 1, borderColor: T.border },
+  budgetRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  budgetIcon: { width: 36, height: 36, borderRadius: 12, backgroundColor: T.accentBg, alignItems: 'center', justifyContent: 'center' },
+  budgetTitle: { fontSize: 14, fontWeight: '700', color: T.textPrimary },
+  budgetSub: { fontSize: 12, color: T.textSecondary, marginTop: 2 },
 
-  /* Card */
-  card: { backgroundColor: '#FFFFFF', borderRadius: 16, padding: 16, marginBottom: 12, marginHorizontal: 20, borderWidth: 1, borderColor: '#F3F4F6', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 12, elevation: 2 },
-  cardTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  tierPill: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
-  tierDot: { width: 6, height: 6, borderRadius: 3 },
-  tierLabel: { fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.4 },
+  filterSection: { marginBottom: 20 },
+  filterLabel: { fontSize: 13, fontWeight: '700', color: T.textPrimary, marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.3 },
 
-  companyRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
-  companyIcon: { width: 38, height: 38, borderRadius: 10, backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#F3F4F6', alignItems: 'center', justifyContent: 'center' },
-  verifiedRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  companyName: { fontSize: 13, fontWeight: '600', color: '#374151' },
-  industryText: { fontSize: 11, color: '#9CA3AF', marginTop: 1 },
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10, borderWidth: 1.5, borderColor: T.border, backgroundColor: T.card },
+  chipActive: { borderColor: T.accent, backgroundColor: T.accentBg },
+  chipText: { fontSize: 13, fontWeight: '600', color: T.textSecondary },
+  chipTextActive: { color: T.accent, fontWeight: '700' },
 
-  roleTitle: { fontSize: 17, fontWeight: '700', color: '#1A1A1A', marginBottom: 4 },
-  rateText: { marginBottom: 10 },
-  rateBold: { fontSize: 18, fontWeight: '800', color: '#1A1A1A' },
-  rateSuffix: { fontSize: 13, color: '#9CA3AF' },
+  startBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: T.accent, borderRadius: 50, height: 56, marginTop: 8, shadowColor: T.accent, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.3, shadowRadius: 16, elevation: 4 },
+  startBtnText: { fontSize: 18, fontWeight: '700', color: T.textOnAccent },
+});
 
-  metaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 10 },
-  metaChip: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#F9FAFB', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
-  metaText: { fontSize: 11, color: '#6B7280', fontWeight: '500' },
+// ═══════════════════════════════════════
+// STYLES — Job Swipe Card
+// ═══════════════════════════════════════
+const makeCardStyles = (T: ThemePalette) => StyleSheet.create({
+  card: {
+    position: 'absolute', width: '100%',
+    backgroundColor: T.card, borderRadius: 24,
+    padding: 24, borderWidth: 1, borderColor: T.border,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.3, shadowRadius: 24, elevation: 6,
+  },
+  cardBehind: { top: 8, transform: [{ scale: 0.96 }], opacity: 0 },
 
-  skillsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 14 },
-  skillChip: { backgroundColor: '#F0F9F0', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 6, borderWidth: 1, borderColor: '#E8F5E9' },
-  skillText: { fontSize: 11, fontWeight: '500', color: '#1B5E20' },
-  moreSkills: { fontSize: 11, color: '#9CA3AF', fontWeight: '600', alignSelf: 'center' },
+  companyHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 16 },
+  companyAvatar: { width: 48, height: 48, borderRadius: 14, backgroundColor: T.accentBg, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: T.accentBg20 },
+  companyIndustry: { fontSize: 14, fontWeight: '700', color: T.textPrimary },
+  companySize: { fontSize: 12, color: T.textSecondary, marginTop: 2 },
+  matchBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: T.accentBg, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
+  matchText: { fontSize: 13, fontWeight: '800', color: T.accent },
 
-  divider: { height: 1, backgroundColor: '#F3F4F6', marginBottom: 12 },
+  roleTitle: { fontSize: 22, fontWeight: '800', color: T.textPrimary, marginBottom: 4 },
+  roleFunction: { fontSize: 14, color: T.textSecondary, marginBottom: 16, fontWeight: '500' },
 
-  actionRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  passBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', alignItems: 'center', justifyContent: 'center' },
-  interestedBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, height: 40, borderRadius: 10 },
-  interestedText: { color: '#FFFFFF', fontSize: 13, fontWeight: '700' },
+  infoRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
+  infoBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: T.accentBg, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
+  infoText: { fontSize: 12, fontWeight: '700', color: T.accent },
 
-  /* Compat ring */
-  compatRing: { borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
-  compatNum: { fontWeight: '800' },
-  compatPct: { fontSize: 8, fontWeight: '700', marginTop: -2 },
+  detailRow: { flexDirection: 'row', gap: 16, marginBottom: 16 },
+  detailItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  detailText: { fontSize: 12, color: T.textMuted, fontWeight: '500' },
 
-  /* Empty */
-  emptyWrap: { alignItems: 'center', paddingTop: 60, gap: 6 },
-  emptyCircle: { width: 64, height: 64, borderRadius: 32, backgroundColor: '#F9FAFB', alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
-  emptyTitle: { fontSize: 16, fontWeight: '700', color: '#374151' },
-  emptySub: { fontSize: 13, color: '#9CA3AF' },
+  skillsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 16 },
+  skillChip: { backgroundColor: T.surface, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, borderWidth: 1, borderColor: T.border },
+  skillText: { fontSize: 12, fontWeight: '600', color: T.textSecondary },
+  skillChipNice: { backgroundColor: T.card, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, borderWidth: 1, borderColor: T.border, borderStyle: 'dashed' },
+  skillTextNice: { fontSize: 12, fontWeight: '500', color: T.textMuted, fontStyle: 'italic' },
+
+  footer: { alignItems: 'center', gap: 8 },
+  tierPill: { backgroundColor: T.accentBg, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 8 },
+  tierText: { fontSize: 10, fontWeight: '800', letterSpacing: 0.5, color: T.accent },
+  visDesc: { fontSize: 12, color: T.textMuted, textAlign: 'center', lineHeight: 18 },
+
+  /* In-card action buttons — compact */
+  cardActions: {
+    flexDirection: 'row', justifyContent: 'center', alignItems: 'center',
+    gap: 12, marginTop: 16, paddingTop: 12,
+    borderTopWidth: 1, borderTopColor: T.border,
+  },
+  cardActionBtn: {
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: T.accentBg, borderWidth: 1.5, borderColor: T.accent,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  cardActionBtnSmall: { width: 40, height: 40, borderRadius: 20 },
+  cardActionLabel: {
+    fontSize: 9, fontWeight: '700', color: T.accent,
+    marginTop: 2, letterSpacing: 0.3,
+  },
+});
+
+// ═══════════════════════════════════════
+// STYLES — Swipe Discovery
+// ═══════════════════════════════════════
+const makeDiscoveryStyles = (T: ThemePalette) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: T.bg },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: T.border },
+  backBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: T.surface, alignItems: 'center', justifyContent: 'center' },
+  headerCenter: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  headerTitle: { fontSize: 18, fontWeight: '800', color: T.textPrimary },
+  headerRight: { alignItems: 'flex-end' },
+  counterText: { fontSize: 13, fontWeight: '700', color: T.accent, backgroundColor: T.accentBg, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
+
+  deckWrap: { flex: 1, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8 },
+  animatedCard: { width: '100%', zIndex: 10 },
+  swipeOverlay: {
+    position: 'absolute', top: 24, alignItems: 'center', justifyContent: 'center',
+    width: 64, height: 64, borderRadius: 32,
+  },
+  passOverlay: { left: 24, backgroundColor: T.dangerBg },
+  acceptOverlay: { right: 24, backgroundColor: T.emeraldBg },
+
+  emptyDeck: { alignItems: 'center', justifyContent: 'center', paddingTop: 80 },
+  emptyIcon: { width: 72, height: 72, borderRadius: 36, backgroundColor: T.surface, alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
+  emptyTitle: { fontSize: 20, fontWeight: '800', color: T.textPrimary, marginBottom: 8 },
+  emptySub: { fontSize: 14, color: T.textSecondary, textAlign: 'center', lineHeight: 20, paddingHorizontal: 30, marginBottom: 24 },
+  resetBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: T.accent, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 50 },
+  resetBtnText: { fontSize: 15, fontWeight: '700', color: T.textOnAccent },
 });

@@ -1,1630 +1,812 @@
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import {
-  Animated,
-  Pressable,
-  ScrollView,
   StyleSheet,
   View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  Alert,
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
-import { Text } from '@/components/Themed';
-import { Ionicons } from '@expo/vector-icons';
-import { StatusBar } from 'expo-status-bar';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import {
-  mockCompanyRoles,
-  mockMatchedCandidates,
-  mockRoles,
-  MatchedCandidate,
-  CandidateVerification,
-  TIER_CONFIG,
-  Tier,
-} from '@/lib/mock-data';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons, FontAwesome5, MaterialCommunityIcons } from '@expo/vector-icons';
+import { useTheme, ThemePalette } from '@/lib/theme';
 
-// ── Tier enforcement rules ──────────────────────────────────────────
+// ==========================================
+// INTERFACES & MOCK DATA
+// ==========================================
+type TierType = 'Corporate' | 'Short-Term' | 'Gig';
 
-const TIER_RULES: Record<
-  Tier,
-  {
-    required_verifications: (keyof CandidateVerification)[];
-    optional_verifications: (keyof CandidateVerification)[];
-    deadline_label: string;
-    rate_flag: 'soft' | 'hard' | 'none';
-    gated: boolean;
-  }
-> = {
-  corporate: {
-    required_verifications: [
-      'identity',
-      'video_intro',
-      'skills_assessment',
-      'employer_review',
-    ],
-    optional_verifications: [],
-    deadline_label: '72h window',
-    rate_flag: 'soft',
-    gated: true,
-  },
-  blue_collar: {
-    required_verifications: [
-      'identity',
-      'video_intro',
-      'skills_assessment',
-    ],
-    optional_verifications: ['employer_review'],
-    deadline_label: '48h window',
-    rate_flag: 'soft',
-    gated: true,
-  },
-  short_term: {
-    required_verifications: [
-      'identity',
-      'video_intro',
-      'skills_assessment',
-    ],
-    optional_verifications: ['employer_review'],
-    deadline_label: '48h window',
-    rate_flag: 'soft',
-    gated: true,
-  },
-  gig: {
-    required_verifications: [
-      'identity',
-      'video_intro',
-      'skills_assessment',
-      'employer_review',
-    ],
-    optional_verifications: [],
-    deadline_label: '24h window',
-    rate_flag: 'hard',
-    gated: false, // Phase 1: out of scope
-  },
-};
-
-const VERIFICATION_LABELS: Record<
-  keyof CandidateVerification,
-  { label: string; icon: string }
-> = {
-  identity: { label: 'Identity', icon: 'finger-print-outline' },
-  video_intro: { label: 'Video Intro', icon: 'videocam-outline' },
-  skills_assessment: {
-    label: 'Skills',
-    icon: 'school-outline',
-  },
-  employer_review: {
-    label: 'Review',
-    icon: 'star-outline',
-  },
-};
-
-function getVerificationCount(v: CandidateVerification): number {
-  return (
-    (v.identity ? 1 : 0) +
-    (v.video_intro ? 1 : 0) +
-    (v.skills_assessment ? 1 : 0) +
-    (v.employer_review ? 1 : 0)
-  );
-}
-
-function meetsGating(
-  v: CandidateVerification,
-  tier: Tier
-): boolean {
-  const rules = TIER_RULES[tier];
-  return rules.required_verifications.every((k) => v[k]);
-}
-
-function getTimeRemaining(
-  sentAt: string,
-  deadlineHours: number
-): { text: string; urgent: boolean; expired: boolean } {
-  const sent = new Date(sentAt).getTime();
-  const deadline = sent + deadlineHours * 60 * 60 * 1000;
-  const now = Date.now();
-  const remaining = deadline - now;
-  if (remaining <= 0)
-    return { text: 'Expired', urgent: false, expired: true };
-  const hours = Math.floor(remaining / (1000 * 60 * 60));
-  const minutes = Math.floor(
-    (remaining % (1000 * 60 * 60)) / (1000 * 60)
-  );
-  if (hours > 24) {
-    const days = Math.floor(hours / 24);
-    return {
-      text: `${days}d ${hours % 24}h left`,
-      urgent: false,
-      expired: false,
-    };
-  }
-  return {
-    text: `${hours}h ${minutes}m left`,
-    urgent: hours < 12,
-    expired: false,
+interface Candidate {
+  id: string;
+  name: string;
+  role: string;
+  avatar: string;
+  matchScore: number;
+  rateRequested: number;
+  verifiedComponents: {
+    identity: boolean;
+    videoIntro: boolean;
+    skillsAssessment: boolean;
+    employerReview: boolean;
   };
+  skills: string[];
 }
 
-// ── Verification badge row ──────────────────────────────────────────
+interface Opportunity {
+  id: string;
+  title: string;
+  companyName: string;
+  isVerifiedCompany: boolean;
+  budgetMax: number;
+  location: string;
+  duration: string;
+  experienceLevel: string;
+  skillsRequired: string[];
+  description: string;
+  candidates: Candidate[];
+}
 
-function VerificationBadges({
-  verification,
-  tier,
-}: {
-  verification: CandidateVerification;
-  tier: Tier;
-}) {
-  const rules = TIER_RULES[tier];
+const mockOpportunities: Record<TierType, Opportunity> = {
+  'Corporate': {
+    id: 'opp_corp_01',
+    title: 'Senior Backend Engineer',
+    companyName: 'Fintech Corp',
+    isVerifiedCompany: true,
+    budgetMax: 7500,
+    location: 'Remote',
+    duration: 'Permanent',
+    experienceLevel: 'Senior',
+    skillsRequired: ['Node.js', 'PostgreSQL', 'TypeScript'],
+    description: 'We are seeking a seasoned Backend Engineer to lead our transaction processing architecture. This is a long-term position with a premier financial infrastructure platform.',
+    candidates: [
+      {
+        id: 'cand_01',
+        name: 'Amara Osei',
+        role: 'Senior Backend Developer',
+        avatar: 'user',
+        matchScore: 94,
+        rateRequested: 7000,
+        verifiedComponents: { identity: true, videoIntro: true, skillsAssessment: true, employerReview: true },
+        skills: ['Node.js', 'PostgreSQL', 'TypeScript', 'AWS'],
+      },
+      {
+        id: 'cand_02',
+        name: 'Kwame Mensah',
+        role: 'Full Stack Engineer',
+        avatar: 'user',
+        matchScore: 82,
+        rateRequested: 8200,
+        verifiedComponents: { identity: true, videoIntro: true, skillsAssessment: true, employerReview: true },
+        skills: ['Node.js', 'PostgreSQL', 'React'],
+      },
+    ],
+  },
+  'Short-Term': {
+    id: 'opp_st_01',
+    title: 'Mobile Developer (React Native)',
+    companyName: 'HealthTech Solutions',
+    isVerifiedCompany: true,
+    budgetMax: 8000,
+    location: 'Remote',
+    duration: '6 Months',
+    experienceLevel: 'Senior',
+    skillsRequired: ['React Native', 'TypeScript', 'Expo'],
+    description: 'Looking for an experienced React Native developer to help audit and clean up application layouts, specifically fixing view cutting, safe area edges, and status bar padding.',
+    candidates: [
+      {
+        id: 'cand_03',
+        name: 'Chinedu Egwu',
+        role: 'Mobile Engineer',
+        avatar: 'user',
+        matchScore: 88,
+        rateRequested: 7800,
+        verifiedComponents: { identity: true, videoIntro: true, skillsAssessment: true, employerReview: false },
+        skills: ['React Native', 'TypeScript', 'Expo'],
+      },
+    ],
+  },
+  'Gig': {
+    id: 'opp_gig_01',
+    title: 'Brand Identity Designer',
+    companyName: 'Consumer Goods Co',
+    isVerifiedCompany: true,
+    budgetMax: 2000,
+    location: 'Remote',
+    duration: '2 Weeks',
+    experienceLevel: 'Mid-Level',
+    skillsRequired: ['Brand Design', 'Adobe Illustrator', 'Typography'],
+    description: 'Design a clean, 3-page brand kit for our launching e-commerce line.',
+    candidates: [],
+  },
+};
+
+// ==========================================
+// COMPONENT IMPLEMENTATION
+// ==========================================
+export default function OpportunityDetail() {
+  const T = useTheme();
+  const styles = useMemo(() => makeStyles(T), [T]);
+
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const [selectedTier, setSelectedTier] = useState<TierType>('Corporate');
+  const [timeLeft, setTimeLeft] = useState(0);
+  const [joinedWaitlist, setJoinedWaitlist] = useState(false);
+
+  const currentOpp = mockOpportunities[selectedTier];
+
+  // Set up Tier-specific Countdown Timers
+  useEffect(() => {
+    let initialSeconds = 0;
+    if (selectedTier === 'Corporate') {
+      initialSeconds = 72 * 3600;
+    } else if (selectedTier === 'Short-Term') {
+      initialSeconds = 48 * 3600;
+    } else {
+      initialSeconds = 24 * 3600;
+    }
+    setTimeLeft(initialSeconds);
+  }, [selectedTier]);
+
+  // Handle countdown interval
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Format Time Helper
+  const formatTime = (seconds: number) => {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    return `${h}h ${m}m ${s}s`;
+  };
+
+  const getTierColor = (tier: TierType) => {
+    if (tier === 'Corporate') return T.emerald;
+    if (tier === 'Short-Term') return T.indigo;
+    return T.textMuted;
+  };
+
+  const getTierBg = (tier: TierType) => {
+    if (tier === 'Corporate') return T.emeraldBg;
+    if (tier === 'Short-Term') return T.indigoBg;
+    return T.surface;
+  };
+
   return (
-    <View style={st.verBadgeRow}>
-      {(
-        Object.keys(VERIFICATION_LABELS) as Array<
-          keyof CandidateVerification
-        >
-      ).map((key) => {
-        const isRequired =
-          rules.required_verifications.includes(key);
-        const isOptional =
-          rules.optional_verifications.includes(key);
-        const hasIt = verification[key];
-        const vl = VERIFICATION_LABELS[key];
-        return (
-          <View
-            key={key}
-            style={[
-              st.verBadge,
-              hasIt
-                ? st.verBadgePass
-                : isRequired
-                ? st.verBadgeFail
-                : st.verBadgeOptional,
-            ]}
-          >
-            <Ionicons
-              name={
-                hasIt
-                  ? 'checkmark-circle'
-                  : isRequired
-                  ? 'close-circle'
-                  : ('remove-circle-outline' as any)
-              }
-              size={11}
-              color={
-                hasIt
-                  ? '#1B5E20'
-                  : isRequired
-                  ? '#DC2626'
-                  : '#9CA3AF'
-              }
-            />
-            <Text
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      {/* HEADER BAR */}
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={24} color={T.textPrimary} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Opportunity Detail</Text>
+        <TouchableOpacity style={styles.menuButton}>
+          <Ionicons name="ellipsis-horizontal" size={24} color={T.textPrimary} />
+        </TouchableOpacity>
+      </View>
+
+      {/* LIVE INTERACTIVE DEV SWITCHER */}
+      <View style={styles.devSwitcherContainer}>
+        <Text style={styles.devLabel}>DEV PREVIEW TIER:</Text>
+        <View style={styles.tabRow}>
+          {(['Corporate', 'Short-Term', 'Gig'] as TierType[]).map((tier) => (
+            <TouchableOpacity
+              key={tier}
+              onPress={() => setSelectedTier(tier)}
               style={[
-                st.verBadgeText,
-                {
-                  color: hasIt
-                    ? '#1B5E20'
-                    : isRequired
-                    ? '#DC2626'
-                    : '#9CA3AF',
+                styles.tabButton,
+                selectedTier === tier && {
+                  backgroundColor: getTierColor(tier),
+                  borderColor: getTierColor(tier),
                 },
               ]}
             >
-              {vl.label}
-            </Text>
-          </View>
-        );
-      })}
-    </View>
-  );
-}
-
-// ── Candidate card ──────────────────────────────────────────────────
-
-function CandidateCard({
-  candidate,
-  index,
-  deadlineHours,
-  isTop5,
-  tier,
-  rateMax,
-}: {
-  candidate: MatchedCandidate;
-  index: number;
-  deadlineHours: number;
-  isTop5: boolean;
-  tier: Tier;
-  rateMax: number;
-}) {
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(16)).current;
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 300,
-        delay: index * 60,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 300,
-        delay: index * 60,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, []);
-
-  const rules = TIER_RULES[tier];
-  const passesGating = meetsGating(candidate.verification, tier);
-  const hasRateFlag =
-    candidate.rate_expectation &&
-    candidate.rate_expectation > rateMax;
-  const isScoreCapped =
-    candidate.missing_must_have &&
-    candidate.missing_must_have.length > 0;
-  const hasIntro =
-    candidate.status === 'intro_sent' ||
-    candidate.status === 'intro_accepted' ||
-    candidate.status === 'intro_expired';
-  const timer =
-    hasIntro && candidate.intro_sent_at
-      ? getTimeRemaining(candidate.intro_sent_at, deadlineHours)
-      : null;
-
-  const statusConfig: Record<
-    string,
-    { label: string; color: string; bg: string }
-  > = {
-    matched: {
-      label: 'Matched',
-      color: '#1B5E20',
-      bg: '#F0F9F0',
-    },
-    intro_sent: {
-      label: 'Intro Sent',
-      color: '#1565C0',
-      bg: '#E3F2FD',
-    },
-    intro_accepted: {
-      label: 'Accepted',
-      color: '#2E7D32',
-      bg: '#E8F5E9',
-    },
-    intro_expired: {
-      label: 'Expired',
-      color: '#DC2626',
-      bg: '#FEF2F2',
-    },
-  };
-  const sc = statusConfig[candidate.status];
-
-  return (
-    <Animated.View
-      style={{
-        opacity: fadeAnim,
-        transform: [{ translateY: slideAnim }],
-      }}
-    >
-      <View
-        style={[
-          st.candidateCard,
-          isTop5 && st.candidateCardTop5,
-          !passesGating && st.candidateCardGated,
-        ]}
-      >
-        {isTop5 && (
-          <View style={st.rankBadge}>
-            <Text style={st.rankText}>#{index + 1}</Text>
-          </View>
-        )}
-
-        <View style={st.candidateRow}>
-          <View style={st.candidateLeft}>
-            <View style={st.candidateAvatar}>
-              <Ionicons
-                name="person"
-                size={16}
-                color="#6B7280"
-              />
-              {candidate.verified && (
-                <View style={st.verifiedBadgeSmall}>
-                  <Ionicons
-                    name="checkmark-circle"
-                    size={10}
-                    color="#1B5E20"
-                  />
-                </View>
-              )}
-            </View>
-            <View style={st.scoreRing}>
-              <Text style={st.scoreNum}>
-                {candidate.match_score}
+              <Text
+                style={[
+                  styles.tabText,
+                  selectedTier === tier && styles.tabTextActive,
+                ]}
+              >
+                {tier}
               </Text>
-              <Text style={st.scorePct}>%</Text>
-            </View>
-          </View>
-
-          <View style={st.candidateInfo}>
-            <Text style={st.candidateName} numberOfLines={1}>
-              {candidate.name}
-            </Text>
-            <Text style={st.candidateTitle} numberOfLines={1}>
-              {candidate.title}
-            </Text>
-            <Text style={st.candidateLocation}>
-              {candidate.location_city},{' '}
-              {candidate.location_country}
-            </Text>
-          </View>
-
-          <View
-            style={[st.statusPill, { backgroundColor: sc.bg }]}
-          >
-            <Text
-              style={[st.statusText, { color: sc.color }]}
-            >
-              {sc.label}
-            </Text>
-          </View>
-        </View>
-
-        {/* Warnings zone */}
-        {(isScoreCapped || hasRateFlag || !passesGating) && (
-          <View style={st.warningsZone}>
-            {!passesGating && (
-              <View style={st.warningRow}>
-                <Ionicons
-                  name="shield-outline"
-                  size={12}
-                  color="#DC2626"
-                />
-                <Text style={st.warningTextRed}>
-                  Missing required verification
-                </Text>
-              </View>
-            )}
-            {isScoreCapped && (
-              <View style={st.warningRow}>
-                <Ionicons
-                  name="warning-outline"
-                  size={12}
-                  color="#F59E0B"
-                />
-                <Text style={st.warningTextAmber}>
-                  Score capped at 50 — missing:{' '}
-                  {candidate.missing_must_have!.join(', ')}
-                </Text>
-              </View>
-            )}
-            {hasRateFlag && (
-              <View style={st.warningRow}>
-                <Ionicons
-                  name={
-                    rules.rate_flag === 'hard'
-                      ? 'ban-outline'
-                      : 'flag-outline'
-                  }
-                  size={12}
-                  color={
-                    rules.rate_flag === 'hard'
-                      ? '#DC2626'
-                      : '#F59E0B'
-                  }
-                />
-                <Text
-                  style={
-                    rules.rate_flag === 'hard'
-                      ? st.warningTextRed
-                      : st.warningTextAmber
-                  }
-                >
-                  {rules.rate_flag === 'hard'
-                    ? 'Rate exceeds max — excluded'
-                    : `Rate above budget ($${candidate.rate_expectation!.toLocaleString()})`}
-                </Text>
-              </View>
-            )}
-          </View>
-        )}
-
-        {/* Verification badges */}
-        <VerificationBadges
-          verification={candidate.verification}
-          tier={tier}
-        />
-
-        {/* Skills */}
-        <View style={st.candidateSkills}>
-          {candidate.skills.slice(0, 4).map((sk) => (
-            <View key={sk} style={st.skillChip}>
-              <Text style={st.skillText}>{sk}</Text>
-            </View>
+            </TouchableOpacity>
           ))}
         </View>
-
-        {/* Timer */}
-        {timer && !timer.expired && (
-          <View
-            style={[
-              st.timerRow,
-              timer.urgent && st.timerRowUrgent,
-            ]}
-          >
-            <Ionicons
-              name="time-outline"
-              size={13}
-              color={timer.urgent ? '#DC2626' : '#6B7280'}
-            />
-            <Text
-              style={[
-                st.timerText,
-                timer.urgent && st.timerTextUrgent,
-              ]}
-            >
-              {timer.text}
-            </Text>
-          </View>
-        )}
-
-        {/* Actions */}
-        <View style={st.candidateActions}>
-          {candidate.status === 'matched' && passesGating && (
-            <Pressable style={st.introBtn}>
-              <Ionicons
-                name="send-outline"
-                size={14}
-                color="#FFFFFF"
-              />
-              <Text style={st.introBtnText}>
-                Send Introduction
-              </Text>
-            </Pressable>
-          )}
-          {candidate.status === 'matched' && !passesGating && (
-            <View style={st.gatedRow}>
-              <Ionicons
-                name="lock-closed-outline"
-                size={13}
-                color="#9CA3AF"
-              />
-              <Text style={st.gatedText}>
-                Verification incomplete
-              </Text>
-            </View>
-          )}
-          {candidate.status === 'intro_accepted' && (
-            <Pressable style={st.chatBtn}>
-              <Ionicons
-                name="chatbubble-outline"
-                size={14}
-                color="#1B5E20"
-              />
-              <Text style={st.chatBtnText}>Open Chat</Text>
-            </Pressable>
-          )}
-          {candidate.status === 'intro_sent' && (
-            <View style={st.pendingRow}>
-              <Ionicons
-                name="hourglass-outline"
-                size={13}
-                color="#6B7280"
-              />
-              <Text style={st.pendingText}>
-                Awaiting response
-              </Text>
-            </View>
-          )}
-        </View>
-      </View>
-    </Animated.View>
-  );
-}
-
-// ── Main screen ─────────────────────────────────────────────────────
-
-export default function CompanyRoleDetailScreen() {
-  const insets = useSafeAreaInsets();
-  const { id } = useLocalSearchParams<{ id: string }>();
-  const companyRole = mockCompanyRoles.find((r) => r.id === id);
-
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(16)).current;
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 350,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 350,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, []);
-
-  if (!companyRole) {
-    return (
-      <View style={st.emptyContainer}>
-        <Ionicons
-          name="alert-circle-outline"
-          size={40}
-          color="#D1D5DB"
-        />
-        <Text style={st.emptyText}>Role not found</Text>
-      </View>
-    );
-  }
-
-  const baseRole = mockRoles.find(
-    (r) => r.id === companyRole.role_id
-  );
-  const cfg = TIER_CONFIG[companyRole.tier];
-  const rules = TIER_RULES[companyRole.tier];
-  const isGig = companyRole.tier === 'gig';
-
-  const top5 = mockMatchedCandidates
-    .filter((c) => c.match_score >= 85)
-    .slice(0, 5);
-  const alternates = mockMatchedCandidates
-    .filter((c) => c.match_score < 85)
-    .slice(0, 10);
-
-  const roleStats = [
-    {
-      label: 'Matched',
-      value: companyRole.candidates_matched,
-      icon: 'people-outline' as const,
-    },
-    {
-      label: 'Shortlisted',
-      value: companyRole.candidates_shortlisted,
-      icon: 'star-outline' as const,
-    },
-    {
-      label: 'Intros',
-      value: companyRole.intros_sent,
-      icon: 'send-outline' as const,
-    },
-    {
-      label: 'Accepted',
-      value: companyRole.intros_accepted,
-      icon: 'checkmark-circle-outline' as const,
-    },
-  ];
-
-  // Gig tier: show waitlist stub
-  if (isGig) {
-    return (
-      <View style={st.container}>
-        <StatusBar style="dark" />
-        <View
-          style={[st.header, { paddingTop: insets.top + 8 }]}
-        >
-          <Pressable
-            style={st.headerBtn}
-            onPress={() => router.back()}
-          >
-            <Ionicons
-              name="arrow-back"
-              size={20}
-              color="#374151"
-            />
-          </Pressable>
-          <Text style={st.headerTitle}>Role Details</Text>
-          <View style={{ width: 40 }} />
-        </View>
-        <View style={st.gigStub}>
-          <View style={st.gigStubCircle}>
-            <Ionicons
-              name="flash-outline"
-              size={40}
-              color="#E65100"
-            />
-          </View>
-          <Text style={st.gigStubTitle}>
-            {companyRole.title}
-          </Text>
-          <View
-            style={[
-              st.tierBadge,
-              { backgroundColor: '#FFE0B2' },
-            ]}
-          >
-            <View
-              style={[
-                st.tierDot,
-                { backgroundColor: '#E65100' },
-              ]}
-            />
-            <Text
-              style={[
-                st.tierBadgeText,
-                { color: '#E65100' },
-              ]}
-            >
-              Gig
-            </Text>
-          </View>
-          <View style={st.gigStubCard}>
-            <Ionicons
-              name="time-outline"
-              size={20}
-              color="#E65100"
-            />
-            <Text style={st.gigStubCardTitle}>
-              Waitlist Only — Phase 1
-            </Text>
-            <Text style={st.gigStubCardSub}>
-              Gig matching is not yet active. Candidates on the
-              waitlist will be notified when this tier launches.
-            </Text>
-          </View>
-          <View style={st.gigStubInfo}>
-            <Text style={st.gigStubInfoTitle}>
-              Coming in Phase 2:
-            </Text>
-            <View style={st.gigStubInfoRow}>
-              <Ionicons
-                name="document-text-outline"
-                size={13}
-                color="#6B7280"
-              />
-              <Text style={st.gigStubInfoText}>
-                500-char scope_of_work replaces description
-              </Text>
-            </View>
-            <View style={st.gigStubInfoRow}>
-              <Ionicons
-                name="shield-checkmark-outline"
-                size={13}
-                color="#6B7280"
-              />
-              <Text style={st.gigStubInfoText}>
-                All 4 verification components required
-              </Text>
-            </View>
-            <View style={st.gigStubInfoRow}>
-              <Ionicons
-                name="ban-outline"
-                size={13}
-                color="#6B7280"
-              />
-              <Text style={st.gigStubInfoText}>
-                Rate above max = hard exclusion (no soft flags)
-              </Text>
-            </View>
-            <View style={st.gigStubInfoRow}>
-              <Ionicons
-                name="alarm-outline"
-                size={13}
-                color="#6B7280"
-              />
-              <Text style={st.gigStubInfoText}>
-                Fast 24-hour response window
-              </Text>
-            </View>
-          </View>
-        </View>
-      </View>
-    );
-  }
-
-  return (
-    <View style={st.container}>
-      <StatusBar style="dark" />
-      <View
-        style={[st.header, { paddingTop: insets.top + 8 }]}
-      >
-        <Pressable
-          style={st.headerBtn}
-          onPress={() => router.back()}
-        >
-          <Ionicons
-            name="arrow-back"
-            size={20}
-            color="#374151"
-          />
-        </Pressable>
-        <Text style={st.headerTitle}>Role Details</Text>
-        <Pressable style={st.headerBtn}>
-          <Ionicons
-            name="ellipsis-horizontal"
-            size={20}
-            color="#374151"
-          />
-        </Pressable>
       </View>
 
-      <Animated.View
-        style={[
-          st.contentWrap,
-          {
-            opacity: fadeAnim,
-            transform: [{ translateY: slideAnim }],
-          },
-        ]}
-      >
-        <ScrollView
-          contentContainerStyle={st.content}
-          showsVerticalScrollIndicator={false}
-        >
-          {/* Title + badges */}
-          <Text style={st.roleTitle}>
-            {companyRole.title}
-          </Text>
-          <View style={st.tierStatusRow}>
-            <View
-              style={[
-                st.tierBadge,
-                { backgroundColor: cfg.accent + '14' },
-              ]}
-            >
-              <View
-                style={[
-                  st.tierDot,
-                  { backgroundColor: cfg.accent },
-                ]}
-              />
-              <Text
-                style={[
-                  st.tierBadgeText,
-                  { color: cfg.accent },
-                ]}
-              >
-                {cfg.label}
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {/* MAIN OPPORTUNITY CARD */}
+        <View style={styles.card}>
+          <View style={styles.cardHeader}>
+            <View style={[styles.tierBadge, { backgroundColor: getTierBg(selectedTier) }]}>
+              <View style={[styles.dot, { backgroundColor: getTierColor(selectedTier) }]} />
+              <Text style={[styles.tierBadgeText, { color: getTierColor(selectedTier) }]}>
+                {selectedTier.toUpperCase()}
               </Text>
             </View>
-            <View
-              style={[
-                st.statusBadge,
-                {
-                  backgroundColor:
-                    companyRole.status === 'active'
-                      ? '#E8F5E9'
-                      : '#FEF3C7',
-                },
-              ]}
-            >
-              <View
-                style={[
-                  st.statusDot,
-                  {
-                    backgroundColor:
-                      companyRole.status === 'active'
-                        ? '#22C55E'
-                        : '#F59E0B',
-                  },
-                ]}
-              />
-              <Text
-                style={[
-                  st.statusBadgeText,
-                  {
-                    color:
-                      companyRole.status === 'active'
-                        ? '#1B5E20'
-                        : '#92400E',
-                  },
-                ]}
-              >
-                {companyRole.status.charAt(0).toUpperCase() +
-                  companyRole.status.slice(1)}
-              </Text>
+
+            {selectedTier !== 'Gig' && (
+              <View style={styles.timerBadge}>
+                <Ionicons name="time-outline" size={14} color={T.danger} />
+                <Text style={styles.timerText}>{formatTime(timeLeft)}</Text>
+              </View>
+            )}
+          </View>
+
+          <Text style={styles.jobTitle}>{currentOpp.title}</Text>
+
+          <View style={styles.companyRow}>
+            <View style={styles.companyIconContainer}>
+              <FontAwesome5 name="building" size={14} color={T.textMuted} />
+            </View>
+            <Text style={styles.companyName}>{currentOpp.companyName}</Text>
+            {currentOpp.isVerifiedCompany && (
+              <View style={styles.verifiedContainer}>
+                <MaterialCommunityIcons name="decagram" size={16} color={T.accent} />
+                <Text style={styles.verifiedText}>Verified Company</Text>
+              </View>
+            )}
+          </View>
+
+          <View style={styles.metaGrid}>
+            <View style={styles.metaItem}>
+              <Ionicons name="location-outline" size={16} color={T.textMuted} />
+              <Text style={styles.metaLabel}>{currentOpp.location}</Text>
+            </View>
+            <View style={styles.metaItem}>
+              <Ionicons name="calendar-outline" size={16} color={T.textMuted} />
+              <Text style={styles.metaLabel}>{currentOpp.duration}</Text>
+            </View>
+            <View style={styles.metaItem}>
+              <Ionicons name="briefcase-outline" size={16} color={T.textMuted} />
+              <Text style={styles.metaLabel}>{currentOpp.experienceLevel}</Text>
             </View>
           </View>
 
-          {/* Tier rules card */}
-          <View style={st.rulesCard}>
-            <View style={st.rulesHeader}>
-              <Ionicons
-                name="shield-checkmark"
-                size={16}
-                color={cfg.accent}
-              />
-              <Text style={st.rulesTitle}>
-                {cfg.label} Tier Rules
-              </Text>
-            </View>
-            <View style={st.rulesRow}>
-              <Ionicons
-                name="finger-print-outline"
-                size={13}
-                color="#374151"
-              />
-              <Text style={st.rulesText}>
-                {rules.required_verifications.length} of 4
-                verifications required
-                {rules.optional_verifications.length > 0
-                  ? ` (${rules.optional_verifications.join(', ')} optional)`
-                  : ''}
-              </Text>
-            </View>
-            <View style={st.rulesRow}>
-              <Ionicons
-                name="alarm-outline"
-                size={13}
-                color="#374151"
-              />
-              <Text style={st.rulesText}>
-                {rules.deadline_label} for candidate response
-              </Text>
-            </View>
-            <View style={st.rulesRow}>
-              <Ionicons
-                name="flag-outline"
-                size={13}
-                color="#374151"
-              />
-              <Text style={st.rulesText}>
-                Missing must_have skill caps score at 50
-              </Text>
-            </View>
-            <View style={st.rulesRow}>
-              <Ionicons
-                name={
-                  rules.rate_flag === 'soft'
-                    ? 'flag-outline'
-                    : 'ban-outline'
-                }
-                size={13}
-                color="#374151"
-              />
-              <Text style={st.rulesText}>
-                {rules.rate_flag === 'soft'
-                  ? 'Rate above max shows soft warning'
-                  : 'Rate above max = hard exclusion'}
-              </Text>
-            </View>
+          <View style={styles.budgetRow}>
+            <Text style={styles.budgetAmount}>
+              ${currentOpp.budgetMax.toLocaleString()}/mo
+            </Text>
+            <Text style={styles.budgetSubtitle}>Max Budget Allocation</Text>
           </View>
 
-          {/* Role params */}
-          {baseRole && (
-            <View style={st.paramsRow}>
-              {[
-                {
-                  icon: 'cash-outline' as const,
-                  label: `$${baseRole.rate_min.toLocaleString()}-$${baseRole.rate_max.toLocaleString()}/${baseRole.rate_type === 'monthly' ? 'mo' : baseRole.rate_type === 'hourly' ? 'hr' : 'fixed'}`,
-                },
-                {
-                  icon: 'time-outline' as const,
-                  label: baseRole.contract_length,
-                },
-                {
-                  icon: 'location-outline' as const,
-                  label:
-                    baseRole.location_type === 'remote'
-                      ? 'Remote'
-                      : baseRole.location_city ||
-                        baseRole.location_type,
-                },
-              ].map((item) => (
-                <View key={item.label} style={st.paramChip}>
-                  <Ionicons
-                    name={item.icon}
-                    size={13}
-                    color="#6B7280"
-                  />
-                  <Text style={st.paramText}>
-                    {item.label}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          )}
+          <Text style={styles.sectionHeader}>Description</Text>
+          <Text style={styles.descriptionText}>{currentOpp.description}</Text>
 
-          {/* Stats grid */}
-          <View style={st.statsGrid}>
-            {roleStats.map((s) => (
-              <View key={s.label} style={st.statItem}>
-                <View style={st.statIconWrap}>
-                  <Ionicons
-                    name={s.icon}
-                    size={16}
-                    color="#1B5E20"
-                  />
-                </View>
-                <Text style={st.statValue}>{s.value}</Text>
-                <Text style={st.statLabel}>{s.label}</Text>
+          <Text style={styles.sectionHeader}>Required Skills</Text>
+          <View style={styles.skillsContainer}>
+            {currentOpp.skillsRequired.map((skill, index) => (
+              <View key={index} style={styles.skillPill}>
+                <Text style={styles.skillText}>{skill}</Text>
               </View>
             ))}
           </View>
+        </View>
 
-          {/* Deadline info */}
-          {companyRole.deadline_hours > 0 && (
-            <View style={st.deadlineCard}>
-              <Ionicons
-                name="alarm-outline"
-                size={16}
-                color="#1B5E20"
-              />
-              <Text style={st.deadlineText}>
-                Introduction window:{' '}
-                <Text style={st.deadlineBold}>
-                  {companyRole.deadline_hours}h
-                </Text>{' '}
-                per candidate
-              </Text>
+        {/* CANDIDATES / MATCHES WORKFLOW SECTION */}
+        {selectedTier === 'Gig' ? (
+          <View style={styles.gigWaitlistCard}>
+            <View style={styles.lockIconContainer}>
+              <Ionicons name="lock-closed" size={32} color={T.textMuted} />
             </View>
-          )}
-
-          {/* Required skills */}
-          {baseRole && (
-            <View style={st.section}>
-              <Text style={st.sectionTitle}>
-                Required Skills
+            <Text style={styles.waitlistTitle}>Gig Matching Coming Soon</Text>
+            <Text style={styles.waitlistSubtitle}>
+              Our high-velocity gig matching engine is currently scheduled for Phase 3 release. Join our early pilot waitlist to get notified instantly.
+            </Text>
+            <TouchableOpacity
+              onPress={() => {
+                setJoinedWaitlist(true);
+                Alert.alert('Success', 'You have successfully joined the Gig matching pilot waitlist!');
+              }}
+              disabled={joinedWaitlist}
+              style={[
+                styles.waitlistButton,
+                { backgroundColor: joinedWaitlist ? T.emerald : T.accent },
+              ]}
+            >
+              <Ionicons name={joinedWaitlist ? 'checkmark-circle' : 'mail-outline'} size={20} color={T.textOnAccent} />
+              <Text style={styles.waitlistButtonText}>
+                {joinedWaitlist ? 'Joined Waitlist' : 'Join Waitlist'}
               </Text>
-              <View style={st.skillWrap}>
-                {baseRole.required_skills.must_have.map(
-                  (sk) => (
-                    <View
-                      key={sk}
-                      style={st.requiredSkillPill}
-                    >
-                      <Text style={st.requiredSkillText}>
-                        {sk}
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <View>
+            <View style={styles.matchSectionHeader}>
+              <Text style={styles.matchSectionTitle}>Match Recommendations</Text>
+              <Text style={styles.matchCount}>{currentOpp.candidates.length} Found</Text>
+            </View>
+
+            {currentOpp.candidates.map((cand) => {
+              const isOverBudget = cand.rateRequested > currentOpp.budgetMax;
+              const activeThemeColor = getTierColor(selectedTier);
+              const activeThemeBg = getTierBg(selectedTier);
+              const showEmployerReview = selectedTier === 'Corporate';
+
+              return (
+                <View key={cand.id} style={styles.candidateCard}>
+                  <View style={styles.candHeader}>
+                    <View style={styles.candAvatarContainer}>
+                      <Ionicons name="person" size={20} color={T.textMuted} />
+                    </View>
+                    <View style={styles.candInfo}>
+                      <Text style={styles.candName}>{cand.name}</Text>
+                      <Text style={styles.candRole}>{cand.role}</Text>
+                    </View>
+                    <View style={[styles.scoreRing, { borderColor: activeThemeColor }]}>
+                      <Text style={[styles.scoreText, { color: activeThemeColor }]}>
+                        {cand.matchScore}%
                       </Text>
                     </View>
-                  )
-                )}
-              </View>
-            </View>
-          )}
+                  </View>
 
-          {/* Top 5 */}
-          <View style={st.section}>
-            <View style={st.sectionHeaderRow}>
-              <Text style={st.sectionTitle}>
-                Top 5 Candidates
-              </Text>
-              <View style={st.top5Badge}>
-                <Text style={st.top5BadgeText}>
-                  {top5.length}
-                </Text>
-              </View>
-            </View>
-            <Text style={st.sectionSub}>
-              Highest compatibility scores
-            </Text>
-            {top5.map((c, i) => (
-              <CandidateCard
-                key={c.id}
-                candidate={c}
-                index={i}
-                deadlineHours={companyRole.deadline_hours}
-                isTop5
-                tier={companyRole.tier}
-                rateMax={baseRole?.rate_max || 0}
-              />
-            ))}
-          </View>
+                  {isOverBudget && (
+                    <View style={styles.warningBanner}>
+                      <Ionicons name="warning" size={16} color={T.amber} />
+                      <Text style={styles.warningBannerText}>
+                        Requested rate (${cand.rateRequested.toLocaleString()}) exceeds maximum opportunity budget.
+                      </Text>
+                    </View>
+                  )}
 
-          {/* Alternates */}
-          <View style={st.section}>
-            <View style={st.sectionHeaderRow}>
-              <Text style={st.sectionTitle}>Alternates</Text>
-              <View
-                style={[
-                  st.top5Badge,
-                  { backgroundColor: '#F9FAFB' },
-                ]}
-              >
-                <Text
-                  style={[
-                    st.top5BadgeText,
-                    { color: '#6B7280' },
-                  ]}
-                >
-                  {alternates.length}
-                </Text>
-              </View>
-            </View>
-            <Text style={st.sectionSub}>
-              Next best matches
-            </Text>
-            {alternates.map((c, i) => (
-              <CandidateCard
-                key={c.id}
-                candidate={c}
-                index={i + 5}
-                deadlineHours={companyRole.deadline_hours}
-                isTop5={false}
-                tier={companyRole.tier}
-                rateMax={baseRole?.rate_max || 0}
-              />
-            ))}
-          </View>
+                  <Text style={styles.badgeSectionTitle}>
+                    {selectedTier === 'Corporate' ? 'Gated Verification (4/4 Required)' : 'Gated Verification (3/4 Required)'}
+                  </Text>
+                  <View style={styles.badgesWrapper}>
+                    <View style={[styles.badgeComponent, cand.verifiedComponents.identity ? styles.badgeSuccess : styles.badgeFailed]}>
+                      <Ionicons name="id-card-outline" size={14} color={cand.verifiedComponents.identity ? T.emerald : T.danger} />
+                      <Text style={[styles.badgeComponentText, { color: cand.verifiedComponents.identity ? T.emerald : T.danger }]}>Identity</Text>
+                    </View>
+                    <View style={[styles.badgeComponent, cand.verifiedComponents.videoIntro ? styles.badgeSuccess : styles.badgeFailed]}>
+                      <Ionicons name="videocam-outline" size={14} color={cand.verifiedComponents.videoIntro ? T.emerald : T.danger} />
+                      <Text style={[styles.badgeComponentText, { color: cand.verifiedComponents.videoIntro ? T.emerald : T.danger }]}>Video</Text>
+                    </View>
+                    <View style={[styles.badgeComponent, cand.verifiedComponents.skillsAssessment ? styles.badgeSuccess : styles.badgeFailed]}>
+                      <Ionicons name="shield-checkmark-outline" size={14} color={cand.verifiedComponents.skillsAssessment ? T.emerald : T.danger} />
+                      <Text style={[styles.badgeComponentText, { color: cand.verifiedComponents.skillsAssessment ? T.emerald : T.danger }]}>Skills</Text>
+                    </View>
+                    {showEmployerReview && (
+                      <View style={[styles.badgeComponent, cand.verifiedComponents.employerReview ? styles.badgeSuccess : styles.badgeFailed]}>
+                        <Ionicons name="star-outline" size={14} color={cand.verifiedComponents.employerReview ? T.emerald : T.danger} />
+                        <Text style={[styles.badgeComponentText, { color: cand.verifiedComponents.employerReview ? T.emerald : T.danger }]}>Review</Text>
+                      </View>
+                    )}
+                  </View>
 
-          {/* RLS */}
-          <View style={st.rlsCard}>
-            <Ionicons
-              name="shield-checkmark-outline"
-              size={16}
-              color="#1B5E20"
-            />
-            <Text style={st.rlsText}>
-              Candidate profiles restricted to your
-              company_id. Full identity revealed after mutual
-              acceptance.
-            </Text>
+                  <View style={styles.candSkillsRow}>
+                    {cand.skills.map((skill, i) => (
+                      <View key={i} style={[styles.candSkillPill, { backgroundColor: activeThemeBg }]}>
+                        <Text style={[styles.candSkillText, { color: activeThemeColor }]}>{skill}</Text>
+                      </View>
+                    ))}
+                  </View>
+
+                  <TouchableOpacity style={[styles.outreachButton, { backgroundColor: activeThemeColor }]}>
+                    <Ionicons name="paper-plane" size={16} color={T.textOnAccent} />
+                    <Text style={styles.outreachButtonText}>Send Introduction</Text>
+                  </TouchableOpacity>
+                </View>
+              );
+            })}
           </View>
-        </ScrollView>
-      </Animated.View>
-    </View>
+        )}
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
-const st = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFFFFF' },
-  emptyContainer: {
+const makeStyles = (T: ThemePalette) => StyleSheet.create({
+  container: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
+    backgroundColor: T.bg,
   },
-  emptyText: { fontSize: 15, color: '#9CA3AF' },
-
   header: {
-    paddingHorizontal: 20,
-    paddingBottom: 12,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: T.bg,
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    borderBottomColor: T.border,
   },
-  headerBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#F9FAFB',
-    borderWidth: 1,
-    borderColor: '#F3F4F6',
-    alignItems: 'center',
-    justifyContent: 'center',
+  backButton: {
+    padding: 4,
   },
   headerTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '700',
-    color: '#1A1A1A',
+    color: T.textPrimary,
   },
-
-  contentWrap: { flex: 1 },
-  content: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
+  menuButton: {
+    padding: 4,
+  },
+  devSwitcherContainer: {
+    padding: 12,
+    backgroundColor: T.bg,
+    borderBottomWidth: 1,
+    borderBottomColor: T.border,
+  },
+  devLabel: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: T.textMuted,
+    marginBottom: 8,
+    letterSpacing: 1,
+  },
+  tabRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  tabButton: {
+    flex: 1,
+    marginHorizontal: 4,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: T.border,
+    alignItems: 'center',
+    backgroundColor: T.card,
+  },
+  tabText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: T.textMuted,
+  },
+  tabTextActive: {
+    color: T.textOnAccent,
+  },
+  scrollContent: {
+    padding: 16,
     paddingBottom: 40,
   },
-
-  roleTitle: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: '#1A1A1A',
-    marginBottom: 10,
-    letterSpacing: -0.3,
+  card: {
+    backgroundColor: T.card,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: T.border,
   },
-  tierStatusRow: {
+  cardHeader: {
     flexDirection: 'row',
-    gap: 8,
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 16,
   },
   tierBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
   },
-  tierDot: { width: 6, height: 6, borderRadius: 3 },
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginRight: 6,
+  },
   tierBadgeText: {
     fontSize: 11,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
-  statusBadge: {
+  timerBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 8,
-  },
-  statusDot: { width: 6, height: 6, borderRadius: 3 },
-  statusBadgeText: {
-    fontSize: 11,
-    fontWeight: '700',
-  },
-
-  // Rules card
-  rulesCard: {
-    backgroundColor: '#F9FAFB',
-    borderWidth: 1,
-    borderColor: '#F3F4F6',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 16,
-  },
-  rulesHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 10,
-  },
-  rulesTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#1A1A1A',
-  },
-  rulesRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 8,
-    marginBottom: 6,
-  },
-  rulesText: {
-    fontSize: 12,
-    color: '#6B7280',
-    fontWeight: '500',
-    flex: 1,
-    lineHeight: 18,
-  },
-
-  paramsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 20,
-  },
-  paramChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    backgroundColor: '#F9FAFB',
-    borderWidth: 1,
-    borderColor: '#F3F4F6',
+    backgroundColor: T.dangerBg,
     paddingHorizontal: 10,
     paddingVertical: 6,
-    borderRadius: 8,
+    borderRadius: 12,
   },
-  paramText: {
+  timerText: {
     fontSize: 12,
-    color: '#6B7280',
-    fontWeight: '500',
+    fontWeight: '700',
+    color: T.danger,
+    marginLeft: 4,
   },
-
-  statsGrid: {
+  jobTitle: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: T.textPrimary,
+    marginBottom: 10,
+  },
+  companyRow: {
     flexDirection: 'row',
-    gap: 8,
+    alignItems: 'center',
     marginBottom: 16,
   },
-  statItem: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#F3F4F6',
-    borderRadius: 12,
-    padding: 12,
-    alignItems: 'center',
-  },
-  statIconWrap: {
+  companyIconContainer: {
     width: 28,
     height: 28,
-    borderRadius: 7,
-    backgroundColor: '#F0F9F0',
-    alignItems: 'center',
+    borderRadius: 6,
+    backgroundColor: T.surface,
     justifyContent: 'center',
-    marginBottom: 6,
+    alignItems: 'center',
+    marginRight: 8,
   },
-  statValue: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#1A1A1A',
-    marginBottom: 2,
-  },
-  statLabel: {
-    fontSize: 10,
-    color: '#9CA3AF',
+  companyName: {
+    fontSize: 14,
     fontWeight: '600',
+    color: T.textPrimary,
+    marginRight: 8,
   },
-
-  deadlineCard: {
+  verifiedContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    backgroundColor: '#F0F9F0',
-    borderWidth: 1,
-    borderColor: '#E8F5E9',
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 20,
+    backgroundColor: T.accentBg,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
   },
-  deadlineText: {
+  verifiedText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: T.accent,
+    marginLeft: 4,
+  },
+  metaGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: 20,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: T.border,
+    paddingVertical: 12,
+  },
+  metaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '50%',
+    marginVertical: 4,
+  },
+  metaLabel: {
     fontSize: 13,
-    color: '#374151',
+    color: T.textMuted,
+    marginLeft: 6,
     fontWeight: '500',
   },
-  deadlineBold: {
+  budgetRow: {
+    marginBottom: 20,
+  },
+  budgetAmount: {
+    fontSize: 22,
     fontWeight: '800',
-    color: '#1B5E20',
+    color: T.textPrimary,
   },
-
-  section: { marginBottom: 24 },
-  sectionHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 4,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: '#1A1A1A',
-  },
-  sectionSub: {
+  budgetSubtitle: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: T.textMuted,
+    fontWeight: '500',
+    marginTop: 2,
+  },
+  sectionHeader: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: T.textPrimary,
+    marginBottom: 8,
+    marginTop: 10,
+  },
+  descriptionText: {
+    fontSize: 14,
+    color: T.textMuted,
+    lineHeight: 20,
     marginBottom: 12,
   },
-  top5Badge: {
-    backgroundColor: '#1B5E20',
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-  },
-  top5BadgeText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-
-  skillWrap: {
+  skillsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 6,
   },
-  requiredSkillPill: {
-    backgroundColor: '#F0F9F0',
-    borderWidth: 1,
-    borderColor: '#E8F5E9',
-    paddingHorizontal: 10,
+  skillPill: {
+    backgroundColor: T.surface,
+    paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
-  },
-  requiredSkillText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#1B5E20',
-  },
-
-  // Candidate card
-  candidateCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
+    marginRight: 8,
+    marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#F3F4F6',
-    padding: 14,
-    marginBottom: 10,
-  },
-  candidateCardTop5: {
-    borderColor: '#E8F5E9',
-    borderWidth: 1.5,
-  },
-  candidateCardGated: { opacity: 0.7 },
-  rankBadge: {
-    position: 'absolute',
-    top: -1,
-    right: 12,
-    backgroundColor: '#1B5E20',
-    borderBottomLeftRadius: 6,
-    borderBottomRightRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    zIndex: 1,
-  },
-  rankText: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: '#FFFFFF',
-  },
-
-  candidateRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginBottom: 8,
-  },
-  candidateLeft: { alignItems: 'center', gap: 4 },
-  candidateAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#F9FAFB',
-    borderWidth: 1,
-    borderColor: '#F3F4F6',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  verifiedBadgeSmall: {
-    position: 'absolute',
-    bottom: -2,
-    right: -2,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 6,
-  },
-  scoreRing: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-  },
-  scoreNum: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: '#1B5E20',
-  },
-  scorePct: {
-    fontSize: 9,
-    fontWeight: '700',
-    color: '#1B5E20',
-  },
-
-  candidateInfo: { flex: 1 },
-  candidateName: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#1A1A1A',
-    marginBottom: 2,
-  },
-  candidateTitle: {
-    fontSize: 12,
-    color: '#6B7280',
-    fontWeight: '500',
-    marginBottom: 1,
-  },
-  candidateLocation: {
-    fontSize: 11,
-    color: '#9CA3AF',
-  },
-
-  statusPill: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  statusText: { fontSize: 10, fontWeight: '700' },
-
-  // Warnings
-  warningsZone: {
-    backgroundColor: '#FFFBEB',
-    borderWidth: 1,
-    borderColor: '#FEF3C7',
-    borderRadius: 8,
-    padding: 8,
-    marginBottom: 8,
-    gap: 4,
-  },
-  warningRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  warningTextAmber: {
-    fontSize: 11,
-    color: '#92400E',
-    fontWeight: '500',
-    flex: 1,
-  },
-  warningTextRed: {
-    fontSize: 11,
-    color: '#DC2626',
-    fontWeight: '500',
-    flex: 1,
-  },
-
-  // Verification badges
-  verBadgeRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 4,
-    marginBottom: 8,
-  },
-  verBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-    paddingHorizontal: 6,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  verBadgePass: { backgroundColor: '#F0F9F0' },
-  verBadgeFail: { backgroundColor: '#FEF2F2' },
-  verBadgeOptional: { backgroundColor: '#F9FAFB' },
-  verBadgeText: { fontSize: 10, fontWeight: '600' },
-
-  candidateSkills: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 4,
-    marginBottom: 8,
-  },
-  skillChip: {
-    backgroundColor: '#F9FAFB',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
+    borderColor: T.border,
   },
   skillText: {
-    fontSize: 10,
-    color: '#6B7280',
-    fontWeight: '500',
+    fontSize: 12,
+    fontWeight: '600',
+    color: T.textMuted,
   },
-
-  timerRow: {
+  matchSectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+    marginTop: 10,
+  },
+  matchSectionTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: T.textPrimary,
+  },
+  matchCount: {
+    fontSize: 13,
+    color: T.textMuted,
+    fontWeight: '600',
+  },
+  candidateCard: {
+    backgroundColor: T.card,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: T.border,
+  },
+  candHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
+    marginBottom: 14,
+  },
+  candAvatarContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: T.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  candInfo: {
+    flex: 1,
+  },
+  candName: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: T.textPrimary,
+  },
+  candRole: {
+    fontSize: 12,
+    color: T.textMuted,
+    marginTop: 2,
+  },
+  scoreRing: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 3,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: T.card,
+  },
+  scoreText: {
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  warningBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: T.amberBg,
+    padding: 10,
+    borderRadius: 10,
+    marginBottom: 14,
+  },
+  warningBannerText: {
+    fontSize: 11,
+    color: T.amber,
+    fontWeight: '600',
+    marginLeft: 6,
+    flex: 1,
+  },
+  badgeSectionTitle: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: T.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
     marginBottom: 8,
-    backgroundColor: '#F9FAFB',
-    alignSelf: 'flex-start',
+  },
+  badgesWrapper: {
+    flexDirection: 'row',
+    marginBottom: 14,
+    flexWrap: 'wrap',
+  },
+  badgeComponent: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
-  },
-  timerRowUrgent: { backgroundColor: '#FEF2F2' },
-  timerText: {
-    fontSize: 11,
-    color: '#6B7280',
-    fontWeight: '600',
-  },
-  timerTextUrgent: { color: '#DC2626' },
-
-  candidateActions: { marginTop: 2 },
-  introBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    backgroundColor: '#1B5E20',
-    borderRadius: 8,
-    height: 36,
-  },
-  introBtnText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  chatBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    backgroundColor: '#F0F9F0',
+    marginRight: 6,
+    marginBottom: 6,
     borderWidth: 1,
-    borderColor: '#E8F5E9',
-    borderRadius: 8,
-    height: 36,
   },
-  chatBtnText: {
-    fontSize: 12,
+  badgeSuccess: {
+    backgroundColor: T.emeraldBg,
+    borderColor: T.emeraldBg,
+  },
+  badgeFailed: {
+    backgroundColor: T.dangerBg,
+    borderColor: T.dangerBg,
+  },
+  badgeComponentText: {
+    fontSize: 10,
     fontWeight: '700',
-    color: '#1B5E20',
+    marginLeft: 4,
   },
-  pendingRow: {
+  candSkillsRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
+    flexWrap: 'wrap',
+    marginBottom: 14,
   },
-  pendingText: {
-    fontSize: 11,
-    color: '#9CA3AF',
-    fontWeight: '500',
-  },
-  gatedRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-  },
-  gatedText: {
-    fontSize: 11,
-    color: '#9CA3AF',
-    fontWeight: '500',
-    fontStyle: 'italic',
-  },
-
-  rlsCard: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 10,
-    backgroundColor: '#F0F9F0',
-    borderWidth: 1,
-    borderColor: '#E8F5E9',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 20,
-  },
-  rlsText: {
-    color: '#6B7280',
-    fontSize: 12,
-    flex: 1,
-    fontWeight: '500',
-    lineHeight: 18,
-  },
-
-  // Gig stub
-  gigStub: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 32,
-  },
-  gigStubCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#FFF7ED',
-    borderWidth: 2,
-    borderColor: '#FFE0B2',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
-  },
-  gigStubTitle: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: '#1A1A1A',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  gigStubCard: {
-    backgroundColor: '#FFF7ED',
-    borderWidth: 1,
-    borderColor: '#FFE0B2',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-    marginTop: 16,
-    marginBottom: 16,
-    width: '100%',
-  },
-  gigStubCardTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#E65100',
-    marginTop: 8,
-    marginBottom: 4,
-  },
-  gigStubCardSub: {
-    fontSize: 12,
-    color: '#6B7280',
-    textAlign: 'center',
-    lineHeight: 18,
-  },
-  gigStubInfo: {
-    backgroundColor: '#F9FAFB',
-    borderWidth: 1,
-    borderColor: '#F3F4F6',
-    borderRadius: 12,
-    padding: 14,
-    width: '100%',
-  },
-  gigStubInfoTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#1A1A1A',
-    marginBottom: 10,
-  },
-  gigStubInfoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  candSkillPill: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+    marginRight: 6,
     marginBottom: 6,
   },
-  gigStubInfoText: {
-    fontSize: 12,
-    color: '#6B7280',
-    fontWeight: '500',
-    flex: 1,
+  candSkillText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  outreachButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 10,
+    marginTop: 4,
+  },
+  outreachButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: T.textOnAccent,
+    marginLeft: 6,
+  },
+  gigWaitlistCard: {
+    backgroundColor: T.card,
+    borderRadius: 16,
+    padding: 30,
+    borderWidth: 1.5,
+    borderColor: T.border,
+    alignItems: 'center',
+  },
+  lockIconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: T.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  waitlistTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: T.textPrimary,
+    marginBottom: 10,
+  },
+  waitlistSubtitle: {
+    fontSize: 13,
+    color: T.textMuted,
+    textAlign: 'center',
+    lineHeight: 18,
+    marginBottom: 20,
+  },
+  waitlistButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 24,
+    width: '100%',
+  },
+  waitlistButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: T.textOnAccent,
+    marginLeft: 6,
   },
 });

@@ -1,80 +1,83 @@
-import React from 'react';
+import { useMemo } from 'react';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { View, StyleSheet, Platform } from 'react-native';
+import { View, Platform, OpaqueColorValue } from 'react-native';
+import { useTheme, ThemePalette } from '@/lib/theme';
 
 export default function CompanyTabLayout() {
+  const T = useTheme();
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarStyle: {
-          backgroundColor: '#FFFFFF',
-          borderTopWidth: 1,
-          borderTopColor: '#F3F4F6',
-          height: Platform.OS === 'ios' ? 88 : 64,
-          paddingBottom: Platform.OS === 'ios' ? 28 : 8,
-          paddingTop: 8,
-          elevation: 0,
-          shadowOpacity: 0,
+        tabBarActiveTintColor: T.textPrimary,
+        tabBarInactiveTintColor: T.textMuted,
+        tabBarShowLabel: true,
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '700',
+          marginTop: -2,
+          letterSpacing: 0.2,
         },
-        tabBarActiveTintColor: '#1B5E20',
-        tabBarInactiveTintColor: '#9CA3AF',
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
+        tabBarStyle: {
+          backgroundColor: T.tabBarBg,
+          borderTopWidth: 1,
+          borderTopColor: T.tabBarBorder,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: -3 },
+          shadowOpacity: 0.3,
+          shadowRadius: 12,
+          elevation: 12,
+          height: Platform.OS === 'ios' ? 88 : 64,
+          paddingTop: 8,
+          paddingBottom: Platform.OS === 'ios' ? 28 : 10,
+        },
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Dashboard',
+          title: 'Home',
           tabBarIcon: ({ color, focused }) => (
-            <View style={[styles.iconWrap, focused && styles.iconWrapActive]}>
-              <Ionicons name={focused ? 'grid' : 'grid-outline'} size={20} color={color} />
-            </View>
+            <Ionicons name={focused ? 'home' : 'home-outline'} size={22} color={color} />
           ),
         }}
       />
       <Tabs.Screen
         name="roles"
         options={{
-          title: 'Roles',
+          title: 'Discover',
           tabBarIcon: ({ color, focused }) => (
-            <View style={[styles.iconWrap, focused && styles.iconWrapActive]}>
-              <Ionicons name={focused ? 'briefcase' : 'briefcase-outline'} size={20} color={color} />
-            </View>
+            <Ionicons name={focused ? 'swap-horizontal' : 'swap-horizontal-outline'} size={22} color={color} />
           ),
         }}
       />
       <Tabs.Screen
-        name="shortlist"
+        name="messages"
         options={{
-          title: 'Shortlist',
+          title: 'Chat',
           tabBarIcon: ({ color, focused }) => (
-            <View style={[styles.iconWrap, focused && styles.iconWrapActive]}>
-              <Ionicons name={focused ? 'people' : 'people-outline'} size={20} color={color} />
-            </View>
+            <Ionicons name={focused ? 'chatbubbles' : 'chatbubbles-outline'} size={22} color={color} />
           ),
         }}
       />
       <Tabs.Screen
-        name="role/[id]"
+        name="analytics"
         options={{
-          href: null,
+          title: 'Insights',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? 'bar-chart' : 'bar-chart-outline'} size={22} color={color} />
+          ),
         }}
       />
+
+      {/* Hidden routes */}
+      <Tabs.Screen name="profile" options={{ href: null }} />
+      <Tabs.Screen name="shortlist" options={{ href: null }} />
+      <Tabs.Screen name="notifications" options={{ href: null }} />
+      <Tabs.Screen name="role/[id]" options={{ href: null }} />
+      <Tabs.Screen name="settings" options={{ href: null }} />
     </Tabs>
   );
 }
-
-const styles = StyleSheet.create({
-  iconWrap: {
-    width: 36,
-    height: 28,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  iconWrapActive: {
-    backgroundColor: '#E8F5E9',
-  },
-});
