@@ -20,6 +20,7 @@ export interface SwipeCandidate {
   rating: number;
   avatarInitials: string;
   photos: string[];  // Portfolio photo URIs
+  keyAchievements: string[];
 }
 
 export type SwipeAction = 'pass' | 'shortlist' | 'accept';
@@ -58,6 +59,7 @@ const MOCK_CANDIDATES: SwipeCandidate[] = [
     coreSkills: ['Node.js', 'PostgreSQL', 'AWS', 'TypeScript', 'Docker'],
     tier: 'corporate', tierLabel: 'Corporate', field: 'Tech',
     verified: true, reliabilityScore: 98, rating: 4.8, avatarInitials: 'AO',
+    keyAchievements: ['Scaled payment API from 100K to 2M daily transactions at Paystack', 'Reduced database query latency by 60% serving 500K+ users', 'Led migration to event-driven architecture processing $30M monthly'],
     photos: ['https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=400&h=500&fit=crop&crop=face', 'https://images.unsplash.com/photo-1523824921871-d6f1a15151f1?w=400&h=500&fit=crop&crop=face', 'https://images.unsplash.com/photo-1507152832244-10d45c7eda57?w=400&h=500&fit=crop&crop=face'],
   },
   {
@@ -66,6 +68,7 @@ const MOCK_CANDIDATES: SwipeCandidate[] = [
     coreSkills: ['Figma', 'UI/UX', 'Design Systems', 'Prototyping'],
     tier: 'freelance', tierLabel: 'Freelance', field: 'Design',
     verified: true, reliabilityScore: 95, rating: 4.6, avatarInitials: 'KA',
+    keyAchievements: ['Designed product used by 1.2M+ users across 8 African countries', 'Built design system adopted by 3 product teams reducing dev time by 40%', 'Won African Design Award 2025 for inclusive fintech UX'],
     photos: ['https://images.unsplash.com/photo-1614023342667-6f060e9d1e04?w=400&h=500&fit=crop&crop=face', 'https://images.unsplash.com/photo-1642257859842-c95f9fa8121d?w=400&h=500&fit=crop&crop=face', 'https://images.unsplash.com/photo-1668752741330-8adc5cef7485?w=400&h=500&fit=crop&crop=face'],
   },
   {
@@ -74,6 +77,7 @@ const MOCK_CANDIDATES: SwipeCandidate[] = [
     coreSkills: ['Python', 'TensorFlow', 'SQL', 'Tableau', 'R'],
     tier: 'contract', tierLabel: 'Contract', field: 'Tech',
     verified: true, reliabilityScore: 97, rating: 4.9, avatarInitials: 'FD',
+    keyAchievements: ['Built ML model predicting churn with 94% accuracy saving $2M ARR', 'Automated reporting pipeline reducing analyst workload by 70%', 'Published research on African market segmentation cited 45+ times'],
     photos: ['https://images.unsplash.com/photo-1589556264800-08ae9e129a8c?w=400&h=500&fit=crop&crop=face', 'https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=400&h=500&fit=crop&crop=face', 'https://images.unsplash.com/photo-1532076904124-d4e8fe7fbbec?w=400&h=500&fit=crop&crop=face'],
   },
   {
@@ -82,6 +86,7 @@ const MOCK_CANDIDATES: SwipeCandidate[] = [
     coreSkills: ['Kubernetes', 'Terraform', 'CI/CD', 'AWS', 'Linux'],
     tier: 'corporate', tierLabel: 'Corporate', field: 'Tech',
     verified: true, reliabilityScore: 92, rating: 4.5, avatarInitials: 'CE',
+    keyAchievements: ['Achieved 99.99% uptime across 8 production clusters for 2 years', 'Cut cloud costs by $180K annually through infrastructure optimization', 'Implemented CI/CD pipeline reducing deployment time from 2hrs to 8min'],
     photos: ['https://images.unsplash.com/photo-1772714601002-fbb0fea8a911?w=400&h=500&fit=crop&crop=face', 'https://images.unsplash.com/photo-1739300293504-234817eead52?w=400&h=500&fit=crop&crop=face', 'https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=400&h=500&fit=crop&crop=face'],
   },
   {
@@ -90,6 +95,7 @@ const MOCK_CANDIDATES: SwipeCandidate[] = [
     coreSkills: ['React Native', 'Swift', 'Kotlin', 'Firebase'],
     tier: 'freelance', tierLabel: 'Freelance', field: 'Tech',
     verified: true, reliabilityScore: 96, rating: 4.7, avatarInitials: 'TM',
+    keyAchievements: ['Shipped fintech app reaching 800K downloads in first 6 months', 'Reduced app crash rate from 2.1% to 0.08% across iOS and Android', 'Built offline-first sync engine serving users in low-connectivity regions'],
     photos: ['https://images.unsplash.com/photo-1668753700627-f76915cfb515?w=400&h=500&fit=crop&crop=face', 'https://images.unsplash.com/photo-1668752600261-e56e7f3780b6?w=400&h=500&fit=crop&crop=face', 'https://images.unsplash.com/photo-1506277886164-e25aa3f4ef7f?w=400&h=500&fit=crop&crop=face'],
   },
   {
@@ -98,6 +104,7 @@ const MOCK_CANDIDATES: SwipeCandidate[] = [
     coreSkills: ['Growth Marketing', 'SEO', 'Analytics', 'Content Strategy'],
     tier: 'temporary', tierLabel: 'Temporary', field: 'Marketing',
     verified: true, reliabilityScore: 89, rating: 4.3, avatarInitials: 'AN',
+    keyAchievements: ['Grew organic traffic from 5K to 120K monthly visitors in 10 months', 'Launched referral program generating 35% of total new user sign-ups', 'Built content strategy reaching 2M+ social impressions monthly'],
     photos: ['https://images.unsplash.com/photo-1527201987695-67c06571957e?w=400&h=500&fit=crop&crop=face', 'https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=400&h=500&fit=crop&crop=face', 'https://images.unsplash.com/photo-1589156280159-27698a70f29e?w=400&h=500&fit=crop&crop=face'],
   },
   {
@@ -106,6 +113,7 @@ const MOCK_CANDIDATES: SwipeCandidate[] = [
     coreSkills: ['React', 'Node.js', 'GraphQL', 'MongoDB', 'TypeScript'],
     tier: 'corporate', tierLabel: 'Corporate', field: 'Tech',
     verified: true, reliabilityScore: 99, rating: 4.8, avatarInitials: 'MK',
+    keyAchievements: ['Architected real-time trading platform handling 50K concurrent users', 'Led team of 6 engineers delivering MVP in 12 weeks at 2x velocity', 'Open-source GraphQL toolkit starred 3.2K+ times on GitHub'],
     photos: ['https://images.unsplash.com/photo-1522529599102-193c0d76b5b6?w=400&h=500&fit=crop&crop=face', 'https://images.unsplash.com/photo-1600486913747-55e5470d6f40?w=400&h=500&fit=crop&crop=face', 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&h=500&fit=crop&crop=face'],
   },
   {
@@ -114,6 +122,7 @@ const MOCK_CANDIDATES: SwipeCandidate[] = [
     coreSkills: ['User Research', 'Usability Testing', 'Figma', 'Analytics'],
     tier: 'freelance', tierLabel: 'Freelance', field: 'Design',
     verified: true, reliabilityScore: 94, rating: 4.4, avatarInitials: 'AB',
+    keyAchievements: ['Conducted 200+ user interviews across 5 African markets', 'Improved onboarding completion from 34% to 78% through UX research', 'Established usability testing program reducing post-launch bug reports by 55%'],
     photos: ['https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&h=500&fit=crop&crop=face', 'https://images.unsplash.com/photo-1611432579699-484f7990b127?w=400&h=500&fit=crop&crop=face', 'https://images.unsplash.com/photo-1596075780750-81249df16d19?w=400&h=500&fit=crop&crop=face'],
   },
   {
@@ -122,6 +131,7 @@ const MOCK_CANDIDATES: SwipeCandidate[] = [
     coreSkills: ['Financial Modeling', 'Excel', 'Power BI', 'Forecasting'],
     tier: 'contract', tierLabel: 'Contract', field: 'Finance',
     verified: true, reliabilityScore: 91, rating: 4.5, avatarInitials: 'EO',
+    keyAchievements: ['Built financial model that secured $15M Series B funding', 'Automated month-end close process reducing time from 10 days to 3', 'Identified $2.4M in cost savings through spend analysis dashboard'],
     photos: ['https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&h=500&fit=crop&crop=face', 'https://images.unsplash.com/photo-1543610892-0b1f7e6d8ac1?w=400&h=500&fit=crop&crop=face', 'https://images.unsplash.com/photo-1598201116904-9613ee826e9a?w=400&h=500&fit=crop&crop=face'],
   },
   {
@@ -130,6 +140,7 @@ const MOCK_CANDIDATES: SwipeCandidate[] = [
     coreSkills: ['Corporate Law', 'Compliance', 'Contract Drafting', 'IP Law'],
     tier: 'corporate', tierLabel: 'Corporate', field: 'Legal',
     verified: true, reliabilityScore: 100, rating: 4.9, avatarInitials: 'WK',
+    keyAchievements: ['Secured regulatory licenses in 6 African jurisdictions in 18 months', 'Negotiated $45M in partnership agreements with zero litigation', 'Built compliance framework adopted as industry standard by 3 peers'],
     photos: ['https://images.unsplash.com/photo-1573497491765-dccce02b29df?w=400&h=500&fit=crop&crop=face', 'https://images.unsplash.com/photo-1573496799652-408c2ac9fe98?w=400&h=500&fit=crop&crop=face', 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=500&fit=crop&crop=face'],
   },
 ];

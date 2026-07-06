@@ -202,12 +202,24 @@ function JobSwipeCard({
         ))}
       </View>
 
+      {/* Key Deliverables */}
+      {role.keyDeliverables && role.keyDeliverables.length > 0 && (
+        <View style={sc.deliverablesWrap}>
+          <Text style={sc.deliverablesTitle}>KEY DELIVERABLES</Text>
+          {role.keyDeliverables.map((d, i) => (
+            <View key={i} style={sc.deliverableRow}>
+              <View style={sc.deliverableDot} />
+              <Text style={sc.deliverableText}>{d}</Text>
+            </View>
+          ))}
+        </View>
+      )}
+
       {/* Footer */}
       <View style={sc.footer}>
         <View style={sc.tierPill}>
           <Text style={sc.tierText}>{tierLabel.toUpperCase()}</Text>
         </View>
-        <Text style={sc.visDesc} numberOfLines={2}>{role.visibility_description}</Text>
       </View>
 
       {/* In-card action buttons (top card only) */}
@@ -236,54 +248,51 @@ function JobSwipeDiscovery({ onBack }: { onBack: () => void }) {
 
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
-  const swiping = useSharedValue(false);
+  const swiping = useRef(false);
 
   const currentRole = roles[currentIndex % roles.length];
   const nextRole = roles[(currentIndex + 1) % roles.length];
   const deckEmpty = currentIndex >= roles.length;
 
   const advanceCard = useCallback(() => {
-    if (!swiping.value) return;
-    swiping.value = false;
+    if (!swiping.current) return;
+    swiping.current = false;
     setCurrentIndex((i) => i + 1);
     translateX.value = 0;
     translateY.value = 0;
   }, [translateX, translateY]);
 
-  const advanceRef = useRef(advanceCard);
-  advanceRef.current = advanceCard;
-  const onSwipeDone = useCallback(() => {
-    advanceRef.current();
-  }, []);
+  const fnRef = useRef({ advanceCard });
+  fnRef.current.advanceCard = advanceCard;
 
   const doAnimateOff = useCallback((direction: number) => {
-    if (swiping.value) return;
-    swiping.value = true;
+    if (swiping.current) return;
+    swiping.current = true;
     translateX.value = withTiming(direction * SCREEN_W * 1.5, { duration: 300 }, (finished) => {
       if (finished) {
-        runOnJS(onSwipeDone)();
+        runOnJS(fnRef.current.advanceCard)();
       } else {
-        swiping.value = false;
+        swiping.current = false;
       }
     });
-  }, [translateX, onSwipeDone]);
+  }, [translateX]);
 
-  const animateOffRef = useRef(doAnimateOff);
-  animateOffRef.current = doAnimateOff;
+  const fnRefOff = useRef(doAnimateOff);
+  fnRefOff.current = doAnimateOff;
 
   const panResponder = useMemo(() => PanResponder.create({
     onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 10,
     onPanResponderMove: (_, g) => {
-      if (swiping.value) return;
+      if (swiping.current) return;
       translateX.value = g.dx;
       translateY.value = g.dy;
     },
     onPanResponderRelease: (_, g) => {
-      if (swiping.value) return;
+      if (swiping.current) return;
       if (g.dx > SWIPE_THRESHOLD) {
-        animateOffRef.current(1);
+        fnRefOff.current(1);
       } else if (g.dx < -SWIPE_THRESHOLD) {
-        animateOffRef.current(-1);
+        fnRefOff.current(-1);
       } else {
         translateX.value = withSpring(0);
         translateY.value = withSpring(0);
@@ -349,9 +358,9 @@ function JobSwipeDiscovery({ onBack }: { onBack: () => void }) {
               <JobSwipeCard
                 role={currentRole}
                 isTop={true}
-                onPass={() => animateOffRef.current(-1)}
-                onSave={() => animateOffRef.current(0.5)}
-                onApply={() => animateOffRef.current(1)}
+                onPass={() => fnRefOff.current(-1)}
+                onSave={() => fnRefOff.current(0.5)}
+                onApply={() => fnRefOff.current(1)}
               />
               <Animated.View pointerEvents="none" style={[sd.swipeOverlay, sd.passOverlay, passOverlayStyle]}>
                 <Ionicons name="close-circle" size={48} color={T.danger} />
@@ -469,6 +478,12 @@ const makeCardStyles = (T: ThemePalette) => StyleSheet.create({
     backgroundColor: T.accentBg, borderWidth: 1.5, borderColor: T.accent,
     alignItems: 'center', justifyContent: 'center',
   },
+  deliverablesWrap: { marginBottom: 16, paddingTop: 12, borderTopWidth: 1, borderTopColor: T.border },
+  deliverablesTitle: { fontSize: 10, fontWeight: '800', color: T.textMuted, letterSpacing: 1.2, marginBottom: 10 },
+  deliverableRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginBottom: 6 },
+  deliverableDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: T.accent, marginTop: 5 },
+  deliverableText: { flex: 1, fontSize: 13, color: T.textSecondary, lineHeight: 18 },
+
   cardActionBtnSmall: { width: 40, height: 40, borderRadius: 20 },
   cardActionLabel: {
     fontSize: 9, fontWeight: '700', color: T.accent,
@@ -488,8 +503,8 @@ const makeDiscoveryStyles = (T: ThemePalette) => StyleSheet.create({
   headerRight: { alignItems: 'flex-end' },
   counterText: { fontSize: 13, fontWeight: '700', color: T.accent, backgroundColor: T.accentBg, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
 
-  deckWrap: { flex: 1, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8 },
-  animatedCard: { width: '100%', zIndex: 10 },
+  deckWrap: { flex: 1, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8, justifyContent: 'center' },
+  animatedCard: { width: '100%', zIndex: 10, height: '100%', justifyContent: 'center' },
   swipeOverlay: {
     position: 'absolute', top: 24, alignItems: 'center', justifyContent: 'center',
     width: 64, height: 64, borderRadius: 32,

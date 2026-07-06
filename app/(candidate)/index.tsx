@@ -33,6 +33,7 @@ const FEATURED_ROLES: Role[] = [
     visibility_description: 'A top-tier pan-African bank expanding its corporate accounting division.',
     match_score: 92,
     status: 'matching',
+    keyDeliverables: ['Manage month-end close for 12 regional entities', 'Prepare IFRS-compliant financial statements quarterly', 'Automate reconciliation workflows reducing manual effort by 50%'],
     created_at: '2026-07-01',
   },
   {
@@ -53,6 +54,7 @@ const FEATURED_ROLES: Role[] = [
     visibility_description: 'An advisory firm seeking a project auditor for a 6-month engagement.',
     match_score: 85,
     status: 'matching',
+    keyDeliverables: ['Conduct risk assessments across 5 business units', 'Deliver audit findings report with actionable remediation plans', 'Build internal controls framework for SOX compliance'],
     created_at: '2026-07-02',
   },
   {
@@ -73,6 +75,7 @@ const FEATURED_ROLES: Role[] = [
     visibility_description: 'Multiple small businesses seeking freelance bookkeeping support.',
     match_score: 0,
     status: 'matching',
+    keyDeliverables: ['Process 200+ monthly invoices with 99.5% accuracy', 'Reconcile accounts across 3 currencies weekly', 'Set up automated payroll for teams of up to 50 employees'],
     created_at: '2026-07-03',
   },
 ];

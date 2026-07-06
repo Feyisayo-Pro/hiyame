@@ -25,6 +25,7 @@ export interface Role {
   match_score: number; // 0–100, used for compatibility display
   status: 'matching' | 'shortlisted' | 'introductions_pending';
   created_at: string;
+  keyDeliverables: string[];
 }
 
 // ── Tier presentation config (shared across screens) ──────────────────
@@ -62,6 +63,7 @@ export const mockRoles: Role[] = [
     visibility_description: 'A leading pan-African fintech scaling its core payments infrastructure to serve 10M+ users.',
     match_score: 94,
     status: 'matching',
+    keyDeliverables: ['Migrate monolith to microservices for 2M+ daily transactions', 'Build real-time fraud detection pipeline with sub-50ms latency', 'Reduce API response times by 40% across payment endpoints'],
     created_at: '2026-06-28',
   },
   {
@@ -85,6 +87,7 @@ export const mockRoles: Role[] = [
     visibility_description: 'A tier-1 pan-African bank modernising its cloud infrastructure across 12 countries.',
     match_score: 95,
     status: 'matching',
+    keyDeliverables: ['Redesign patient onboarding flow achieving 85% completion rate', 'Build design system with 60+ reusable components', 'Lead user research across 5 African markets with 200+ participants'],
     created_at: '2026-06-20',
   },
 
@@ -114,6 +117,7 @@ export const mockRoles: Role[] = [
     visibility_description: 'An e-commerce startup redesigning their mobile checkout experience.',
     match_score: 87,
     status: 'matching',
+    keyDeliverables: ['Build executive dashboards tracking $50M+ GMV in real-time', 'Automate weekly reporting saving 20 analyst-hours per cycle', 'Design A/B testing framework to optimize conversion by 15%'],
     created_at: '2026-06-30',
   },
   {
@@ -137,6 +141,7 @@ export const mockRoles: Role[] = [
     visibility_description: 'A healthtech startup building a patient-facing mobile app for West Africa.',
     match_score: 88,
     status: 'matching',
+    keyDeliverables: ['Achieve 99.95% uptime SLA across 12 regional clusters', 'Cut cloud infrastructure costs by 35% via optimization', 'Implement zero-downtime deployment for 50+ services'],
     created_at: '2026-07-01',
   },
 
@@ -162,6 +167,7 @@ export const mockRoles: Role[] = [
     visibility_description: 'An early-stage consumer brand preparing for its market launch.',
     match_score: 0, // waitlisted — score not yet calculated
     status: 'matching',
+    keyDeliverables: ['Ship cross-platform app serving 500K+ users in 3 countries', 'Implement offline-first sync for low-connectivity regions', 'Reduce app crash rate to under 0.1% with robust error handling'],
     created_at: '2026-07-02',
   },
   {
@@ -185,6 +191,7 @@ export const mockRoles: Role[] = [
     visibility_description: 'A Lagos-based fashion brand launching a new collection and needs social media buzz.',
     match_score: 0,
     status: 'matching',
+    keyDeliverables: ['Grow organic sign-ups to 10K monthly through content strategy', 'Launch influencer program generating 3x ROI on ad spend', 'Build attribution model tracking journeys across 8 channels'],
     created_at: '2026-07-02',
   },
 ];
