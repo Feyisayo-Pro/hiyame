@@ -9,16 +9,17 @@ export interface TierConfig {
   swipesPerDay: number;        // -1 = unlimited
   activeMatchesCap: number;    // -1 = unlimited
   activeConversationsCap: number;
-  advancedFilters: boolean;    // Field + Contract filters
+  advancedFilters: boolean;    // Field + Rate filters
   reliabilityVisible: boolean;
   atsIntegration: boolean;
   savedSearches: boolean;
   hiringAnalytics: boolean;
+  teamSeatCap: number;         // -1 = unlimited
 }
 
 export const TIER_CONFIGS: Record<SubscriptionTier, TierConfig> = {
   scout: {
-    name: 'Scout',
+    name: 'Starter',
     price: 0,
     swipesPerDay: 10,
     activeMatchesCap: 3,
@@ -28,22 +29,24 @@ export const TIER_CONFIGS: Record<SubscriptionTier, TierConfig> = {
     atsIntegration: false,
     savedSearches: false,
     hiringAnalytics: false,
+    teamSeatCap: 1,
   },
   hire: {
-    name: 'Hire',
-    price: 199,
-    swipesPerDay: -1,
-    activeMatchesCap: -1,
+    name: 'Growth',
+    price: 250000,
+    swipesPerDay: 50,
+    activeMatchesCap: 15,
     activeConversationsCap: 25,
     advancedFilters: true,
     reliabilityVisible: true,
     atsIntegration: false,
     savedSearches: false,
     hiringAnalytics: false,
+    teamSeatCap: 3,
   },
   scale: {
-    name: 'Scale',
-    price: 599,
+    name: 'Enterprise',
+    price: 650000,
     swipesPerDay: -1,
     activeMatchesCap: -1,
     activeConversationsCap: -1,
@@ -52,6 +55,7 @@ export const TIER_CONFIGS: Record<SubscriptionTier, TierConfig> = {
     atsIntegration: true,
     savedSearches: true,
     hiringAnalytics: true,
+    teamSeatCap: -1,
   },
 };
 
@@ -78,7 +82,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
 
   const recordSwipe = useCallback((): boolean => {
     if (config.swipesPerDay !== -1 && swipesToday >= config.swipesPerDay) return false;
-    setSwipesToday((s) => s + 1);
+    setSwipesToday((n) => n + 1);
     return true;
   }, [config.swipesPerDay, swipesToday]);
 

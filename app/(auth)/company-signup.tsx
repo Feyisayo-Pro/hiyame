@@ -48,7 +48,7 @@ const PLANS: PlanCard[] = [
   {
     key: 'scout',
     name: 'Scout',
-    price: '$0',
+    price: '₦0',
     period: '/month',
     tagline: 'Get started for free',
     features: ['10 daily swipes', 'Basic filters', '3 active matches', 'Email support'],
@@ -56,7 +56,7 @@ const PLANS: PlanCard[] = [
   {
     key: 'hire',
     name: 'Hire',
-    price: '$49',
+    price: '₦250,000',
     period: '/month',
     tagline: 'For growing teams',
     features: ['50 daily swipes', 'Advanced filters', '15 active matches', 'Priority support', 'Analytics dashboard'],
@@ -65,7 +65,7 @@ const PLANS: PlanCard[] = [
   {
     key: 'scale',
     name: 'Scale',
-    price: '$149',
+    price: '₦650,000',
     period: '/month',
     tagline: 'Enterprise-grade hiring',
     features: ['Unlimited swipes', 'All filters', 'Unlimited matches', 'Dedicated manager', 'API access', 'Custom branding'],

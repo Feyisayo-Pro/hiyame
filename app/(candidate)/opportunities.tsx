@@ -9,8 +9,9 @@ import SwipeHint from '@/components/SwipeHint';
 import { mockRoles, Role, Tier } from '@/lib/mock-data';
 import { useTheme, ThemePalette } from '@/lib/theme';
 
-const { width: SCREEN_W } = Dimensions.get('window');
+const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 const SWIPE_THRESHOLD = SCREEN_W * 0.25;
+const CARD_HEIGHT = SCREEN_H * 0.75; // 75% of screen height
 
 // ── Filter chip data ──
 const TIERS: { key: Tier | 'all'; label: string }[] = [
@@ -248,34 +249,34 @@ function JobSwipeDiscovery({ onBack }: { onBack: () => void }) {
 
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
-  const swiping = useRef(false);
+  const swiping = useSharedValue(false);
 
   const currentRole = roles[currentIndex % roles.length];
   const nextRole = roles[(currentIndex + 1) % roles.length];
   const deckEmpty = currentIndex >= roles.length;
 
   const advanceCard = useCallback(() => {
-    if (!swiping.current) return;
-    swiping.current = false;
+    if (!swiping.value) return;
+    swiping.value = false;
     setCurrentIndex((i) => i + 1);
     translateX.value = 0;
     translateY.value = 0;
-  }, [translateX, translateY]);
+  }, [translateX, translateY, swiping]);
 
   const fnRef = useRef({ advanceCard });
   fnRef.current.advanceCard = advanceCard;
 
   const doAnimateOff = useCallback((direction: number) => {
-    if (swiping.current) return;
-    swiping.current = true;
+    if (swiping.value) return;
+    swiping.value = true;
     translateX.value = withTiming(direction * SCREEN_W * 1.5, { duration: 300 }, (finished) => {
       if (finished) {
         runOnJS(fnRef.current.advanceCard)();
       } else {
-        swiping.current = false;
+        swiping.value = false;
       }
     });
-  }, [translateX]);
+  }, [translateX, swiping]);
 
   const fnRefOff = useRef(doAnimateOff);
   fnRefOff.current = doAnimateOff;
@@ -283,12 +284,12 @@ function JobSwipeDiscovery({ onBack }: { onBack: () => void }) {
   const panResponder = useMemo(() => PanResponder.create({
     onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 10,
     onPanResponderMove: (_, g) => {
-      if (swiping.current) return;
+      if (swiping.value) return;
       translateX.value = g.dx;
       translateY.value = g.dy;
     },
     onPanResponderRelease: (_, g) => {
-      if (swiping.current) return;
+      if (swiping.value) return;
       if (g.dx > SWIPE_THRESHOLD) {
         fnRefOff.current(1);
       } else if (g.dx < -SWIPE_THRESHOLD) {
@@ -431,12 +432,12 @@ const makeFilterStyles = (T: ThemePalette) => StyleSheet.create({
 // ═══════════════════════════════════════
 const makeCardStyles = (T: ThemePalette) => StyleSheet.create({
   card: {
-    position: 'absolute', width: '100%',
+    position: 'absolute', width: '100%', height: CARD_HEIGHT,
     backgroundColor: T.card, borderRadius: 24,
     padding: 24, borderWidth: 1, borderColor: T.border,
     shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.3, shadowRadius: 24, elevation: 6,
   },
-  cardBehind: { top: 8, transform: [{ scale: 0.96 }], opacity: 0 },
+  cardBehind: { top: 8, transform: [{ scale: 0.96 }], opacity: 0.5 },
 
   companyHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 16 },
   companyAvatar: { width: 48, height: 48, borderRadius: 14, backgroundColor: T.accentBg, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: T.accentBg20 },
@@ -503,8 +504,8 @@ const makeDiscoveryStyles = (T: ThemePalette) => StyleSheet.create({
   headerRight: { alignItems: 'flex-end' },
   counterText: { fontSize: 13, fontWeight: '700', color: T.accent, backgroundColor: T.accentBg, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
 
-  deckWrap: { flex: 1, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8, justifyContent: 'center' },
-  animatedCard: { width: '100%', zIndex: 10, height: '100%', justifyContent: 'center' },
+  deckWrap: { flex: 1, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8, justifyContent: 'center', alignItems: 'center' },
+  animatedCard: { width: '100%', height: CARD_HEIGHT, zIndex: 10 },
   swipeOverlay: {
     position: 'absolute', top: 24, alignItems: 'center', justifyContent: 'center',
     width: 64, height: 64, borderRadius: 32,

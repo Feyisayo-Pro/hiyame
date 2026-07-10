@@ -1,9 +1,10 @@
 import { useCallback, useRef, useState, useMemo } from 'react';
-import { Dimensions, Image, PanResponder, Pressable, ScrollView, StyleSheet, View, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
+import { Alert, Dimensions, Image, PanResponder, Pressable, ScrollView, StyleSheet, View, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSpring, runOnJS, interpolate, Extrapolation } from 'react-native-reanimated';
 import { Text } from '@/components/Themed';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import { useSwipeStore, SwipeCandidate, SwipeMatch } from '@/lib/swipeStore';
 import { useSubscription } from '@/lib/subscriptionStore';
@@ -11,12 +12,13 @@ import { useTheme, ThemePalette } from '@/lib/theme';
 import MatchMomentModal from '@/components/MatchMomentModal';
 import SwipeHint from '@/components/SwipeHint';
 
-const { width: SCREEN_W } = Dimensions.get('window');
+const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 const SWIPE_THRESHOLD = SCREEN_W * 0.25;
 
-// Card content width accounts for the deckWrap horizontal padding (20 * 2) used in SwipeDiscovery.
-const CARD_INNER_W = SCREEN_W - 40;
+// Card content width accounts for the deckWrap horizontal padding (26 * 2) used in SwipeDiscovery.
+const CARD_INNER_W = SCREEN_W - 52;
 const CAROUSEL_HEIGHT_RATIO = 0.50;
+const CARD_HEIGHT = SCREEN_H * 0.70; // slightly smaller so it sits inside a smaller frame
 
 // ── Filter chip data ──
 const ROLE_TYPES = ['Corporate', 'Freelance', 'Contract', 'Temporary'];
@@ -53,6 +55,10 @@ function FilterSetup({ onStart }: { onStart: () => void }) {
     setter(next);
   };
 
+  const showPremiumFilterGate = useCallback(() => {
+    Alert.alert('Premium Filters', 'Premium Filters are only available on Growth and Enterprise tiers.');
+  }, []);
+
   return (
     <ScrollView contentContainerStyle={fs.scroll} showsVerticalScrollIndicator={false}>
       <SwipeFadeContainer>
@@ -65,7 +71,7 @@ function FilterSetup({ onStart }: { onStart: () => void }) {
           <Text style={fs.headerSub}>Set your preferences and start reviewing candidates</Text>
         </View>
 
-        {/* Swipe Budget */}
+        {/* Daily Swipe Budget */}
         {swipesRemaining !== null && (
           <View style={fs.budgetCard}>
             <View style={fs.budgetRow}>
@@ -73,7 +79,7 @@ function FilterSetup({ onStart }: { onStart: () => void }) {
                 <Ionicons name="flash" size={16} color={T.accent} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={fs.budgetTitle}>Daily Review Budget</Text>
+                <Text style={fs.budgetTitle}>Daily Swipe Budget</Text>
                 <Text style={fs.budgetSub}>
                   {swipesRemaining} of {config.swipesPerDay} remaining today
                 </Text>
@@ -110,7 +116,7 @@ function FilterSetup({ onStart }: { onStart: () => void }) {
           </View>
           <View style={[fs.chipRow, !advancedFilters && fs.chipRowLocked]}>
             {FIELDS.map((f) => (
-              <Pressable key={f} style={[fs.chip, selectedFields.has(f) && fs.chipActive, !advancedFilters && fs.chipDisabled]} onPress={() => advancedFilters && toggle(selectedFields, f, setSelectedFields)}>
+              <Pressable key={f} style={[fs.chip, selectedFields.has(f) && fs.chipActive, !advancedFilters && fs.chipDisabled]} onPress={() => (advancedFilters ? toggle(selectedFields, f, setSelectedFields) : showPremiumFilterGate())}>
                 <Text style={[fs.chipText, selectedFields.has(f) && fs.chipTextActive, !advancedFilters && fs.chipTextDisabled]}>{f}</Text>
               </Pressable>
             ))}
@@ -142,7 +148,7 @@ function FilterSetup({ onStart }: { onStart: () => void }) {
           </View>
           <View style={[fs.chipRow, !advancedFilters && fs.chipRowLocked]}>
             {RATE_RANGES.map((r) => (
-              <Pressable key={r} style={[fs.chip, selectedRates.has(r) && fs.chipActive, !advancedFilters && fs.chipDisabled]} onPress={() => advancedFilters && toggle(selectedRates, r, setSelectedRates)}>
+              <Pressable key={r} style={[fs.chip, selectedRates.has(r) && fs.chipActive, !advancedFilters && fs.chipDisabled]} onPress={() => (advancedFilters ? toggle(selectedRates, r, setSelectedRates) : showPremiumFilterGate())}>
                 <Text style={[fs.chipText, selectedRates.has(r) && fs.chipTextActive, !advancedFilters && fs.chipTextDisabled]}>{r}</Text>
               </Pressable>
             ))}
@@ -154,8 +160,8 @@ function FilterSetup({ onStart }: { onStart: () => void }) {
           <View style={fs.upsellCard}>
             <Ionicons name="sparkles" size={16} color={T.accent} />
             <View style={{ flex: 1 }}>
-              <Text style={fs.upsellTitle}>Upgrade to Hire</Text>
-              <Text style={fs.upsellSub}>Unlock field and rate filters, plus 50 daily reviews.</Text>
+              <Text style={fs.upsellTitle}>Upgrade to Growth</Text>
+              <Text style={fs.upsellSub}>Unlock field and rate filters, plus unlimited monthly matches.</Text>
             </View>
           </View>
         )}
@@ -287,9 +293,14 @@ function SwipeCard({
 
       {/* Top badges */}
       <View style={sc.badgeRow}>
-        <View style={sc.locationBadge}>
-          <Ionicons name="location" size={12} color={T.accent} />
-          <Text style={sc.locationText}>{candidate.location}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <View style={sc.locationBadge}>
+            <Ionicons name="location" size={12} color={T.accent} />
+            <Text style={sc.locationText}>{candidate.location}</Text>
+          </View>
+          <View style={sc.tierPill}>
+            <Text style={sc.tierText}>{candidate.tierLabel.toUpperCase()}</Text>
+          </View>
         </View>
         <View style={{ flexDirection: 'row', gap: 6 }}>
           {showReliability && (
@@ -334,25 +345,19 @@ function SwipeCard({
         ))}
       </View>
 
-      {/* Key Achievements */}
+      {/* Key Achievements — capped to 2 lines each, 2 bullets, so the section has a
+          predictable height that always fits the card rather than relying on overflow clipping. */}
       {candidate.keyAchievements && candidate.keyAchievements.length > 0 && (
         <View style={sc.achievementsWrap}>
           <Text style={sc.achievementsTitle}>KEY ACHIEVEMENTS</Text>
-          {candidate.keyAchievements.map((a, i) => (
+          {candidate.keyAchievements.slice(0, 2).map((a, i) => (
             <View key={i} style={sc.achievementRow}>
               <View style={sc.achievementDot} />
-              <Text style={sc.achievementText}>{a}</Text>
+              <Text style={sc.achievementText} numberOfLines={2}>{a}</Text>
             </View>
           ))}
         </View>
       )}
-
-      {/* Footer with tier + action buttons */}
-      <View style={sc.footer}>
-        <View style={sc.tierPill}>
-          <Text style={sc.tierText}>{candidate.tierLabel.toUpperCase()}</Text>
-        </View>
-      </View>
 
       {/* In-card action buttons (top card only) */}
       {isTop && onShortlist && onAccept && (
@@ -375,15 +380,27 @@ function SwipeCard({
 function SwipeDiscovery({ onBack }: { onBack: () => void }) {
   const T = useTheme();
   const sd = useMemo(() => makeDiscoveryStyles(T), [T]);
+  const router = useRouter();
   const { candidates, currentIndex, swipeAction } = useSwipeStore();
-  const { config, swipesToday, recordSwipe } = useSubscription();
+  const { config, swipesToday, canSwipe, recordSwipe } = useSubscription();
   const [matchResult, setMatchResult] = useState<SwipeMatch | null>(null);
 
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
-  const swiping = useRef(false);
+  const swiping = useSharedValue(false);
 
   const swipesRemaining = config.swipesPerDay === -1 ? null : Math.max(config.swipesPerDay - swipesToday, 0);
+
+  const showSwipeLimitAlert = useCallback(() => {
+    Alert.alert(
+      'Daily Swipe Limit Reached!',
+      `You've used all ${config.swipesPerDay} of your daily candidate swipes on the ${config.name} plan. Upgrade to unlock more daily swipes.`,
+      [
+        { text: 'Not Now', style: 'cancel' },
+        { text: 'Upgrade', onPress: () => router.push('/(company)/subscriptions') },
+      ],
+    );
+  }, [config, router]);
 
   const currentCandidate = candidates[currentIndex % candidates.length];
   const nextCandidate = candidates[(currentIndex + 1) % candidates.length];
@@ -393,50 +410,78 @@ function SwipeDiscovery({ onBack }: { onBack: () => void }) {
   candidateRef.current = currentCandidate;
 
   const handleSwipeComplete = useCallback((action: 'pass' | 'shortlist' | 'accept') => {
-    if (!swiping.current) return;
-    swiping.current = false;
+    if (!swiping.value) return;
+    swiping.value = false;
     recordSwipe();
     const match = swipeAction(candidateRef.current.id, action);
     if (match) setMatchResult(match);
     translateX.value = 0;
     translateY.value = 0;
-  }, [swipeAction, translateX, translateY, recordSwipe]);
+  }, [swipeAction, translateX, translateY, recordSwipe, swiping]);
 
-  // Keep a ref so the PanResponder always calls the latest version
-  const fnRef = useRef({ handleSwipeComplete });
-  fnRef.current.handleSwipeComplete = handleSwipeComplete;
-
+  // handleSwipeComplete is captured directly in doAnimateOff's closure (via the
+  // dependency array below) rather than through a mutable ref, since the withTiming
+  // callback below runs as a worklet — mutating a plain ref's `.current` that a
+  // worklet also reads triggers Reanimated's "already converted to a Shareable" warning.
   const doAnimateOff = useCallback((direction: number, action: 'pass' | 'shortlist' | 'accept') => {
-    if (swiping.current) return;
-    swiping.current = true;
+    if (swiping.value) return;
+    swiping.value = true;
     translateX.value = withTiming(direction * SCREEN_W * 1.5, { duration: 300 }, (finished) => {
       if (finished) {
-        runOnJS(fnRef.current.handleSwipeComplete)(action);
+        runOnJS(handleSwipeComplete)(action);
       } else {
-        swiping.current = false;
+        swiping.value = false;
       }
     });
-  }, [translateX]);
+  }, [translateX, swiping, handleSwipeComplete]);
 
   const fnRefOff = useRef(doAnimateOff);
   fnRefOff.current = doAnimateOff;
 
+  // Keep a ref so the PanResponder (memoized once) always sees the latest
+  // swipe-limit gate state without needing to be recreated every render.
+  const gateRef = useRef({ canSwipe, showSwipeLimitAlert });
+  gateRef.current.canSwipe = canSwipe;
+  gateRef.current.showSwipeLimitAlert = showSwipeLimitAlert;
+
+  const attemptSwipe = useCallback((direction: number, action: 'pass' | 'shortlist' | 'accept') => {
+    if (!gateRef.current.canSwipe) {
+      gateRef.current.showSwipeLimitAlert();
+      return;
+    }
+    fnRefOff.current(direction, action);
+  }, []);
+
+  const attemptAccept = useCallback(() => attemptSwipe(1, 'accept'), [attemptSwipe]);
+
   const panResponder = useMemo(() => PanResponder.create({
     onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 10,
+    // Capture-phase check so a drag started over the photo carousel's tap zones
+    // (which claim the responder on touch-start) still gets stolen by the card
+    // once the gesture is clearly a horizontal swipe rather than a tap.
+    onMoveShouldSetPanResponderCapture: (_, g) => Math.abs(g.dx) > 10,
     onPanResponderMove: (_, g) => {
-      if (swiping.current) return;
+      if (swiping.value) return;
       translateX.value = g.dx;
       translateY.value = g.dy;
     },
     onPanResponderRelease: (_, g) => {
-      if (swiping.current) return;
-      if (g.dx > SWIPE_THRESHOLD) {
-        fnRefOff.current(1, 'accept');
-      } else if (g.dx < -SWIPE_THRESHOLD) {
-        fnRefOff.current(-1, 'pass');
-      } else {
+      if (swiping.value) return;
+      if (Math.abs(g.dx) < SWIPE_THRESHOLD) {
         translateX.value = withSpring(0);
         translateY.value = withSpring(0);
+        return;
+      }
+      if (!gateRef.current.canSwipe) {
+        translateX.value = withSpring(0);
+        translateY.value = withSpring(0);
+        gateRef.current.showSwipeLimitAlert();
+        return;
+      }
+      if (g.dx > SWIPE_THRESHOLD) {
+        fnRefOff.current(1, 'accept');
+      } else {
+        fnRefOff.current(-1, 'pass');
       }
     },
   }), [translateX, translateY]);
@@ -471,9 +516,15 @@ function SwipeDiscovery({ onBack }: { onBack: () => void }) {
           <Text style={sd.headerTitle}>Discover</Text>
         </View>
         <View style={sd.headerRight}>
-          <Text style={sd.counterText}>{currentIndex + 1}/{candidates.length}</Text>
-          {swipesRemaining !== null && (
-            <Text style={sd.swipesLeftText}>{swipesRemaining} left today</Text>
+          {swipesRemaining === null ? (
+            <Text style={sd.counterText}>Unlimited</Text>
+          ) : (
+            <>
+              <Text style={[sd.counterText, swipesRemaining === 0 && { color: T.danger }]}>
+                {swipesToday}/{config.swipesPerDay}
+              </Text>
+              <Text style={sd.swipesLeftText}>Daily swipes</Text>
+            </>
           )}
         </View>
       </View>
@@ -507,9 +558,9 @@ function SwipeDiscovery({ onBack }: { onBack: () => void }) {
               <SwipeCard
                 candidate={currentCandidate}
                 isTop={true}
-                onPass={() => fnRefOff.current(-1, 'pass')}
+                onPass={() => attemptSwipe(-1, 'pass')}
                 onShortlist={() => fnRefOff.current(0.5, 'shortlist')}
-                onAccept={() => fnRefOff.current(1, 'accept')}
+                onAccept={attemptAccept}
               />
               <Animated.View pointerEvents="none" style={[sd.swipeOverlay, sd.passOverlay, passOverlayStyle]}>
                 <Ionicons name="close-circle" size={48} color={T.danger} />
@@ -664,16 +715,16 @@ const pcStyles = StyleSheet.create({
 // ═══════════════════════════════════════
 const makeCardStyles = (T: ThemePalette) => StyleSheet.create({
   card: {
-    position: 'absolute', width: '100%',
-    backgroundColor: T.card, borderRadius: 24,
-    padding: 24, borderWidth: 1, borderColor: T.border,
+    position: 'absolute', width: '100%', height: CARD_HEIGHT,
+    backgroundColor: T.card, borderRadius: 24, overflow: 'hidden',
+    padding: 20, borderWidth: 1, borderColor: T.border,
     shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.3, shadowRadius: 24, elevation: 6,
   },
-  cardBehind: { top: 8, transform: [{ scale: 0.96 }], opacity: 0 },
+  cardBehind: { top: 8, transform: [{ scale: 0.96 }], opacity: 0.5 },
 
-  carouselContainer: { marginHorizontal: -24, marginTop: -24, marginBottom: 20 },
+  carouselContainer: { marginHorizontal: -20, marginTop: -20, marginBottom: 16 },
 
-  badgeRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 },
+  badgeRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
   locationBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: T.accentBg, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
   locationText: { fontSize: 12, fontWeight: '700', color: T.accent },
   reliabilityBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: T.emeraldBg, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
@@ -681,36 +732,38 @@ const makeCardStyles = (T: ThemePalette) => StyleSheet.create({
   verifiedBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: T.emeraldBg, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
   verifiedText: { fontSize: 10, fontWeight: '800', color: T.emerald, letterSpacing: 0.5 },
 
-  profileSection: { marginBottom: 12 },
+  profileSection: { marginBottom: 10 },
   avatar: { display: 'none' as any },
   avatarText: { display: 'none' as any },
   name: { fontSize: 20, fontWeight: '800', color: T.textPrimary, marginBottom: 2 },
   title: { fontSize: 14, color: T.textSecondary, fontWeight: '500' },
 
-  statsRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 16, marginBottom: 14, paddingVertical: 10, backgroundColor: T.surface, borderRadius: 14 },
+  statsRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 16, marginBottom: 12, paddingVertical: 9, backgroundColor: T.surface, borderRadius: 14 },
   stat: { flexDirection: 'row', alignItems: 'baseline', gap: 3 },
   statValue: { fontSize: 18, fontWeight: '800', color: T.textPrimary },
   statLabel: { fontSize: 12, color: T.textMuted, fontWeight: '500' },
   statDivider: { width: 1, height: 20, backgroundColor: T.border },
 
-  skillsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 12, justifyContent: 'center' },
+  skillsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 10, justifyContent: 'center' },
   skillChip: { backgroundColor: T.surface, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, borderWidth: 1, borderColor: T.border },
   skillText: { fontSize: 12, fontWeight: '600', color: T.textSecondary },
 
-  footer: { alignItems: 'center' },
   tierPill: { backgroundColor: T.accentBg, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 8 },
   tierText: { fontSize: 10, fontWeight: '800', letterSpacing: 0.5, color: T.accent },
 
-  achievementsWrap: { marginBottom: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: T.border },
-  achievementsTitle: { fontSize: 10, fontWeight: '800', color: T.textMuted, letterSpacing: 1.2, marginBottom: 10 },
+  achievementsWrap: { marginBottom: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: T.border },
+  achievementsTitle: { fontSize: 10, fontWeight: '800', color: T.textMuted, letterSpacing: 1.2, marginBottom: 8 },
   achievementRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginBottom: 6 },
   achievementDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: T.accent, marginTop: 5 },
   achievementText: { flex: 1, fontSize: 13, color: T.textSecondary, lineHeight: 18 },
 
-  /* In-card action buttons — compact */
+  /* In-card action buttons — pinned to the card's bottom edge so they're never
+     clipped by overflow:hidden regardless of how much achievement text precedes them. */
   cardActions: {
+    position: 'absolute', left: 0, right: 0, bottom: 0,
     flexDirection: 'row', justifyContent: 'center', alignItems: 'center',
-    gap: 12, marginTop: 16, paddingTop: 12,
+    gap: 12, paddingTop: 10, paddingBottom: 4,
+    backgroundColor: T.card,
     borderTopWidth: 1, borderTopColor: T.border,
   },
   cardActionBtn: {
@@ -730,7 +783,7 @@ const makeCardStyles = (T: ThemePalette) => StyleSheet.create({
 // ═══════════════════════════════════════
 const makeDiscoveryStyles = (T: ThemePalette) => StyleSheet.create({
   container: { flex: 1, backgroundColor: T.bg },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: T.border },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 26, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: T.border },
   backBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: T.surface, alignItems: 'center', justifyContent: 'center' },
   headerCenter: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   headerTitle: { fontSize: 18, fontWeight: '800', color: T.textPrimary },
@@ -738,8 +791,8 @@ const makeDiscoveryStyles = (T: ThemePalette) => StyleSheet.create({
   counterText: { fontSize: 13, fontWeight: '700', color: T.accent, backgroundColor: T.accentBg, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
   swipesLeftText: { fontSize: 10, color: T.textMuted, marginTop: 4 },
 
-  deckWrap: { flex: 1, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8, justifyContent: 'center' },
-  animatedCard: { width: '100%', zIndex: 10, height: '100%', justifyContent: 'center' },
+  deckWrap: { flex: 1, paddingHorizontal: 26, paddingTop: 20, paddingBottom: 28, justifyContent: 'center', alignItems: 'center' },
+  animatedCard: { width: '100%', height: CARD_HEIGHT, zIndex: 10 },
   swipeOverlay: {
     position: 'absolute', top: 24, alignItems: 'center', justifyContent: 'center',
     width: 64, height: 64, borderRadius: 32,

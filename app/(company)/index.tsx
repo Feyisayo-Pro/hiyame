@@ -64,8 +64,8 @@ function ConfigModal({ visible, onClose, T }: { visible: boolean; onClose: () =>
       title: 'ACCOUNT',
       items: [
         { icon: 'person-outline', label: 'Edit Profile', desc: 'Update company name, email, industry', onPress: () => { onClose(); router.push('/(company)/profile'); } },
-        { icon: 'card-outline', label: 'Subscription', desc: config.name + ' Plan - Manage billing', onPress: () => { onClose(); router.push('/(company)/settings'); } },
-        { icon: 'people-outline', label: 'Team Members', desc: 'Manage hiring managers', onPress: () => {} },
+        { icon: 'card-outline', label: 'Subscription & Billing', desc: config.name + ' Plan · Tap to manage', onPress: () => { onClose(); router.push('/(company)/subscriptions'); } },
+        { icon: 'people-outline', label: 'Team Members', desc: 'Manage hiring managers', onPress: () => { onClose(); router.push('/(company)/team'); } },
       ],
     },
     {
@@ -210,6 +210,23 @@ export default function CompanyDashboardScreen() {
           </View>
         </SwipeFadeContainer>
 
+        {/* Active plan banner */}
+        <SwipeFadeContainer direction="left" triggerKey="planBanner" delay={150}>
+          <Pressable
+            style={({ pressed }) => [styles.planBanner, pressed && styles.planBannerPressed]}
+            onPress={() => router.push('/(company)/subscriptions')}
+          >
+            <View style={styles.planBannerIconWrap}>
+              <MaterialCommunityIcons name="crown-outline" size={20} color={T.accent} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.planBannerTitle}>Active Plan: {config.name}</Text>
+              <Text style={styles.planBannerSubtitle}>Tap to view or upgrade your subscription</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={T.accent} />
+          </Pressable>
+        </SwipeFadeContainer>
+
         {/* Subscription status bar */}
         {showUpgradeBar && (
           <SwipeFadeContainer direction="left" triggerKey="statusbar" delay={180}>
@@ -308,17 +325,21 @@ export default function CompanyDashboardScreen() {
           </View>
         </SwipeFadeContainer>
 
-        {/* Scale tier extras */}
-        {tier === 'scale' && (
-          <SwipeFadeContainer direction="left" triggerKey="scale-extras" delay={300}>
-            <Text style={styles.sectionTitle}>Enterprise Tools</Text>
-            <View style={styles.atsRow}>
+        {/* ATS / HRMS Integration & Developer Webhooks — Enterprise-gated */}
+        <SwipeFadeContainer direction="left" triggerKey="ats-gate" delay={300}>
+          <Text style={styles.sectionTitle}>Enterprise Tools</Text>
+          <Pressable
+            disabled={tier === 'scale'}
+            onPress={() => router.push('/(company)/subscriptions')}
+            style={styles.atsGateWrap}
+          >
+            <View style={[styles.atsRow, tier !== 'scale' && styles.atsRowLocked]} pointerEvents={tier !== 'scale' ? 'none' : 'auto'}>
               <View style={styles.atsIconWrap}>
                 <MaterialCommunityIcons name="sync-circle" size={20} color={T.emerald} />
               </View>
               <View style={styles.atsTextBlock}>
-                <Text style={styles.atsTitle}>ATS Integration</Text>
-                <Text style={styles.atsSubtitle}>Sync candidates with your ATS</Text>
+                <Text style={styles.atsTitle}>ATS / HRMS Integration</Text>
+                <Text style={styles.atsSubtitle}>Sync candidates & webhooks with your ATS</Text>
               </View>
               <View style={styles.atsToggle}>
                 <View style={styles.atsToggleTrack}>
@@ -326,7 +347,18 @@ export default function CompanyDashboardScreen() {
                 </View>
               </View>
             </View>
+            {tier !== 'scale' && (
+              <View style={styles.enterpriseRibbon}>
+                <Ionicons name="lock-closed" size={11} color={T.textOnAccent} />
+                <Text style={styles.enterpriseRibbonText}>ENTERPRISE TIER ONLY</Text>
+              </View>
+            )}
+          </Pressable>
+        </SwipeFadeContainer>
 
+        {/* Scale tier extras */}
+        {tier === 'scale' && (
+          <SwipeFadeContainer direction="left" triggerKey="scale-extras" delay={330}>
             <TouchableOpacity style={styles.talentPoolsCard} activeOpacity={0.85}>
               <View style={[styles.quickActionIconWrap, { backgroundColor: T.amberBg }]}>
                 <MaterialCommunityIcons name="account-group-outline" size={22} color={T.amber} />
@@ -361,6 +393,11 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   companyName: { fontSize: 22, color: T.textPrimary, fontWeight: '800', marginTop: 2 },
   planBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: T.accentBg, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 7, borderWidth: 1, borderColor: T.accent + '30' },
   planBadgeText: { fontSize: 12, fontWeight: '700', color: T.accent },
+  planBanner: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: T.accentBg, borderRadius: 16, borderWidth: 1, borderColor: T.accent + '30', padding: 14, marginBottom: 16 },
+  planBannerPressed: { backgroundColor: T.accentBg20 },
+  planBannerIconWrap: { width: 36, height: 36, borderRadius: 12, backgroundColor: T.card, alignItems: 'center', justifyContent: 'center' },
+  planBannerTitle: { fontSize: 14, fontWeight: '700', color: T.textPrimary },
+  planBannerSubtitle: { fontSize: 12, color: T.textSecondary, marginTop: 2 },
   statusBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: T.accentBg, borderRadius: 14, borderWidth: 1, borderColor: T.accent + '30', paddingHorizontal: 16, paddingVertical: 12, marginBottom: 20 },
   statusBarLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   statusBarText: { fontSize: 13, color: T.textPrimary, fontWeight: '600', marginLeft: 6 },
@@ -392,7 +429,11 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   quickActionIconWrap: { width: 42, height: 42, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
   quickActionTitle: { fontSize: 14, fontWeight: '700', color: T.textPrimary, marginBottom: 4 },
   quickActionSubtitle: { fontSize: 12, color: T.textSecondary },
-  atsRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: T.card, borderRadius: 14, borderWidth: 1, borderColor: T.border, padding: 14, marginBottom: 12 },
+  atsGateWrap: { position: 'relative', marginBottom: 12 },
+  atsRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: T.card, borderRadius: 14, borderWidth: 1, borderColor: T.border, padding: 14, marginBottom: 0 },
+  atsRowLocked: { opacity: 0.4 },
+  enterpriseRibbon: { position: 'absolute', top: -8, right: 12, flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: T.accent, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
+  enterpriseRibbonText: { fontSize: 9, fontWeight: '800', color: T.textOnAccent, letterSpacing: 0.3 },
   atsIconWrap: { width: 36, height: 36, borderRadius: 10, backgroundColor: T.emeraldBg, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
   atsTextBlock: { flex: 1 },
   atsTitle: { fontSize: 14, fontWeight: '600', color: T.textPrimary, marginBottom: 2 },

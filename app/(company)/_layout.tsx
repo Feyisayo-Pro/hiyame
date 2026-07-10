@@ -78,6 +78,8 @@ export default function CompanyTabLayout() {
       <Tabs.Screen name="notifications" options={{ href: null }} />
       <Tabs.Screen name="role/[id]" options={{ href: null }} />
       <Tabs.Screen name="settings" options={{ href: null }} />
+      <Tabs.Screen name="subscriptions" options={{ href: null }} />
+      <Tabs.Screen name="team" options={{ href: null }} />
     </Tabs>
   );
 }
