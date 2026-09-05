@@ -59,6 +59,20 @@ export const TIER_CONFIGS: Record<SubscriptionTier, TierConfig> = {
   },
 };
 
+export interface TeamMember {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  avatarInitials: string;
+}
+
+const INITIAL_TEAM_MEMBERS: TeamMember[] = [
+  { id: 'tm-1', name: 'Ada Eze', email: 'ada@vertexglobal.com', role: 'Owner', avatarInitials: 'AE' },
+  { id: 'tm-2', name: 'Chidi Okafor', email: 'chidi@vertexglobal.com', role: 'Hiring Manager', avatarInitials: 'CO' },
+  { id: 'tm-3', name: 'Bisi Adeyemi', email: 'bisi@vertexglobal.com', role: 'Hiring Manager', avatarInitials: 'BA' },
+];
+
 // ── Context ──
 export interface SubscriptionState {
   tier: SubscriptionTier;
@@ -68,6 +82,12 @@ export interface SubscriptionState {
   canSwipe: boolean;
   recordSwipe: () => boolean;  // returns false if capped
   setTier: (t: SubscriptionTier) => void;
+
+  // Team seats (per-tier cap; Growth = 3, Starter = 1, Enterprise = unlimited)
+  teamMembers: TeamMember[];
+  canInviteTeamMember: boolean;
+  addTeamMember: (member: Omit<TeamMember, 'id'>) => boolean; // returns false if capped
+  removeTeamMember: (id: string) => void;
 }
 
 const SubscriptionContext = createContext<SubscriptionState | null>(null);
@@ -76,6 +96,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const [tier, setTierState] = useState<SubscriptionTier>('scale');
   const [swipesToday, setSwipesToday] = useState(0);
   const [trialDaysLeft] = useState(14);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>(INITIAL_TEAM_MEMBERS);
 
   const config = TIER_CONFIGS[tier];
   const canSwipe = config.swipesPerDay === -1 || swipesToday < config.swipesPerDay;
@@ -91,8 +112,21 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
     setSwipesToday(0);
   }, []);
 
+  const canInviteTeamMember = config.teamSeatCap === -1 || teamMembers.length < config.teamSeatCap;
+
+  const addTeamMember = useCallback((member: Omit<TeamMember, 'id'>): boolean => {
+    if (config.teamSeatCap !== -1 && teamMembers.length >= config.teamSeatCap) return false;
+    setTeamMembers((prev) => [...prev, { ...member, id: `tm-${Date.now()}` }]);
+    return true;
+  }, [config.teamSeatCap, teamMembers.length]);
+
+  const removeTeamMember = useCallback((id: string) => {
+    setTeamMembers((prev) => prev.filter((m) => m.id !== id));
+  }, []);
+
   const value: SubscriptionState = {
     tier, config, trialDaysLeft, swipesToday, canSwipe, recordSwipe, setTier,
+    teamMembers, canInviteTeamMember, addTeamMember, removeTeamMember,
   };
 
   return React.createElement(SubscriptionContext.Provider, { value }, children);

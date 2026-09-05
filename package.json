@@ -4,8 +4,10 @@
   "version": "1.0.0",
   "dependencies": {
     "@expo/vector-icons": "^15.1.1",
+    "@smile_identity/react-native-expo": "^11.2.10",
     "@supabase/supabase-js": "^2.110.0",
     "expo": "^57.0.2",
+    "expo-build-properties": "^57.0.7",
     "expo-constants": "~57.0.3",
     "expo-font": "~57.0.0",
     "expo-linking": "~57.0.1",

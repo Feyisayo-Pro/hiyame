@@ -15,6 +15,7 @@ export interface VerificationContextValue extends VerificationState {
   toggleVideoIntro: () => void;
   toggleAssessment: () => void;
   toggleEmployerReview: () => void;
+  setIdentityVerified: (value: boolean) => void;
   completedCount: number;
   totalCount: number;
   isFullyVerified: boolean;
@@ -42,6 +43,12 @@ export function VerificationProvider({ children }: { children: ReactNode }) {
     setState((prev) => ({ ...prev, identityVerified: !prev.identityVerified }));
   }, []);
 
+  // Real result setter (vs. the dev toggle above) — used by the Smile ID flow,
+  // which always resolves to a definite pass/fail rather than a flip.
+  const setIdentityVerified = useCallback((value: boolean) => {
+    setState((prev) => ({ ...prev, identityVerified: value }));
+  }, []);
+
   const toggleVideoIntro = useCallback(() => {
     setState((prev) => ({ ...prev, videoIntroUploaded: !prev.videoIntroUploaded }));
   }, []);
@@ -67,6 +74,7 @@ export function VerificationProvider({ children }: { children: ReactNode }) {
     toggleVideoIntro,
     toggleAssessment,
     toggleEmployerReview,
+    setIdentityVerified,
     completedCount,
     totalCount: 4,
     isFullyVerified: completedCount === 4,

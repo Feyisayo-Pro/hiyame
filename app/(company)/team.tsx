@@ -9,20 +9,6 @@ import { useTheme, ThemePalette } from '@/lib/theme';
 import { useSubscription } from '@/lib/subscriptionStore';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 
-interface TeamMember {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  avatarInitials: string;
-}
-
-const INITIAL_MEMBERS: TeamMember[] = [
-  { id: '1', name: 'Ada Eze', email: 'ada@vertexglobal.com', role: 'Owner', avatarInitials: 'AE' },
-  { id: '2', name: 'Chidi Okafor', email: 'chidi@vertexglobal.com', role: 'Hiring Manager', avatarInitials: 'CO' },
-  { id: '3', name: 'Bisi Adeyemi', email: 'bisi@vertexglobal.com', role: 'Hiring Manager', avatarInitials: 'BA' },
-];
-
 function initialsFor(email: string): string {
   const name = email.split('@')[0];
   return name.slice(0, 2).toUpperCase();
@@ -32,14 +18,13 @@ export default function TeamMembersScreen() {
   const T = useTheme();
   const s = useMemo(() => makeStyles(T), [T]);
   const router = useRouter();
-  const { config } = useSubscription();
+  const { config, teamMembers, canInviteTeamMember, addTeamMember, removeTeamMember } = useSubscription();
 
-  const [members, setMembers] = useState<TeamMember[]>(INITIAL_MEMBERS);
   const [inviteEmail, setInviteEmail] = useState('');
 
   const seatCap = config.teamSeatCap;
-  const seatsUsed = members.length;
-  const seatsFull = seatCap !== -1 && seatsUsed >= seatCap;
+  const seatsUsed = teamMembers.length;
+  const seatsFull = !canInviteTeamMember;
 
   const handleInvite = useCallback(() => {
     if (seatsFull) {
@@ -55,12 +40,20 @@ export default function TeamMembersScreen() {
     }
     const email = inviteEmail.trim();
     if (!email) return;
-    setMembers((prev) => [
-      ...prev,
-      { id: String(Date.now()), name: email.split('@')[0], email, role: 'Pending Invite', avatarInitials: initialsFor(email) },
-    ]);
+    addTeamMember({ name: email.split('@')[0], email, role: 'Pending Invite', avatarInitials: initialsFor(email) });
     setInviteEmail('');
-  }, [seatsFull, config.name, seatCap, router, inviteEmail]);
+  }, [seatsFull, config.name, seatCap, router, inviteEmail, addTeamMember]);
+
+  const handleRemove = useCallback((member: { id: string; name: string }) => {
+    Alert.alert(
+      'Remove Team Member',
+      `Remove ${member.name} from your team? This frees up a seat immediately.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Remove', style: 'destructive', onPress: () => removeTeamMember(member.id) },
+      ],
+    );
+  }, [removeTeamMember]);
 
   return (
     <SafeAreaView style={s.safeArea} edges={['top', 'left', 'right']}>
@@ -90,8 +83,8 @@ export default function TeamMembersScreen() {
           {/* Member list */}
           <Text style={s.sectionLabel}>MEMBERS</Text>
           <View style={s.memberList}>
-            {members.map((m, i) => (
-              <View key={m.id} style={[s.memberRow, i < members.length - 1 && s.memberRowBorder]}>
+            {teamMembers.map((m, i) => (
+              <View key={m.id} style={[s.memberRow, i < teamMembers.length - 1 && s.memberRowBorder]}>
                 <View style={s.avatarCircle}>
                   <Text style={s.avatarInitials}>{m.avatarInitials}</Text>
                 </View>
@@ -102,6 +95,9 @@ export default function TeamMembersScreen() {
                 <View style={[s.roleBadge, m.role === 'Pending Invite' && s.roleBadgePending]}>
                   <Text style={[s.roleBadgeText, m.role === 'Pending Invite' && s.roleBadgeTextPending]}>{m.role}</Text>
                 </View>
+                <Pressable onPress={() => handleRemove(m)} style={s.deleteBtn} hitSlop={8}>
+                  <Ionicons name="trash-outline" size={18} color={T.danger} />
+                </Pressable>
               </View>
             ))}
           </View>
@@ -172,6 +168,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   roleBadgeText: { fontSize: 10, fontWeight: '700', color: T.textSecondary },
   roleBadgePending: { backgroundColor: T.amberBg },
   roleBadgeTextPending: { color: T.amber },
+  deleteBtn: { marginLeft: 10, width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
 
   inviteCard: { backgroundColor: T.card, borderRadius: 16, borderWidth: 1, borderColor: T.border, padding: 16, gap: 12, marginBottom: 12 },
   inviteInput: { backgroundColor: T.inputBg, color: T.inputText, borderRadius: 12, borderWidth: 1, borderColor: T.border, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14 },

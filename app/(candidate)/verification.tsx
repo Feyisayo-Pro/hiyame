@@ -4,7 +4,9 @@ import { Text } from '@/components/Themed';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCandidateProfile } from '@/lib/candidateProfile';
+import { useVerification } from '@/lib/useVerification';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
+import SmileIdVerificationModal from '@/components/SmileIdVerificationModal';
 import { useTheme, ThemePalette } from '@/lib/theme';
 
 // ==========================================
@@ -58,20 +60,27 @@ export default function VerificationScreen() {
 
   const insets = useSafeAreaInsets();
   const { fullName, professionalTitle, profileCompleted } = useCandidateProfile();
+  const { identityVerified, setIdentityVerified } = useVerification();
+  const [showSmileId, setShowSmileId] = useState(false);
 
-  // Local state for dev simulation (will be replaced by useVerification context in production)
+  // 'identity' is real, backed by lib/useVerification.ts + the Smile ID flow below.
+  // The other 3 steps remain a local dev toggle until their own integrations exist.
   const [completed, setCompleted] = useState<Record<string, boolean>>({
-    identity: false,
     video: false,
     assessment: false,
     review: false,
   });
 
   const toggleStep = useCallback((key: string) => {
+    if (key === 'identity') {
+      setShowSmileId(true);
+      return;
+    }
     setCompleted((prev) => ({ ...prev, [key]: !prev[key] }));
   }, []);
 
-  const completedCount = Object.values(completed).filter(Boolean).length;
+  const allCompleted: Record<string, boolean> = { ...completed, identity: identityVerified };
+  const completedCount = Object.values(allCompleted).filter(Boolean).length;
   const isFullyVerified = completedCount === 4;
   const progressPercent = (completedCount / 4) * 100;
 
@@ -192,7 +201,7 @@ export default function VerificationScreen() {
 
         {/* Step Cards */}
         {STEPS.map((step, index) => {
-          const isDone = completed[step.key];
+          const isDone = allCompleted[step.key];
           return (
             <View key={step.key} style={[st.stepCard, isDone && st.stepCardDone]}>
               {/* Step Number + Status */}
@@ -232,12 +241,12 @@ export default function VerificationScreen() {
                 activeOpacity={0.7}
               >
                 <Ionicons
-                  name={isDone ? 'close-circle-outline' : 'arrow-forward-circle-outline'}
+                  name={isDone ? (step.key === 'identity' ? 'checkmark-circle-outline' : 'close-circle-outline') : 'arrow-forward-circle-outline'}
                   size={18}
                   color={isDone ? T.textMuted : T.textOnAccent}
                 />
                 <Text style={[st.stepButtonText, isDone && st.stepButtonTextDone]}>
-                  {isDone ? 'Reset (Dev)' : 'Begin Verification'}
+                  {isDone ? (step.key === 'identity' ? 'Re-verify' : 'Reset (Dev)') : 'Begin Verification'}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -248,6 +257,13 @@ export default function VerificationScreen() {
         <View style={{ height: 32 }} />
         </SwipeFadeContainer>
       </ScrollView>
+
+      <SmileIdVerificationModal
+        visible={showSmileId}
+        onClose={() => setShowSmileId(false)}
+        onVerified={() => setIdentityVerified(true)}
+        userId={fullName || 'candidate-demo'}
+      />
     </SafeAreaView>
   );
 }
