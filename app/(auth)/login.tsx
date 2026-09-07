@@ -1,5 +1,5 @@
 import { useRef, useEffect, useMemo} from 'react';
-import { Animated, Pressable, StyleSheet, View } from 'react-native';
+import { Animated, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import { Text } from '@/components/Themed';
 import { Ionicons } from '@expo/vector-icons';
@@ -63,62 +63,73 @@ export default function LoginScreen() {
         <Ionicons name="arrow-back" size={20} color={T.textPrimary} />
       </Pressable>
 
-      {/* Header */}
-      <Animated.View style={[st.headerWrap, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
-        <View style={st.logoMark}>
-          <Ionicons name="leaf" size={20} color={T.textOnAccent} />
-        </View>
-        <Text style={st.title}>Welcome Back</Text>
-        <Text style={st.subtitle}>Choose how you'd like to sign in</Text>
-      </Animated.View>
+      <ScrollView
+        contentContainerStyle={st.scrollContent}
+        showsVerticalScrollIndicator={false}
+        bounces={false}
+      >
+        {/* Header */}
+        <Animated.View style={[st.headerWrap, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+          <View style={st.logoMark}>
+            <Ionicons name="leaf" size={20} color={T.textOnAccent} />
+          </View>
+          <Text style={st.title}>Welcome Back</Text>
+          <Text style={st.subtitle}>Choose how you'd like to sign in</Text>
+        </Animated.View>
 
-      {/* Option Cards */}
-      <Animated.View style={[st.cardsWrap, { opacity: cardFade, transform: [{ translateY: cardSlide }] }]}>
-        {OPTIONS.map((opt, index) => (
-          <Pressable
-            key={opt.key}
-            style={({ pressed }) => [st.optionCard, pressed && st.optionCardPressed]}
-            onPress={() => router.push(opt.route as any)}
-          >
-            <View style={st.optionTop}>
-              <View style={st.optionIconWrap}>
-                <Ionicons name={opt.icon} size={26} color={T.accent} />
+        {/* Option Cards */}
+        <Animated.View style={[st.cardsWrap, { opacity: cardFade, transform: [{ translateY: cardSlide }] }]}>
+          {OPTIONS.map((opt, index) => (
+            <Pressable
+              key={opt.key}
+              style={({ pressed }) => [st.optionCard, pressed && st.optionCardPressed]}
+              onPress={() => router.push(opt.route as any)}
+            >
+              <View style={st.optionTop}>
+                <View style={st.optionIconWrap}>
+                  <Ionicons name={opt.icon} size={26} color={T.accent} />
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={T.textMuted} />
               </View>
-              <Ionicons name="chevron-forward" size={20} color={T.textMuted} />
-            </View>
 
-            <Text style={st.optionTitle}>{opt.title}</Text>
-            <Text style={st.optionSubtitle}>{opt.subtitle}</Text>
+              <Text style={st.optionTitle}>{opt.title}</Text>
+              <Text style={st.optionSubtitle}>{opt.subtitle}</Text>
 
-            <View style={st.microRow}>
-              <Ionicons name="sparkles-outline" size={12} color={T.accent} />
-              <Text style={st.microText}>{opt.micro}</Text>
-            </View>
+              <View style={st.microRow}>
+                <Ionicons name="sparkles-outline" size={12} color={T.accent} />
+                <Text style={st.microText}>{opt.micro}</Text>
+              </View>
+            </Pressable>
+          ))}
+        </Animated.View>
+
+        {/* Footer */}
+        <View style={st.footer}>
+          <View style={st.dividerRow}>
+            <View style={st.dividerLine} />
+            <Text style={st.dividerText}>New to hiyame?</Text>
+            <View style={st.dividerLine} />
+          </View>
+          <Pressable
+            style={st.registerButton}
+            onPress={() => router.push('/(auth)/register')}
+          >
+            <Ionicons name="add-circle-outline" size={18} color={T.accent} />
+            <Text style={st.registerText}>Create an Account</Text>
           </Pressable>
-        ))}
-      </Animated.View>
-
-      {/* Footer */}
-      <View style={st.footer}>
-        <View style={st.dividerRow}>
-          <View style={st.dividerLine} />
-          <Text style={st.dividerText}>New to hiyame?</Text>
-          <View style={st.dividerLine} />
         </View>
-        <Pressable
-          style={st.registerButton}
-          onPress={() => router.push('/(auth)/register')}
-        >
-          <Ionicons name="add-circle-outline" size={18} color={T.accent} />
-          <Text style={st.registerText}>Create an Account</Text>
-        </Pressable>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
 const makeStyles = (T: ThemePalette) => StyleSheet.create({
   container: { flex: 1, backgroundColor: T.bg, paddingHorizontal: 20 },
+  // flexGrow + space-between reproduces the old flex:1-cardsWrap look (footer pinned near
+  // the bottom) on a tall screen, but degrades to plain scrolling instead of overlapping
+  // the footer when the viewport is too short to fit everything — a real browser window
+  // is shorter and wider than the phone viewport this screen was tuned on.
+  scrollContent: { flexGrow: 1, justifyContent: 'space-between' },
 
   backButton: {
     width: 40, height: 40, borderRadius: 20,
@@ -139,7 +150,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   subtitle: { fontSize: 15, color: T.textSecondary, fontWeight: '500' },
 
   /* Cards */
-  cardsWrap: { flex: 1 },
+  cardsWrap: { marginBottom: 24 },
   optionCard: {
     backgroundColor: T.card, borderRadius: 18,
     padding: 22, marginBottom: 14,
