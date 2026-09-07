@@ -13,10 +13,15 @@ import { SCREEN_W, SCREEN_H } from '@/lib/screen';
 import MatchMomentModal from '@/components/MatchMomentModal';
 import SwipeHint from '@/components/SwipeHint';
 
-const SWIPE_THRESHOLD = SCREEN_W * 0.25;
+// The page column can be up to 900px wide on web (see lib/screen.ts), but a Tinder-style
+// swipe card shouldn't stretch that wide — it'd turn into a short, wide banner and every
+// gesture threshold below would need a huge drag to trigger. Deck-specific layout and
+// gesture math all use this narrower cap instead of the page's own SCREEN_W.
+const DECK_W = Math.min(SCREEN_W, 420);
+const SWIPE_THRESHOLD = DECK_W * 0.25;
 
 // Card content width accounts for the deckWrap horizontal padding (26 * 2) used in SwipeDiscovery.
-const CARD_INNER_W = SCREEN_W - 52;
+const CARD_INNER_W = DECK_W - 52;
 // Portrait-ish crop proportional to the card's actual width, clamped to sane bounds —
 // previously a fixed 210px tied to an unrelated "420" baseline, which looked squat/wrong
 // once CARD_INNER_W varies (e.g. was never wrong on the 420px viewport this was tuned on,
@@ -430,7 +435,7 @@ function SwipeDiscovery({ onBack }: { onBack: () => void }) {
   const doAnimateOff = useCallback((direction: number, action: 'pass' | 'shortlist' | 'accept') => {
     if (swiping.value) return;
     swiping.value = true;
-    translateX.value = withTiming(direction * SCREEN_W * 1.5, { duration: 300 }, (finished) => {
+    translateX.value = withTiming(direction * DECK_W * 1.5, { duration: 300 }, (finished) => {
       if (finished) {
         runOnJS(handleSwipeComplete)(action);
       } else {
@@ -494,16 +499,16 @@ function SwipeDiscovery({ onBack }: { onBack: () => void }) {
     transform: [
       { translateX: translateX.value },
       { translateY: translateY.value },
-      { rotate: interpolate(translateX.value, [-SCREEN_W, 0, SCREEN_W], [-12, 0, 12]) + 'deg' },
+      { rotate: interpolate(translateX.value, [-DECK_W, 0, DECK_W], [-12, 0, 12]) + 'deg' },
     ],
   }));
 
   const passOverlayStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(translateX.value, [-SCREEN_W * 0.5, 0], [1, 0], Extrapolation.CLAMP),
+    opacity: interpolate(translateX.value, [-DECK_W * 0.5, 0], [1, 0], Extrapolation.CLAMP),
   }));
 
   const acceptOverlayStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(translateX.value, [0, SCREEN_W * 0.5], [0, 1], Extrapolation.CLAMP),
+    opacity: interpolate(translateX.value, [0, DECK_W * 0.5], [0, 1], Extrapolation.CLAMP),
   }));
 
   return (
@@ -795,7 +800,7 @@ const makeDiscoveryStyles = (T: ThemePalette) => StyleSheet.create({
   counterText: { fontSize: 13, fontWeight: '700', color: T.accent, backgroundColor: T.accentBg, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
   swipesLeftText: { fontSize: 10, color: T.textMuted, marginTop: 4 },
 
-  deckWrap: { flex: 1, paddingHorizontal: 26, paddingTop: 20, paddingBottom: 28, justifyContent: 'center', alignItems: 'center' },
+  deckWrap: { flex: 1, width: '100%', maxWidth: DECK_W + 52, alignSelf: 'center', paddingHorizontal: 26, paddingTop: 20, paddingBottom: 28, justifyContent: 'center', alignItems: 'center' },
   animatedCard: { width: '100%', height: CARD_HEIGHT, zIndex: 10 },
   swipeOverlay: {
     position: 'absolute', top: 24, alignItems: 'center', justifyContent: 'center',

@@ -4,8 +4,10 @@ import { Dimensions, Platform } from 'react-native';
 // to cap it, so a raw Dimensions.get('window') on a desktop browser returns the full
 // monitor width — cards, photos, and text all stretch to fill it and look broken.
 // This clamps every screen-width-dependent layout to the same column width the root
-// layout centers the app inside (see app/_layout.tsx).
-export const WEB_APP_MAX_WIDTH = 480;
+// layout centers the app inside (see app/_layout.tsx). 900px reads as a website's
+// content column, not a phone mockup — narrower (e.g. 480) looked like a tiny phone
+// floating in empty space on a real desktop screen.
+export const WEB_APP_MAX_WIDTH = 900;
 
 function computeScreenSize() {
   const { width, height } = Dimensions.get('window');
