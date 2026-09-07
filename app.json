@@ -8,9 +8,11 @@
     "scheme": "hiyame",
     "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.hiyame.app"
     },
     "android": {
+      "package": "com.hiyame.app",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -52,6 +54,13 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "7e534f99-6673-4a9f-86c5-98033a2f71f3"
+      }
+    },
+    "owner": "temi1556"
   }
 }

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Modal, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Modal, Pressable, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SmileIDDocumentVerificationView } from '@smile_identity/react-native-expo';
 import type { DocumentVerificationParams } from '@smile_identity/react-native-expo';
@@ -16,7 +16,9 @@ interface Props {
   countryCode?: string;
 }
 
-type Status = 'initializing' | 'capturing' | 'processing' | 'error' | 'unconfigured' | 'unsupported';
+// Native only — Metro resolves SmileIdVerificationModal.web.tsx for web builds instead,
+// which never imports @smile_identity/react-native-expo at all (see that file for why).
+type Status = 'initializing' | 'capturing' | 'processing' | 'error' | 'unconfigured';
 
 export default function SmileIdVerificationModal({ visible, onClose, onVerified, userId, countryCode = 'NG' }: Props) {
   const T = useTheme();
@@ -26,13 +28,6 @@ export default function SmileIdVerificationModal({ visible, onClose, onVerified,
 
   useEffect(() => {
     if (!visible) return;
-
-    // The native capture view has no web implementation — this SDK only runs
-    // inside an EAS development/production build, never Expo Web or Expo Go.
-    if (Platform.OS === 'web') {
-      setStatus('unsupported');
-      return;
-    }
 
     if (!isSmileIdConfigured()) {
       setStatus('unconfigured');
@@ -76,19 +71,7 @@ export default function SmileIdVerificationModal({ visible, onClose, onVerified,
           <View style={{ width: 36 }} />
         </View>
 
-        {status === 'unsupported' ? (
-          <View style={s.centerWrap}>
-            <Ionicons name="phone-portrait-outline" size={32} color={T.textMuted} />
-            <Text style={s.title}>Needs a Real Device Build</Text>
-            <Text style={s.body}>
-              Identity verification uses native camera/liveness capture and only runs in an EAS
-              development or production build — not the web preview or Expo Go.
-            </Text>
-            <Pressable style={s.actionBtn} onPress={onClose}>
-              <Text style={s.actionBtnText}>Close</Text>
-            </Pressable>
-          </View>
-        ) : status === 'unconfigured' ? (
+        {status === 'unconfigured' ? (
           <View style={s.centerWrap}>
             <Ionicons name="warning-outline" size={32} color={T.amber} />
             <Text style={s.title}>Not Configured Yet</Text>

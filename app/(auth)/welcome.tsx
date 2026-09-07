@@ -1,12 +1,11 @@
 import { useEffect, useRef, useMemo} from 'react';
-import { Animated, Pressable, StyleSheet, View, Dimensions } from 'react-native';
+import { Animated, Pressable, StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import { Text } from '@/components/Themed';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme, ThemePalette } from '@/lib/theme';
-
-const { width } = Dimensions.get('window');
+import { SCREEN_W as width } from '@/lib/screen';
 
 export default function WelcomeScreen() {
   const T = useTheme();

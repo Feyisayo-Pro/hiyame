@@ -5,7 +5,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
-  Dimensions,
   FlatList,
   KeyboardAvoidingView,
   Platform,
@@ -19,10 +18,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, ThemePalette } from '@/lib/theme';
 import { useChatStore, Conversation, Message, ConversationStatus } from '@/lib/chatStore';
+import { SCREEN_W } from '@/lib/screen';
 import ScheduleModal from '@/components/ScheduleModal';
 import OfferLetterModal from '@/components/OfferLetterModal';
-
-const { width: SCREEN_W } = Dimensions.get('window');
 
 // == Helpers ==
 

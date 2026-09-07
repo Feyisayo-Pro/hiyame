@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState, useMemo } from 'react';
-import { Dimensions, PanResponder, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { PanResponder, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSpring, runOnJS, interpolate, Extrapolation } from 'react-native-reanimated';
 import { Text } from '@/components/Themed';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -8,8 +8,7 @@ import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import SwipeHint from '@/components/SwipeHint';
 import { mockRoles, Role, Tier } from '@/lib/mock-data';
 import { useTheme, ThemePalette } from '@/lib/theme';
-
-const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
+import { SCREEN_W, SCREEN_H } from '@/lib/screen';
 const SWIPE_THRESHOLD = SCREEN_W * 0.25;
 const CARD_HEIGHT = SCREEN_H * 0.75; // 75% of screen height
 

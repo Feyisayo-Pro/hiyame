@@ -3,6 +3,7 @@ import { DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useMemo } from 'react';
 import { View, StatusBar as RNStatusBar, Platform } from 'react-native';
+import { WEB_APP_MAX_WIDTH } from '@/lib/screen';
 import { StatusBar } from 'expo-status-bar';
 import { CandidateProfileProvider } from '@/lib/candidateProfile';
 import { VerificationProvider } from '@/lib/useVerification';
@@ -62,6 +63,7 @@ function RootLayoutNav() {
 
   const statusStyle = T.mode === 'dark' ? 'light' : 'dark';
   const barStyle = T.mode === 'dark' ? 'light-content' : 'dark-content';
+  const isWeb = Platform.OS === 'web';
 
   return (
     <ApplicationProvider>
@@ -71,16 +73,28 @@ function RootLayoutNav() {
             <VerificationProvider>
               <CandidateProfileProvider>
                 <ThemeProvider value={navTheme}>
-                  <View style={{ flex: 1, backgroundColor: T.bg }}>
-                    <StatusBar style={statusStyle} />
-                    {Platform.OS === 'android' && (
-                      <RNStatusBar translucent backgroundColor="transparent" barStyle={barStyle} />
-                    )}
-                    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: T.bg } }}>
-                      <Stack.Screen name="(auth)" />
-                      <Stack.Screen name="(candidate)" />
-                      <Stack.Screen name="(company)" />
-                    </Stack>
+                  {/* On web there's no phone frame to cap the width, so a desktop browser
+                      stretches every screen full-monitor-wide. This centers the app in the
+                      same column width lib/screen.ts clamps layout math to, so it always
+                      reads as a phone-shaped app rather than a broken wide website. */}
+                  <View style={isWeb ? { flex: 1, backgroundColor: T.surface, alignItems: 'center' } : { flex: 1 }}>
+                    <View
+                      style={
+                        isWeb
+                          ? { flex: 1, width: '100%', maxWidth: WEB_APP_MAX_WIDTH, backgroundColor: T.bg, shadowColor: '#000', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.12, shadowRadius: 24, elevation: 8 }
+                          : { flex: 1, backgroundColor: T.bg }
+                      }
+                    >
+                      <StatusBar style={statusStyle} />
+                      {Platform.OS === 'android' && (
+                        <RNStatusBar translucent backgroundColor="transparent" barStyle={barStyle} />
+                      )}
+                      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: T.bg } }}>
+                        <Stack.Screen name="(auth)" />
+                        <Stack.Screen name="(candidate)" />
+                        <Stack.Screen name="(company)" />
+                      </Stack>
+                    </View>
                   </View>
                 </ThemeProvider>
               </CandidateProfileProvider>

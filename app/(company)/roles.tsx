@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState, useMemo } from 'react';
-import { Alert, Dimensions, Image, PanResponder, Pressable, ScrollView, StyleSheet, View, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
+import { Alert, Image, PanResponder, Pressable, ScrollView, StyleSheet, View, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSpring, runOnJS, interpolate, Extrapolation } from 'react-native-reanimated';
 import { Text } from '@/components/Themed';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -9,15 +9,19 @@ import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import { useSwipeStore, SwipeCandidate, SwipeMatch } from '@/lib/swipeStore';
 import { useSubscription } from '@/lib/subscriptionStore';
 import { useTheme, ThemePalette } from '@/lib/theme';
+import { SCREEN_W, SCREEN_H } from '@/lib/screen';
 import MatchMomentModal from '@/components/MatchMomentModal';
 import SwipeHint from '@/components/SwipeHint';
 
-const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
 const SWIPE_THRESHOLD = SCREEN_W * 0.25;
 
 // Card content width accounts for the deckWrap horizontal padding (26 * 2) used in SwipeDiscovery.
 const CARD_INNER_W = SCREEN_W - 52;
-const CAROUSEL_HEIGHT_RATIO = 0.50;
+// Portrait-ish crop proportional to the card's actual width, clamped to sane bounds —
+// previously a fixed 210px tied to an unrelated "420" baseline, which looked squat/wrong
+// once CARD_INNER_W varies (e.g. was never wrong on the 420px viewport this was tuned on,
+// but broke badly at any other width).
+const CAROUSEL_HEIGHT = Math.min(240, Math.max(180, CARD_INNER_W * 0.55));
 const CARD_HEIGHT = SCREEN_H * 0.70; // slightly smaller so it sits inside a smaller frame
 
 // ── Filter chip data ──
@@ -276,7 +280,7 @@ function SwipeCard({
   const sc = useMemo(() => makeCardStyles(T), [T]);
   const { config } = useSubscription();
   const showReliability = config.reliabilityVisible;
-  const carouselHeight = 420 * CAROUSEL_HEIGHT_RATIO;
+  const carouselHeight = CAROUSEL_HEIGHT;
 
   return (
     <View style={[sc.card, !isTop && sc.cardBehind]}>

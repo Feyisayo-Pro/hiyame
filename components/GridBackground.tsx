@@ -1,5 +1,6 @@
 import { memo, useMemo } from 'react';
-import { Dimensions, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { SCREEN_W, SCREEN_H } from '@/lib/screen';
 
 const GRID_SPACING = 24;
 const LINE_COLOR = 'rgba(75, 85, 99, 0.08)';
@@ -10,7 +11,8 @@ const LINE_COLOR = 'rgba(75, 85, 99, 0.08)';
  * Pure RN Views, no SVG dependency.
  */
 function GridBackgroundRaw() {
-  const { width, height } = Dimensions.get('window');
+  const width = SCREEN_W;
+  const height = SCREEN_H;
 
   const lines = useMemo(() => {
     const hCount = Math.ceil(height / GRID_SPACING);
