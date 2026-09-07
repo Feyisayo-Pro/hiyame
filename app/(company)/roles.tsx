@@ -1,5 +1,5 @@
-import { useCallback, useRef, useState, useMemo } from 'react';
-import { Alert, Image, PanResponder, Pressable, ScrollView, StyleSheet, View, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
+import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
+import { Alert, Image, PanResponder, Platform, Pressable, ScrollView, StyleSheet, View, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSpring, runOnJS, interpolate, Extrapolation } from 'react-native-reanimated';
 import { Text } from '@/components/Themed';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -368,14 +368,20 @@ function SwipeCard({
         </View>
       )}
 
-      {/* In-card action buttons (top card only) */}
-      {isTop && onShortlist && onAccept && (
+      {/* In-card action buttons (top card only) — these are the primary interaction on
+          web, not the drag gesture (dragging isn't a discoverable website interaction the
+          way it is on a touch phone). Pass previously had no button at all — dragging
+          left was the ONLY way to reject a candidate. */}
+      {isTop && onPass && onShortlist && onAccept && (
         <View style={sc.cardActions}>
+          <Pressable style={[sc.cardActionBtn, sc.cardActionBtnDanger]} onPress={onPass}>
+            <Ionicons name="close" size={20} color={T.danger} />
+          </Pressable>
           <Pressable style={sc.cardActionBtn} onPress={onShortlist}>
             <Ionicons name="bookmark" size={18} color={T.accent} />
           </Pressable>
-          <Pressable style={sc.cardActionBtn} onPress={onAccept}>
-            <Ionicons name="checkmark" size={18} color={T.accent} />
+          <Pressable style={[sc.cardActionBtn, sc.cardActionBtnSuccess]} onPress={onAccept}>
+            <Ionicons name="checkmark" size={20} color={T.emerald} />
           </Pressable>
         </View>
       )}
@@ -462,6 +468,20 @@ function SwipeDiscovery({ onBack }: { onBack: () => void }) {
   }, []);
 
   const attemptAccept = useCallback(() => attemptSwipe(1, 'accept'), [attemptSwipe]);
+  const attemptPass = useCallback(() => attemptSwipe(-1, 'pass'), [attemptSwipe]);
+
+  // Keyboard shortcuts — on web, dragging a card isn't a discoverable interaction the way
+  // it is on a touch phone, and it's a common enough desktop pattern (arrow keys mirroring
+  // left/right swipe) that it's worth wiring up alongside the on-card buttons.
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') attemptPass();
+      else if (e.key === 'ArrowRight') attemptAccept();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [attemptPass, attemptAccept]);
 
   const panResponder = useMemo(() => PanResponder.create({
     onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 10,
@@ -538,6 +558,19 @@ function SwipeDiscovery({ onBack }: { onBack: () => void }) {
         </View>
       </View>
 
+      {/* Keyboard-shortcut hint — web only, since arrow keys aren't a thing on touch */}
+      {Platform.OS === 'web' && !deckEmpty && (
+        <View style={sd.keyHintBar}>
+          <Ionicons name="arrow-back" size={12} color={T.textMuted} />
+          <Text style={sd.keyHintText}>Pass</Text>
+          <Text style={sd.keyHintDivider}>·</Text>
+          <Text style={sd.keyHintText}>Accept</Text>
+          <Ionicons name="arrow-forward" size={12} color={T.textMuted} />
+          <Text style={sd.keyHintDivider}>·</Text>
+          <Text style={sd.keyHintText}>or use the buttons below</Text>
+        </View>
+      )}
+
       {/* Card Stack */}
       <View style={sd.deckWrap}>
         {deckEmpty ? (
@@ -567,7 +600,7 @@ function SwipeDiscovery({ onBack }: { onBack: () => void }) {
               <SwipeCard
                 candidate={currentCandidate}
                 isTop={true}
-                onPass={() => attemptSwipe(-1, 'pass')}
+                onPass={attemptPass}
                 onShortlist={() => fnRefOff.current(0.5, 'shortlist')}
                 onAccept={attemptAccept}
               />
@@ -780,6 +813,8 @@ const makeCardStyles = (T: ThemePalette) => StyleSheet.create({
     backgroundColor: T.accentBg, borderWidth: 1.5, borderColor: T.accent,
     alignItems: 'center', justifyContent: 'center',
   },
+  cardActionBtnDanger: { backgroundColor: T.dangerBg, borderColor: T.danger },
+  cardActionBtnSuccess: { backgroundColor: T.emeraldBg, borderColor: T.emerald },
   cardActionBtnStar: { width: 40, height: 40, borderRadius: 20 },
   cardActionLabel: {
     fontSize: 9, fontWeight: '700', color: T.accent,
@@ -799,6 +834,10 @@ const makeDiscoveryStyles = (T: ThemePalette) => StyleSheet.create({
   headerRight: { alignItems: 'flex-end' },
   counterText: { fontSize: 13, fontWeight: '700', color: T.accent, backgroundColor: T.accentBg, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
   swipesLeftText: { fontSize: 10, color: T.textMuted, marginTop: 4 },
+
+  keyHintBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 8, backgroundColor: T.surface },
+  keyHintText: { fontSize: 11, fontWeight: '600', color: T.textMuted },
+  keyHintDivider: { fontSize: 11, color: T.border },
 
   deckWrap: { flex: 1, width: '100%', maxWidth: DECK_W + 52, alignSelf: 'center', paddingHorizontal: 26, paddingTop: 20, paddingBottom: 28, justifyContent: 'center', alignItems: 'center' },
   animatedCard: { width: '100%', height: CARD_HEIGHT, zIndex: 10 },

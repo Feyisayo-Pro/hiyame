@@ -1,7 +1,7 @@
-import { useMemo } from 'react';
+import { useMemo, ReactNode } from 'react';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { View, Platform, OpaqueColorValue } from 'react-native';
+import { Text, View, Platform, OpaqueColorValue } from 'react-native';
 import { useTheme, ThemePalette } from '@/lib/theme';
 
 function ProfileAvatar({ color, focused }: { color: string | OpaqueColorValue; focused: boolean }) {
@@ -9,6 +9,22 @@ function ProfileAvatar({ color, focused }: { color: string | OpaqueColorValue; f
   return (
     <View style={[{ width: 28, height: 28, borderRadius: 14, backgroundColor: T.surface, alignItems: 'center', justifyContent: 'center' }, focused && { borderWidth: 1, borderColor: T.textPrimary }]}>
       <Ionicons name={focused ? 'person' : 'person-outline'} size={18} color={color} />
+    </View>
+  );
+}
+
+// React Navigation's bottom-tabs wraps ITS OWN label slot (tabBarLabel / the string
+// `title`) in a fixed ~9px overflow:hidden box on web — a custom tabBarLabel render
+// prop still gets forced into that same wrapper, so no amount of styling escapes it.
+// Rendering icon+label together via tabBarIcon (a slot with no such restriction) and
+// turning the built-in label off entirely (tabBarShowLabel: false) sidesteps it.
+function TabIcon({ icon, label, color }: { icon: ReactNode; label: string; color: string | OpaqueColorValue }) {
+  return (
+    <View style={{ alignItems: 'center', justifyContent: 'center', gap: 2 }}>
+      {icon}
+      <Text style={{ fontSize: 11, fontWeight: '700', letterSpacing: 0.2, color }} numberOfLines={1}>
+        {label}
+      </Text>
     </View>
   );
 }
@@ -22,13 +38,7 @@ export default function CandidateTabLayout() {
         headerShown: false,
         tabBarActiveTintColor: T.textPrimary,
         tabBarInactiveTintColor: T.textMuted,
-        tabBarShowLabel: true,
-        tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: '700',
-          marginTop: -2,
-          letterSpacing: 0.2,
-        },
+        tabBarShowLabel: false,
         tabBarStyle: {
           backgroundColor: T.tabBarBg,
           borderTopWidth: 1,
@@ -38,9 +48,9 @@ export default function CandidateTabLayout() {
           shadowOpacity: 0.3,
           shadowRadius: 12,
           elevation: 12,
-          height: Platform.OS === 'ios' ? 88 : 64,
+          height: Platform.OS === 'ios' ? 88 : Platform.OS === 'web' ? 72 : 64,
           paddingTop: 8,
-          paddingBottom: Platform.OS === 'ios' ? 28 : 10,
+          paddingBottom: Platform.OS === 'ios' ? 28 : Platform.OS === 'web' ? 14 : 10,
         },
       }}
     >
@@ -49,7 +59,7 @@ export default function CandidateTabLayout() {
         options={{
           title: 'Home',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'home' : 'home-outline'} size={22} color={color} />
+            <TabIcon icon={<Ionicons name={focused ? 'home' : 'home-outline'} size={22} color={color} />} label="Home" color={color} />
           ),
         }}
       />
@@ -58,7 +68,7 @@ export default function CandidateTabLayout() {
         options={{
           title: 'Jobs',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'briefcase' : 'briefcase-outline'} size={22} color={color} />
+            <TabIcon icon={<Ionicons name={focused ? 'briefcase' : 'briefcase-outline'} size={22} color={color} />} label="Jobs" color={color} />
           ),
         }}
       />
@@ -67,7 +77,7 @@ export default function CandidateTabLayout() {
         options={{
           title: 'Chat',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'chatbubbles' : 'chatbubbles-outline'} size={22} color={color} />
+            <TabIcon icon={<Ionicons name={focused ? 'chatbubbles' : 'chatbubbles-outline'} size={22} color={color} />} label="Chat" color={color} />
           ),
         }}
       />
@@ -76,7 +86,7 @@ export default function CandidateTabLayout() {
         options={{
           title: 'Profile',
           tabBarIcon: ({ color, focused }) => (
-            <ProfileAvatar color={color} focused={focused} />
+            <TabIcon icon={<ProfileAvatar color={color} focused={focused} />} label="Profile" color={color} />
           ),
         }}
       />

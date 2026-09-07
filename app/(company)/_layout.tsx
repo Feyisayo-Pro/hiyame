@@ -1,8 +1,24 @@
 import { useMemo } from 'react';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { View, Platform, OpaqueColorValue } from 'react-native';
+import { Text, View, Platform, OpaqueColorValue } from 'react-native';
 import { useTheme, ThemePalette } from '@/lib/theme';
+
+// React Navigation's bottom-tabs wraps ITS OWN label slot (tabBarLabel / the string
+// `title`) in a fixed ~9px overflow:hidden box on web — a custom tabBarLabel render
+// prop still gets forced into that same wrapper, so no amount of styling escapes it.
+// Rendering icon+label together via tabBarIcon (a slot with no such restriction) and
+// turning the built-in label off entirely (tabBarShowLabel: false) sidesteps it.
+function TabIcon({ name, label, color }: { name: keyof typeof Ionicons.glyphMap; label: string; color: string | OpaqueColorValue }) {
+  return (
+    <View style={{ alignItems: 'center', justifyContent: 'center', gap: 2 }}>
+      <Ionicons name={name} size={22} color={color} />
+      <Text style={{ fontSize: 11, fontWeight: '700', letterSpacing: 0.2, color }} numberOfLines={1}>
+        {label}
+      </Text>
+    </View>
+  );
+}
 
 export default function CompanyTabLayout() {
   const T = useTheme();
@@ -13,13 +29,7 @@ export default function CompanyTabLayout() {
         headerShown: false,
         tabBarActiveTintColor: T.textPrimary,
         tabBarInactiveTintColor: T.textMuted,
-        tabBarShowLabel: true,
-        tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: '700',
-          marginTop: -2,
-          letterSpacing: 0.2,
-        },
+        tabBarShowLabel: false,
         tabBarStyle: {
           backgroundColor: T.tabBarBg,
           borderTopWidth: 1,
@@ -29,9 +39,9 @@ export default function CompanyTabLayout() {
           shadowOpacity: 0.3,
           shadowRadius: 12,
           elevation: 12,
-          height: Platform.OS === 'ios' ? 88 : 64,
+          height: Platform.OS === 'ios' ? 88 : Platform.OS === 'web' ? 72 : 64,
           paddingTop: 8,
-          paddingBottom: Platform.OS === 'ios' ? 28 : 10,
+          paddingBottom: Platform.OS === 'ios' ? 28 : Platform.OS === 'web' ? 14 : 10,
         },
       }}
     >
@@ -40,7 +50,7 @@ export default function CompanyTabLayout() {
         options={{
           title: 'Home',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'home' : 'home-outline'} size={22} color={color} />
+            <TabIcon name={focused ? 'home' : 'home-outline'} label="Home" color={color} />
           ),
         }}
       />
@@ -49,7 +59,7 @@ export default function CompanyTabLayout() {
         options={{
           title: 'Discover',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'swap-horizontal' : 'swap-horizontal-outline'} size={22} color={color} />
+            <TabIcon name={focused ? 'swap-horizontal' : 'swap-horizontal-outline'} label="Discover" color={color} />
           ),
         }}
       />
@@ -58,7 +68,7 @@ export default function CompanyTabLayout() {
         options={{
           title: 'Chat',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'chatbubbles' : 'chatbubbles-outline'} size={22} color={color} />
+            <TabIcon name={focused ? 'chatbubbles' : 'chatbubbles-outline'} label="Chat" color={color} />
           ),
         }}
       />
@@ -67,7 +77,7 @@ export default function CompanyTabLayout() {
         options={{
           title: 'Insights',
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? 'bar-chart' : 'bar-chart-outline'} size={22} color={color} />
+            <TabIcon name={focused ? 'bar-chart' : 'bar-chart-outline'} label="Insights" color={color} />
           ),
         }}
       />

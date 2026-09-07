@@ -1,5 +1,5 @@
-import { useCallback, useRef, useState, useMemo } from 'react';
-import { PanResponder, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
+import { PanResponder, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSpring, runOnJS, interpolate, Extrapolation } from 'react-native-reanimated';
 import { Text } from '@/components/Themed';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -222,14 +222,19 @@ function JobSwipeCard({
         </View>
       </View>
 
-      {/* In-card action buttons (top card only) */}
-      {isTop && onSave && onApply && (
+      {/* In-card action buttons (top card only) — the primary interaction on web, not
+          the drag gesture. Pass previously had no button at all — dragging left was the
+          only way to skip a role. */}
+      {isTop && onPass && onSave && onApply && (
         <View style={sc.cardActions}>
+          <Pressable style={[sc.cardActionBtn, sc.cardActionBtnDanger]} onPress={onPass}>
+            <Ionicons name="close" size={20} color={T.danger} />
+          </Pressable>
           <Pressable style={sc.cardActionBtn} onPress={onSave}>
             <Ionicons name="bookmark" size={18} color={T.accent} />
           </Pressable>
-          <Pressable style={sc.cardActionBtn} onPress={onApply}>
-            <Ionicons name="checkmark" size={18} color={T.accent} />
+          <Pressable style={[sc.cardActionBtn, sc.cardActionBtnSuccess]} onPress={onApply}>
+            <Ionicons name="checkmark" size={20} color={T.emerald} />
           </Pressable>
         </View>
       )}
@@ -279,6 +284,19 @@ function JobSwipeDiscovery({ onBack }: { onBack: () => void }) {
 
   const fnRefOff = useRef(doAnimateOff);
   fnRefOff.current = doAnimateOff;
+
+  // Keyboard shortcuts — on web, dragging a card isn't a discoverable interaction the
+  // way it is on a touch phone, and arrow keys mirroring left/right swipe is a common
+  // enough desktop pattern that it's worth wiring up alongside the on-card buttons.
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') fnRefOff.current(-1);
+      else if (e.key === 'ArrowRight') fnRefOff.current(1);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
 
   const panResponder = useMemo(() => PanResponder.create({
     onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 10,
@@ -331,6 +349,19 @@ function JobSwipeDiscovery({ onBack }: { onBack: () => void }) {
           <Text style={sd.counterText}>{currentIndex + 1}/{roles.length}</Text>
         </View>
       </View>
+
+      {/* Keyboard-shortcut hint — web only, since arrow keys aren't a thing on touch */}
+      {Platform.OS === 'web' && !deckEmpty && (
+        <View style={sd.keyHintBar}>
+          <Ionicons name="arrow-back" size={12} color={T.textMuted} />
+          <Text style={sd.keyHintText}>Pass</Text>
+          <Text style={sd.keyHintDivider}>·</Text>
+          <Text style={sd.keyHintText}>Apply</Text>
+          <Ionicons name="arrow-forward" size={12} color={T.textMuted} />
+          <Text style={sd.keyHintDivider}>·</Text>
+          <Text style={sd.keyHintText}>or use the buttons below</Text>
+        </View>
+      )}
 
       {/* Card Stack */}
       <View style={sd.deckWrap}>
@@ -478,6 +509,8 @@ const makeCardStyles = (T: ThemePalette) => StyleSheet.create({
     backgroundColor: T.accentBg, borderWidth: 1.5, borderColor: T.accent,
     alignItems: 'center', justifyContent: 'center',
   },
+  cardActionBtnDanger: { backgroundColor: T.dangerBg, borderColor: T.danger },
+  cardActionBtnSuccess: { backgroundColor: T.emeraldBg, borderColor: T.emerald },
   deliverablesWrap: { marginBottom: 16, paddingTop: 12, borderTopWidth: 1, borderTopColor: T.border },
   deliverablesTitle: { fontSize: 10, fontWeight: '800', color: T.textMuted, letterSpacing: 1.2, marginBottom: 10 },
   deliverableRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginBottom: 6 },
@@ -502,6 +535,10 @@ const makeDiscoveryStyles = (T: ThemePalette) => StyleSheet.create({
   headerTitle: { fontSize: 18, fontWeight: '800', color: T.textPrimary },
   headerRight: { alignItems: 'flex-end' },
   counterText: { fontSize: 13, fontWeight: '700', color: T.accent, backgroundColor: T.accentBg, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
+
+  keyHintBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 8, backgroundColor: T.surface },
+  keyHintText: { fontSize: 11, fontWeight: '600', color: T.textMuted },
+  keyHintDivider: { fontSize: 11, color: T.border },
 
   deckWrap: { flex: 1, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8, justifyContent: 'center', alignItems: 'center' },
   animatedCard: { width: '100%', height: CARD_HEIGHT, zIndex: 10 },
