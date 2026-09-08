@@ -1,5 +1,6 @@
 import { useEffect, useRef, useMemo } from 'react';
-import { Animated, Image, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Animated, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Image } from 'expo-image';
 import { Text } from '@/components/Themed';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSwipeStore, SwipeMatch } from '@/lib/swipeStore';

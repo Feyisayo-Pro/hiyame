@@ -2,7 +2,9 @@ import { useFonts } from 'expo-font';
 import { DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useMemo } from 'react';
-import { View, StatusBar as RNStatusBar, Platform } from 'react-native';
+import { Pressable, StyleSheet, Text, View, StatusBar as RNStatusBar, Platform } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { Ionicons } from '@expo/vector-icons';
 import { WEB_APP_MAX_WIDTH } from '@/lib/screen';
 import { StatusBar } from 'expo-status-bar';
 import { CandidateProfileProvider } from '@/lib/candidateProfile';
@@ -10,11 +12,53 @@ import { VerificationProvider } from '@/lib/useVerification';
 import { ApplicationProvider } from '@/lib/applicationStore';
 import { SwipeStoreProvider } from '@/lib/swipeStore';
 import { SubscriptionProvider } from '@/lib/subscriptionStore';
-import { HiyameThemeProvider, useTheme } from '@/lib/theme';
+import { HiyameThemeProvider, useTheme, ThemePalette } from '@/lib/theme';
 import { ChatProvider } from '@/lib/chatStore';
 import 'react-native-reanimated';
 
-export { ErrorBoundary } from 'expo-router';
+// Expo Router renders this in place of the whole app when the root layout throws —
+// it may mount outside HiyameThemeProvider, so useTheme() relies on its context
+// default (LIGHT) rather than requiring a provider.
+export function ErrorBoundary({ error, retry }: { error: Error; retry: () => void }) {
+  const T = useTheme();
+  const st = useMemo(() => makeErrorStyles(T), [T]);
+
+  return (
+    <View style={st.container}>
+      <View style={st.iconWrap}>
+        <Ionicons name="warning-outline" size={32} color={T.danger} />
+      </View>
+      <Text style={st.title}>Something went wrong</Text>
+      <Text style={st.subtitle}>{error.message}</Text>
+      <Pressable style={st.retryButton} onPress={retry}>
+        <Ionicons name="refresh" size={18} color={T.textOnAccent} />
+        <Text style={st.retryButtonText}>Try Again</Text>
+      </Pressable>
+    </View>
+  );
+}
+
+const makeErrorStyles = (T: ThemePalette) => StyleSheet.create({
+  container: {
+    flex: 1, backgroundColor: T.bg,
+    alignItems: 'center', justifyContent: 'center',
+    paddingHorizontal: 32,
+  },
+  iconWrap: {
+    width: 64, height: 64, borderRadius: 20,
+    backgroundColor: T.dangerBg, borderWidth: 1, borderColor: T.danger,
+    alignItems: 'center', justifyContent: 'center',
+    marginBottom: 20,
+  },
+  title: { fontSize: 22, fontWeight: '800', color: T.textPrimary, marginBottom: 8, textAlign: 'center' },
+  subtitle: { fontSize: 14, color: T.textSecondary, textAlign: 'center', lineHeight: 20, marginBottom: 28 },
+  retryButton: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 8, paddingHorizontal: 24, paddingVertical: 14, borderRadius: 50,
+    backgroundColor: T.accent,
+  },
+  retryButtonText: { fontSize: 15, fontWeight: '700', color: T.textOnAccent },
+});
 
 export const unstable_settings = {
   initialRouteName: '(auth)',
@@ -40,9 +84,11 @@ export default function RootLayout() {
   if (!loaded) return null;
 
   return (
-    <HiyameThemeProvider>
-      <RootLayoutNav />
-    </HiyameThemeProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <HiyameThemeProvider>
+        <RootLayoutNav />
+      </HiyameThemeProvider>
+    </GestureHandlerRootView>
   );
 }
 

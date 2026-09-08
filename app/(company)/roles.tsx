@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
-import { Alert, Image, PanResponder, Platform, Pressable, ScrollView, StyleSheet, View, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
+import { Alert, Platform, Pressable, ScrollView, StyleSheet, View, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
+import { Image } from 'expo-image';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSpring, runOnJS, interpolate, Extrapolation } from 'react-native-reanimated';
 import { Text } from '@/components/Themed';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -41,11 +43,45 @@ const REGIONS = [
   { code: 'GL', label: 'Global' },
 ];
 const RATE_RANGES = ['Under $25/hr', '$25–75/hr', '$75–150/hr', '$150+/hr'];
+const RATE_BOUNDS: Record<string, [number, number]> = {
+  'Under $25/hr': [0, 25],
+  '$25–75/hr': [25, 75],
+  '$75–150/hr': [75, 150],
+  '$150+/hr': [150, Infinity],
+};
+
+export interface CandidateFilters {
+  roles: Set<string>;
+  fields: Set<string>;
+  regions: Set<string>;
+  rates: Set<string>;
+}
+
+// Empty selection on any dimension means "don't filter on that dimension" — safer than
+// showing zero candidates just because a user deselected every chip in a row.
+function matchesFilters(candidate: SwipeCandidate, filters: CandidateFilters): boolean {
+  if (filters.roles.size > 0 && !filters.roles.has(candidate.tierLabel)) return false;
+  if (filters.fields.size > 0 && !filters.fields.has(candidate.field)) return false;
+
+  if (filters.regions.size > 0 && !filters.regions.has('AF') && !filters.regions.has('GL')) {
+    if (!filters.regions.has(candidate.countryCode)) return false;
+  }
+
+  if (filters.rates.size > 0) {
+    const inRange = Array.from(filters.rates).some((label) => {
+      const bounds = RATE_BOUNDS[label];
+      return bounds && candidate.hourlyRate >= bounds[0] && candidate.hourlyRate < bounds[1];
+    });
+    if (!inRange) return false;
+  }
+
+  return true;
+}
 
 // ═══════════════════════════════════════
 // FILTER SETUP VIEW
 // ═══════════════════════════════════════
-function FilterSetup({ onStart }: { onStart: () => void }) {
+function FilterSetup({ onStart }: { onStart: (filters: CandidateFilters) => void }) {
   const T = useTheme();
   const fs = useMemo(() => makeStyles(T), [T]);
   const { tier, config, swipesToday } = useSubscription();
@@ -176,7 +212,10 @@ function FilterSetup({ onStart }: { onStart: () => void }) {
         )}
 
         {/* Start button */}
-        <Pressable style={fs.startBtn} onPress={onStart}>
+        <Pressable
+          style={fs.startBtn}
+          onPress={() => onStart({ roles: selectedRoles, fields: selectedFields, regions: selectedRegions, rates: selectedRates })}
+        >
           <Ionicons name="flash" size={20} color={T.textOnAccent} />
           <Text style={fs.startBtnText}>Start Reviewing Candidates</Text>
         </Pressable>
@@ -234,7 +273,8 @@ function PhotoCarousel({ candidate, height }: { candidate: SwipeCandidate; heigh
           <View key={i} style={[pcStyles.slide, { width: CARD_INNER_W, height, backgroundColor: T.surface }]}>
             <Image
               source={{ uri }}
-              resizeMode="cover"
+              contentFit="cover"
+              transition={150}
               style={{ width: CARD_INNER_W, height }}
             />
             {/* Initials overlay as fallback while loading */}
@@ -392,12 +432,17 @@ function SwipeCard({
 // ═══════════════════════════════════════
 // SWIPE DISCOVERY VIEW
 // ═══════════════════════════════════════
-function SwipeDiscovery({ onBack }: { onBack: () => void }) {
+function SwipeDiscovery({ filters, onBack }: { filters: CandidateFilters | null; onBack: () => void }) {
   const T = useTheme();
   const sd = useMemo(() => makeDiscoveryStyles(T), [T]);
   const router = useRouter();
   const { candidates, currentIndex, swipeAction } = useSwipeStore();
   const { config, swipesToday, canSwipe, recordSwipe } = useSubscription();
+
+  const filteredCandidates = useMemo(
+    () => (filters ? candidates.filter((c) => matchesFilters(c, filters)) : candidates),
+    [candidates, filters],
+  );
   const [matchResult, setMatchResult] = useState<SwipeMatch | null>(null);
 
   const translateX = useSharedValue(0);
@@ -417,9 +462,9 @@ function SwipeDiscovery({ onBack }: { onBack: () => void }) {
     );
   }, [config, router]);
 
-  const currentCandidate = candidates[currentIndex % candidates.length];
-  const nextCandidate = candidates[(currentIndex + 1) % candidates.length];
-  const deckEmpty = currentIndex >= candidates.length;
+  const currentCandidate = filteredCandidates[currentIndex % (filteredCandidates.length || 1)];
+  const nextCandidate = filteredCandidates[(currentIndex + 1) % (filteredCandidates.length || 1)];
+  const deckEmpty = currentIndex >= filteredCandidates.length;
 
   const candidateRef = useRef(currentCandidate);
   candidateRef.current = currentCandidate;
@@ -453,7 +498,7 @@ function SwipeDiscovery({ onBack }: { onBack: () => void }) {
   const fnRefOff = useRef(doAnimateOff);
   fnRefOff.current = doAnimateOff;
 
-  // Keep a ref so the PanResponder (memoized once) always sees the latest
+  // Keep a ref so the gesture handler (memoized once) always sees the latest
   // swipe-limit gate state without needing to be recreated every render.
   const gateRef = useRef({ canSwipe, showSwipeLimitAlert });
   gateRef.current.canSwipe = canSwipe;
@@ -483,37 +528,40 @@ function SwipeDiscovery({ onBack }: { onBack: () => void }) {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [attemptPass, attemptAccept]);
 
-  const panResponder = useMemo(() => PanResponder.create({
-    onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 10,
-    // Capture-phase check so a drag started over the photo carousel's tap zones
-    // (which claim the responder on touch-start) still gets stolen by the card
-    // once the gesture is clearly a horizontal swipe rather than a tap.
-    onMoveShouldSetPanResponderCapture: (_, g) => Math.abs(g.dx) > 10,
-    onPanResponderMove: (_, g) => {
+  const handlePanEnd = useCallback((dx: number) => {
+    if (swiping.value) return;
+    if (Math.abs(dx) < SWIPE_THRESHOLD) {
+      translateX.value = withSpring(0);
+      translateY.value = withSpring(0);
+      return;
+    }
+    if (!gateRef.current.canSwipe) {
+      translateX.value = withSpring(0);
+      translateY.value = withSpring(0);
+      gateRef.current.showSwipeLimitAlert();
+      return;
+    }
+    if (dx > SWIPE_THRESHOLD) {
+      fnRefOff.current(1, 'accept');
+    } else {
+      fnRefOff.current(-1, 'pass');
+    }
+  }, [translateX, translateY, swiping]);
+
+  // Gesture.Pan() runs recognition on the UI thread and reads/writes the shared values
+  // directly in onUpdate — no runOnJS needed there. onEnd's decision logic (gate check,
+  // Alert, calling into JS refs) still has to cross back to the JS thread, same as
+  // PanResponder's onPanResponderRelease always did.
+  const panGesture = useMemo(() => Gesture.Pan()
+    .minDistance(10)
+    .onUpdate((e) => {
       if (swiping.value) return;
-      translateX.value = g.dx;
-      translateY.value = g.dy;
-    },
-    onPanResponderRelease: (_, g) => {
-      if (swiping.value) return;
-      if (Math.abs(g.dx) < SWIPE_THRESHOLD) {
-        translateX.value = withSpring(0);
-        translateY.value = withSpring(0);
-        return;
-      }
-      if (!gateRef.current.canSwipe) {
-        translateX.value = withSpring(0);
-        translateY.value = withSpring(0);
-        gateRef.current.showSwipeLimitAlert();
-        return;
-      }
-      if (g.dx > SWIPE_THRESHOLD) {
-        fnRefOff.current(1, 'accept');
-      } else {
-        fnRefOff.current(-1, 'pass');
-      }
-    },
-  }), [translateX, translateY]);
+      translateX.value = e.translationX;
+      translateY.value = e.translationY;
+    })
+    .onEnd((e) => {
+      runOnJS(handlePanEnd)(e.translationX);
+    }), [translateX, translateY, swiping, handlePanEnd]);
 
   const cardAnimatedStyle = useAnimatedStyle(() => ({
     transform: [
@@ -593,24 +641,23 @@ function SwipeDiscovery({ onBack }: { onBack: () => void }) {
             {nextCandidate && <SwipeCard candidate={nextCandidate} isTop={false} />}
 
             {/* Current card (top, draggable) */}
-            <Animated.View
-              style={[sd.animatedCard, cardAnimatedStyle]}
-              {...panResponder.panHandlers}
-            >
-              <SwipeCard
-                candidate={currentCandidate}
-                isTop={true}
-                onPass={attemptPass}
-                onShortlist={() => fnRefOff.current(0.5, 'shortlist')}
-                onAccept={attemptAccept}
-              />
-              <Animated.View pointerEvents="none" style={[sd.swipeOverlay, sd.passOverlay, passOverlayStyle]}>
-                <Ionicons name="close-circle" size={48} color={T.danger} />
+            <GestureDetector gesture={panGesture}>
+              <Animated.View style={[sd.animatedCard, cardAnimatedStyle]}>
+                <SwipeCard
+                  candidate={currentCandidate}
+                  isTop={true}
+                  onPass={attemptPass}
+                  onShortlist={() => fnRefOff.current(0.5, 'shortlist')}
+                  onAccept={attemptAccept}
+                />
+                <Animated.View pointerEvents="none" style={[sd.swipeOverlay, sd.passOverlay, passOverlayStyle]}>
+                  <Ionicons name="close-circle" size={48} color={T.danger} />
+                </Animated.View>
+                <Animated.View pointerEvents="none" style={[sd.swipeOverlay, sd.acceptOverlay, acceptOverlayStyle]}>
+                  <Ionicons name="checkmark-circle" size={48} color={T.emerald} />
+                </Animated.View>
               </Animated.View>
-              <Animated.View pointerEvents="none" style={[sd.swipeOverlay, sd.acceptOverlay, acceptOverlayStyle]}>
-                <Ionicons name="checkmark-circle" size={48} color={T.emerald} />
-              </Animated.View>
-            </Animated.View>
+            </GestureDetector>
           </>
         )}
 
@@ -628,13 +675,14 @@ export default function CompanyRolesScreen() {
   const T = useTheme();
 
   const [mode, setMode] = useState<'filter' | 'swipe'>('filter');
+  const [filters, setFilters] = useState<CandidateFilters | null>(null);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: T.bg }} edges={['top', 'left', 'right']}>
       {mode === 'filter' ? (
-        <FilterSetup onStart={() => setMode('swipe')} />
+        <FilterSetup onStart={(f) => { setFilters(f); setMode('swipe'); }} />
       ) : (
-        <SwipeDiscovery onBack={() => setMode('filter')} />
+        <SwipeDiscovery filters={filters} onBack={() => setMode('filter')} />
       )}
     </SafeAreaView>
   );

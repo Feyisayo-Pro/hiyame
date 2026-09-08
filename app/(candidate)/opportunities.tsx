@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
-import { PanResponder, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSpring, runOnJS, interpolate, Extrapolation } from 'react-native-reanimated';
 import { Text } from '@/components/Themed';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -22,10 +23,28 @@ const TIERS: { key: Tier | 'all'; label: string }[] = [
 const LOCATIONS = ['Remote', 'Hybrid', 'On-site'];
 const FIELDS = ['Engineering', 'Design', 'Finance', 'Marketing', 'Legal', 'Ops'];
 
+interface RoleFilters {
+  tier: Tier | 'all';
+  locations: Set<string>;
+  fields: Set<string>;
+}
+
+function matchesRoleFilters(role: Role, filters: RoleFilters): boolean {
+  if (filters.tier !== 'all' && role.tier !== filters.tier) return false;
+  if (filters.fields.size > 0 && !filters.fields.has(role.function)) return false;
+
+  if (filters.locations.size > 0) {
+    const locLabel = role.location_type === 'remote' ? 'Remote' : role.location_type === 'hybrid' ? 'Hybrid' : 'On-site';
+    if (!filters.locations.has(locLabel)) return false;
+  }
+
+  return true;
+}
+
 // ═══════════════════════════════════════
 // FILTER SETUP VIEW
 // ═══════════════════════════════════════
-function FilterSetup({ onStart }: { onStart: () => void }) {
+function FilterSetup({ onStart }: { onStart: (filters: RoleFilters) => void }) {
   const T = useTheme();
   const fs = useMemo(() => makeFilterStyles(T), [T]);
 
@@ -103,7 +122,10 @@ function FilterSetup({ onStart }: { onStart: () => void }) {
         </View>
 
         {/* Start button */}
-        <Pressable style={fs.startBtn} onPress={onStart}>
+        <Pressable
+          style={fs.startBtn}
+          onPress={() => onStart({ tier: selectedTier, locations: selectedLocations, fields: selectedFields })}
+        >
           <Ionicons name="flash" size={20} color={T.textOnAccent} />
           <Text style={fs.startBtnText}>Start Exploring</Text>
         </Pressable>
@@ -245,18 +267,21 @@ function JobSwipeCard({
 // ═══════════════════════════════════════
 // SWIPE DISCOVERY VIEW
 // ═══════════════════════════════════════
-function JobSwipeDiscovery({ onBack }: { onBack: () => void }) {
+function JobSwipeDiscovery({ filters, onBack }: { filters: RoleFilters | null; onBack: () => void }) {
   const T = useTheme();
   const sd = useMemo(() => makeDiscoveryStyles(T), [T]);
-  const roles = mockRoles;
+  const roles = useMemo(
+    () => (filters ? mockRoles.filter((r) => matchesRoleFilters(r, filters)) : mockRoles),
+    [filters],
+  );
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
   const swiping = useSharedValue(false);
 
-  const currentRole = roles[currentIndex % roles.length];
-  const nextRole = roles[(currentIndex + 1) % roles.length];
+  const currentRole = roles[currentIndex % (roles.length || 1)];
+  const nextRole = roles[(currentIndex + 1) % (roles.length || 1)];
   const deckEmpty = currentIndex >= roles.length;
 
   const advanceCard = useCallback(() => {
@@ -298,25 +323,28 @@ function JobSwipeDiscovery({ onBack }: { onBack: () => void }) {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, []);
 
-  const panResponder = useMemo(() => PanResponder.create({
-    onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 10,
-    onPanResponderMove: (_, g) => {
+  const handlePanEnd = useCallback((dx: number) => {
+    if (swiping.value) return;
+    if (dx > SWIPE_THRESHOLD) {
+      fnRefOff.current(1);
+    } else if (dx < -SWIPE_THRESHOLD) {
+      fnRefOff.current(-1);
+    } else {
+      translateX.value = withSpring(0);
+      translateY.value = withSpring(0);
+    }
+  }, [translateX, translateY, swiping]);
+
+  const panGesture = useMemo(() => Gesture.Pan()
+    .minDistance(10)
+    .onUpdate((e) => {
       if (swiping.value) return;
-      translateX.value = g.dx;
-      translateY.value = g.dy;
-    },
-    onPanResponderRelease: (_, g) => {
-      if (swiping.value) return;
-      if (g.dx > SWIPE_THRESHOLD) {
-        fnRefOff.current(1);
-      } else if (g.dx < -SWIPE_THRESHOLD) {
-        fnRefOff.current(-1);
-      } else {
-        translateX.value = withSpring(0);
-        translateY.value = withSpring(0);
-      }
-    },
-  }), [translateX, translateY]);
+      translateX.value = e.translationX;
+      translateY.value = e.translationY;
+    })
+    .onEnd((e) => {
+      runOnJS(handlePanEnd)(e.translationX);
+    }), [translateX, translateY, swiping, handlePanEnd]);
 
   const cardAnimatedStyle = useAnimatedStyle(() => ({
     transform: [
@@ -382,24 +410,23 @@ function JobSwipeDiscovery({ onBack }: { onBack: () => void }) {
         ) : (
           <>
             {nextRole && <JobSwipeCard role={nextRole} isTop={false} />}
-            <Animated.View
-              style={[sd.animatedCard, cardAnimatedStyle]}
-              {...panResponder.panHandlers}
-            >
-              <JobSwipeCard
-                role={currentRole}
-                isTop={true}
-                onPass={() => fnRefOff.current(-1)}
-                onSave={() => fnRefOff.current(0.5)}
-                onApply={() => fnRefOff.current(1)}
-              />
-              <Animated.View pointerEvents="none" style={[sd.swipeOverlay, sd.passOverlay, passOverlayStyle]}>
-                <Ionicons name="close-circle" size={48} color={T.danger} />
+            <GestureDetector gesture={panGesture}>
+              <Animated.View style={[sd.animatedCard, cardAnimatedStyle]}>
+                <JobSwipeCard
+                  role={currentRole}
+                  isTop={true}
+                  onPass={() => fnRefOff.current(-1)}
+                  onSave={() => fnRefOff.current(0.5)}
+                  onApply={() => fnRefOff.current(1)}
+                />
+                <Animated.View pointerEvents="none" style={[sd.swipeOverlay, sd.passOverlay, passOverlayStyle]}>
+                  <Ionicons name="close-circle" size={48} color={T.danger} />
+                </Animated.View>
+                <Animated.View pointerEvents="none" style={[sd.swipeOverlay, sd.acceptOverlay, acceptOverlayStyle]}>
+                  <Ionicons name="checkmark-circle" size={48} color={T.emerald} />
+                </Animated.View>
               </Animated.View>
-              <Animated.View pointerEvents="none" style={[sd.swipeOverlay, sd.acceptOverlay, acceptOverlayStyle]}>
-                <Ionicons name="checkmark-circle" size={48} color={T.emerald} />
-              </Animated.View>
-            </Animated.View>
+            </GestureDetector>
           </>
         )}
 
@@ -416,13 +443,14 @@ function JobSwipeDiscovery({ onBack }: { onBack: () => void }) {
 export default function OpportunitiesScreen() {
   const T = useTheme();
   const [mode, setMode] = useState<'filter' | 'swipe'>('filter');
+  const [filters, setFilters] = useState<RoleFilters | null>(null);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: T.bg }} edges={['top', 'left', 'right']}>
       {mode === 'filter' ? (
-        <FilterSetup onStart={() => setMode('swipe')} />
+        <FilterSetup onStart={(f) => { setFilters(f); setMode('swipe'); }} />
       ) : (
-        <JobSwipeDiscovery onBack={() => setMode('filter')} />
+        <JobSwipeDiscovery filters={filters} onBack={() => setMode('filter')} />
       )}
     </SafeAreaView>
   );
