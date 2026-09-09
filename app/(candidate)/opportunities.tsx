@@ -1,586 +1,264 @@
-import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
-import { Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, withSpring, runOnJS, interpolate, Extrapolation } from 'react-native-reanimated';
+import { useCallback, useEffect, useState, useMemo } from 'react';
+import { Pressable, RefreshControl, ScrollView, StyleSheet, View, ActivityIndicator, Alert } from 'react-native';
 import { Text } from '@/components/Themed';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import SwipeFadeContainer from '@/components/SwipeFadeContainer';
-import SwipeHint from '@/components/SwipeHint';
-import { mockRoles, Role, Tier } from '@/lib/mock-data';
 import { useTheme, ThemePalette } from '@/lib/theme';
-import { SCREEN_W, SCREEN_H } from '@/lib/screen';
-const SWIPE_THRESHOLD = SCREEN_W * 0.25;
-const CARD_HEIGHT = SCREEN_H * 0.75; // 75% of screen height
+import { useAuth } from '@/lib/useAuth';
+import { supabase } from '@/lib/supabase';
+import { TIER_CONFIG, Tier } from '@/lib/mock-data';
 
-// ── Filter chip data ──
-const TIERS: { key: Tier | 'all'; label: string }[] = [
-  { key: 'all', label: 'All' },
-  { key: 'corporate', label: 'Corporate' },
-  { key: 'short_term', label: 'Short-Term' },
-  { key: 'gig', label: 'Gig' },
-];
-const LOCATIONS = ['Remote', 'Hybrid', 'On-site'];
-const FIELDS = ['Engineering', 'Design', 'Finance', 'Marketing', 'Legal', 'Ops'];
+// Replaces the old Tinder-style swipe deck over mock roles. Under the real
+// architecture, candidates don't browse and swipe an open pool — a company's
+// shortlist Accept creates an "introduction", and this screen is that inbox.
+// Company identity stays hidden (industry + size band only) until the
+// candidate accepts — enforced server-side by get_introduction_preview(),
+// not by anything client-side here.
 
-interface RoleFilters {
-  tier: Tier | 'all';
-  locations: Set<string>;
-  fields: Set<string>;
+interface PendingIntro {
+  introductionId: string;
+  status: string;
+  sentAt: string;
+  responseWindowHours: number;
+  roleTitle: string;
+  roleFunction: string | null;
+  roleTier: Tier;
+  companyIndustry: string | null;
+  companySizeRange: string | null;
+  expired: boolean;
 }
 
-function matchesRoleFilters(role: Role, filters: RoleFilters): boolean {
-  if (filters.tier !== 'all' && role.tier !== filters.tier) return false;
-  if (filters.fields.size > 0 && !filters.fields.has(role.function)) return false;
-
-  if (filters.locations.size > 0) {
-    const locLabel = role.location_type === 'remote' ? 'Remote' : role.location_type === 'hybrid' ? 'Hybrid' : 'On-site';
-    if (!filters.locations.has(locLabel)) return false;
-  }
-
-  return true;
+// Matches get_introduction_preview()'s RETURNS TABLE columns exactly — no
+// generated Supabase types exist in this project, so .rpc() calls are
+// otherwise untyped.
+interface IntroductionPreviewRow {
+  introduction_id: string;
+  status: string;
+  sent_at: string;
+  response_window_hours: number;
+  role_title: string;
+  role_function: string | null;
+  role_tier: Tier;
+  company_industry: string | null;
+  company_size_range: string | null;
 }
 
-// ═══════════════════════════════════════
-// FILTER SETUP VIEW
-// ═══════════════════════════════════════
-function FilterSetup({ onStart }: { onStart: (filters: RoleFilters) => void }) {
-  const T = useTheme();
-  const fs = useMemo(() => makeFilterStyles(T), [T]);
-
-  const [selectedTier, setSelectedTier] = useState<Tier | 'all'>('all');
-  const [selectedLocations, setSelectedLocations] = useState<Set<string>>(new Set(['Remote']));
-  const [selectedFields, setSelectedFields] = useState<Set<string>>(new Set(['Engineering']));
-
-  const toggle = (set: Set<string>, val: string, setter: (s: Set<string>) => void) => {
-    const next = new Set(set);
-    if (next.has(val)) next.delete(val); else next.add(val);
-    setter(next);
-  };
-
-  const roleCount = mockRoles.filter(r => selectedTier === 'all' || r.tier === selectedTier).length;
-
-  return (
-    <ScrollView contentContainerStyle={fs.scroll} showsVerticalScrollIndicator={false}>
-      <SwipeFadeContainer>
-        {/* Header */}
-        <View style={fs.header}>
-          <View style={fs.headerIcon}>
-            <Ionicons name="compass" size={22} color={T.accent} />
-          </View>
-          <Text style={fs.headerTitle}>Discover Opportunities</Text>
-          <Text style={fs.headerSub}>Set your preferences and start exploring roles</Text>
-        </View>
-
-        {/* Role count */}
-        <View style={fs.budgetCard}>
-          <View style={fs.budgetRow}>
-            <View style={fs.budgetIcon}>
-              <Ionicons name="briefcase" size={16} color={T.accent} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={fs.budgetTitle}>Available Roles</Text>
-              <Text style={fs.budgetSub}>{roleCount} roles match your filters</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Tier */}
-        <View style={fs.filterSection}>
-          <Text style={fs.filterLabel}>Role Type</Text>
-          <View style={fs.chipRow}>
-            {TIERS.map((t) => (
-              <Pressable key={t.key} style={[fs.chip, selectedTier === t.key && fs.chipActive]} onPress={() => setSelectedTier(t.key)}>
-                <Text style={[fs.chipText, selectedTier === t.key && fs.chipTextActive]}>{t.label}</Text>
-              </Pressable>
-            ))}
-          </View>
-        </View>
-
-        {/* Location */}
-        <View style={fs.filterSection}>
-          <Text style={fs.filterLabel}>Work Arrangement</Text>
-          <View style={fs.chipRow}>
-            {LOCATIONS.map((l) => (
-              <Pressable key={l} style={[fs.chip, selectedLocations.has(l) && fs.chipActive]} onPress={() => toggle(selectedLocations, l, setSelectedLocations)}>
-                <Text style={[fs.chipText, selectedLocations.has(l) && fs.chipTextActive]}>{l}</Text>
-              </Pressable>
-            ))}
-          </View>
-        </View>
-
-        {/* Field */}
-        <View style={fs.filterSection}>
-          <Text style={fs.filterLabel}>Function</Text>
-          <View style={fs.chipRow}>
-            {FIELDS.map((f) => (
-              <Pressable key={f} style={[fs.chip, selectedFields.has(f) && fs.chipActive]} onPress={() => toggle(selectedFields, f, setSelectedFields)}>
-                <Text style={[fs.chipText, selectedFields.has(f) && fs.chipTextActive]}>{f}</Text>
-              </Pressable>
-            ))}
-          </View>
-        </View>
-
-        {/* Start button */}
-        <Pressable
-          style={fs.startBtn}
-          onPress={() => onStart({ tier: selectedTier, locations: selectedLocations, fields: selectedFields })}
-        >
-          <Ionicons name="flash" size={20} color={T.textOnAccent} />
-          <Text style={fs.startBtnText}>Start Exploring</Text>
-        </Pressable>
-      </SwipeFadeContainer>
-    </ScrollView>
-  );
+interface AcceptedIntro {
+  introductionId: string;
+  roleTitle: string;
+  roleTier: Tier;
+  companyName: string;
 }
 
-// ═══════════════════════════════════════
-// JOB SWIPE CARD
-// ═══════════════════════════════════════
-function JobSwipeCard({
-  role,
-  isTop,
-  onPass,
-  onSave,
-  onApply,
-}: {
-  role: Role;
-  isTop: boolean;
-  onPass?: () => void;
-  onSave?: () => void;
-  onApply?: () => void;
-}) {
-  const T = useTheme();
-  const sc = useMemo(() => makeCardStyles(T), [T]);
-
-  const locationLabel = role.location_type === 'remote' ? 'Remote' :
-    role.location_type === 'hybrid' ? `Hybrid · ${role.location_city}` :
-    `${role.location_city}, ${role.location_country}`;
-
-  const rateLabel = role.rate_type === 'monthly'
-    ? `$${role.rate_min.toLocaleString()}–${role.rate_max.toLocaleString()}/mo`
-    : role.rate_type === 'hourly'
-    ? `$${role.rate_min}–${role.rate_max}/hr`
-    : `$${role.rate_min.toLocaleString()} fixed`;
-
-  const tierLabel = role.tier === 'corporate' ? 'Corporate' : role.tier === 'short_term' ? 'Short-Term' : 'Gig';
-
-  return (
-    <View style={[sc.card, !isTop && sc.cardBehind]}>
-      {/* Company header */}
-      <View style={sc.companyHeader}>
-        <View style={sc.companyAvatar}>
-          <Ionicons name="business" size={24} color={T.accent} />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={sc.companyIndustry}>{role.company_industry}</Text>
-          <Text style={sc.companySize}>{role.company_size_band}</Text>
-        </View>
-        <View style={sc.matchBadge}>
-          <Ionicons name="heart" size={12} color={T.accent} />
-          <Text style={sc.matchText}>{role.match_score}%</Text>
-        </View>
-      </View>
-
-      {/* Role title */}
-      <Text style={sc.roleTitle}>{role.title}</Text>
-      <Text style={sc.roleFunction}>{role.function} · {role.experience_level}</Text>
-
-      {/* Location + Rate */}
-      <View style={sc.infoRow}>
-        <View style={sc.infoBadge}>
-          <Ionicons name="location" size={12} color={T.accent} />
-          <Text style={sc.infoText}>{locationLabel}</Text>
-        </View>
-        <View style={sc.infoBadge}>
-          <Ionicons name="cash" size={12} color={T.accent} />
-          <Text style={sc.infoText}>{rateLabel}</Text>
-        </View>
-      </View>
-
-      {/* Contract + Start */}
-      <View style={sc.detailRow}>
-        <View style={sc.detailItem}>
-          <Ionicons name="time-outline" size={14} color={T.textMuted} />
-          <Text style={sc.detailText}>{role.contract_length}</Text>
-        </View>
-        <View style={sc.detailItem}>
-          <Ionicons name="calendar-outline" size={14} color={T.textMuted} />
-          <Text style={sc.detailText}>Start: {role.start_date}</Text>
-        </View>
-      </View>
-
-      {/* Skills */}
-      <View style={sc.skillsWrap}>
-        {role.required_skills.must_have.map((s) => (
-          <View key={s} style={sc.skillChip}>
-            <Text style={sc.skillText}>{s}</Text>
-          </View>
-        ))}
-        {role.required_skills.nice_to_have.slice(0, 2).map((s) => (
-          <View key={s} style={sc.skillChipNice}>
-            <Text style={sc.skillTextNice}>{s}</Text>
-          </View>
-        ))}
-      </View>
-
-      {/* Key Deliverables */}
-      {role.keyDeliverables && role.keyDeliverables.length > 0 && (
-        <View style={sc.deliverablesWrap}>
-          <Text style={sc.deliverablesTitle}>KEY DELIVERABLES</Text>
-          {role.keyDeliverables.map((d, i) => (
-            <View key={i} style={sc.deliverableRow}>
-              <View style={sc.deliverableDot} />
-              <Text style={sc.deliverableText}>{d}</Text>
-            </View>
-          ))}
-        </View>
-      )}
-
-      {/* Footer */}
-      <View style={sc.footer}>
-        <View style={sc.tierPill}>
-          <Text style={sc.tierText}>{tierLabel.toUpperCase()}</Text>
-        </View>
-      </View>
-
-      {/* In-card action buttons (top card only) — the primary interaction on web, not
-          the drag gesture. Pass previously had no button at all — dragging left was the
-          only way to skip a role. */}
-      {isTop && onPass && onSave && onApply && (
-        <View style={sc.cardActions}>
-          <Pressable style={[sc.cardActionBtn, sc.cardActionBtnDanger]} onPress={onPass}>
-            <Ionicons name="close" size={20} color={T.danger} />
-          </Pressable>
-          <Pressable style={sc.cardActionBtn} onPress={onSave}>
-            <Ionicons name="bookmark" size={18} color={T.accent} />
-          </Pressable>
-          <Pressable style={[sc.cardActionBtn, sc.cardActionBtnSuccess]} onPress={onApply}>
-            <Ionicons name="checkmark" size={20} color={T.emerald} />
-          </Pressable>
-        </View>
-      )}
-    </View>
-  );
-}
-
-// ═══════════════════════════════════════
-// SWIPE DISCOVERY VIEW
-// ═══════════════════════════════════════
-function JobSwipeDiscovery({ filters, onBack }: { filters: RoleFilters | null; onBack: () => void }) {
-  const T = useTheme();
-  const sd = useMemo(() => makeDiscoveryStyles(T), [T]);
-  const roles = useMemo(
-    () => (filters ? mockRoles.filter((r) => matchesRoleFilters(r, filters)) : mockRoles),
-    [filters],
-  );
-  const [currentIndex, setCurrentIndex] = useState(0);
-
-  const translateX = useSharedValue(0);
-  const translateY = useSharedValue(0);
-  const swiping = useSharedValue(false);
-
-  const currentRole = roles[currentIndex % (roles.length || 1)];
-  const nextRole = roles[(currentIndex + 1) % (roles.length || 1)];
-  const deckEmpty = currentIndex >= roles.length;
-
-  const advanceCard = useCallback(() => {
-    if (!swiping.value) return;
-    swiping.value = false;
-    setCurrentIndex((i) => i + 1);
-    translateX.value = 0;
-    translateY.value = 0;
-  }, [translateX, translateY, swiping]);
-
-  const fnRef = useRef({ advanceCard });
-  fnRef.current.advanceCard = advanceCard;
-
-  const doAnimateOff = useCallback((direction: number) => {
-    if (swiping.value) return;
-    swiping.value = true;
-    translateX.value = withTiming(direction * SCREEN_W * 1.5, { duration: 300 }, (finished) => {
-      if (finished) {
-        runOnJS(fnRef.current.advanceCard)();
-      } else {
-        swiping.value = false;
-      }
-    });
-  }, [translateX, swiping]);
-
-  const fnRefOff = useRef(doAnimateOff);
-  fnRefOff.current = doAnimateOff;
-
-  // Keyboard shortcuts — on web, dragging a card isn't a discoverable interaction the
-  // way it is on a touch phone, and arrow keys mirroring left/right swipe is a common
-  // enough desktop pattern that it's worth wiring up alongside the on-card buttons.
-  useEffect(() => {
-    if (Platform.OS !== 'web') return;
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowLeft') fnRefOff.current(-1);
-      else if (e.key === 'ArrowRight') fnRefOff.current(1);
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, []);
-
-  const handlePanEnd = useCallback((dx: number) => {
-    if (swiping.value) return;
-    if (dx > SWIPE_THRESHOLD) {
-      fnRefOff.current(1);
-    } else if (dx < -SWIPE_THRESHOLD) {
-      fnRefOff.current(-1);
-    } else {
-      translateX.value = withSpring(0);
-      translateY.value = withSpring(0);
-    }
-  }, [translateX, translateY, swiping]);
-
-  const panGesture = useMemo(() => Gesture.Pan()
-    .minDistance(10)
-    .onUpdate((e) => {
-      if (swiping.value) return;
-      translateX.value = e.translationX;
-      translateY.value = e.translationY;
-    })
-    .onEnd((e) => {
-      runOnJS(handlePanEnd)(e.translationX);
-    }), [translateX, translateY, swiping, handlePanEnd]);
-
-  const cardAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [
-      { translateX: translateX.value },
-      { translateY: translateY.value },
-      { rotate: interpolate(translateX.value, [-SCREEN_W, 0, SCREEN_W], [-12, 0, 12]) + 'deg' },
-    ],
-  }));
-
-  const passOverlayStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(translateX.value, [-SCREEN_W * 0.5, 0], [1, 0], Extrapolation.CLAMP),
-  }));
-
-  const acceptOverlayStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(translateX.value, [0, SCREEN_W * 0.5], [0, 1], Extrapolation.CLAMP),
-  }));
-
-  return (
-    <View style={sd.container}>
-      {/* Header */}
-      <View style={sd.header}>
-        <Pressable style={sd.backBtn} onPress={onBack}>
-          <Ionicons name="arrow-back" size={20} color={T.textPrimary} />
-        </Pressable>
-        <View style={sd.headerCenter}>
-          <Ionicons name="compass" size={16} color={T.accent} />
-          <Text style={sd.headerTitle}>Explore</Text>
-        </View>
-        <View style={sd.headerRight}>
-          <Text style={sd.counterText}>{currentIndex + 1}/{roles.length}</Text>
-        </View>
-      </View>
-
-      {/* Keyboard-shortcut hint — web only, since arrow keys aren't a thing on touch */}
-      {Platform.OS === 'web' && !deckEmpty && (
-        <View style={sd.keyHintBar}>
-          <Ionicons name="arrow-back" size={12} color={T.textMuted} />
-          <Text style={sd.keyHintText}>Pass</Text>
-          <Text style={sd.keyHintDivider}>·</Text>
-          <Text style={sd.keyHintText}>Apply</Text>
-          <Ionicons name="arrow-forward" size={12} color={T.textMuted} />
-          <Text style={sd.keyHintDivider}>·</Text>
-          <Text style={sd.keyHintText}>or use the buttons below</Text>
-        </View>
-      )}
-
-      {/* Card Stack */}
-      <View style={sd.deckWrap}>
-        {deckEmpty ? (
-          <SwipeFadeContainer>
-            <View style={sd.emptyDeck}>
-              <View style={sd.emptyIcon}>
-                <Ionicons name="search" size={32} color={T.textMuted} />
-              </View>
-              <Text style={sd.emptyTitle}>All caught up!</Text>
-              <Text style={sd.emptySub}>You have reviewed all available opportunities. Check back later or adjust your filters.</Text>
-              <Pressable style={sd.resetBtn} onPress={onBack}>
-                <Ionicons name="refresh" size={16} color={T.textOnAccent} />
-                <Text style={sd.resetBtnText}>Adjust Filters</Text>
-              </Pressable>
-            </View>
-          </SwipeFadeContainer>
-        ) : (
-          <>
-            {nextRole && <JobSwipeCard role={nextRole} isTop={false} />}
-            <GestureDetector gesture={panGesture}>
-              <Animated.View style={[sd.animatedCard, cardAnimatedStyle]}>
-                <JobSwipeCard
-                  role={currentRole}
-                  isTop={true}
-                  onPass={() => fnRefOff.current(-1)}
-                  onSave={() => fnRefOff.current(0.5)}
-                  onApply={() => fnRefOff.current(1)}
-                />
-                <Animated.View pointerEvents="none" style={[sd.swipeOverlay, sd.passOverlay, passOverlayStyle]}>
-                  <Ionicons name="close-circle" size={48} color={T.danger} />
-                </Animated.View>
-                <Animated.View pointerEvents="none" style={[sd.swipeOverlay, sd.acceptOverlay, acceptOverlayStyle]}>
-                  <Ionicons name="checkmark-circle" size={48} color={T.emerald} />
-                </Animated.View>
-              </Animated.View>
-            </GestureDetector>
-          </>
-        )}
-
-        {/* Swipe hint animation */}
-        {!deckEmpty && <SwipeHint />}
-      </View>
-    </View>
-  );
-}
-
-// ═══════════════════════════════════════
-// MAIN SCREEN
-// ═══════════════════════════════════════
 export default function OpportunitiesScreen() {
   const T = useTheme();
-  const [mode, setMode] = useState<'filter' | 'swipe'>('filter');
-  const [filters, setFilters] = useState<RoleFilters | null>(null);
+  const st = useMemo(() => makeStyles(T), [T]);
+  const { candidateId } = useAuth();
+
+  const [pending, setPending] = useState<PendingIntro[] | null>(null);
+  const [accepted, setAccepted] = useState<AcceptedIntro[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    if (!candidateId) {
+      setPending([]);
+      return;
+    }
+
+    const { data: intros, error } = await supabase
+      .from('introductions')
+      .select('id, status, sent_at, response_window_hours')
+      .eq('candidate_id', candidateId)
+      .order('sent_at', { ascending: false });
+    if (error) {
+      console.warn('Failed to load introductions:', error.message);
+      setPending([]);
+      return;
+    }
+
+    const sentRows = (intros ?? []).filter((i) => i.status === 'sent');
+    const acceptedRows = (intros ?? []).filter((i) => i.status === 'accepted');
+
+    const previews: PendingIntro[] = [];
+    for (const row of sentRows) {
+      const { data: preview, error: previewErr } = await supabase
+        .rpc('get_introduction_preview', { p_introduction_id: row.id })
+        .maybeSingle<IntroductionPreviewRow>();
+      if (previewErr || !preview) continue;
+      const deadline = new Date(preview.sent_at).getTime() + preview.response_window_hours * 60 * 60 * 1000;
+      previews.push({
+        introductionId: preview.introduction_id,
+        status: preview.status,
+        sentAt: preview.sent_at,
+        responseWindowHours: preview.response_window_hours,
+        roleTitle: preview.role_title,
+        roleFunction: preview.role_function,
+        roleTier: preview.role_tier,
+        companyIndustry: preview.company_industry,
+        companySizeRange: preview.company_size_range,
+        expired: Date.now() > deadline,
+      });
+    }
+    setPending(previews);
+
+    const acceptedDetails: AcceptedIntro[] = [];
+    if (acceptedRows.length > 0) {
+      const { data: fullIntros } = await supabase
+        .from('introductions')
+        .select('id, role_id')
+        .in('id', acceptedRows.map((r) => r.id));
+      for (const intro of fullIntros ?? []) {
+        const { data: role } = await supabase.from('roles').select('title, tier, company_id').eq('id', intro.role_id).maybeSingle();
+        if (!role) continue;
+        const { data: company } = await supabase.from('companies').select('legal_name').eq('id', role.company_id).maybeSingle();
+        acceptedDetails.push({
+          introductionId: intro.id,
+          roleTitle: role.title,
+          roleTier: role.tier as Tier,
+          companyName: company?.legal_name ?? 'Company',
+        });
+      }
+    }
+    setAccepted(acceptedDetails);
+  }, [candidateId]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await load();
+    setRefreshing(false);
+  }, [load]);
+
+  const respond = async (introductionId: string, status: 'accepted' | 'declined') => {
+    setBusyId(introductionId);
+    const { error } = await supabase
+      .from('introductions')
+      .update({ status, responded_at: new Date().toISOString() })
+      .eq('id', introductionId);
+    setBusyId(null);
+    if (error) {
+      Alert.alert('Something went wrong', error.message);
+      return;
+    }
+    await load();
+  };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: T.bg }} edges={['top', 'left', 'right']}>
-      {mode === 'filter' ? (
-        <FilterSetup onStart={(f) => { setFilters(f); setMode('swipe'); }} />
+    <SafeAreaView style={st.container} edges={['top', 'left', 'right']}>
+      <View style={st.header}>
+        <Text style={st.headerTitle}>Introductions</Text>
+        <Text style={st.headerSub}>Companies interested in working with you</Text>
+      </View>
+
+      {pending === null ? (
+        <View style={st.centerFill}>
+          <ActivityIndicator color={T.accent} />
+        </View>
       ) : (
-        <JobSwipeDiscovery filters={filters} onBack={() => setMode('filter')} />
+        <ScrollView
+          contentContainerStyle={st.scroll}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={T.accent} colors={[T.accent]} />}
+        >
+          {pending.length === 0 && accepted.length === 0 && (
+            <View style={st.emptyBlock}>
+              <Ionicons name="mail-outline" size={28} color={T.textMuted} />
+              <Text style={st.emptyTitle}>No introductions yet</Text>
+              <Text style={st.emptySub}>
+                When a company wants to connect, it'll show up here. Complete verification to become eligible for matching.
+              </Text>
+            </View>
+          )}
+
+          {pending.filter((p) => !p.expired).map((intro) => {
+            const cfg = TIER_CONFIG[intro.roleTier];
+            const hoursLeft = Math.max(0, Math.round(
+              (new Date(intro.sentAt).getTime() + intro.responseWindowHours * 60 * 60 * 1000 - Date.now()) / (60 * 60 * 1000),
+            ));
+            return (
+              <View key={intro.introductionId} style={st.card}>
+                <View style={st.lockedRow}>
+                  <View style={st.lockIcon}>
+                    <Ionicons name="lock-closed" size={14} color={T.textMuted} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={st.lockedLabel}>Company identity revealed after you accept</Text>
+                    <Text style={st.metaText}>{intro.companyIndustry ?? 'Unknown industry'} · {intro.companySizeRange ?? 'Size not specified'}</Text>
+                  </View>
+                </View>
+                <Text style={st.roleTitle}>{intro.roleTitle}</Text>
+                <View style={[st.tierPill, { backgroundColor: cfg.accent + '14' }]}>
+                  <Text style={[st.tierText, { color: cfg.accent }]}>{cfg.label.toUpperCase()}</Text>
+                </View>
+                <Text style={st.deadlineText}>{hoursLeft}h left to respond</Text>
+                <View style={st.actionsRow}>
+                  <Pressable style={[st.actionBtn, st.declineBtn]} onPress={() => respond(intro.introductionId, 'declined')} disabled={busyId === intro.introductionId}>
+                    <Ionicons name="close" size={18} color={T.danger} />
+                    <Text style={st.declineText}>Decline</Text>
+                  </Pressable>
+                  <Pressable style={[st.actionBtn, st.acceptBtn]} onPress={() => respond(intro.introductionId, 'accepted')} disabled={busyId === intro.introductionId}>
+                    <Ionicons name="checkmark" size={18} color={T.emerald} />
+                    <Text style={st.acceptText}>Accept</Text>
+                  </Pressable>
+                </View>
+              </View>
+            );
+          })}
+
+          {accepted.length > 0 && (
+            <>
+              <Text style={st.sectionLabel}>ACCEPTED</Text>
+              {accepted.map((a) => {
+                const cfg = TIER_CONFIG[a.roleTier];
+                return (
+                  <View key={a.introductionId} style={st.card}>
+                    <View style={[st.tierPill, { backgroundColor: cfg.accent + '14', alignSelf: 'flex-start', marginBottom: 8 }]}>
+                      <Text style={[st.tierText, { color: cfg.accent }]}>{cfg.label.toUpperCase()}</Text>
+                    </View>
+                    <Text style={st.roleTitle}>{a.roleTitle}</Text>
+                    <View style={st.metaRow}>
+                      <Ionicons name="business-outline" size={14} color={T.textSecondary} />
+                      <Text style={st.metaText}>{a.companyName}</Text>
+                    </View>
+                  </View>
+                );
+              })}
+            </>
+          )}
+        </ScrollView>
       )}
     </SafeAreaView>
   );
 }
 
-// ═══════════════════════════════════════
-// STYLES — Filter Setup
-// ═══════════════════════════════════════
-const makeFilterStyles = (T: ThemePalette) => StyleSheet.create({
-  scroll: { paddingHorizontal: 20, paddingBottom: 40, backgroundColor: T.bg },
-  header: { alignItems: 'center', paddingTop: 12, paddingBottom: 24 },
-  headerIcon: { width: 48, height: 48, borderRadius: 16, backgroundColor: T.accentBg, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
-  headerTitle: { fontSize: 24, fontWeight: '800', color: T.textPrimary, marginBottom: 4 },
-  headerSub: { fontSize: 14, color: T.textSecondary, textAlign: 'center' },
-
-  budgetCard: { backgroundColor: T.card, borderRadius: 16, padding: 16, marginBottom: 24, borderWidth: 1, borderColor: T.border },
-  budgetRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  budgetIcon: { width: 36, height: 36, borderRadius: 12, backgroundColor: T.accentBg, alignItems: 'center', justifyContent: 'center' },
-  budgetTitle: { fontSize: 14, fontWeight: '700', color: T.textPrimary },
-  budgetSub: { fontSize: 12, color: T.textSecondary, marginTop: 2 },
-
-  filterSection: { marginBottom: 20 },
-  filterLabel: { fontSize: 13, fontWeight: '700', color: T.textPrimary, marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.3 },
-
-  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10, borderWidth: 1.5, borderColor: T.border, backgroundColor: T.card },
-  chipActive: { borderColor: T.accent, backgroundColor: T.accentBg },
-  chipText: { fontSize: 13, fontWeight: '600', color: T.textSecondary },
-  chipTextActive: { color: T.accent, fontWeight: '700' },
-
-  startBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: T.accent, borderRadius: 50, height: 56, marginTop: 8, shadowColor: T.accent, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.3, shadowRadius: 16, elevation: 4 },
-  startBtnText: { fontSize: 18, fontWeight: '700', color: T.textOnAccent },
-});
-
-// ═══════════════════════════════════════
-// STYLES — Job Swipe Card
-// ═══════════════════════════════════════
-const makeCardStyles = (T: ThemePalette) => StyleSheet.create({
-  card: {
-    position: 'absolute', width: '100%', height: CARD_HEIGHT,
-    backgroundColor: T.card, borderRadius: 24,
-    padding: 24, borderWidth: 1, borderColor: T.border,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.3, shadowRadius: 24, elevation: 6,
-  },
-  cardBehind: { top: 8, transform: [{ scale: 0.96 }], opacity: 0.5 },
-
-  companyHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 16 },
-  companyAvatar: { width: 48, height: 48, borderRadius: 14, backgroundColor: T.accentBg, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: T.accentBg20 },
-  companyIndustry: { fontSize: 14, fontWeight: '700', color: T.textPrimary },
-  companySize: { fontSize: 12, color: T.textSecondary, marginTop: 2 },
-  matchBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: T.accentBg, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
-  matchText: { fontSize: 13, fontWeight: '800', color: T.accent },
-
-  roleTitle: { fontSize: 22, fontWeight: '800', color: T.textPrimary, marginBottom: 4 },
-  roleFunction: { fontSize: 14, color: T.textSecondary, marginBottom: 16, fontWeight: '500' },
-
-  infoRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
-  infoBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: T.accentBg, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
-  infoText: { fontSize: 12, fontWeight: '700', color: T.accent },
-
-  detailRow: { flexDirection: 'row', gap: 16, marginBottom: 16 },
-  detailItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  detailText: { fontSize: 12, color: T.textMuted, fontWeight: '500' },
-
-  skillsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 16 },
-  skillChip: { backgroundColor: T.surface, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, borderWidth: 1, borderColor: T.border },
-  skillText: { fontSize: 12, fontWeight: '600', color: T.textSecondary },
-  skillChipNice: { backgroundColor: T.card, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, borderWidth: 1, borderColor: T.border, borderStyle: 'dashed' },
-  skillTextNice: { fontSize: 12, fontWeight: '500', color: T.textMuted, fontStyle: 'italic' },
-
-  footer: { alignItems: 'center', gap: 8 },
-  tierPill: { backgroundColor: T.accentBg, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 8 },
-  tierText: { fontSize: 10, fontWeight: '800', letterSpacing: 0.5, color: T.accent },
-  visDesc: { fontSize: 12, color: T.textMuted, textAlign: 'center', lineHeight: 18 },
-
-  /* In-card action buttons — compact */
-  cardActions: {
-    flexDirection: 'row', justifyContent: 'center', alignItems: 'center',
-    gap: 12, marginTop: 16, paddingTop: 12,
-    borderTopWidth: 1, borderTopColor: T.border,
-  },
-  cardActionBtn: {
-    width: 40, height: 40, borderRadius: 20,
-    backgroundColor: T.accentBg, borderWidth: 1.5, borderColor: T.accent,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  cardActionBtnDanger: { backgroundColor: T.dangerBg, borderColor: T.danger },
-  cardActionBtnSuccess: { backgroundColor: T.emeraldBg, borderColor: T.emerald },
-  deliverablesWrap: { marginBottom: 16, paddingTop: 12, borderTopWidth: 1, borderTopColor: T.border },
-  deliverablesTitle: { fontSize: 10, fontWeight: '800', color: T.textMuted, letterSpacing: 1.2, marginBottom: 10 },
-  deliverableRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginBottom: 6 },
-  deliverableDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: T.accent, marginTop: 5 },
-  deliverableText: { flex: 1, fontSize: 13, color: T.textSecondary, lineHeight: 18 },
-
-  cardActionBtnSmall: { width: 40, height: 40, borderRadius: 20 },
-  cardActionLabel: {
-    fontSize: 9, fontWeight: '700', color: T.accent,
-    marginTop: 2, letterSpacing: 0.3,
-  },
-});
-
-// ═══════════════════════════════════════
-// STYLES — Swipe Discovery
-// ═══════════════════════════════════════
-const makeDiscoveryStyles = (T: ThemePalette) => StyleSheet.create({
+const makeStyles = (T: ThemePalette) => StyleSheet.create({
   container: { flex: 1, backgroundColor: T.bg },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: T.border },
-  backBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: T.surface, alignItems: 'center', justifyContent: 'center' },
-  headerCenter: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  headerTitle: { fontSize: 18, fontWeight: '800', color: T.textPrimary },
-  headerRight: { alignItems: 'flex-end' },
-  counterText: { fontSize: 13, fontWeight: '700', color: T.accent, backgroundColor: T.accentBg, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
-
-  keyHintBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 8, backgroundColor: T.surface },
-  keyHintText: { fontSize: 11, fontWeight: '600', color: T.textMuted },
-  keyHintDivider: { fontSize: 11, color: T.border },
-
-  deckWrap: { flex: 1, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8, justifyContent: 'center', alignItems: 'center' },
-  animatedCard: { width: '100%', height: CARD_HEIGHT, zIndex: 10 },
-  swipeOverlay: {
-    position: 'absolute', top: 24, alignItems: 'center', justifyContent: 'center',
-    width: 64, height: 64, borderRadius: 32,
-  },
-  passOverlay: { left: 24, backgroundColor: T.dangerBg },
-  acceptOverlay: { right: 24, backgroundColor: T.emeraldBg },
-
-  emptyDeck: { alignItems: 'center', justifyContent: 'center', paddingTop: 80 },
-  emptyIcon: { width: 72, height: 72, borderRadius: 36, backgroundColor: T.surface, alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
-  emptyTitle: { fontSize: 20, fontWeight: '800', color: T.textPrimary, marginBottom: 8 },
-  emptySub: { fontSize: 14, color: T.textSecondary, textAlign: 'center', lineHeight: 20, paddingHorizontal: 30, marginBottom: 24 },
-  resetBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: T.accent, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 50 },
-  resetBtnText: { fontSize: 15, fontWeight: '700', color: T.textOnAccent },
+  header: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 16 },
+  headerTitle: { fontSize: 24, fontWeight: '800', color: T.textPrimary, letterSpacing: -0.3 },
+  headerSub: { fontSize: 14, color: T.textSecondary, marginTop: 4 },
+  centerFill: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  scroll: { paddingHorizontal: 20, paddingBottom: 32 },
+  sectionLabel: { fontSize: 12, fontWeight: '800', color: T.textMuted, letterSpacing: 0.5, marginTop: 8, marginBottom: 10 },
+  emptyBlock: { alignItems: 'center', paddingTop: 60, paddingHorizontal: 20 },
+  emptyTitle: { fontSize: 17, fontWeight: '800', color: T.textPrimary, marginTop: 12, marginBottom: 6 },
+  emptySub: { fontSize: 13, color: T.textSecondary, textAlign: 'center', lineHeight: 19 },
+  card: { backgroundColor: T.card, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: T.border },
+  lockedRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 },
+  lockIcon: { width: 32, height: 32, borderRadius: 10, backgroundColor: T.surface, alignItems: 'center', justifyContent: 'center' },
+  lockedLabel: { fontSize: 11, color: T.textMuted, fontWeight: '600', marginBottom: 2 },
+  roleTitle: { fontSize: 17, fontWeight: '700', color: T.textPrimary, marginBottom: 8 },
+  tierPill: { alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, marginBottom: 10 },
+  tierText: { fontSize: 10, fontWeight: '700', letterSpacing: 0.4 },
+  deadlineText: { fontSize: 12, color: T.amber, fontWeight: '600', marginBottom: 14 },
+  metaRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  metaText: { fontSize: 12, color: T.textSecondary },
+  actionsRow: { flexDirection: 'row', gap: 10 },
+  actionBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, height: 46, borderRadius: 12, borderWidth: 1.5 },
+  declineBtn: { backgroundColor: T.dangerBg, borderColor: T.danger },
+  declineText: { fontSize: 14, fontWeight: '700', color: T.danger },
+  acceptBtn: { backgroundColor: T.emeraldBg, borderColor: T.emerald },
+  acceptText: { fontSize: 14, fontWeight: '700', color: T.emerald },
 });
