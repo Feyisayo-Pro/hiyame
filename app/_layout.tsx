@@ -1,7 +1,7 @@
 import { useFonts } from 'expo-font';
-import { DefaultTheme, Stack, ThemeProvider } from 'expo-router';
+import { DefaultTheme, Stack, ThemeProvider, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View, StatusBar as RNStatusBar, Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
@@ -14,7 +14,32 @@ import { SwipeStoreProvider } from '@/lib/swipeStore';
 import { SubscriptionProvider } from '@/lib/subscriptionStore';
 import { HiyameThemeProvider, useTheme, ThemePalette } from '@/lib/theme';
 import { ChatProvider } from '@/lib/chatStore';
+import { AuthProvider, useAuth } from '@/lib/useAuth';
 import 'react-native-reanimated';
+
+// Redirects based on real auth state: signed out + outside (auth) -> welcome;
+// signed in with a resolved persona + inside (auth) -> that persona's home.
+// Renders nothing while the initial session/role check is in flight, same as
+// the existing font-loading gate below.
+function AuthGate({ children }: { children: ReactNode }) {
+  const { session, loading, role } = useAuth();
+  const segments = useSegments();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (loading) return;
+    const inAuthGroup = segments[0] === '(auth)';
+
+    if (!session && !inAuthGroup) {
+      router.replace('/(auth)/welcome');
+    } else if (session && role && inAuthGroup) {
+      router.replace(role === 'candidate' ? '/(candidate)' : '/(company)');
+    }
+  }, [loading, session, role, segments, router]);
+
+  if (loading) return null;
+  return <>{children}</>;
+}
 
 // Expo Router renders this in place of the whole app when the root layout throws —
 // it may mount outside HiyameThemeProvider, so useTheme() relies on its context
@@ -112,43 +137,47 @@ function RootLayoutNav() {
   const isWeb = Platform.OS === 'web';
 
   return (
-    <ApplicationProvider>
-      <SubscriptionProvider>
-        <SwipeStoreProvider>
-          <ChatProvider>
-            <VerificationProvider>
-              <CandidateProfileProvider>
-                <ThemeProvider value={navTheme}>
-                  {/* On web there's no phone frame to cap the width, so a desktop browser
-                      stretches every screen full-monitor-wide. This centers the app in the
-                      same column width lib/screen.ts clamps layout math to — same background
-                      as the content itself (no shadow/card treatment), so it reads as a
-                      website's content column, not a phone mockup floating in a box. */}
-                  <View style={isWeb ? { flex: 1, backgroundColor: T.bg, alignItems: 'center' } : { flex: 1 }}>
-                    <View
-                      style={
-                        isWeb
-                          ? { flex: 1, width: '100%', maxWidth: WEB_APP_MAX_WIDTH, backgroundColor: T.bg }
-                          : { flex: 1, backgroundColor: T.bg }
-                      }
-                    >
-                      <StatusBar style={statusStyle} />
-                      {Platform.OS === 'android' && (
-                        <RNStatusBar translucent backgroundColor="transparent" barStyle={barStyle} />
-                      )}
-                      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: T.bg } }}>
-                        <Stack.Screen name="(auth)" />
-                        <Stack.Screen name="(candidate)" />
-                        <Stack.Screen name="(company)" />
-                      </Stack>
+    <AuthProvider>
+      <ApplicationProvider>
+        <SubscriptionProvider>
+          <SwipeStoreProvider>
+            <ChatProvider>
+              <VerificationProvider>
+                <CandidateProfileProvider>
+                  <ThemeProvider value={navTheme}>
+                    {/* On web there's no phone frame to cap the width, so a desktop browser
+                        stretches every screen full-monitor-wide. This centers the app in the
+                        same column width lib/screen.ts clamps layout math to — same background
+                        as the content itself (no shadow/card treatment), so it reads as a
+                        website's content column, not a phone mockup floating in a box. */}
+                    <View style={isWeb ? { flex: 1, backgroundColor: T.bg, alignItems: 'center' } : { flex: 1 }}>
+                      <View
+                        style={
+                          isWeb
+                            ? { flex: 1, width: '100%', maxWidth: WEB_APP_MAX_WIDTH, backgroundColor: T.bg }
+                            : { flex: 1, backgroundColor: T.bg }
+                        }
+                      >
+                        <StatusBar style={statusStyle} />
+                        {Platform.OS === 'android' && (
+                          <RNStatusBar translucent backgroundColor="transparent" barStyle={barStyle} />
+                        )}
+                        <AuthGate>
+                          <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: T.bg } }}>
+                            <Stack.Screen name="(auth)" />
+                            <Stack.Screen name="(candidate)" />
+                            <Stack.Screen name="(company)" />
+                          </Stack>
+                        </AuthGate>
+                      </View>
                     </View>
-                  </View>
-                </ThemeProvider>
-              </CandidateProfileProvider>
-            </VerificationProvider>
-          </ChatProvider>
-        </SwipeStoreProvider>
-      </SubscriptionProvider>
-    </ApplicationProvider>
+                  </ThemeProvider>
+                </CandidateProfileProvider>
+              </VerificationProvider>
+            </ChatProvider>
+          </SwipeStoreProvider>
+        </SubscriptionProvider>
+      </ApplicationProvider>
+    </AuthProvider>
   );
 }

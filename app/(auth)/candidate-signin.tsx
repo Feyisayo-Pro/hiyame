@@ -5,6 +5,7 @@ import { Text } from '@/components/Themed';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, ThemePalette } from '@/lib/theme';
+import { supabase } from '@/lib/supabase';
 
 export default function CandidateSignInScreen() {
   const T = useTheme();
@@ -14,7 +15,7 @@ export default function CandidateSignInScreen() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [errors, setErrors] = useState<{ email?: string; password?: string; general?: string }>({});
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(24)).current;
@@ -42,15 +43,24 @@ export default function CandidateSignInScreen() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSignIn = () => {
+  const handleSignIn = async () => {
     if (!validate()) return;
     setLoading(true);
+    setErrors((e) => ({ ...e, general: undefined }));
 
-    // Simulated auth delay — Supabase Auth integration in Milestone 2
-    setTimeout(() => {
-      setLoading(false);
-      router.replace('/(candidate)/');
-    }, 1200);
+    const { error } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password,
+    });
+
+    setLoading(false);
+    if (error) {
+      setErrors((e) => ({ ...e, general: error.message }));
+      return;
+    }
+    // AuthProvider picks up the new session via onAuthStateChange and the
+    // routing guard in app/_layout.tsx routes to the right persona home.
+    router.replace('/(candidate)');
   };
 
   return (
@@ -126,6 +136,13 @@ export default function CandidateSignInScreen() {
               <Text style={st.forgotText}>Forgot password?</Text>
             </Pressable>
 
+            {errors.general && (
+              <View style={st.generalErrorBanner}>
+                <Ionicons name="alert-circle" size={16} color={T.danger} />
+                <Text style={st.generalErrorText}>{errors.general}</Text>
+              </View>
+            )}
+
             {/* Spacer between forgot link and sign-in button */}
             <View style={st.spacer} />
 
@@ -199,6 +216,14 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
 
   /* Spacer */
   spacer: { height: 16 },
+
+  /* General auth error */
+  generalErrorBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: T.dangerBg, borderRadius: 12, borderWidth: 1, borderColor: T.danger,
+    paddingHorizontal: 14, paddingVertical: 12, marginTop: 8,
+  },
+  generalErrorText: { flex: 1, fontSize: 13, fontWeight: '600', color: T.danger, lineHeight: 18 },
 
   /* Button */
   signInButton: {

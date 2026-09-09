@@ -15,10 +15,11 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, ThemePalette } from '@/lib/theme';
 import { useSubscription, SubscriptionTier } from '@/lib/subscriptionStore';
+import { supabase } from '@/lib/supabase';
 
 /* ── Constants ── */
 
-const TOTAL_STEPS = 4;
+const TOTAL_STEPS = 5;
 
 const INDUSTRIES = [
   'Technology', 'Financial Services', 'Healthcare', 'Education',
@@ -129,6 +130,11 @@ export default function CompanySignupScreen() {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Step 0 — Account
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+
   // Step 1 — Corporate Identity
   const [companyName, setCompanyName] = useState('');
   const [taxId, setTaxId] = useState('');
@@ -158,34 +164,79 @@ export default function CompanySignupScreen() {
     const newErrors: Record<string, string> = {};
 
     if (step === 0) {
-      if (!companyName.trim()) newErrors.companyName = 'Company name is required';
+      if (!email.trim()) {
+        newErrors.email = 'Email is required';
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+        newErrors.email = 'Enter a valid email address';
+      }
+      if (!password) {
+        newErrors.password = 'Password is required';
+      } else if (password.length < 6) {
+        newErrors.password = 'Password must be at least 6 characters';
+      }
     } else if (step === 1) {
+      if (!companyName.trim()) newErrors.companyName = 'Company name is required';
+    } else if (step === 2) {
       if (!industry) newErrors.industry = 'Select your industry';
       if (!companySize) newErrors.companySize = 'Select company size';
-    } else if (step === 2) {
+    } else if (step === 3) {
       if (!bio.trim()) newErrors.bio = 'A brief description is required';
     }
-    // Step 3 (tier) always valid — has a default
+    // Step 4 (tier) always valid — has a default
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  }, [step, companyName, industry, companySize, bio]);
+  }, [step, email, password, companyName, industry, companySize, bio]);
 
-  const handleNext = useCallback(() => {
+  const handleNext = useCallback(async () => {
     if (!validateStep()) return;
 
     if (step < TOTAL_STEPS - 1) {
       setStep(step + 1);
-    } else {
-      // Final submit
-      setLoading(true);
-      setTier(selectedTier);
-      setTimeout(() => {
-        setLoading(false);
-        router.replace('/(company)/');
-      }, 800);
+      return;
     }
-  }, [step, validateStep, selectedTier, setTier]);
+
+    // Final submit. Company profile fields are stashed in auth user_metadata
+    // rather than created directly — this project requires email confirmation,
+    // so signUp() often returns no session yet (the create_company_and_claim
+    // RPC needs auth.uid(), which doesn't exist until they confirm).
+    // lib/useAuth.ts finishes the RPC call the first time a confirmed session
+    // shows up.
+    setLoading(true);
+    setErrors((e) => ({ ...e, general: '' }));
+
+    const { data, error } = await supabase.auth.signUp({
+      email: email.trim(),
+      password,
+      options: {
+        data: {
+          pending_signup: 'company',
+          legal_name: companyName.trim(),
+          trading_name: companyName.trim(),
+          industry,
+          size_range: companySize,
+          hq_location: hqLocation.trim(),
+          website_url: website.trim(),
+          description: bio.trim(),
+        },
+      },
+    });
+
+    if (error) {
+      setLoading(false);
+      setErrors((e) => ({ ...e, general: error.message }));
+      return;
+    }
+
+    setTier(selectedTier);
+    setLoading(false);
+
+    if (!data.session) {
+      setErrors((e) => ({ ...e, general: 'Check your email to confirm your account, then sign in.' }));
+      return;
+    }
+    router.replace('/(company)');
+  }, [step, validateStep, selectedTier, setTier, email, password, companyName, industry, companySize, hqLocation, website, bio]);
 
   const handleBack = useCallback(() => {
     if (step > 0) {
@@ -197,6 +248,51 @@ export default function CompanySignupScreen() {
   }, [step]);
 
   /* ── Step Renderers ── */
+
+  const renderAccountStep = () => (
+    <>
+      <Text style={st.stepTitle}>Create Your Account</Text>
+      <Text style={st.stepSubtitle}>You'll use this to sign in to your hiring workspace</Text>
+
+      <View style={st.fieldWrap}>
+        <Text style={st.label}>Work Email *</Text>
+        <View style={[st.inputWrap, errors.email ? st.inputError : null]}>
+          <Ionicons name="mail-outline" size={18} color={errors.email ? T.danger : T.textMuted} />
+          <TextInput
+            style={st.input}
+            placeholder="hiring@company.com"
+            placeholderTextColor={T.textMuted}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoComplete="email"
+            value={email}
+            onChangeText={(t) => { setEmail(t); clearError('email'); }}
+          />
+        </View>
+        {errors.email ? <Text style={st.errorText}>{errors.email}</Text> : null}
+      </View>
+
+      <View style={st.fieldWrap}>
+        <Text style={st.label}>Password *</Text>
+        <View style={[st.inputWrap, errors.password ? st.inputError : null]}>
+          <Ionicons name="lock-closed-outline" size={18} color={errors.password ? T.danger : T.textMuted} />
+          <TextInput
+            style={st.input}
+            placeholder="At least 6 characters"
+            placeholderTextColor={T.textMuted}
+            secureTextEntry={!showPassword}
+            autoCapitalize="none"
+            value={password}
+            onChangeText={(t) => { setPassword(t); clearError('password'); }}
+          />
+          <Pressable onPress={() => setShowPassword(!showPassword)} hitSlop={8}>
+            <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color={T.textMuted} />
+          </Pressable>
+        </View>
+        {errors.password ? <Text style={st.errorText}>{errors.password}</Text> : null}
+      </View>
+    </>
+  );
 
   const renderStep0 = () => (
     <>
@@ -450,8 +546,8 @@ export default function CompanySignupScreen() {
     </>
   );
 
-  const stepRenderers = [renderStep0, renderStep1, renderStep2, renderStep3];
-  const stepLabels = ['Corporate Identity', 'Industry & Scale', 'Bio & Branding', 'Choose Plan'];
+  const stepRenderers = [renderAccountStep, renderStep0, renderStep1, renderStep2, renderStep3];
+  const stepLabels = ['Create Account', 'Corporate Identity', 'Industry & Scale', 'Bio & Branding', 'Choose Plan'];
 
   return (
     <SafeAreaView style={st.container} edges={['top', 'left', 'right', 'bottom']}>
@@ -488,6 +584,13 @@ export default function CompanySignupScreen() {
               </View>
 
               {stepRenderers[step]()}
+
+              {errors.general ? (
+                <View style={st.generalErrorBanner}>
+                  <Ionicons name="alert-circle" size={16} color={T.danger} />
+                  <Text style={st.generalErrorText}>{errors.general}</Text>
+                </View>
+              ) : null}
 
               {/* Continue / Submit Button */}
               <View style={{ marginTop: 8 }}>
@@ -556,6 +659,12 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
     borderWidth: 1, borderColor: T.accentBg20,
   },
   infoText: { flex: 1, fontSize: 13, color: T.accent, lineHeight: 18, fontWeight: '500' },
+  generalErrorBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: T.dangerBg, borderRadius: 12, borderWidth: 1, borderColor: T.danger,
+    paddingHorizontal: 14, paddingVertical: 12, marginBottom: 16,
+  },
+  generalErrorText: { flex: 1, fontSize: 13, fontWeight: '600', color: T.danger, lineHeight: 18 },
   continueButton: {
     backgroundColor: T.accent, borderRadius: 50,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',

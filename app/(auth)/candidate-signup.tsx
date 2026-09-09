@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useCandidateProfile } from '@/lib/candidateProfile';
 import { useTheme, ThemePalette } from '@/lib/theme';
+import { supabase } from '@/lib/supabase';
 
 const SUGGESTED_SKILLS = [
   'React Native', 'TypeScript', 'Node.js', 'Python', 'PostgreSQL',
@@ -28,6 +29,9 @@ export default function CandidateSignupScreen() {
 
   const { setProfile } = useCandidateProfile();
 
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [fullName, setFullName] = useState('');
   const [professionalTitle, setProfessionalTitle] = useState('');
   const [skillInput, setSkillInput] = useState('');
@@ -51,6 +55,16 @@ export default function CandidateSignupScreen() {
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
+    if (!email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      newErrors.email = 'Enter a valid email address';
+    }
+    if (!password) {
+      newErrors.password = 'Password is required';
+    } else if (password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
+    }
     if (!fullName.trim()) newErrors.fullName = 'Full name is required';
     if (!professionalTitle.trim()) newErrors.title = 'Professional title is required';
     if (coreSkills.length === 0) newErrors.skills = 'Add at least one core skill';
@@ -63,9 +77,35 @@ export default function CandidateSignupScreen() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validate()) return;
     setLoading(true);
+    setErrors((e) => ({ ...e, general: '' }));
+
+    // Profile fields are stashed in auth user_metadata rather than inserted into
+    // `candidates` directly — this project requires email confirmation, so
+    // signUp() often returns no session yet (RLS needs auth.uid(), which doesn't
+    // exist until they confirm). lib/useAuth.ts finishes creating the real
+    // candidates row the first time a confirmed session shows up.
+    const { data, error } = await supabase.auth.signUp({
+      email: email.trim(),
+      password,
+      options: {
+        data: {
+          pending_signup: 'candidate',
+          full_name: fullName.trim(),
+          core_skills: coreSkills,
+          target_min_rate: Number(rateInput),
+        },
+      },
+    });
+
+    if (error) {
+      setLoading(false);
+      setErrors((e) => ({ ...e, general: error.message }));
+      return;
+    }
+
     setProfile({
       fullName: fullName.trim(),
       professionalTitle: professionalTitle.trim(),
@@ -73,10 +113,15 @@ export default function CandidateSignupScreen() {
       targetMinRate: Number(rateInput),
       photos: [],
     });
-    setTimeout(() => {
-      setLoading(false);
-      router.replace('/(candidate)/verification');
-    }, 800);
+
+    setLoading(false);
+    if (!data.session) {
+      // No session yet — confirmation email sent, nothing more to do here until
+      // they confirm and sign in for the first time.
+      setErrors((e) => ({ ...e, general: 'Check your email to confirm your account, then sign in.' }));
+      return;
+    }
+    router.replace('/(candidate)/verification');
   };
 
   const availableSuggestions = SUGGESTED_SKILLS.filter((s) => !coreSkills.includes(s));
@@ -107,6 +152,44 @@ export default function CandidateSignupScreen() {
               <Text style={st.subtitle}>
                 This information helps us match you with the right opportunities. You'll complete verification next.
               </Text>
+            </View>
+
+            <View style={st.fieldWrap}>
+              <Text style={st.label}>Email Address</Text>
+              <View style={[st.inputWrap, errors.email ? st.inputError : null]}>
+                <Ionicons name="mail-outline" size={18} color={errors.email ? T.danger : T.textMuted} />
+                <TextInput
+                  style={st.input}
+                  placeholder="you@example.com"
+                  placeholderTextColor={T.textMuted}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoComplete="email"
+                  value={email}
+                  onChangeText={(t) => { setEmail(t); setErrors((e) => ({ ...e, email: '' })); }}
+                />
+              </View>
+              {errors.email ? <Text style={st.errorText}>{errors.email}</Text> : null}
+            </View>
+
+            <View style={st.fieldWrap}>
+              <Text style={st.label}>Password</Text>
+              <View style={[st.inputWrap, errors.password ? st.inputError : null]}>
+                <Ionicons name="lock-closed-outline" size={18} color={errors.password ? T.danger : T.textMuted} />
+                <TextInput
+                  style={st.input}
+                  placeholder="At least 6 characters"
+                  placeholderTextColor={T.textMuted}
+                  secureTextEntry={!showPassword}
+                  autoCapitalize="none"
+                  value={password}
+                  onChangeText={(t) => { setPassword(t); setErrors((e) => ({ ...e, password: '' })); }}
+                />
+                <Pressable onPress={() => setShowPassword(!showPassword)} hitSlop={8}>
+                  <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color={T.textMuted} />
+                </Pressable>
+              </View>
+              {errors.password ? <Text style={st.errorText}>{errors.password}</Text> : null}
             </View>
 
             <View style={st.fieldWrap}>
@@ -216,6 +299,13 @@ export default function CandidateSignupScreen() {
               </Text>
             </View>
 
+            {errors.general ? (
+              <View style={st.generalErrorBanner}>
+                <Ionicons name="alert-circle" size={16} color={T.danger} />
+                <Text style={st.generalErrorText}>{errors.general}</Text>
+              </View>
+            ) : null}
+
             <Pressable
               style={[st.submitButton, loading && st.submitButtonDisabled]}
               onPress={handleSubmit}
@@ -294,6 +384,12 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
     borderWidth: 1, borderColor: T.accentBg20,
   },
   infoText: { flex: 1, fontSize: 13, color: T.accent, lineHeight: 18, fontWeight: '500' },
+  generalErrorBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: T.dangerBg, borderRadius: 12, borderWidth: 1, borderColor: T.danger,
+    paddingHorizontal: 14, paddingVertical: 12, marginBottom: 16,
+  },
+  generalErrorText: { flex: 1, fontSize: 13, fontWeight: '600', color: T.danger, lineHeight: 18 },
   submitButton: {
     backgroundColor: T.accent, borderRadius: 50,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',

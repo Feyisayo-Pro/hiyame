@@ -42,6 +42,7 @@
     "web": "expo start --web",
     "web:build": "expo export -p web && node scripts/fix-vercel-web-assets.js",
     "migrate:strivo": "tsx scripts/migrate-strivo-data.ts",
-    "migrate:strivo:apply": "tsx scripts/migrate-strivo-data.ts --apply"
+    "migrate:strivo:apply": "tsx scripts/migrate-strivo-data.ts --apply",
+    "invite:strivo": "tsx scripts/invite-strivo-users.ts"
   }
 }
