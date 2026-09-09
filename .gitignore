@@ -34,6 +34,12 @@ yarn-error.*
 .env*.local
 .env
 
+# Strivo migration — real candidate/client PII and a service-role key must
+# never be committed. See scripts/migrate-strivo-data.ts.
+scripts/.env.migration
+scripts/firebase-export-data/
+scripts/migration-report.json
+
 # typescript
 *.tsbuildinfo
 
