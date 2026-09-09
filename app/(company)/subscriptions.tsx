@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,6 +8,7 @@ import { Text } from '@/components/Themed';
 import { useTheme, ThemePalette } from '@/lib/theme';
 import { useSubscription, SubscriptionTier } from '@/lib/subscriptionStore';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
+import { notify } from '@/lib/notify';
 
 // ── Plan copy (maps onto the underlying pilot/starter/growth/enterprise tiers) ──
 interface PricingPlan {
@@ -164,7 +165,7 @@ export default function SubscriptionsScreen() {
     const payload = buildCheckoutPayload(plan);
     console.log('[Paystack] Initiating checkout with payload:', payload);
 
-    Alert.alert(
+    notify(
       'Paystack Secure Checkout',
       'Connecting to Paystack Secure Checkout Gateway...',
       [

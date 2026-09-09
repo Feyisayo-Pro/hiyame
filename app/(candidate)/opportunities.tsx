@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, useMemo } from 'react';
-import { Pressable, RefreshControl, ScrollView, StyleSheet, View, ActivityIndicator, Alert } from 'react-native';
+import { Pressable, RefreshControl, ScrollView, StyleSheet, View, ActivityIndicator } from 'react-native';
 import { Text } from '@/components/Themed';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -7,6 +7,7 @@ import { useTheme, ThemePalette } from '@/lib/theme';
 import { useAuth } from '@/lib/useAuth';
 import { supabase } from '@/lib/supabase';
 import { TIER_CONFIG, Tier } from '@/lib/mock-data';
+import { notify } from '@/lib/notify';
 
 // Replaces the old Tinder-style swipe deck over mock roles. Under the real
 // architecture, candidates don't browse and swipe an open pool — a company's
@@ -141,7 +142,7 @@ export default function OpportunitiesScreen() {
       .eq('id', introductionId);
     setBusyId(null);
     if (error) {
-      Alert.alert('Something went wrong', error.message);
+      notify('Something went wrong', error.message);
       return;
     }
     await load();

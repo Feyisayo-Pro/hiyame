@@ -1,5 +1,5 @@
 import { useMemo, useState, useCallback } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,6 +8,7 @@ import { Text } from '@/components/Themed';
 import { useTheme, ThemePalette } from '@/lib/theme';
 import { useSubscription } from '@/lib/subscriptionStore';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
+import { notify } from '@/lib/notify';
 
 function initialsFor(email: string): string {
   const name = email.split('@')[0];
@@ -28,7 +29,7 @@ export default function TeamMembersScreen() {
 
   const handleInvite = useCallback(() => {
     if (seatsFull) {
-      Alert.alert(
+      notify(
         'Seat Limit Reached',
         `Your ${config.name} plan is limited to ${seatCap} team seat${seatCap === 1 ? '' : 's'}. Upgrade to Enterprise for unlimited seats.`,
         [
@@ -45,7 +46,7 @@ export default function TeamMembersScreen() {
   }, [seatsFull, config.name, seatCap, router, inviteEmail, addTeamMember]);
 
   const handleRemove = useCallback((member: { id: string; name: string }) => {
-    Alert.alert(
+    notify(
       'Remove Team Member',
       `Remove ${member.name} from your team? This frees up a seat immediately.`,
       [

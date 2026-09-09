@@ -13,10 +13,11 @@ import { TIER_CONFIG, Tier } from '@/lib/mock-data';
 // candidate pool. Under the real architecture, matching is per-ROLE (a company
 // posts a role, the matching engine scores candidates against it, producing a
 // shortlist) — so the company's entry point is "my roles", not "swipe
-// everyone". Tapping a role goes to its computed shortlist (shortlist.tsx).
-// Role-creation UI doesn't exist yet — this screen only lists roles that
-// already exist (today, that's the migrated Strivo roles for companies that
-// came from that import; a fresh signup sees an empty list).
+// everyone". Tapping a role goes to its computed shortlist (shortlist.tsx);
+// "+ Post a Role" goes to create-role.tsx. Note: posting a role here doesn't
+// trigger scoring — the matching engine only runs via the operator-invoked
+// scripts/run-matching.ts, so a freshly-posted role's shortlist stays empty
+// until someone runs it. That's a real, current limitation, not a bug.
 
 interface RoleListItem {
   id: string;
@@ -94,8 +95,13 @@ export default function CompanyRolesScreen() {
   return (
     <SafeAreaView style={st.container} edges={['top', 'left', 'right']}>
       <View style={st.header}>
-        <Text style={st.headerTitle}>My Roles</Text>
-        <Text style={st.headerSub}>Tap a role to review its shortlist</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={st.headerTitle}>My Roles</Text>
+          <Text style={st.headerSub}>Tap a role to review its shortlist</Text>
+        </View>
+        <Pressable style={st.postButton} onPress={() => router.push('/(company)/create-role')}>
+          <Ionicons name="add" size={20} color={T.textOnAccent} />
+        </Pressable>
       </View>
 
       {roles === null ? (
@@ -111,7 +117,11 @@ export default function CompanyRolesScreen() {
             <Ionicons name="briefcase-outline" size={32} color={T.textMuted} />
           </View>
           <Text style={st.emptyTitle}>No roles yet</Text>
-          <Text style={st.emptySub}>Roles you post will show up here with their computed shortlist.</Text>
+          <Text style={st.emptySub}>Post your first role to start building a shortlist.</Text>
+          <Pressable style={st.emptyPostButton} onPress={() => router.push('/(company)/create-role')}>
+            <Ionicons name="add" size={18} color={T.textOnAccent} />
+            <Text style={st.emptyPostButtonText}>Post a Role</Text>
+          </Pressable>
         </ScrollView>
       ) : (
         <ScrollView
@@ -152,7 +162,12 @@ export default function CompanyRolesScreen() {
 
 const makeStyles = (T: ThemePalette) => StyleSheet.create({
   container: { flex: 1, backgroundColor: T.bg },
-  header: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 16 },
+  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingTop: 12, paddingBottom: 16 },
+  postButton: {
+    width: 44, height: 44, borderRadius: 22, backgroundColor: T.accent,
+    alignItems: 'center', justifyContent: 'center',
+    shadowColor: T.accent, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 3,
+  },
   headerTitle: { fontSize: 24, fontWeight: '800', color: T.textPrimary, letterSpacing: -0.3 },
   headerSub: { fontSize: 14, color: T.textSecondary, marginTop: 4 },
   centerFill: { flex: 1, alignItems: 'center', justifyContent: 'center' },
@@ -163,7 +178,12 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
     alignItems: 'center', justifyContent: 'center', marginBottom: 16,
   },
   emptyTitle: { fontSize: 18, fontWeight: '800', color: T.textPrimary, marginBottom: 6 },
-  emptySub: { fontSize: 14, color: T.textSecondary, textAlign: 'center', lineHeight: 20 },
+  emptySub: { fontSize: 14, color: T.textSecondary, textAlign: 'center', lineHeight: 20, marginBottom: 20 },
+  emptyPostButton: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: T.accent, paddingHorizontal: 20, paddingVertical: 12, borderRadius: 50,
+  },
+  emptyPostButtonText: { fontSize: 14, fontWeight: '700', color: T.textOnAccent },
   card: {
     backgroundColor: T.card, borderRadius: 16, padding: 16, marginBottom: 12,
     borderWidth: 1, borderColor: T.border,

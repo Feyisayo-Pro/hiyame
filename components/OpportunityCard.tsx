@@ -1,6 +1,5 @@
 import { useRef, useEffect, useState, useMemo} from 'react';
 import { Animated, Pressable, StyleSheet, View } from 'react-native';
-import { router } from 'expo-router';
 import { Text } from '@/components/Themed';
 import { Ionicons } from '@expo/vector-icons';
 import { Role, TIER_CONFIG } from '@/lib/mock-data';
@@ -78,10 +77,11 @@ export default function OpportunityCard({
         ? `Hybrid · ${role.location_city}`
         : `${role.location_city}, ${role.location_country}`;
 
-  const detailPath =
-    routeGroup === 'company'
-      ? ('/(company)/role/[id]' as const)
-      : ('/(candidate)/role/[id]' as const);
+  // Note: there is no role-detail screen anymore (app/(company)/role/[id].tsx
+  // and app/(candidate)/role/[id].tsx were removed as disconnected prototypes
+  // — see the cleanup commit). This card no longer navigates anywhere on tap;
+  // `routeGroup` is kept for future use but currently unused.
+  void routeGroup;
 
   // ── Shared card content (tier pill, company, role info, meta, skills) ──
   const cardContent = (
@@ -186,14 +186,12 @@ export default function OpportunityCard({
   }
 
   // ── CORPORATE / SHORT-TERM: Standard card with apply/lock ──
+  // Plain View, not Pressable — there's no detail screen to navigate to
+  // anymore (see the note above), so this no longer implies tap affordance
+  // it can't deliver. The Apply/Locked control below is still interactive.
   return (
     <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }, { scale: scaleAnim }] }}>
-      <Pressable
-        style={st.card}
-        onPress={() => router.push({ pathname: detailPath, params: { id: role.id } })}
-        onPressIn={() => Animated.spring(scaleAnim, { toValue: 0.98, useNativeDriver: true }).start()}
-        onPressOut={() => Animated.spring(scaleAnim, { toValue: 1, friction: 3, useNativeDriver: true }).start()}
-      >
+      <View style={st.card}>
         {cardContent}
 
         {applied ? (
@@ -228,7 +226,7 @@ export default function OpportunityCard({
             )}
           </View>
         )}
-      </Pressable>
+      </View>
     </Animated.View>
   );
 }

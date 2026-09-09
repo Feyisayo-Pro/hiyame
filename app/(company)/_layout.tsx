@@ -85,6 +85,7 @@ export default function CompanyTabLayout() {
       {/* Hidden routes */}
       <Tabs.Screen name="profile" options={{ href: null }} />
       <Tabs.Screen name="shortlist" options={{ href: null }} />
+      <Tabs.Screen name="create-role" options={{ href: null }} />
       <Tabs.Screen name="notifications" options={{ href: null }} />
       <Tabs.Screen name="settings" options={{ href: null }} />
       <Tabs.Screen name="subscriptions" options={{ href: null }} />

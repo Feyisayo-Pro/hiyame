@@ -1,4 +1,4 @@
-import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useMemo } from 'react';
 import { Text } from '@/components/Themed';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -8,6 +8,7 @@ import { useCandidateProfile } from '@/lib/candidateProfile';
 import { useVerification } from '@/lib/useVerification';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import { useTheme, useThemeToggle, ThemePalette } from '@/lib/theme';
+import { notify } from '@/lib/notify';
 
 export default function CandidateProfileScreen() {
   const T = useTheme();
@@ -49,7 +50,7 @@ export default function CandidateProfileScreen() {
             onPress={() => {
               const mockUri = `mock-photo://${Date.now()}-${photos.length}`;
               setPhotos([...photos, mockUri]);
-              Alert.alert('Photo Upload', 'Profile picture added! In production this will open your camera roll.');
+              notify('Photo Upload', 'Profile picture added! In production this will open your camera roll.');
             }}
           >
             <View style={[st.avatar, isFullyVerified && st.avatarVerified]}>
