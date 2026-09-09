@@ -9,7 +9,7 @@ import { useTheme, ThemePalette } from '@/lib/theme';
 import { useSubscription, SubscriptionTier } from '@/lib/subscriptionStore';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 
-// ── Plan copy (maps onto the underlying scout/hire/scale tiers) ──
+// ── Plan copy (maps onto the underlying pilot/starter/growth/enterprise tiers) ──
 interface PricingPlan {
   id: SubscriptionTier;
   name: string;
@@ -22,7 +22,20 @@ interface PricingPlan {
 
 const PLANS: PricingPlan[] = [
   {
-    id: 'scout',
+    id: 'pilot',
+    name: 'Pilot',
+    subtitle: 'Try it out',
+    price: '₦0',
+    period: '/mo',
+    features: [
+      '1 candidate match / month',
+      'Basic search & filtering',
+      'Standard email support',
+      '1 team seat',
+    ],
+  },
+  {
+    id: 'starter',
     name: 'Starter',
     subtitle: 'Free',
     price: '₦0',
@@ -35,7 +48,7 @@ const PLANS: PricingPlan[] = [
     ],
   },
   {
-    id: 'hire',
+    id: 'growth',
     name: 'Growth',
     subtitle: 'Pro',
     price: '₦250,000',
@@ -49,7 +62,7 @@ const PLANS: PricingPlan[] = [
     highlight: true,
   },
   {
-    id: 'scale',
+    id: 'enterprise',
     name: 'Enterprise',
     subtitle: 'Scale',
     price: '₦650,000',

@@ -1,7 +1,11 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 
 // ── Tier Definitions ──
-export type SubscriptionTier = 'scout' | 'hire' | 'scale';
+// Matches the architecture doc's companies.plan_tier enum exactly
+// (pilot|starter|growth|enterprise). 'pilot' is new — a free, more limited
+// trial tier below 'starter' — the other three are a straight rename of the
+// former scout/hire/scale, same features/pricing, unchanged.
+export type SubscriptionTier = 'pilot' | 'starter' | 'growth' | 'enterprise';
 
 export interface TierConfig {
   name: string;
@@ -18,7 +22,20 @@ export interface TierConfig {
 }
 
 export const TIER_CONFIGS: Record<SubscriptionTier, TierConfig> = {
-  scout: {
+  pilot: {
+    name: 'Pilot',
+    price: 0,
+    swipesPerDay: 3,
+    activeMatchesCap: 1,
+    activeConversationsCap: 1,
+    advancedFilters: false,
+    reliabilityVisible: false,
+    atsIntegration: false,
+    savedSearches: false,
+    hiringAnalytics: false,
+    teamSeatCap: 1,
+  },
+  starter: {
     name: 'Starter',
     price: 0,
     swipesPerDay: 10,
@@ -31,7 +48,7 @@ export const TIER_CONFIGS: Record<SubscriptionTier, TierConfig> = {
     hiringAnalytics: false,
     teamSeatCap: 1,
   },
-  hire: {
+  growth: {
     name: 'Growth',
     price: 250000,
     swipesPerDay: 50,
@@ -44,7 +61,7 @@ export const TIER_CONFIGS: Record<SubscriptionTier, TierConfig> = {
     hiringAnalytics: false,
     teamSeatCap: 3,
   },
-  scale: {
+  enterprise: {
     name: 'Enterprise',
     price: 650000,
     swipesPerDay: -1,
@@ -83,7 +100,7 @@ export interface SubscriptionState {
   recordSwipe: () => boolean;  // returns false if capped
   setTier: (t: SubscriptionTier) => void;
 
-  // Team seats (per-tier cap; Growth = 3, Starter = 1, Enterprise = unlimited)
+  // Team seats (per-tier cap; Growth = 3, Pilot/Starter = 1, Enterprise = unlimited)
   teamMembers: TeamMember[];
   canInviteTeamMember: boolean;
   addTeamMember: (member: Omit<TeamMember, 'id'>) => boolean; // returns false if capped
@@ -93,7 +110,7 @@ export interface SubscriptionState {
 const SubscriptionContext = createContext<SubscriptionState | null>(null);
 
 export function SubscriptionProvider({ children }: { children: ReactNode }) {
-  const [tier, setTierState] = useState<SubscriptionTier>('scale');
+  const [tier, setTierState] = useState<SubscriptionTier>('enterprise');
   const [swipesToday, setSwipesToday] = useState(0);
   const [trialDaysLeft] = useState(14);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>(INITIAL_TEAM_MEMBERS);

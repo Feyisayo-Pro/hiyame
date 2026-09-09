@@ -47,29 +47,37 @@ interface PlanCard {
 
 const PLANS: PlanCard[] = [
   {
-    key: 'scout',
-    name: 'Scout',
+    key: 'pilot',
+    name: 'Pilot',
+    price: '₦0',
+    period: '/month',
+    tagline: 'Try Hiyame with one active role',
+    features: ['3 candidate reviews/day', 'Basic filters', '1 active match', 'Email support'],
+  },
+  {
+    key: 'starter',
+    name: 'Starter',
     price: '₦0',
     period: '/month',
     tagline: 'Get started for free',
-    features: ['10 daily swipes', 'Basic filters', '3 active matches', 'Email support'],
+    features: ['10 candidate reviews/day', 'Basic filters', '3 active matches', 'Email support'],
   },
   {
-    key: 'hire',
-    name: 'Hire',
+    key: 'growth',
+    name: 'Growth',
     price: '₦250,000',
     period: '/month',
     tagline: 'For growing teams',
-    features: ['50 daily swipes', 'Advanced filters', '15 active matches', 'Priority support', 'Analytics dashboard'],
+    features: ['50 candidate reviews/day', 'Advanced filters', '15 active matches', 'Priority support', 'Analytics dashboard'],
     popular: true,
   },
   {
-    key: 'scale',
-    name: 'Scale',
+    key: 'enterprise',
+    name: 'Enterprise',
     price: '₦650,000',
     period: '/month',
     tagline: 'Enterprise-grade hiring',
-    features: ['Unlimited swipes', 'All filters', 'Unlimited matches', 'Dedicated manager', 'API access', 'Custom branding'],
+    features: ['Unlimited candidate reviews', 'All filters', 'Unlimited matches', 'Dedicated manager', 'API access', 'Custom branding'],
   },
 ];
 
@@ -150,7 +158,7 @@ export default function CompanySignupScreen() {
   const [logoUploaded, setLogoUploaded] = useState(false);
 
   // Step 4 — Tier Selection
-  const [selectedTier, setSelectedTier] = useState<SubscriptionTier>('scout');
+  const [selectedTier, setSelectedTier] = useState<SubscriptionTier>('starter');
 
   const clearError = useCallback((key: string) => {
     setErrors((e) => {

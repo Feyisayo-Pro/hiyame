@@ -179,7 +179,7 @@ export default function CompanyDashboardScreen() {
   const [showConfig, setShowConfig] = useState(false);
 
   const greeting = useMemo(() => getGreeting(), []);
-  const showUpgradeBar = tier === 'scout' || tier === 'hire';
+  const showUpgradeBar = tier !== 'enterprise';
 
   const metricCards = [
     { key: 'swiped', label: 'Profiles Swiped', value: metrics.profilesSwiped, icon: 'swap-horizontal' as const, color: T.accent, bg: T.accentBg },
@@ -329,11 +329,11 @@ export default function CompanyDashboardScreen() {
         <SwipeFadeContainer direction="left" triggerKey="ats-gate" delay={300}>
           <Text style={styles.sectionTitle}>Enterprise Tools</Text>
           <Pressable
-            disabled={tier === 'scale'}
+            disabled={tier === 'enterprise'}
             onPress={() => router.push('/(company)/subscriptions')}
             style={styles.atsGateWrap}
           >
-            <View style={[styles.atsRow, tier !== 'scale' && styles.atsRowLocked]} pointerEvents={tier !== 'scale' ? 'none' : 'auto'}>
+            <View style={[styles.atsRow, tier !== 'enterprise' && styles.atsRowLocked]} pointerEvents={tier !== 'enterprise' ? 'none' : 'auto'}>
               <View style={styles.atsIconWrap}>
                 <MaterialCommunityIcons name="sync-circle" size={20} color={T.emerald} />
               </View>
@@ -347,7 +347,7 @@ export default function CompanyDashboardScreen() {
                 </View>
               </View>
             </View>
-            {tier !== 'scale' && (
+            {tier !== 'enterprise' && (
               <View style={styles.enterpriseRibbon}>
                 <Ionicons name="lock-closed" size={11} color={T.textOnAccent} />
                 <Text style={styles.enterpriseRibbonText}>ENTERPRISE TIER ONLY</Text>
@@ -356,8 +356,8 @@ export default function CompanyDashboardScreen() {
           </Pressable>
         </SwipeFadeContainer>
 
-        {/* Scale tier extras */}
-        {tier === 'scale' && (
+        {/* Enterprise tier extras */}
+        {tier === 'enterprise' && (
           <SwipeFadeContainer direction="left" triggerKey="scale-extras" delay={330}>
             <TouchableOpacity style={styles.talentPoolsCard} activeOpacity={0.85}>
               <View style={[styles.quickActionIconWrap, { backgroundColor: T.amberBg }]}>
