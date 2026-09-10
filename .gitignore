@@ -47,3 +47,7 @@ scripts/migration-report.json
 /ios
 /android
 .vercel
+
+# Python bytecode (vendored skill runs search.py)
+__pycache__/
+*.pyc
