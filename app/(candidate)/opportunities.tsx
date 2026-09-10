@@ -3,7 +3,7 @@ import { Pressable, RefreshControl, ScrollView, StyleSheet, View, ActivityIndica
 import { Text } from '@/components/Themed';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTheme, ThemePalette } from '@/lib/theme';
+import { useTheme, ThemePalette, ELEVATION } from '@/lib/theme';
 import { useAuth } from '@/lib/useAuth';
 import { supabase } from '@/lib/supabase';
 import { TIER_CONFIG, Tier } from '@/lib/mock-data';
@@ -259,7 +259,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   emptyBlock: { alignItems: 'center', paddingTop: 60, paddingHorizontal: 20 },
   emptyTitle: { fontSize: 17, fontWeight: '800', color: T.textPrimary, marginTop: 12, marginBottom: 6 },
   emptySub: { fontSize: 13, color: T.textSecondary, textAlign: 'center', lineHeight: 19 },
-  card: { backgroundColor: T.card, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: T.border },
+  card: { backgroundColor: T.card, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: T.border, ...ELEVATION.card },
   lockedRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 },
   lockIcon: { width: 32, height: 32, borderRadius: 10, backgroundColor: T.surface, alignItems: 'center', justifyContent: 'center' },
   lockedLabel: { fontSize: 11, color: T.textMuted, fontWeight: '600', marginBottom: 2 },

@@ -4,7 +4,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { Text } from '@/components/Themed';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTheme, ThemePalette } from '@/lib/theme';
+import { useTheme, ThemePalette, RADIUS, ELEVATION, ICON } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
 import { TIER_CONFIG, Tier } from '@/lib/mock-data';
 import { notify } from '@/lib/notify';
@@ -342,8 +342,8 @@ function CandidateCardView({ T, st, card, busy, onAccept, onSkip, onSave }: {
         <Pressable style={[st.actionBtn, st.saveBtn]} onPress={onSave} disabled={busy} accessibilityRole="button" accessibilityLabel={`Save ${card.fullName}`}>
           <Ionicons name="bookmark-outline" size={16} color={T.accent} />
         </Pressable>
-        <Pressable style={[st.actionBtn, st.acceptBtn]} onPress={onAccept} disabled={busy}>
-          <Ionicons name="checkmark" size={18} color={T.emerald} />
+        <Pressable style={[st.actionBtn, st.acceptBtn]} onPress={onAccept} disabled={busy} accessibilityRole="button" accessibilityLabel={`Accept ${card.fullName}`}>
+          <Ionicons name="checkmark" size={ICON.md} color={T.white} />
           <Text style={st.acceptText}>Accept</Text>
         </Pressable>
       </View>
@@ -367,28 +367,28 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   emptySub: { fontSize: 13, color: T.textSecondary, textAlign: 'center', lineHeight: 19 },
   rerunPill: { flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: T.accent, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 50, marginTop: 16 },
   rerunPillText: { fontSize: 13, fontWeight: '700', color: T.textOnAccent },
-  card: { backgroundColor: T.card, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: T.border },
-  cardTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
-  candidateName: { fontSize: 16, fontWeight: '700', color: T.textPrimary, flex: 1 },
-  scoreRing: { width: 40, height: 40, borderRadius: 20, borderWidth: 2, borderColor: T.emerald, alignItems: 'center', justifyContent: 'center' },
-  scoreText: { fontSize: 11, fontWeight: '800', color: T.emerald },
-  badgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 10 },
-  badge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 7, borderWidth: 1 },
-  badgeVerified: { backgroundColor: T.emeraldBg, borderColor: T.emerald + '40' },
-  badgeUnverified: { backgroundColor: T.surface, borderColor: T.border },
-  badgeNeutral: { backgroundColor: T.surface, borderColor: T.border },
-  badgeText: { fontSize: 10, fontWeight: '700', textTransform: 'capitalize' },
-  metaRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 10 },
-  metaText: { fontSize: 12, color: T.textSecondary },
-  skillsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 14 },
-  skillChip: { backgroundColor: T.surface, borderWidth: 1, borderColor: T.border, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
-  skillText: { fontSize: 11, color: T.textSecondary, fontWeight: '500' },
-  actionsRow: { flexDirection: 'row', gap: 10 },
-  actionBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, height: 44, borderRadius: 12, borderWidth: 1.5 },
-  skipBtn: { width: 44, backgroundColor: T.dangerBg, borderColor: T.danger },
-  saveBtn: { width: 44, backgroundColor: T.accentBg, borderColor: T.accent },
-  acceptBtn: { flex: 1, backgroundColor: T.emeraldBg, borderColor: T.emerald },
-  acceptText: { fontSize: 14, fontWeight: '700', color: T.emerald },
+  card: { backgroundColor: T.card, borderRadius: RADIUS.card, padding: 18, marginBottom: 12, borderWidth: 1, borderColor: T.border, ...ELEVATION.card },
+  cardTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, gap: 12 },
+  candidateName: { fontSize: 16, fontWeight: '700', color: T.textPrimary, flex: 1, letterSpacing: -0.2 },
+  scoreRing: { minWidth: 46, height: 26, borderRadius: RADIUS.chip, backgroundColor: T.emeraldBg, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8 },
+  scoreText: { fontSize: 12, fontWeight: '800', color: T.emerald, letterSpacing: -0.2 },
+  badgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 12 },
+  badge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 4, borderRadius: RADIUS.chip },
+  badgeVerified: { backgroundColor: T.emeraldBg },
+  badgeUnverified: { backgroundColor: T.surface },
+  badgeNeutral: { backgroundColor: T.surface },
+  badgeText: { fontSize: 10.5, fontWeight: '700', textTransform: 'capitalize', letterSpacing: 0.1 },
+  metaRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 12 },
+  metaText: { fontSize: 12.5, color: T.textSecondary, fontWeight: '500' },
+  skillsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 16 },
+  skillChip: { backgroundColor: T.surface, paddingHorizontal: 10, paddingVertical: 5, borderRadius: RADIUS.chip },
+  skillText: { fontSize: 11.5, color: T.textSecondary, fontWeight: '600' },
+  actionsRow: { flexDirection: 'row', gap: 8 },
+  actionBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, height: 42, borderRadius: RADIUS.control },
+  skipBtn: { width: 44, backgroundColor: T.surface },
+  saveBtn: { width: 44, backgroundColor: T.accentBg },
+  acceptBtn: { flexGrow: 0, minWidth: 132, paddingHorizontal: 22, backgroundColor: T.accent, marginLeft: 'auto' },
+  acceptText: { fontSize: 14, fontWeight: '700', color: T.white, letterSpacing: -0.1 },
   introducedRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: T.border },
   introducedCard: { marginBottom: 12 },
   introducedName: { fontSize: 14, fontWeight: '600', color: T.textPrimary },

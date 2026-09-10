@@ -13,7 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 
-import { useTheme, useThemeToggle, ThemePalette } from '@/lib/theme';
+import { useTheme, useThemeToggle, ThemePalette, ELEVATION } from '@/lib/theme';
 import { useSubscription } from '@/lib/subscriptionStore';
 import { useAuth } from '@/lib/useAuth';
 import { getCompanyStats, CompanyStats, relativeTime } from '@/lib/dashboardStats';
@@ -106,7 +106,7 @@ function ConfigModal({ visible, onClose, T }: { visible: boolean; onClose: () =>
 
               {/* Theme Toggle */}
               <View style={{ marginHorizontal: 20, marginBottom: 20 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: T.card, borderRadius: 14, padding: 16, borderWidth: 1, borderColor: T.border }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: T.card, borderRadius: 14, padding: 16, borderWidth: 1, borderColor: T.border, ...ELEVATION.card }}>
                   <Ionicons name={mode === 'light' ? 'sunny-outline' : 'moon-outline'} size={20} color={T.textSecondary} />
                   <Text style={{ flex: 1, fontSize: 14, fontWeight: '600', color: T.textPrimary }}>Dark Mode</Text>
                   <Switch value={mode === 'dark'} onValueChange={toggleTheme} trackColor={{ false: T.surface, true: T.accent }} thumbColor={T.white} />
@@ -427,7 +427,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   statusBadge: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, marginBottom: 6 },
   statusBadgeText: { fontSize: 10, fontWeight: '700', letterSpacing: 0.3 },
   matchTime: { fontSize: 11, color: T.textMuted },
-  emptyState: { alignItems: 'center', justifyContent: 'center', paddingVertical: 32, backgroundColor: T.card, borderRadius: 14, borderWidth: 1, borderColor: T.border },
+  emptyState: { alignItems: 'center', justifyContent: 'center', paddingVertical: 32, backgroundColor: T.card, borderRadius: 14, borderWidth: 1, borderColor: T.border, ...ELEVATION.card },
   emptyStateText: { marginTop: 8, fontSize: 13, color: T.textMuted },
   quickActionsRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 24 },
   quickActionCard: { width: '48%', backgroundColor: T.card, borderRadius: 16, borderWidth: 1, borderColor: T.border, padding: 16 },

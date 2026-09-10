@@ -10,7 +10,7 @@ import { getCandidateStats, CandidateStats, relativeTime } from '@/lib/dashboard
 import { TIER_CONFIG } from '@/lib/mock-data';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import { useIsDesktopWeb } from '@/components/TopNav';
-import { useTheme, useThemeToggle, ThemePalette } from '@/lib/theme';
+import { useTheme, useThemeToggle, ThemePalette, ELEVATION } from '@/lib/theme';
 
 const VERIFY_COMPONENTS: { key: string; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
   { key: 'identity', label: 'Identity Check', icon: 'id-card-outline' },
@@ -257,7 +257,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   headerActions: { flexDirection: 'row', gap: 8 },
   iconBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: T.surface, borderWidth: 1, borderColor: T.border, alignItems: 'center', justifyContent: 'center' },
 
-  scoreCard: { marginHorizontal: 20, marginBottom: 20, padding: 20, borderRadius: 16, backgroundColor: T.card, borderWidth: 1, borderColor: T.border },
+  scoreCard: { marginHorizontal: 20, marginBottom: 20, padding: 20, borderRadius: 16, backgroundColor: T.card, borderWidth: 1, borderColor: T.border, ...ELEVATION.card },
   scoreHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
   scoreLeft: { flexDirection: 'row', alignItems: 'center', gap: 14, flex: 1 },
   scoreRing: { width: 52, height: 52, borderRadius: 26, borderWidth: 3, borderColor: T.accent, alignItems: 'center', justifyContent: 'center' },

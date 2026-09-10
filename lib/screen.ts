@@ -5,7 +5,7 @@ import { Dimensions, Platform } from 'react-native';
 // screen-width-dependent layout math breaks. This clamps that math to the width
 // the root layout centers the app column inside (see app/_layout.tsx). Desktop
 // web also gets a top nav bar instead of the bottom tab bar (components/TopNav).
-export const WEB_APP_MAX_WIDTH = 1280;
+export const WEB_APP_MAX_WIDTH = 880;
 
 function computeScreenSize() {
   const { width, height } = Dimensions.get('window');

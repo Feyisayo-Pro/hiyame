@@ -41,75 +41,80 @@ export interface ThemePalette {
 }
 
 // ── Light palette (default) ──
+// Neutrals carry a faint cool bias toward the X-blue accent so they read as
+// chosen, not default grey. Surfaces separate by tone + subtle elevation
+// (ELEVATION below), not only a hairline border.
 export const LIGHT: ThemePalette = {
   mode: 'light',
-  bg: '#F8F9FA',
+  bg: '#F6F7F9',
   card: '#FFFFFF',
   cardElevated: '#FFFFFF',
-  surface: '#F0F1F3',
-  surfaceHover: '#E8E9EB',
+  surface: '#EEF0F3',
+  surfaceHover: '#E5E8EC',
   accent: '#1DA1F2',
   accentDim: '#0C7ABF',
   accentBg: 'rgba(29,161,242,0.08)',
-  accentBg20: 'rgba(29,161,242,0.15)',
-  textPrimary: '#14171A',
-  textSecondary: '#536471',
-  textMuted: '#6E7B8B',
+  accentBg20: 'rgba(29,161,242,0.14)',
+  textPrimary: '#0F1419',
+  textSecondary: '#5B6875',
+  textMuted: '#8A97A4',
   textOnAccent: '#FFFFFF',
-  emerald: '#17BF63',
-  emeraldBg: 'rgba(23,191,99,0.08)',
+  emerald: '#17A75B',
+  emeraldBg: 'rgba(23,167,91,0.09)',
   danger: '#E0245E',
   dangerBg: 'rgba(224,36,94,0.08)',
-  amber: '#FFAD1F',
-  amberBg: 'rgba(255,173,31,0.08)',
-  indigo: '#794BC4',
-  indigoBg: 'rgba(121,75,196,0.08)',
-  border: '#E1E8ED',
-  borderLight: '#CCD6DD',
+  amber: '#E0870B',
+  amberBg: 'rgba(224,135,11,0.10)',
+  indigo: '#6D4BC4',
+  indigoBg: 'rgba(109,75,196,0.09)',
+  border: '#E6E9ED',
+  borderLight: '#D6DBE1',
   white: '#FFFFFF',
-  overlay: 'rgba(0,0,0,0.4)',
+  overlay: 'rgba(15,20,25,0.45)',
   tabBarBg: '#FFFFFF',
-  tabBarBorder: '#E1E8ED',
+  tabBarBorder: '#E6E9ED',
   statusBarStyle: 'dark',
-  inputBg: '#F5F8FA',
-  inputText: '#14171A',
-  inputPlaceholder: '#8899A6',
+  inputBg: '#F1F3F6',
+  inputText: '#0F1419',
+  inputPlaceholder: '#8A97A4',
 };
 
 // ── Dark palette ──
+// Cool-neutral (not the previous warm/brown cast) so it sits under the blue
+// accent cleanly. Surfaces step up in lightness as they come forward.
 export const DARK: ThemePalette = {
   mode: 'dark',
-  bg: '#0D0D0C',
-  card: '#161615',
-  cardElevated: '#1E1E1D',
-  surface: '#232322',
-  surfaceHover: '#2A2A29',
+  bg: '#0C0E12',
+  card: '#15181D',
+  cardElevated: '#1B1F26',
+  surface: '#20242B',
+  surfaceHover: '#282D35',
   accent: '#1DA1F2',
-  accentDim: '#0C7ABF',
-  accentBg: 'rgba(29,161,242,0.12)',
-  accentBg20: 'rgba(29,161,242,0.20)',
-  textPrimary: '#F5F5F4',
-  textSecondary: '#A3A3A2',
-  textMuted: '#6B6B6A',
+  accentDim: '#6FC3F7',
+  accentBg: 'rgba(29,161,242,0.14)',
+  accentBg20: 'rgba(29,161,242,0.22)',
+  textPrimary: '#F2F4F7',
+  textSecondary: '#A7B0BC',
+  textMuted: '#6C7784',
   textOnAccent: '#FFFFFF',
   emerald: '#34D399',
-  emeraldBg: 'rgba(52,211,153,0.12)',
+  emeraldBg: 'rgba(52,211,153,0.14)',
   danger: '#F87171',
-  dangerBg: 'rgba(248,113,113,0.12)',
+  dangerBg: 'rgba(248,113,113,0.14)',
   amber: '#FBBF24',
-  amberBg: 'rgba(251,191,36,0.12)',
-  indigo: '#818CF8',
-  indigoBg: 'rgba(129,140,248,0.12)',
-  border: '#2A2A29',
-  borderLight: '#333332',
+  amberBg: 'rgba(251,191,36,0.14)',
+  indigo: '#8B8CF8',
+  indigoBg: 'rgba(139,140,248,0.16)',
+  border: '#262B33',
+  borderLight: '#333A44',
   white: '#FFFFFF',
-  overlay: 'rgba(0,0,0,0.7)',
-  tabBarBg: '#111110',
-  tabBarBorder: '#1E1E1D',
+  overlay: 'rgba(0,0,0,0.72)',
+  tabBarBg: '#101318',
+  tabBarBorder: '#20242B',
   statusBarStyle: 'light',
-  inputBg: '#232322',
-  inputText: '#F5F5F4',
-  inputPlaceholder: '#6B6B6A',
+  inputBg: '#1B1F26',
+  inputText: '#F2F4F7',
+  inputPlaceholder: '#6C7784',
 };
 
 // ── Backward compat: static export for non-component code ──
@@ -145,6 +150,31 @@ export const SPACING = { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 24, xxxl: 32
 
 // Corner radii by role — not one radius stamped on everything.
 export const RADIUS = { chip: 8, control: 12, card: 16, sheet: 20, pill: 999 } as const;
+
+// One icon-size scale. Use these, not arbitrary 20/22/17 values — consistent
+// sizing is most of what makes an interface read as "considered".
+export const ICON = { xs: 13, sm: 15, md: 18, lg: 20, xl: 24 } as const;
+
+// Subtle elevation — premium reads as restraint, not heavy drop shadows.
+// `card` for standard raised surfaces, `raised` for the one thing that should
+// float (a sheet, an active FAB). RN maps shadow* on iOS/web, elevation on
+// Android.
+export const ELEVATION = {
+  card: {
+    shadowColor: '#0B1220',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  raised: {
+    shadowColor: '#0B1220',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.10,
+    shadowRadius: 24,
+    elevation: 6,
+  },
+} as const;
 
 // Minimum interactive target (WCAG 2.5.5 / platform HIG). Icon-only buttons
 // smaller than this visually must carry hitSlop to reach it, plus an

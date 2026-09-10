@@ -3,7 +3,7 @@ import { Platform, Pressable, StyleSheet, View, useWindowDimensions } from 'reac
 import { router, usePathname } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Text } from '@/components/Themed';
-import { useTheme, useThemeToggle, ThemePalette } from '@/lib/theme';
+import { useTheme, useThemeToggle, ThemePalette, ICON, ELEVATION, RADIUS } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
 
 // Desktop-web top navigation. Replaces the floating bottom tab bar on wide
@@ -49,7 +49,7 @@ export default function TopNav({ role }: { role: 'candidate' | 'company' }) {
     <View style={st.bar}>
       <Pressable style={st.brand} onPress={() => router.navigate(items[0].route as any)} accessibilityRole="link">
         <View style={st.brandDot}>
-          <Ionicons name="flash" size={15} color={T.textOnAccent} />
+          <Ionicons name="flash" size={ICON.sm} color={T.textOnAccent} />
         </View>
         <Text style={st.brandText}>Hiyame</Text>
       </Pressable>
@@ -61,11 +61,15 @@ export default function TopNav({ role }: { role: 'candidate' | 'company' }) {
             <Pressable
               key={it.screen}
               onPress={() => router.navigate(it.route as any)}
-              style={[st.link, active && st.linkActive]}
+              style={({ pressed }) => [st.link, active && st.linkActive, pressed && !active && st.linkPressed]}
               accessibilityRole="link"
               accessibilityState={{ selected: active }}
             >
-              <Ionicons name={it.icon} size={17} color={active ? T.accent : T.textSecondary} />
+              <Ionicons
+                name={active ? (it.icon.replace('-outline', '') as keyof typeof Ionicons.glyphMap) : it.icon}
+                size={ICON.md}
+                color={active ? T.accent : T.textSecondary}
+              />
               <Text style={[st.linkText, active && st.linkTextActive]}>{it.label}</Text>
             </Pressable>
           );
@@ -73,11 +77,11 @@ export default function TopNav({ role }: { role: 'candidate' | 'company' }) {
       </View>
 
       <View style={st.actions}>
-        <Pressable style={st.iconBtn} onPress={toggleTheme} accessibilityRole="button" accessibilityLabel="Toggle theme">
-          <Ionicons name={mode === 'light' ? 'sunny-outline' : 'moon-outline'} size={18} color={T.textSecondary} />
+        <Pressable style={({ pressed }) => [st.iconBtn, pressed && st.iconBtnPressed]} onPress={toggleTheme} accessibilityRole="button" accessibilityLabel="Toggle theme">
+          <Ionicons name={mode === 'light' ? 'sunny-outline' : 'moon-outline'} size={ICON.md} color={T.textSecondary} />
         </Pressable>
-        <Pressable style={st.iconBtn} onPress={() => supabase.auth.signOut()} accessibilityRole="button" accessibilityLabel="Sign out">
-          <Ionicons name="log-out-outline" size={18} color={T.textSecondary} />
+        <Pressable style={({ pressed }) => [st.iconBtn, pressed && st.iconBtnPressed]} onPress={() => supabase.auth.signOut()} accessibilityRole="button" accessibilityLabel="Sign out">
+          <Ionicons name="log-out-outline" size={ICON.md} color={T.textSecondary} />
         </Pressable>
       </View>
     </View>
@@ -88,25 +92,28 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   bar: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 24,
-    height: 60,
-    paddingHorizontal: 24,
+    gap: 28,
+    height: 56,
+    paddingHorizontal: 22,
     backgroundColor: T.card,
     borderBottomWidth: 1,
     borderBottomColor: T.border,
+    ...ELEVATION.card,
+    zIndex: 10,
   },
-  brand: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  brandDot: { width: 24, height: 24, borderRadius: 7, backgroundColor: T.accent, alignItems: 'center', justifyContent: 'center' },
-  brandText: { fontSize: 17, fontWeight: '800', color: T.textPrimary, letterSpacing: -0.3 },
-  links: { flexDirection: 'row', alignItems: 'center', gap: 4, flex: 1 },
+  brand: { flexDirection: 'row', alignItems: 'center', gap: 9 },
+  brandDot: { width: 26, height: 26, borderRadius: 8, backgroundColor: T.accent, alignItems: 'center', justifyContent: 'center' },
+  brandText: { fontSize: 16, fontWeight: '800', color: T.textPrimary, letterSpacing: -0.3 },
+  links: { flexDirection: 'row', alignItems: 'center', gap: 2, flex: 1 },
   link: {
     flexDirection: 'row', alignItems: 'center', gap: 7,
-    paddingHorizontal: 14, height: 60,
-    borderBottomWidth: 2, borderBottomColor: 'transparent',
+    paddingHorizontal: 13, height: 34, borderRadius: RADIUS.control,
   },
-  linkActive: { borderBottomColor: T.accent },
-  linkText: { fontSize: 14, fontWeight: '600', color: T.textSecondary },
-  linkTextActive: { color: T.textPrimary, fontWeight: '700' },
-  actions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  iconBtn: { width: 34, height: 34, borderRadius: 17, backgroundColor: T.surface, alignItems: 'center', justifyContent: 'center' },
+  linkActive: { backgroundColor: T.accentBg },
+  linkPressed: { backgroundColor: T.surface },
+  linkText: { fontSize: 13.5, fontWeight: '600', color: T.textSecondary, letterSpacing: -0.1 },
+  linkTextActive: { color: T.accent, fontWeight: '700' },
+  actions: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  iconBtn: { width: 34, height: 34, borderRadius: RADIUS.control, alignItems: 'center', justifyContent: 'center' },
+  iconBtnPressed: { backgroundColor: T.surface },
 });
