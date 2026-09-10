@@ -125,6 +125,58 @@ describe('scoreCandidate — hard filters', () => {
   });
 });
 
+describe('scoreCandidate — relaxed mode (pre-verification window)', () => {
+  it('still hard-excludes an unverified candidate by default', () => {
+    const result = scoreCandidate(baseCandidate({ verification: UNVERIFIED }), baseRole());
+    expect(result.excluded).toBe(true);
+  });
+
+  it('scores an unverified candidate when requireVerification is false, marking them not verified', () => {
+    const result = scoreCandidate(
+      baseCandidate({ verification: UNVERIFIED }),
+      baseRole(),
+      { requireVerification: false },
+    );
+    expect(result.excluded).toBe(false);
+    expect(result.verified).toBe(false);
+    expect(result.score).toBeGreaterThan(DEFAULT_MATCH_THRESHOLD);
+  });
+
+  it('rewards a fully-verified candidate over an identical unverified one in relaxed mode', () => {
+    const verified = scoreCandidate(baseCandidate({ verification: FULLY_VERIFIED }), baseRole(), { requireVerification: false });
+    const unverified = scoreCandidate(baseCandidate({ verification: UNVERIFIED }), baseRole(), { requireVerification: false });
+    expect(verified.verified).toBe(true);
+    expect(verified.score).toBeGreaterThan(unverified.score);
+  });
+
+  it('keeps Gig waitlisted even in relaxed mode', () => {
+    const result = scoreCandidate(
+      baseCandidate({ verification: UNVERIFIED, tierPreferences: [] }),
+      baseRole({ tier: 'gig' }),
+      { requireVerification: false },
+    );
+    expect(result.excluded).toBe(true);
+    expect(result.exclusionReason).toMatch(/waitlist/i);
+  });
+
+  it('treats an empty tierPreferences list as open to all tiers, not opted out', () => {
+    const result = scoreCandidate(
+      baseCandidate({ tierPreferences: [] }),
+      baseRole({ tier: 'corporate' }),
+    );
+    expect(result.excluded).toBe(false);
+  });
+
+  it('still excludes when a non-empty tierPreferences list omits the role tier', () => {
+    const result = scoreCandidate(
+      baseCandidate({ tierPreferences: ['short_term'] }),
+      baseRole({ tier: 'corporate' }),
+    );
+    expect(result.excluded).toBe(true);
+    expect(result.exclusionReason).toMatch(/tier/i);
+  });
+});
+
 describe('scoreCandidate — scoring rules', () => {
   it('caps the score at 50 when a must-have skill is missing, even with a perfect fit on every other signal', () => {
     // A lowered threshold isolates the cap itself from the (correct, separate)

@@ -32,6 +32,7 @@
   "devDependencies": {
     "@types/node": "^26.5.0",
     "@types/react": "~19.2.4",
+    "@vercel/node": "^12.0.3",
     "tsx": "^4.23.13",
     "typescript": "~6.0.3",
     "vitest": "^5.0.0"
@@ -42,6 +43,7 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "web:build": "expo export -p web && node scripts/fix-vercel-web-assets.js",
+  "vercel-build": "expo export -p web && node scripts/fix-vercel-web-assets.js",
     "migrate:strivo": "tsx scripts/migrate-strivo-data.ts",
     "migrate:strivo:apply": "tsx scripts/migrate-strivo-data.ts --apply",
     "invite:strivo": "tsx scripts/invite-strivo-users.ts",

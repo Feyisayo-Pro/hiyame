@@ -8,6 +8,7 @@ import { useTheme, ThemePalette } from '@/lib/theme';
 import { useAuth } from '@/lib/useAuth';
 import { supabase } from '@/lib/supabase';
 import { notify } from '@/lib/notify';
+import { requestMatching } from '@/lib/requestMatching';
 import { TIER_CONFIG, Tier } from '@/lib/mock-data';
 
 // Only Corporate/Short-Term are postable here — Gig stays a Phase 3 stub
@@ -102,6 +103,12 @@ export default function CreateRoleScreen() {
       notify('Could not post role', error.message);
       return;
     }
+
+    // Kick off matching for the new role. Don't block navigation on it — the
+    // shortlist screen shows its own "finding candidates" state and will
+    // trigger the run itself if this didn't land (e.g. local dev has no
+    // /api route).
+    void requestMatching(data.id);
     router.replace({ pathname: '/(company)/shortlist', params: { roleId: data.id } });
   };
 

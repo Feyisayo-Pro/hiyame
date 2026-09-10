@@ -1,5 +1,5 @@
-import { VerificationState } from './useVerification';
-import { Tier, ExperienceLevel } from './mock-data';
+import type { VerificationState } from './useVerification';
+import type { Tier, ExperienceLevel } from './mock-data';
 
 // ==========================================
 // BUSINESS RULES — TIER ELIGIBILITY
@@ -117,6 +117,11 @@ export const MATCH_WEIGHTS = {
   // Additive on top of the base 100 above, then the total is clamped to 100.
   reliabilityBoost: 3,
   employerReviewBoost: 2,
+  // Only applied when verification is a soft signal (requireVerification: false)
+  // rather than a hard gate — see scoreCandidate's opts. Rewards a candidate who
+  // *is* fully verified for the tier without excluding those who aren't yet,
+  // for the window before identity verification (Smile ID) goes live.
+  verifiedBoost: 5,
 };
 
 const EXPERIENCE_ORDER: ExperienceLevel[] = ['junior', 'mid', 'senior', 'lead'];
@@ -160,6 +165,11 @@ export interface MatchResult {
   score: number; // 0 when excluded
   breakdown: MatchScoreBreakdown;
   rateFlag?: boolean;
+  // Whether the candidate is fully verified for this role's tier. Always true
+  // for a non-excluded result in the default (gate) mode. In relaxed mode
+  // (requireVerification: false) it reflects real status, so the UI can badge
+  // "not yet verified" candidates while still shortlisting them.
+  verified?: boolean;
 }
 
 function skillOverlapScore(required: string[], has: string[], weight: number): number {
@@ -184,21 +194,35 @@ function daysBetween(a: string, b: string): number {
 export function scoreCandidate(
   candidate: ScoringCandidateInput,
   role: ScoringRoleInput,
-  opts?: { threshold?: number },
+  opts?: { threshold?: number; requireVerification?: boolean },
 ): MatchResult {
   const threshold = opts?.threshold ?? DEFAULT_MATCH_THRESHOLD;
+  const requireVerification = opts?.requireVerification ?? true;
   const zeroBreakdown: MatchScoreBreakdown = { skills: 0, experience: 0, rate: 0, availability: 0, location: 0, boosts: 0 };
 
   // ── Hard filter 1: verified-badge eligibility for this tier ──
-  // Unverified candidates never enter scoring at all, per PRD.
+  // Per PRD, unverified candidates never enter scoring. That holds in the
+  // default (gate) mode. In relaxed mode — the window before identity
+  // verification (Smile ID) is live, when no candidate has any verification
+  // records — eligibility becomes a soft signal instead: the candidate is
+  // still scored, `verified` records real status, and a boost rewards those
+  // who are fully verified. Gig stays excluded either way (it's waitlisted by
+  // evaluateEligibility regardless of verification).
   const eligibility = evaluateEligibility(candidate.verification, role.tier);
-  if (!eligibility.eligible) {
-    return { excluded: true, exclusionReason: eligibility.message, score: 0, breakdown: zeroBreakdown };
+  const verified = eligibility.eligible;
+  if (requireVerification && !eligibility.eligible) {
+    return { excluded: true, exclusionReason: eligibility.message, score: 0, breakdown: zeroBreakdown, verified };
+  }
+  if (!requireVerification && role.tier === 'gig') {
+    return { excluded: true, exclusionReason: eligibility.message, score: 0, breakdown: zeroBreakdown, verified };
   }
 
-  // ── Hard filter 2: contract tier preference (hard filter, not a score input) ──
-  if (!candidate.tierPreferences.includes(role.tier)) {
-    return { excluded: true, exclusionReason: 'Candidate has not marked this contract tier as open', score: 0, breakdown: zeroBreakdown };
+  // ── Hard filter 2: contract tier preference ──
+  // An explicit preference list that omits this tier excludes the candidate.
+  // An empty list means "no stated preference" (the state of every migrated
+  // candidate) and is treated as open to all tiers, not opted out of all.
+  if (candidate.tierPreferences.length > 0 && !candidate.tierPreferences.includes(role.tier)) {
+    return { excluded: true, exclusionReason: 'Candidate has not marked this contract tier as open', score: 0, breakdown: zeroBreakdown, verified };
   }
 
   // ── Hard filter 3: experience two-or-more levels below ──
@@ -206,7 +230,7 @@ export function scoreCandidate(
     const roleIdx = EXPERIENCE_ORDER.indexOf(role.experienceLevel);
     const candIdx = EXPERIENCE_ORDER.indexOf(candidate.experienceLevel);
     if (roleIdx - candIdx >= 2) {
-      return { excluded: true, exclusionReason: 'Experience level too far below role requirement', score: 0, breakdown: zeroBreakdown };
+      return { excluded: true, exclusionReason: 'Experience level too far below role requirement', score: 0, breakdown: zeroBreakdown, verified };
     }
   }
 
@@ -219,7 +243,7 @@ export function scoreCandidate(
   // ── Hard filter 4: on-site role, remote-only candidate, different city ──
   if (role.locationType === 'on_site' && candidate.remotePreference === 'remote' && candidate.location && role.locationCity) {
     if (!candidate.location.toLowerCase().includes(role.locationCity.toLowerCase())) {
-      return { excluded: true, exclusionReason: 'Remote-only candidate, on-site role in a different city', score: 0, breakdown: zeroBreakdown };
+      return { excluded: true, exclusionReason: 'Remote-only candidate, on-site role in a different city', score: 0, breakdown: zeroBreakdown, verified };
     }
   }
 
@@ -279,6 +303,10 @@ export function scoreCandidate(
   let boosts = 0;
   if (candidate.reliabilityScore !== null && candidate.reliabilityScore >= 70) boosts += MATCH_WEIGHTS.reliabilityBoost;
   if (candidate.hasPassedEmployerReview) boosts += MATCH_WEIGHTS.employerReviewBoost;
+  // In relaxed mode a fully-verified candidate is rewarded rather than being the
+  // only kind that gets scored. In gate mode every scored candidate is verified,
+  // so this would be noise — skip it.
+  if (!requireVerification && verified) boosts += MATCH_WEIGHTS.verifiedBoost;
 
   let total = skills + experience + rate + availability + location + boosts;
   total = Math.min(100, total);
@@ -287,10 +315,10 @@ export function scoreCandidate(
   const breakdown: MatchScoreBreakdown = { skills, experience, rate, availability, location, boosts };
 
   if (total < threshold) {
-    return { excluded: true, exclusionReason: `Score ${Math.round(total)} below threshold ${threshold}`, score: Math.round(total), breakdown, rateFlag };
+    return { excluded: true, exclusionReason: `Score ${Math.round(total)} below threshold ${threshold}`, score: Math.round(total), breakdown, rateFlag, verified };
   }
 
-  return { excluded: false, score: Math.round(total), breakdown, rateFlag };
+  return { excluded: false, score: Math.round(total), breakdown, rateFlag, verified };
 }
 
 export interface ShortlistEntry {

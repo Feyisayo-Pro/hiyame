@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, useMemo } from 'react';
+import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, View, ActivityIndicator } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Text } from '@/components/Themed';
@@ -8,6 +8,7 @@ import { useTheme, ThemePalette } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
 import { TIER_CONFIG, Tier } from '@/lib/mock-data';
 import { notify } from '@/lib/notify';
+import { requestMatching } from '@/lib/requestMatching';
 
 // Response-window hours per tier (architecture doc §7.4).
 const RESPONSE_WINDOW_HOURS: Record<Tier, number> = {
@@ -21,6 +22,7 @@ interface CandidateCard {
   candidateId: string;
   score: number;
   isAlternate: boolean;
+  verified: boolean | null;
   fullName: string;
   skillTags: string[];
   location: string | null;
@@ -34,6 +36,8 @@ interface IntroducedCard {
   status: string;
 }
 
+type MatchingState = 'idle' | 'running' | 'unavailable';
+
 export default function ShortlistScreen() {
   const T = useTheme();
   const st = useMemo(() => makeStyles(T), [T]);
@@ -41,16 +45,24 @@ export default function ShortlistScreen() {
 
   const [roleTitle, setRoleTitle] = useState<string | null>(null);
   const [roleTier, setRoleTier] = useState<Tier | null>(null);
+  const [matchingRanAt, setMatchingRanAt] = useState<string | null>(null);
   const [cards, setCards] = useState<CandidateCard[] | null>(null);
   const [introduced, setIntroduced] = useState<IntroducedCard[]>([]);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [matchingState, setMatchingState] = useState<MatchingState>('idle');
+  const autoTriggeredFor = useRef<string | null>(null);
 
   const load = useCallback(async () => {
     if (!roleId) return;
 
-    const { data: role } = await supabase.from('roles').select('title, tier').eq('id', roleId).maybeSingle();
+    const { data: role } = await supabase
+      .from('roles')
+      .select('title, tier, matching_ran_at')
+      .eq('id', roleId)
+      .maybeSingle();
     setRoleTitle(role?.title ?? null);
     setRoleTier((role?.tier as Tier) ?? null);
+    setMatchingRanAt(role?.matching_ran_at ?? null);
 
     const { data: intros } = await supabase
       .from('introductions')
@@ -67,7 +79,7 @@ export default function ShortlistScreen() {
 
     const { data: scores, error } = await supabase
       .from('match_scores')
-      .select('id, candidate_id, score, is_alternate, company_action, candidates(full_name, skill_tags, location, experience_level, rate_min)')
+      .select('id, candidate_id, score, is_alternate, company_action, score_breakdown, candidates(full_name, skill_tags, location, experience_level, rate_min)')
       .eq('role_id', roleId)
       .eq('excluded', false)
       .order('score', { ascending: false });
@@ -84,6 +96,7 @@ export default function ShortlistScreen() {
         candidateId: s.candidate_id,
         score: s.score,
         isAlternate: s.is_alternate,
+        verified: typeof s.score_breakdown?.verified === 'boolean' ? s.score_breakdown.verified : null,
         fullName: s.candidates?.full_name ?? 'Candidate',
         skillTags: s.candidates?.skill_tags ?? [],
         location: s.candidates?.location ?? null,
@@ -93,9 +106,33 @@ export default function ShortlistScreen() {
     setCards(rows);
   }, [roleId]);
 
+  const runMatching = useCallback(async () => {
+    if (!roleId) return;
+    setMatchingState('running');
+    const outcome = await requestMatching(roleId);
+    if (outcome.ok) {
+      setMatchingState('idle');
+      await load();
+    } else if (outcome.reason === 'unavailable') {
+      setMatchingState('unavailable');
+    } else {
+      setMatchingState('idle');
+      notify('Matching didn’t run', outcome.message);
+    }
+  }, [roleId, load]);
+
   useEffect(() => {
     load();
   }, [load]);
+
+  // First time a never-matched role's shortlist is opened, kick off the run.
+  useEffect(() => {
+    if (!roleId || cards === null) return;
+    if (matchingRanAt !== null) return;
+    if (autoTriggeredFor.current === roleId) return;
+    autoTriggeredFor.current = roleId;
+    runMatching();
+  }, [roleId, cards, matchingRanAt, runMatching]);
 
   const handleAccept = async (card: CandidateCard) => {
     if (!roleId || !roleTier) return;
@@ -130,6 +167,8 @@ export default function ShortlistScreen() {
   const cfg = roleTier ? TIER_CONFIG[roleTier] : null;
   const active = (cards ?? []).filter((c) => !c.isAlternate);
   const alternates = (cards ?? []).filter((c) => c.isAlternate);
+  const hasAnyCards = active.length > 0 || alternates.length > 0;
+  const running = matchingState === 'running';
 
   return (
     <SafeAreaView style={st.container} edges={['top', 'left', 'right']}>
@@ -145,6 +184,19 @@ export default function ShortlistScreen() {
             </View>
           )}
         </View>
+        <Pressable
+          style={st.rerunButton}
+          onPress={runMatching}
+          disabled={running}
+          accessibilityRole="button"
+          accessibilityLabel="Re-run matching"
+        >
+          {running ? (
+            <ActivityIndicator size="small" color={T.accent} />
+          ) : (
+            <Ionicons name="refresh" size={18} color={T.accent} />
+          )}
+        </Pressable>
       </View>
 
       {cards === null ? (
@@ -153,13 +205,31 @@ export default function ShortlistScreen() {
         </View>
       ) : (
         <ScrollView contentContainerStyle={st.scroll}>
-          {active.length === 0 && alternates.length === 0 && (
+          {!hasAnyCards && running && (
+            <View style={st.emptyBlock}>
+              <ActivityIndicator color={T.accent} />
+              <Text style={st.emptyTitle}>Finding candidates…</Text>
+              <Text style={st.emptySub}>Scoring the candidate pool against this role. This usually takes a few seconds.</Text>
+            </View>
+          )}
+
+          {!hasAnyCards && !running && matchingState === 'unavailable' && (
+            <View style={st.emptyBlock}>
+              <Ionicons name="cloud-offline-outline" size={28} color={T.textMuted} />
+              <Text style={st.emptyTitle}>Matching runs on the live site</Text>
+              <Text style={st.emptySub}>The matching service isn’t available in local preview. Open this role on the deployed site to build its shortlist.</Text>
+            </View>
+          )}
+
+          {!hasAnyCards && !running && matchingState !== 'unavailable' && matchingRanAt !== null && (
             <View style={st.emptyBlock}>
               <Ionicons name="search" size={28} color={T.textMuted} />
-              <Text style={st.emptyTitle}>No candidates yet</Text>
-              <Text style={st.emptySub}>
-                Either no candidates match this role yet, or the matching engine hasn't been run for it. Check back later.
-              </Text>
+              <Text style={st.emptyTitle}>No candidates matched yet</Text>
+              <Text style={st.emptySub}>No one in the pool cleared the bar for this role. Widening the skills or rate range, then re-running, may surface more.</Text>
+              <Pressable style={st.rerunPill} onPress={runMatching}>
+                <Ionicons name="refresh" size={15} color={T.textOnAccent} />
+                <Text style={st.rerunPillText}>Re-run matching</Text>
+              </Pressable>
             </View>
           )}
 
@@ -212,6 +282,25 @@ function CandidateCardView({ T, st, card, busy, onAccept, onSkip, onSave }: {
           <Text style={st.scoreText}>{card.score}%</Text>
         </View>
       </View>
+      <View style={st.badgeRow}>
+        {card.verified === true && (
+          <View style={[st.badge, st.badgeVerified]}>
+            <Ionicons name="shield-checkmark" size={11} color={T.emerald} />
+            <Text style={[st.badgeText, { color: T.emerald }]}>Verified</Text>
+          </View>
+        )}
+        {card.verified === false && (
+          <View style={[st.badge, st.badgeUnverified]}>
+            <Ionicons name="shield-outline" size={11} color={T.textMuted} />
+            <Text style={[st.badgeText, { color: T.textMuted }]}>Not yet verified</Text>
+          </View>
+        )}
+        {card.experienceLevel && (
+          <View style={[st.badge, st.badgeNeutral]}>
+            <Text style={[st.badgeText, { color: T.textSecondary }]}>{card.experienceLevel}</Text>
+          </View>
+        )}
+      </View>
       {card.location && (
         <View style={st.metaRow}>
           <Ionicons name="location-outline" size={12} color={T.textSecondary} />
@@ -245,20 +334,29 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   container: { flex: 1, backgroundColor: T.bg },
   header: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 20, paddingTop: 8, paddingBottom: 16 },
   backButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: T.card, borderWidth: 1, borderColor: T.border, alignItems: 'center', justifyContent: 'center' },
+  rerunButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: T.accentBg, borderWidth: 1, borderColor: T.accent, alignItems: 'center', justifyContent: 'center' },
   headerTitle: { fontSize: 20, fontWeight: '800', color: T.textPrimary, marginBottom: 6 },
   tierPill: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
   tierText: { fontSize: 10, fontWeight: '700', letterSpacing: 0.4 },
   centerFill: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   scroll: { paddingHorizontal: 20, paddingBottom: 32 },
   sectionLabel: { fontSize: 12, fontWeight: '800', color: T.textMuted, letterSpacing: 0.5, marginTop: 16, marginBottom: 10 },
-  emptyBlock: { alignItems: 'center', paddingTop: 60, paddingHorizontal: 20 },
+  emptyBlock: { alignItems: 'center', paddingTop: 60, paddingHorizontal: 20, gap: 4 },
   emptyTitle: { fontSize: 17, fontWeight: '800', color: T.textPrimary, marginTop: 12, marginBottom: 6 },
   emptySub: { fontSize: 13, color: T.textSecondary, textAlign: 'center', lineHeight: 19 },
+  rerunPill: { flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: T.accent, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 50, marginTop: 16 },
+  rerunPillText: { fontSize: 13, fontWeight: '700', color: T.textOnAccent },
   card: { backgroundColor: T.card, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: T.border },
   cardTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
   candidateName: { fontSize: 16, fontWeight: '700', color: T.textPrimary, flex: 1 },
   scoreRing: { width: 40, height: 40, borderRadius: 20, borderWidth: 2, borderColor: T.emerald, alignItems: 'center', justifyContent: 'center' },
   scoreText: { fontSize: 11, fontWeight: '800', color: T.emerald },
+  badgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 10 },
+  badge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 7, borderWidth: 1 },
+  badgeVerified: { backgroundColor: T.emeraldBg, borderColor: T.emerald + '40' },
+  badgeUnverified: { backgroundColor: T.surface, borderColor: T.border },
+  badgeNeutral: { backgroundColor: T.surface, borderColor: T.border },
+  badgeText: { fontSize: 10, fontWeight: '700', textTransform: 'capitalize' },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 10 },
   metaText: { fontSize: 12, color: T.textSecondary },
   skillsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 14 },
