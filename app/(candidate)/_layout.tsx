@@ -35,8 +35,9 @@ export default function CandidateTabLayout() {
   const desktop = useIsDesktopWeb();
 
   return (
-    <View style={{ flex: 1, backgroundColor: T.bg }}>
+    <View style={{ flex: 1, flexDirection: desktop ? 'row' : 'column', backgroundColor: T.bg }}>
       <TopNav role="candidate" />
+      <View style={{ flex: 1, minWidth: 0, maxWidth: desktop ? 960 : undefined }}>
       <Tabs
       screenOptions={{
         headerShown: false,
@@ -102,6 +103,7 @@ export default function CandidateTabLayout() {
       <Tabs.Screen name="settings" options={{ href: null }} />
       <Tabs.Screen name="welcome-tour" options={{ href: null }} />
       </Tabs>
+      </View>
     </View>
   );
 }

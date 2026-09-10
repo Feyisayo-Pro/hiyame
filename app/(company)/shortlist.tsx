@@ -387,7 +387,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   actionBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, height: 42, borderRadius: RADIUS.control },
   skipBtn: { width: 44, backgroundColor: T.surface },
   saveBtn: { width: 44, backgroundColor: T.accentBg },
-  acceptBtn: { flex: 1, backgroundColor: T.accent },
+  acceptBtn: { paddingHorizontal: 26, backgroundColor: T.accent },
   acceptText: { fontSize: 14, fontWeight: '700', color: T.white, letterSpacing: -0.1 },
   introducedRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: T.border },
   introducedCard: { marginBottom: 12 },

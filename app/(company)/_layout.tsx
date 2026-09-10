@@ -25,8 +25,9 @@ export default function CompanyTabLayout() {
   const desktop = useIsDesktopWeb();
 
   return (
-    <View style={{ flex: 1, backgroundColor: T.bg }}>
+    <View style={{ flex: 1, flexDirection: desktop ? 'row' : 'column', backgroundColor: T.bg }}>
       <TopNav role="company" />
+      <View style={{ flex: 1, minWidth: 0, maxWidth: desktop ? 960 : undefined }}>
       <Tabs
       screenOptions={{
         headerShown: false,
@@ -94,6 +95,7 @@ export default function CompanyTabLayout() {
       <Tabs.Screen name="subscriptions" options={{ href: null }} />
       <Tabs.Screen name="team" options={{ href: null }} />
       </Tabs>
+      </View>
     </View>
   );
 }

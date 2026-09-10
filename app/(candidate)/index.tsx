@@ -114,7 +114,7 @@ export default function CandidateHomeScreen() {
                 <View style={[st.scoreRing, isFullyVerified && st.scoreRingComplete]}>
                   <Text style={[st.scoreRingText, isFullyVerified && st.scoreRingTextComplete]}>{verifiedCount}/4</Text>
                 </View>
-                <View>
+                <View style={{ flex: 1 }}>
                   <Text style={st.scoreTitle}>{isFullyVerified ? 'Profile Verified' : 'Verification In Progress'}</Text>
                   <Text style={st.scoreSub}>
                     {isFullyVerified
