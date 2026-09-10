@@ -11,6 +11,7 @@ import { notify } from '@/lib/notify';
 import { requestMatching } from '@/lib/requestMatching';
 import { getIntroductionContact, IntroductionContact } from '@/lib/introductionContact';
 import ContactReveal from '@/components/ContactReveal';
+import { notifyIntroduction } from '@/lib/requestNotify';
 
 // Response-window hours per tier (architecture doc §7.4).
 const RESPONSE_WINDOW_HOURS: Record<Tier, number> = {
@@ -146,16 +147,21 @@ export default function ShortlistScreen() {
   const handleAccept = async (card: CandidateCard) => {
     if (!roleId || !roleTier) return;
     setBusyId(card.matchScoreId);
-    const { error } = await supabase.from('introductions').insert({
-      role_id: roleId,
-      candidate_id: card.candidateId,
-      response_window_hours: RESPONSE_WINDOW_HOURS[roleTier],
-    });
+    const { data: created, error } = await supabase
+      .from('introductions')
+      .insert({
+        role_id: roleId,
+        candidate_id: card.candidateId,
+        response_window_hours: RESPONSE_WINDOW_HOURS[roleTier],
+      })
+      .select('id')
+      .single();
     setBusyId(null);
     if (error) {
       notify('Could not send introduction', error.message);
       return;
     }
+    if (created?.id) void notifyIntroduction(created.id, 'sent');
     await load();
   };
 

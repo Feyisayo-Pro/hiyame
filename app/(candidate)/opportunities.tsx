@@ -10,6 +10,7 @@ import { TIER_CONFIG, Tier } from '@/lib/mock-data';
 import { notify } from '@/lib/notify';
 import { getIntroductionContact, IntroductionContact } from '@/lib/introductionContact';
 import ContactReveal from '@/components/ContactReveal';
+import { notifyIntroduction } from '@/lib/requestNotify';
 
 // Replaces the old Tinder-style swipe deck over mock roles. Under the real
 // architecture, candidates don't browse and swipe an open pool — a company's
@@ -150,6 +151,7 @@ export default function OpportunitiesScreen() {
       notify('Something went wrong', error.message);
       return;
     }
+    if (status === 'accepted') void notifyIntroduction(introductionId, 'accepted');
     await load();
   };
 
