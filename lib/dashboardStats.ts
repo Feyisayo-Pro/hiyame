@@ -149,11 +149,16 @@ export async function getCandidateStats(candidateId: string): Promise<CandidateS
   ]);
 
   const introRows = intros ?? [];
-  const roleIds = [...new Set(introRows.map((i) => i.role_id))];
+  // A candidate can only read a role row via RLS once the introduction is
+  // accepted (roles_select_via_accepted_introduction). For still-pending ones
+  // the title/tier come from get_introduction_preview (SECURITY DEFINER,
+  // company identity stays masked).
   const roleById = new Map<string, { title: string; tier: Tier; company_id: string }>();
   const companyName = new Map<string, string>();
-  if (roleIds.length > 0) {
-    const { data: roles } = await supabase.from('roles').select('id, title, tier, company_id').in('id', roleIds);
+
+  const acceptedRoleIds = [...new Set(introRows.filter((i) => i.status === 'accepted').map((i) => i.role_id))];
+  if (acceptedRoleIds.length > 0) {
+    const { data: roles } = await supabase.from('roles').select('id, title, tier, company_id').in('id', acceptedRoleIds);
     for (const r of roles ?? []) roleById.set(r.id, r as any);
     const companyIds = [...new Set((roles ?? []).map((r) => r.company_id))];
     if (companyIds.length > 0) {
@@ -161,6 +166,16 @@ export async function getCandidateStats(candidateId: string): Promise<CandidateS
       for (const c of cos ?? []) companyName.set(c.id, (c as any).trading_name || (c as any).legal_name || 'A company');
     }
   }
+
+  const previewByIntro = new Map<string, { title: string; tier: Tier }>();
+  await Promise.all(
+    introRows
+      .filter((i) => i.status !== 'accepted')
+      .map(async (i) => {
+        const { data } = await supabase.rpc('get_introduction_preview', { p_introduction_id: i.id }).maybeSingle<any>();
+        if (data) previewByIntro.set(i.id, { title: data.role_title, tier: data.role_tier });
+      }),
+  );
 
   const passed = new Set((vrecs ?? []).filter((v) => v.status === 'passed').map((v) => v.component));
 
@@ -179,16 +194,20 @@ export async function getCandidateStats(candidateId: string): Promise<CandidateS
     introsTotal: introRows.length,
     verifiedCount: passed.size,
     profileCompletePct,
-    recentIntros: introRows.slice(0, 6).map((i) => ({
-      id: i.id,
-      status: i.status,
-      roleTitle: roleById.get(i.role_id)?.title ?? 'Role',
-      roleTier: (roleById.get(i.role_id)?.tier as Tier) ?? 'corporate',
-      counterpartyName: i.status === 'accepted'
-        ? companyName.get(roleById.get(i.role_id)?.company_id ?? '') ?? 'A company'
-        : 'A company',
-      at: i.responded_at ?? i.sent_at,
-    })),
+    recentIntros: introRows.slice(0, 6).map((i) => {
+      const joined = roleById.get(i.role_id);
+      const preview = previewByIntro.get(i.id);
+      return {
+        id: i.id,
+        status: i.status,
+        roleTitle: joined?.title ?? preview?.title ?? 'A role',
+        roleTier: (joined?.tier ?? preview?.tier ?? 'corporate') as Tier,
+        counterpartyName: i.status === 'accepted'
+          ? companyName.get(joined?.company_id ?? '') ?? 'A company'
+          : 'A company',
+        at: i.responded_at ?? i.sent_at,
+      };
+    }),
   };
 }
 
