@@ -3,6 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Text, View, Platform, OpaqueColorValue } from 'react-native';
 import { useTheme } from '@/lib/theme';
 import TopNav, { useIsDesktopWeb } from '@/components/TopNav';
+import TopBar from '@/components/TopBar';
 
 // React Navigation's bottom-tabs wraps ITS OWN label slot (tabBarLabel / the string
 // `title`) in a fixed ~9px overflow:hidden box on web — a custom tabBarLabel render
@@ -28,6 +29,7 @@ export default function CompanyTabLayout() {
     <View style={{ flex: 1, flexDirection: desktop ? 'row' : 'column', backgroundColor: T.bg }}>
       <TopNav role="company" />
       <View style={{ flex: 1, minWidth: 0, maxWidth: desktop ? 960 : undefined }}>
+      <TopBar role="company" />
       <Tabs
       screenOptions={{
         headerShown: false,

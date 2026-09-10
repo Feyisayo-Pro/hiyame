@@ -3,7 +3,7 @@ import { Platform, Pressable, StyleSheet, View, useWindowDimensions } from 'reac
 import { router, usePathname } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Text } from '@/components/Themed';
-import { useTheme, useThemeToggle, ThemePalette, ICON, RADIUS } from '@/lib/theme';
+import { useTheme, ThemePalette, ICON, RADIUS } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
 
 // Persistent left sidebar for desktop web. The tab layouts render this beside
@@ -40,7 +40,6 @@ function filled(icon: string): keyof typeof Ionicons.glyphMap {
 export default function SideNav({ role }: { role: 'candidate' | 'company' }) {
   const T = useTheme();
   const st = useMemo(() => makeStyles(T), [T]);
-  const { mode, toggleTheme } = useThemeToggle();
   const pathname = usePathname();
   const isDesktop = useIsDesktopWeb();
 
@@ -78,15 +77,6 @@ export default function SideNav({ role }: { role: 'candidate' | 'company' }) {
       </View>
 
       <View style={st.footer}>
-        <Pressable
-          style={({ pressed }) => [st.footRow, pressed && st.linkPressed]}
-          onPress={toggleTheme}
-          accessibilityRole="button"
-          accessibilityLabel="Toggle theme"
-        >
-          <Ionicons name={mode === 'light' ? 'moon-outline' : 'sunny-outline'} size={ICON.md} color={T.textSecondary} />
-          <Text style={st.footText}>{mode === 'light' ? 'Dark mode' : 'Light mode'}</Text>
-        </Pressable>
         <Pressable
           style={({ pressed }) => [st.footRow, pressed && st.linkPressed]}
           onPress={() => supabase.auth.signOut()}

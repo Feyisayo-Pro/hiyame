@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
-import { Pressable, ScrollView, StyleSheet, View, ActivityIndicator } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, View, ActivityIndicator } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Text } from '@/components/Themed';
 import { Ionicons } from '@expo/vector-icons';
@@ -12,6 +12,7 @@ import { requestMatching } from '@/lib/requestMatching';
 import { getIntroductionContact, IntroductionContact } from '@/lib/introductionContact';
 import ContactReveal from '@/components/ContactReveal';
 import { notifyIntroduction } from '@/lib/requestNotify';
+import { useIsDesktopWeb } from '@/components/TopNav';
 
 // Response-window hours per tier (architecture doc §7.4).
 const RESPONSE_WINDOW_HOURS: Record<Tier, number> = {
@@ -27,10 +28,15 @@ interface CandidateCard {
   isAlternate: boolean;
   verified: boolean | null;
   fullName: string;
+  photoUrl: string | null;
   skillTags: string[];
   location: string | null;
   experienceLevel: string | null;
   rateMin: number | null;
+}
+
+function initials(name: string): string {
+  return name.split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]?.toUpperCase() ?? '').join('') || '?';
 }
 
 interface IntroducedCard {
@@ -46,6 +52,7 @@ type MatchingState = 'idle' | 'running' | 'unavailable';
 export default function ShortlistScreen() {
   const T = useTheme();
   const st = useMemo(() => makeStyles(T), [T]);
+  const isDesktop = useIsDesktopWeb();
   const { roleId } = useLocalSearchParams<{ roleId: string }>();
 
   const [roleTitle, setRoleTitle] = useState<string | null>(null);
@@ -89,7 +96,7 @@ export default function ShortlistScreen() {
 
     const { data: scores, error } = await supabase
       .from('match_scores')
-      .select('id, candidate_id, score, is_alternate, company_action, score_breakdown, candidates(full_name, skill_tags, location, experience_level, rate_min)')
+      .select('id, candidate_id, score, is_alternate, company_action, score_breakdown, candidates(full_name, photo_url, skill_tags, location, experience_level, rate_min)')
       .eq('role_id', roleId)
       .eq('excluded', false)
       .order('score', { ascending: false });
@@ -108,6 +115,7 @@ export default function ShortlistScreen() {
         isAlternate: s.is_alternate,
         verified: typeof s.score_breakdown?.verified === 'boolean' ? s.score_breakdown.verified : null,
         fullName: s.candidates?.full_name ?? 'Candidate',
+        photoUrl: s.candidates?.photo_url ?? null,
         skillTags: s.candidates?.skill_tags ?? [],
         location: s.candidates?.location ?? null,
         experienceLevel: s.candidates?.experience_level ?? null,
@@ -251,20 +259,28 @@ export default function ShortlistScreen() {
           {active.length > 0 && (
             <>
               <Text style={st.sectionLabel}>SHORTLIST</Text>
-              {active.map((c) => (
-                <CandidateCardView key={c.matchScoreId} T={T} st={st} card={c} busy={busyId === c.matchScoreId}
-                  onAccept={() => handleAccept(c)} onSkip={() => handleAction(c, 'skipped')} onSave={() => handleAction(c, 'saved')} />
-              ))}
+              <View style={st.grid}>
+                {active.map((c) => (
+                  <View key={c.matchScoreId} style={[st.gridItem, isDesktop && st.gridItemHalf]}>
+                    <CandidateCardView T={T} st={st} card={c} busy={busyId === c.matchScoreId}
+                      onAccept={() => handleAccept(c)} onSkip={() => handleAction(c, 'skipped')} onSave={() => handleAction(c, 'saved')} />
+                  </View>
+                ))}
+              </View>
             </>
           )}
 
           {alternates.length > 0 && (
             <>
               <Text style={st.sectionLabel}>ALTERNATES</Text>
-              {alternates.map((c) => (
-                <CandidateCardView key={c.matchScoreId} T={T} st={st} card={c} busy={busyId === c.matchScoreId}
-                  onAccept={() => handleAccept(c)} onSkip={() => handleAction(c, 'skipped')} onSave={() => handleAction(c, 'saved')} />
-              ))}
+              <View style={st.grid}>
+                {alternates.map((c) => (
+                  <View key={c.matchScoreId} style={[st.gridItem, isDesktop && st.gridItemHalf]}>
+                    <CandidateCardView T={T} st={st} card={c} busy={busyId === c.matchScoreId}
+                      onAccept={() => handleAccept(c)} onSkip={() => handleAction(c, 'skipped')} onSave={() => handleAction(c, 'saved')} />
+                  </View>
+                ))}
+              </View>
             </>
           )}
 
@@ -295,52 +311,64 @@ function CandidateCardView({ T, st, card, busy, onAccept, onSkip, onSave }: {
   T: ThemePalette; st: ReturnType<typeof makeStyles>; card: CandidateCard; busy: boolean;
   onAccept: () => void; onSkip: () => void; onSave: () => void;
 }) {
+  const meta = [
+    card.experienceLevel,
+    card.location,
+    card.rateMin ? `from $${card.rateMin.toLocaleString()}` : null,
+  ].filter(Boolean).join('  ·  ');
+
   return (
     <View style={st.card}>
-      <View style={st.cardTop}>
-        <Text style={st.candidateName}>{card.fullName}</Text>
-        <View style={st.scoreRing}>
-          <Text style={st.scoreText}>{card.score}%</Text>
+      <View style={st.profileRow}>
+        {card.photoUrl ? (
+          <Image source={{ uri: card.photoUrl }} style={st.photo} />
+        ) : (
+          <View style={[st.photo, st.photoFallback]}>
+            <Text style={st.photoInitials}>{initials(card.fullName)}</Text>
+          </View>
+        )}
+
+        <View style={st.profileBody}>
+          <View style={st.nameRow}>
+            <Text style={st.candidateName} numberOfLines={1}>{card.fullName}</Text>
+            <View style={st.scoreRing}>
+              <Text style={st.scoreText}>{card.score}%</Text>
+            </View>
+          </View>
+
+          <View style={st.badgeRow}>
+            {card.verified === true && (
+              <View style={[st.badge, st.badgeVerified]}>
+                <Ionicons name="shield-checkmark" size={ICON.xs} color={T.emerald} />
+                <Text style={[st.badgeText, { color: T.emerald }]}>Verified</Text>
+              </View>
+            )}
+            {card.verified === false && (
+              <View style={[st.badge, st.badgeUnverified]}>
+                <Ionicons name="shield-outline" size={ICON.xs} color={T.textMuted} />
+                <Text style={[st.badgeText, { color: T.textMuted }]}>Not yet verified</Text>
+              </View>
+            )}
+          </View>
+
+          {meta ? <Text style={st.metaText} numberOfLines={1}>{meta}</Text> : null}
         </View>
       </View>
-      <View style={st.badgeRow}>
-        {card.verified === true && (
-          <View style={[st.badge, st.badgeVerified]}>
-            <Ionicons name="shield-checkmark" size={11} color={T.emerald} />
-            <Text style={[st.badgeText, { color: T.emerald }]}>Verified</Text>
-          </View>
-        )}
-        {card.verified === false && (
-          <View style={[st.badge, st.badgeUnverified]}>
-            <Ionicons name="shield-outline" size={11} color={T.textMuted} />
-            <Text style={[st.badgeText, { color: T.textMuted }]}>Not yet verified</Text>
-          </View>
-        )}
-        {card.experienceLevel && (
-          <View style={[st.badge, st.badgeNeutral]}>
-            <Text style={[st.badgeText, { color: T.textSecondary }]}>{card.experienceLevel}</Text>
-          </View>
-        )}
-      </View>
-      {card.location && (
-        <View style={st.metaRow}>
-          <Ionicons name="location-outline" size={12} color={T.textSecondary} />
-          <Text style={st.metaText}>{card.location}</Text>
-        </View>
-      )}
+
       <View style={st.skillsRow}>
-        {card.skillTags.slice(0, 4).map((s) => (
+        {card.skillTags.slice(0, 5).map((s) => (
           <View key={s} style={st.skillChip}>
             <Text style={st.skillText}>{s}</Text>
           </View>
         ))}
       </View>
+
       <View style={st.actionsRow}>
         <Pressable style={[st.actionBtn, st.skipBtn]} onPress={onSkip} disabled={busy} accessibilityRole="button" accessibilityLabel={`Skip ${card.fullName}`}>
-          <Ionicons name="close" size={18} color={T.danger} />
+          <Ionicons name="close" size={ICON.md} color={T.danger} />
         </Pressable>
         <Pressable style={[st.actionBtn, st.saveBtn]} onPress={onSave} disabled={busy} accessibilityRole="button" accessibilityLabel={`Save ${card.fullName}`}>
-          <Ionicons name="bookmark-outline" size={16} color={T.accent} />
+          <Ionicons name="bookmark-outline" size={ICON.sm} color={T.accent} />
         </Pressable>
         <Pressable style={[st.actionBtn, st.acceptBtn]} onPress={onAccept} disabled={busy} accessibilityRole="button" accessibilityLabel={`Accept ${card.fullName}`}>
           <Ionicons name="checkmark" size={ICON.md} color={T.white} />
@@ -367,27 +395,33 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   emptySub: { fontSize: 13, color: T.textSecondary, textAlign: 'center', lineHeight: 19 },
   rerunPill: { flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: T.accent, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 50, marginTop: 16 },
   rerunPillText: { fontSize: 13, fontWeight: '700', color: T.textOnAccent },
-  card: { backgroundColor: T.card, borderRadius: RADIUS.card, padding: 18, marginBottom: 12, borderWidth: 1, borderColor: T.border, ...ELEVATION.card },
-  cardTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, gap: 12 },
-  candidateName: { fontSize: 16, fontWeight: '700', color: T.textPrimary, flex: 1, letterSpacing: -0.2 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 14 },
+  gridItem: { width: '100%' },
+  gridItemHalf: { width: '48.5%' },
+  card: { flex: 1, backgroundColor: T.card, borderRadius: RADIUS.card, padding: 18, marginBottom: 0, borderWidth: 1, borderColor: T.border, ...ELEVATION.card },
+  profileRow: { flexDirection: 'row', gap: 14, marginBottom: 14 },
+  photo: { width: 68, height: 68, borderRadius: 18, backgroundColor: T.surface },
+  photoFallback: { alignItems: 'center', justifyContent: 'center' },
+  photoInitials: { fontSize: 22, fontWeight: '800', color: T.accent, letterSpacing: -0.5 },
+  profileBody: { flex: 1, minWidth: 0, gap: 7, justifyContent: 'center' },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  candidateName: { flex: 1, fontSize: 17, fontWeight: '800', color: T.textPrimary, letterSpacing: -0.3 },
   scoreRing: { minWidth: 46, height: 26, borderRadius: RADIUS.chip, backgroundColor: T.emeraldBg, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8 },
   scoreText: { fontSize: 12, fontWeight: '800', color: T.emerald, letterSpacing: -0.2 },
-  badgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 12 },
-  badge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 4, borderRadius: RADIUS.chip },
+  badgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  badge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 3, borderRadius: RADIUS.chip },
   badgeVerified: { backgroundColor: T.emeraldBg },
   badgeUnverified: { backgroundColor: T.surface },
-  badgeNeutral: { backgroundColor: T.surface },
   badgeText: { fontSize: 10.5, fontWeight: '700', textTransform: 'capitalize', letterSpacing: 0.1 },
-  metaRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 12 },
   metaText: { fontSize: 12.5, color: T.textSecondary, fontWeight: '500' },
   skillsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 16 },
   skillChip: { backgroundColor: T.surface, paddingHorizontal: 10, paddingVertical: 5, borderRadius: RADIUS.chip },
   skillText: { fontSize: 11.5, color: T.textSecondary, fontWeight: '600' },
-  actionsRow: { flexDirection: 'row', gap: 8 },
+  actionsRow: { flexDirection: 'row', gap: 8, marginTop: 'auto' },
   actionBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, height: 42, borderRadius: RADIUS.control },
   skipBtn: { width: 44, backgroundColor: T.surface },
   saveBtn: { width: 44, backgroundColor: T.accentBg },
-  acceptBtn: { paddingHorizontal: 26, backgroundColor: T.accent },
+  acceptBtn: { flex: 1, backgroundColor: T.accent },
   acceptText: { fontSize: 14, fontWeight: '700', color: T.white, letterSpacing: -0.1 },
   introducedRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: T.border },
   introducedCard: { marginBottom: 12 },
