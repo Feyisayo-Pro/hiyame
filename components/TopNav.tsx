@@ -3,7 +3,7 @@ import { Platform, Pressable, StyleSheet, View, useWindowDimensions } from 'reac
 import { router, usePathname } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Text } from '@/components/Themed';
-import { useTheme, ThemePalette, ICON, RADIUS } from '@/lib/theme';
+import { useTheme, useThemeToggle, ThemePalette, ICON, RADIUS } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
 
 // Persistent left sidebar for desktop web. The tab layouts render this beside
@@ -40,12 +40,14 @@ function filled(icon: string): keyof typeof Ionicons.glyphMap {
 export default function SideNav({ role }: { role: 'candidate' | 'company' }) {
   const T = useTheme();
   const st = useMemo(() => makeStyles(T), [T]);
+  const { mode, toggleTheme } = useThemeToggle();
   const pathname = usePathname();
   const isDesktop = useIsDesktopWeb();
 
   if (!isDesktop) return null;
 
   const items = role === 'candidate' ? CANDIDATE : COMPANY;
+  const base = role === 'candidate' ? '/(candidate)' : '/(company)';
   const last = pathname.replace(/\/+$/, '').split('/').pop() || '';
   const activeScreen = last === '' || last === '(candidate)' || last === '(company)' ? 'index' : last;
 
@@ -79,12 +81,39 @@ export default function SideNav({ role }: { role: 'candidate' | 'company' }) {
       <View style={st.footer}>
         <Pressable
           style={({ pressed }) => [st.footRow, pressed && st.linkPressed]}
+          onPress={() => router.navigate(`${base}/notifications` as any)}
+          accessibilityRole="link"
+          accessibilityLabel="Notifications"
+        >
+          <Ionicons name="notifications-outline" size={ICON.md} color={T.textSecondary} />
+          <Text style={st.footText}>Notifications</Text>
+        </Pressable>
+        <Pressable
+          style={({ pressed }) => [st.footRow, pressed && st.linkPressed]}
+          onPress={toggleTheme}
+          accessibilityRole="button"
+          accessibilityLabel={mode === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+        >
+          <Ionicons name={mode === 'light' ? 'moon-outline' : 'sunny-outline'} size={ICON.md} color={T.textSecondary} />
+          <Text style={st.footText}>{mode === 'light' ? 'Dark mode' : 'Light mode'}</Text>
+        </Pressable>
+        <Pressable
+          style={({ pressed }) => [st.footRow, pressed && st.linkPressed]}
+          onPress={() => router.navigate(`${base}/settings` as any)}
+          accessibilityRole="link"
+          accessibilityLabel="Settings"
+        >
+          <Ionicons name="settings-outline" size={ICON.md} color={T.textSecondary} />
+          <Text style={st.footText}>Settings</Text>
+        </Pressable>
+        <Pressable
+          style={({ pressed }) => [st.footRow, pressed && st.linkPressed]}
           onPress={() => supabase.auth.signOut()}
           accessibilityRole="button"
           accessibilityLabel="Sign out"
         >
-          <Ionicons name="log-out-outline" size={ICON.md} color={T.textSecondary} />
-          <Text style={st.footText}>Sign out</Text>
+          <Ionicons name="log-out-outline" size={ICON.md} color={T.danger} />
+          <Text style={[st.footText, { color: T.danger }]}>Sign out</Text>
         </Pressable>
       </View>
     </View>

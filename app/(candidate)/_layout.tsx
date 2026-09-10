@@ -4,7 +4,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { Text, View, Platform, OpaqueColorValue } from 'react-native';
 import { useTheme } from '@/lib/theme';
 import TopNav, { useIsDesktopWeb } from '@/components/TopNav';
-import TopBar from '@/components/TopBar';
 
 function ProfileAvatar({ color, focused }: { color: string | OpaqueColorValue; focused: boolean }) {
   const T = useTheme();
@@ -39,7 +38,6 @@ export default function CandidateTabLayout() {
     <View style={{ flex: 1, flexDirection: desktop ? 'row' : 'column', backgroundColor: T.bg }}>
       <TopNav role="candidate" />
       <View style={{ flex: 1, minWidth: 0, maxWidth: desktop ? 960 : undefined }}>
-      <TopBar role="candidate" />
       <Tabs
       screenOptions={{
         headerShown: false,
