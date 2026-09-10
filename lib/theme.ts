@@ -115,6 +115,42 @@ export const DARK: ThemePalette = {
 // ── Backward compat: static export for non-component code ──
 export const THEME = LIGHT;
 
+// ══════════════════════════════════════════════════════════════════════
+// TYPOGRAPHY — Instagram-style scale
+// ──────────────────────────────────────────────────────────────────────
+// Direction (see design-system/hiyame/MASTER.md): the platform system font
+// — which is exactly what instagram.com uses on web — with a tight, modern
+// hierarchy. No custom typeface is loaded; if a branded face is ever wanted,
+// register it in app/_layout.tsx's useFonts() and set FONT_FAMILY here.
+//
+// Use these tokens instead of hardcoding fontSize / fontWeight in a
+// StyleSheet. Weights are strings because React Native wants '600', not 600.
+export const FONT_FAMILY: string | undefined = undefined; // system default
+
+export const TYPE = {
+  // size + the line height that pairs with it
+  display: { fontSize: 28, lineHeight: 32, fontWeight: '800' as const, letterSpacing: -0.4 },
+  title:   { fontSize: 22, lineHeight: 27, fontWeight: '800' as const, letterSpacing: -0.3 },
+  heading: { fontSize: 17, lineHeight: 22, fontWeight: '700' as const, letterSpacing: -0.2 },
+  body:    { fontSize: 15, lineHeight: 22, fontWeight: '400' as const, letterSpacing: 0 },
+  bodyStrong: { fontSize: 15, lineHeight: 22, fontWeight: '600' as const, letterSpacing: 0 },
+  callout: { fontSize: 13, lineHeight: 18, fontWeight: '500' as const, letterSpacing: 0 },
+  caption: { fontSize: 12, lineHeight: 16, fontWeight: '500' as const, letterSpacing: 0.1 },
+  // ALL-CAPS eyebrow / section labels — the tracking is load-bearing here
+  overline: { fontSize: 11, lineHeight: 14, fontWeight: '700' as const, letterSpacing: 0.6 },
+} as const;
+
+// 4-point spacing scale. Prefer layout gap over per-element margins.
+export const SPACING = { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 24, xxxl: 32 } as const;
+
+// Corner radii by role — not one radius stamped on everything.
+export const RADIUS = { chip: 8, control: 12, card: 16, sheet: 20, pill: 999 } as const;
+
+// Minimum interactive target (WCAG 2.5.5 / platform HIG). Icon-only buttons
+// smaller than this visually must carry hitSlop to reach it, plus an
+// accessibilityLabel.
+export const MIN_TOUCH = 44;
+
 // ── Context ──
 interface ThemeContextValue {
   theme: ThemePalette;

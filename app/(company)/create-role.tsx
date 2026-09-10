@@ -116,7 +116,7 @@ export default function CreateRoleScreen() {
     <SafeAreaView style={st.container} edges={['top', 'left', 'right']}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View style={st.header}>
-          <Pressable style={st.backButton} onPress={() => router.back()}>
+          <Pressable style={st.backButton} onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Go back">
             <Ionicons name="arrow-back" size={20} color={T.textPrimary} />
           </Pressable>
           <Text style={st.headerTitle}>Post a Role</Text>
@@ -304,7 +304,7 @@ function TagField({ T, st, label, inputValue, onInputChange, tags, onAdd, onRemo
           returnKeyType="done"
         />
         {inputValue.trim().length > 0 && (
-          <Pressable style={st.addTagBtn} onPress={onAdd} hitSlop={8}>
+          <Pressable style={st.addTagBtn} onPress={onAdd} hitSlop={8} accessibilityRole="button" accessibilityLabel={`Add ${label.toLowerCase()} "${inputValue.trim()}"`}>
             <Ionicons name="add" size={18} color={T.textOnAccent} />
           </Pressable>
         )}
@@ -314,7 +314,7 @@ function TagField({ T, st, label, inputValue, onInputChange, tags, onAdd, onRemo
           {tags.map((tag) => (
             <View key={tag} style={st.tagChip}>
               <Text style={st.tagChipText}>{tag}</Text>
-              <Pressable onPress={() => onRemove(tag)} hitSlop={6}>
+              <Pressable onPress={() => onRemove(tag)} hitSlop={6} accessibilityRole="button" accessibilityLabel={`Remove ${tag}`}>
                 <Ionicons name="close" size={14} color={T.accent} />
               </Pressable>
             </View>

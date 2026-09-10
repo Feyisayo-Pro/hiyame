@@ -99,7 +99,7 @@ export default function CompanyRolesScreen() {
           <Text style={st.headerTitle}>My Roles</Text>
           <Text style={st.headerSub}>Tap a role to review its shortlist</Text>
         </View>
-        <Pressable style={st.postButton} onPress={() => router.push('/(company)/create-role')}>
+        <Pressable style={st.postButton} onPress={() => router.push('/(company)/create-role')} accessibilityRole="button" accessibilityLabel="Post a role">
           <Ionicons name="add" size={20} color={T.textOnAccent} />
         </Pressable>
       </View>

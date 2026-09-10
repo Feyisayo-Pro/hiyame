@@ -182,7 +182,7 @@ export default function ShortlistScreen() {
   return (
     <SafeAreaView style={st.container} edges={['top', 'left', 'right']}>
       <View style={st.header}>
-        <Pressable style={st.backButton} onPress={() => router.back()}>
+        <Pressable style={st.backButton} onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Go back">
           <Ionicons name="arrow-back" size={20} color={T.textPrimary} />
         </Pressable>
         <View style={{ flex: 1 }}>
@@ -330,10 +330,10 @@ function CandidateCardView({ T, st, card, busy, onAccept, onSkip, onSave }: {
         ))}
       </View>
       <View style={st.actionsRow}>
-        <Pressable style={[st.actionBtn, st.skipBtn]} onPress={onSkip} disabled={busy}>
+        <Pressable style={[st.actionBtn, st.skipBtn]} onPress={onSkip} disabled={busy} accessibilityRole="button" accessibilityLabel={`Skip ${card.fullName}`}>
           <Ionicons name="close" size={18} color={T.danger} />
         </Pressable>
-        <Pressable style={[st.actionBtn, st.saveBtn]} onPress={onSave} disabled={busy}>
+        <Pressable style={[st.actionBtn, st.saveBtn]} onPress={onSave} disabled={busy} accessibilityRole="button" accessibilityLabel={`Save ${card.fullName}`}>
           <Ionicons name="bookmark-outline" size={16} color={T.accent} />
         </Pressable>
         <Pressable style={[st.actionBtn, st.acceptBtn]} onPress={onAccept} disabled={busy}>
