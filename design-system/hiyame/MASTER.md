@@ -3,10 +3,19 @@
 Global source of truth for Hiyame's UI. Page-specific overrides, if any, live in
 `design-system/hiyame/pages/<page>.md` and win over this file.
 
-Distilled from the `ui-ux-pro-max` UI/UX skill's priority rules (that skill's
-searchable dataset/scripts are not installed in this repo — if they're added
-later, this file is the `--persist` MASTER it expects). Tokens here are mirrored
-in code in `lib/theme.ts` — change both together.
+Distilled from the `ui-ux-pro-max` UI/UX skill's priority rules. That skill is
+now vendored at `.claude/skills/ui-ux-pro-max/` (MIT, from
+github.com/nextlevelbuilder/ui-ux-pro-max-skill) — query it for specific UX
+outcomes, stack guidance, palettes, fonts, icons, and chart types:
+
+```
+python .claude/skills/ui-ux-pro-max/scripts/search.py "<query>" --domain <ux|style|color|typography|icons|chart|...>
+python .claude/skills/ui-ux-pro-max/scripts/search.py "<query>" --stack react-native
+```
+
+The skill's generic `--design-system` output does NOT override this file — the
+pinned direction below (X-blue + Instagram type) always wins. Tokens here are
+mirrored in code in `lib/theme.ts` — change both together.
 
 ---
 
