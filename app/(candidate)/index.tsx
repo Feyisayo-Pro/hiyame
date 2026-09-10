@@ -9,6 +9,7 @@ import { supabase } from '@/lib/supabase';
 import { getCandidateStats, CandidateStats, relativeTime } from '@/lib/dashboardStats';
 import { TIER_CONFIG } from '@/lib/mock-data';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
+import { useIsDesktopWeb } from '@/components/TopNav';
 import { useTheme, useThemeToggle, ThemePalette } from '@/lib/theme';
 
 const VERIFY_COMPONENTS: { key: string; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
@@ -38,6 +39,7 @@ export default function CandidateHomeScreen() {
   const { mode, toggleTheme } = useThemeToggle();
   const st = useMemo(() => makeStyles(T), [T]);
   const { candidateId } = useAuth();
+  const isDesktop = useIsDesktopWeb();
 
   const [stats, setStats] = useState<CandidateStats | null>(null);
   const [passedComponents, setPassedComponents] = useState<Set<string>>(new Set());
@@ -45,10 +47,16 @@ export default function CandidateHomeScreen() {
 
   const load = useCallback(async () => {
     if (!candidateId) { setStats(null); return; }
-    const [s, { data: vrecs }] = await Promise.all([
+    const [s, { data: vrecs }, { data: me }] = await Promise.all([
       getCandidateStats(candidateId),
       supabase.from('verification_records').select('component, status').eq('candidate_id', candidateId),
+      supabase.from('candidates').select('tour_seen_at').eq('id', candidateId).maybeSingle(),
     ]);
+    // First run: send new candidates through the welcome walkthrough once.
+    if (me && !me.tour_seen_at) {
+      router.replace('/(candidate)/welcome-tour' as any);
+      return;
+    }
     setStats(s);
     setPassedComponents(new Set((vrecs ?? []).filter((v) => v.status === 'passed').map((v) => v.component)));
   }, [candidateId]);
@@ -86,14 +94,16 @@ export default function CandidateHomeScreen() {
                   <Text style={st.userName}>{firstName}</Text>
                 </View>
               </View>
-              <View style={st.headerActions}>
-                <Pressable style={st.iconBtn} onPress={toggleTheme} accessibilityRole="button" accessibilityLabel="Toggle theme">
-                  <Ionicons name={mode === 'light' ? 'sunny-outline' : 'moon-outline'} size={20} color={T.textSecondary} />
-                </Pressable>
-                <Pressable style={st.iconBtn} onPress={() => supabase.auth.signOut()} accessibilityRole="button" accessibilityLabel="Sign out">
-                  <Ionicons name="log-out-outline" size={20} color={T.textSecondary} />
-                </Pressable>
-              </View>
+              {!isDesktop && (
+                <View style={st.headerActions}>
+                  <Pressable style={st.iconBtn} onPress={toggleTheme} accessibilityRole="button" accessibilityLabel="Toggle theme">
+                    <Ionicons name={mode === 'light' ? 'sunny-outline' : 'moon-outline'} size={20} color={T.textSecondary} />
+                  </Pressable>
+                  <Pressable style={st.iconBtn} onPress={() => supabase.auth.signOut()} accessibilityRole="button" accessibilityLabel="Sign out">
+                    <Ionicons name="log-out-outline" size={20} color={T.textSecondary} />
+                  </Pressable>
+                </View>
+              )}
             </View>
           </View>
 

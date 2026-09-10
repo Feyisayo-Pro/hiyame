@@ -227,6 +227,17 @@ export default function CandidateProfileScreen() {
             </View>
           </Pressable>
 
+          <Pressable style={st.actionItem} onPress={() => router.push('/(candidate)/welcome-tour' as any)}>
+            <View style={st.actionIconWrap}>
+              <Ionicons name="help-buoy-outline" size={18} color={T.accent} />
+            </View>
+            <View style={st.actionContent}>
+              <Text style={st.actionLabel}>How Hiyame works</Text>
+              <Text style={st.actionDesc}>Replay the welcome walkthrough</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={T.textMuted} />
+          </Pressable>
+
           <Pressable style={st.actionItem}>
             <View style={st.actionIconWrap}>
               <Ionicons name="settings-outline" size={18} color={T.accent} />

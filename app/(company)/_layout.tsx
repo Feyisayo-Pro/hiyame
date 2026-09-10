@@ -1,8 +1,8 @@
-import { useMemo } from 'react';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Text, View, Platform, OpaqueColorValue } from 'react-native';
-import { useTheme, ThemePalette } from '@/lib/theme';
+import { useTheme } from '@/lib/theme';
+import TopNav, { useIsDesktopWeb } from '@/components/TopNav';
 
 // React Navigation's bottom-tabs wraps ITS OWN label slot (tabBarLabel / the string
 // `title`) in a fixed ~9px overflow:hidden box on web — a custom tabBarLabel render
@@ -22,15 +22,18 @@ function TabIcon({ name, label, color }: { name: keyof typeof Ionicons.glyphMap;
 
 export default function CompanyTabLayout() {
   const T = useTheme();
+  const desktop = useIsDesktopWeb();
 
   return (
-    <Tabs
+    <View style={{ flex: 1, backgroundColor: T.bg }}>
+      <TopNav role="company" />
+      <Tabs
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: T.textPrimary,
         tabBarInactiveTintColor: T.textMuted,
         tabBarShowLabel: false,
-        tabBarStyle: {
+        tabBarStyle: desktop ? { display: 'none' } : {
           backgroundColor: T.tabBarBg,
           borderTopWidth: 1,
           borderTopColor: T.tabBarBorder,
@@ -90,6 +93,7 @@ export default function CompanyTabLayout() {
       <Tabs.Screen name="settings" options={{ href: null }} />
       <Tabs.Screen name="subscriptions" options={{ href: null }} />
       <Tabs.Screen name="team" options={{ href: null }} />
-    </Tabs>
+      </Tabs>
+    </View>
   );
 }

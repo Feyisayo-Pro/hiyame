@@ -1,8 +1,9 @@
-import { useMemo, ReactNode } from 'react';
+import { ReactNode } from 'react';
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Text, View, Platform, OpaqueColorValue } from 'react-native';
-import { useTheme, ThemePalette } from '@/lib/theme';
+import { useTheme } from '@/lib/theme';
+import TopNav, { useIsDesktopWeb } from '@/components/TopNav';
 
 function ProfileAvatar({ color, focused }: { color: string | OpaqueColorValue; focused: boolean }) {
   const T = useTheme();
@@ -31,15 +32,18 @@ function TabIcon({ icon, label, color }: { icon: ReactNode; label: string; color
 
 export default function CandidateTabLayout() {
   const T = useTheme();
+  const desktop = useIsDesktopWeb();
 
   return (
-    <Tabs
+    <View style={{ flex: 1, backgroundColor: T.bg }}>
+      <TopNav role="candidate" />
+      <Tabs
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: T.textPrimary,
         tabBarInactiveTintColor: T.textMuted,
         tabBarShowLabel: false,
-        tabBarStyle: {
+        tabBarStyle: desktop ? { display: 'none' } : {
           backgroundColor: T.tabBarBg,
           borderTopWidth: 1,
           borderTopColor: T.tabBarBorder,
@@ -96,6 +100,8 @@ export default function CandidateTabLayout() {
       <Tabs.Screen name="analytics" options={{ href: null }} />
       <Tabs.Screen name="notifications" options={{ href: null }} />
       <Tabs.Screen name="settings" options={{ href: null }} />
-    </Tabs>
+      <Tabs.Screen name="welcome-tour" options={{ href: null }} />
+      </Tabs>
+    </View>
   );
 }
