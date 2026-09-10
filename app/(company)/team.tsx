@@ -1,5 +1,5 @@
-import { useMemo, useState, useCallback } from 'react';
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { useMemo, useState, useCallback, useEffect } from 'react';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -7,27 +7,83 @@ import { Ionicons } from '@expo/vector-icons';
 import { Text } from '@/components/Themed';
 import { useTheme, ThemePalette } from '@/lib/theme';
 import { useSubscription } from '@/lib/subscriptionStore';
+import { useAuth } from '@/lib/useAuth';
+import { supabase } from '@/lib/supabase';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import { notify } from '@/lib/notify';
 
-function initialsFor(email: string): string {
-  const name = email.split('@')[0];
-  return name.slice(0, 2).toUpperCase();
+// The team roster is real: it reads and writes the company_users table
+// (scoped to the signed-in user's company via RLS). An "invite" is a
+// persisted row with status = 'pending' and no auth_user_id — a record of
+// intent only. There is NO invite email and no way for the invitee to sign
+// in yet; a future email-based claim flow will activate pending rows. Until
+// then a pending member stays pending. Seat cap comes from the plan tier
+// (useSubscription), counted against real rows.
+
+interface Member {
+  id: string;
+  email: string | null;
+  role: string | null;
+  status: 'active' | 'pending';
+  auth_user_id: string | null;
+}
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function displayName(email: string | null): string {
+  if (!email) return 'Unknown';
+  return email.split('@')[0];
+}
+
+function initialsFor(email: string | null): string {
+  return displayName(email).slice(0, 2).toUpperCase();
+}
+
+function roleLabel(m: Member): string {
+  if (m.status === 'pending') return 'Pending Invite';
+  if (m.role === 'talent_lead') return 'Talent Lead';
+  return 'Hiring Manager';
 }
 
 export default function TeamMembersScreen() {
   const T = useTheme();
   const s = useMemo(() => makeStyles(T), [T]);
   const router = useRouter();
-  const { config, teamMembers, canInviteTeamMember, addTeamMember, removeTeamMember } = useSubscription();
+  const { config } = useSubscription();
+  const { companyId, session } = useAuth();
 
+  const [members, setMembers] = useState<Member[] | null>(null);
   const [inviteEmail, setInviteEmail] = useState('');
+  const [inviting, setInviting] = useState(false);
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    if (!companyId) {
+      setMembers([]);
+      return;
+    }
+    const { data, error } = await supabase
+      .from('company_users')
+      .select('id, email, role, status, auth_user_id')
+      .eq('company_id', companyId)
+      .order('created_at', { ascending: true });
+    if (error) {
+      console.warn('Failed to load team:', error.message);
+      setMembers([]);
+      return;
+    }
+    setMembers((data ?? []) as Member[]);
+  }, [companyId]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const seatCap = config.teamSeatCap;
-  const seatsUsed = teamMembers.length;
-  const seatsFull = !canInviteTeamMember;
+  const seatsUsed = members?.length ?? 0;
+  const seatsFull = seatCap !== -1 && seatsUsed >= seatCap;
 
-  const handleInvite = useCallback(() => {
+  const handleInvite = useCallback(async () => {
     if (seatsFull) {
       notify(
         'Seat Limit Reached',
@@ -39,22 +95,67 @@ export default function TeamMembersScreen() {
       );
       return;
     }
-    const email = inviteEmail.trim();
+    const email = inviteEmail.trim().toLowerCase();
     if (!email) return;
-    addTeamMember({ name: email.split('@')[0], email, role: 'Pending Invite', avatarInitials: initialsFor(email) });
-    setInviteEmail('');
-  }, [seatsFull, config.name, seatCap, router, inviteEmail, addTeamMember]);
+    if (!EMAIL_RE.test(email)) {
+      notify('Invalid email', 'Enter a valid email address.');
+      return;
+    }
+    if (!companyId) {
+      notify('Something went wrong', 'No company account found for this session.');
+      return;
+    }
 
-  const handleRemove = useCallback((member: { id: string; name: string }) => {
-    notify(
-      'Remove Team Member',
-      `Remove ${member.name} from your team? This frees up a seat immediately.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Remove', style: 'destructive', onPress: () => removeTeamMember(member.id) },
-      ],
-    );
-  }, [removeTeamMember]);
+    setInviting(true);
+    const { error } = await supabase
+      .from('company_users')
+      .insert({ company_id: companyId, email, role: 'hiring_manager', status: 'pending' });
+    setInviting(false);
+
+    if (error) {
+      if (error.code === '23505') {
+        notify('Already on the team', `${email} has already been invited or added.`);
+      } else {
+        notify('Could not send invite', error.message);
+      }
+      return;
+    }
+    setInviteEmail('');
+    await load();
+  }, [seatsFull, config.name, seatCap, router, inviteEmail, companyId, load]);
+
+  const handleRemove = useCallback(
+    (member: Member) => {
+      if (member.auth_user_id && member.auth_user_id === session?.user?.id) {
+        notify("Can't remove yourself", 'Ask another teammate to remove your seat.');
+        return;
+      }
+      notify(
+        member.status === 'pending' ? 'Cancel Invite' : 'Remove Team Member',
+        member.status === 'pending'
+          ? `Cancel the pending invite for ${member.email}?`
+          : `Remove ${displayName(member.email)} from your team? This frees up a seat immediately.`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: member.status === 'pending' ? 'Cancel Invite' : 'Remove',
+            style: 'destructive',
+            onPress: async () => {
+              setBusyId(member.id);
+              const { error } = await supabase.from('company_users').delete().eq('id', member.id);
+              setBusyId(null);
+              if (error) {
+                notify('Something went wrong', error.message);
+                return;
+              }
+              await load();
+            },
+          },
+        ],
+      );
+    },
+    [session, load],
+  );
 
   return (
     <SafeAreaView style={s.safeArea} edges={['top', 'left', 'right']}>
@@ -83,25 +184,56 @@ export default function TeamMembersScreen() {
 
           {/* Member list */}
           <Text style={s.sectionLabel}>MEMBERS</Text>
-          <View style={s.memberList}>
-            {teamMembers.map((m, i) => (
-              <View key={m.id} style={[s.memberRow, i < teamMembers.length - 1 && s.memberRowBorder]}>
-                <View style={s.avatarCircle}>
-                  <Text style={s.avatarInitials}>{m.avatarInitials}</Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={s.memberName}>{m.name}</Text>
-                  <Text style={s.memberEmail}>{m.email}</Text>
-                </View>
-                <View style={[s.roleBadge, m.role === 'Pending Invite' && s.roleBadgePending]}>
-                  <Text style={[s.roleBadgeText, m.role === 'Pending Invite' && s.roleBadgeTextPending]}>{m.role}</Text>
-                </View>
-                <Pressable onPress={() => handleRemove(m)} style={s.deleteBtn} hitSlop={8}>
-                  <Ionicons name="trash-outline" size={18} color={T.danger} />
-                </Pressable>
-              </View>
-            ))}
-          </View>
+          {members === null ? (
+            <View style={s.loadingBox}>
+              <ActivityIndicator color={T.accent} />
+            </View>
+          ) : members.length === 0 ? (
+            <View style={s.emptyBox}>
+              <Text style={s.emptyText}>No team members yet. Invite your first teammate below.</Text>
+            </View>
+          ) : (
+            <View style={s.memberList}>
+              {members.map((m, i) => {
+                const isSelf = !!m.auth_user_id && m.auth_user_id === session?.user?.id;
+                const label = roleLabel(m);
+                return (
+                  <View key={m.id} style={[s.memberRow, i < members.length - 1 && s.memberRowBorder]}>
+                    <View style={s.avatarCircle}>
+                      <Text style={s.avatarInitials}>{initialsFor(m.email)}</Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={s.memberName}>
+                        {displayName(m.email)}
+                        {isSelf ? ' (you)' : ''}
+                      </Text>
+                      <Text style={s.memberEmail}>{m.email}</Text>
+                    </View>
+                    <View style={[s.roleBadge, m.status === 'pending' && s.roleBadgePending]}>
+                      <Text style={[s.roleBadgeText, m.status === 'pending' && s.roleBadgeTextPending]}>{label}</Text>
+                    </View>
+                    {isSelf ? (
+                      <View style={s.deleteBtn} />
+                    ) : busyId === m.id ? (
+                      <View style={s.deleteBtn}>
+                        <ActivityIndicator size="small" color={T.danger} />
+                      </View>
+                    ) : (
+                      <Pressable
+                        onPress={() => handleRemove(m)}
+                        style={s.deleteBtn}
+                        hitSlop={8}
+                        accessibilityRole="button"
+                        accessibilityLabel={`${m.status === 'pending' ? 'Cancel invite for' : 'Remove'} ${m.email ?? 'member'}`}
+                      >
+                        <Ionicons name="trash-outline" size={18} color={T.danger} />
+                      </Pressable>
+                    )}
+                  </View>
+                );
+              })}
+            </View>
+          )}
 
           {/* Invite section */}
           <Text style={s.sectionLabel}>INVITE A TEAMMATE</Text>
@@ -113,16 +245,20 @@ export default function TeamMembersScreen() {
               placeholderTextColor={T.inputPlaceholder}
               keyboardType="email-address"
               autoCapitalize="none"
-              editable={!seatsFull}
-              style={[s.inviteInput, seatsFull && s.inviteInputDisabled]}
+              editable={!seatsFull && !inviting}
+              style={[s.inviteInput, (seatsFull || inviting) && s.inviteInputDisabled]}
             />
             <Pressable
               onPress={handleInvite}
-              style={[s.inviteBtn, seatsFull && s.inviteBtnDisabled]}
+              disabled={inviting}
+              style={[s.inviteBtn, (seatsFull || inviting) && s.inviteBtnDisabled]}
             >
               <Ionicons name={seatsFull ? 'lock-closed' : 'person-add'} size={16} color={T.textOnAccent} />
-              <Text style={s.inviteBtnText}>Invite Member</Text>
+              <Text style={s.inviteBtnText}>{inviting ? 'Inviting…' : 'Invite Member'}</Text>
             </Pressable>
+            <Text style={s.inviteHint}>
+              Adds a pending seat now. No email is sent yet — teammate sign-in is coming later.
+            </Text>
           </View>
 
           {seatsFull && (
@@ -158,6 +294,9 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   seatSubtitle: { fontSize: 12, color: T.textSecondary, marginTop: 2 },
 
   sectionLabel: { fontSize: 12, fontWeight: '700', color: T.textMuted, marginBottom: 8, letterSpacing: 0.3 },
+  loadingBox: { backgroundColor: T.card, borderRadius: 16, borderWidth: 1, borderColor: T.border, padding: 28, alignItems: 'center', marginBottom: 24 },
+  emptyBox: { backgroundColor: T.card, borderRadius: 16, borderWidth: 1, borderColor: T.border, padding: 20, marginBottom: 24 },
+  emptyText: { fontSize: 13, color: T.textSecondary, lineHeight: 19, textAlign: 'center' },
   memberList: { backgroundColor: T.card, borderRadius: 16, borderWidth: 1, borderColor: T.border, marginBottom: 24 },
   memberRow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 },
   memberRowBorder: { borderBottomWidth: 1, borderBottomColor: T.border },
@@ -177,6 +316,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   inviteBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: T.accent, borderRadius: 12, paddingVertical: 14 },
   inviteBtnDisabled: { backgroundColor: T.textMuted, opacity: 0.6 },
   inviteBtnText: { fontSize: 14, fontWeight: '700', color: T.textOnAccent },
+  inviteHint: { fontSize: 11, color: T.textMuted, lineHeight: 15 },
 
   limitNotice: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, backgroundColor: T.amberBg, borderRadius: 12, padding: 14 },
   limitNoticeText: { flex: 1, fontSize: 12, color: T.textPrimary, lineHeight: 17 },
