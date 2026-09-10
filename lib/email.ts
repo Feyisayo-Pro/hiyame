@@ -121,6 +121,41 @@ export function introductionAcceptedCompanyEmail(p: {
   };
 }
 
+// Halfway-point reminder — to the candidate. Still masked.
+export function introductionReminderEmail(p: {
+  roleTitle: string;
+  companyIndustry: string | null;
+  companySizeRange: string | null;
+  hoursLeft: number;
+}): { subject: string; html: string } {
+  const band = [p.companyIndustry, p.companySizeRange].filter(Boolean).join(' · ') || 'a company on Hiyame';
+  return {
+    subject: `Reminder: respond to your introduction — ${p.roleTitle}`,
+    html: shell(
+      'Your introduction is still waiting',
+      `<p style="margin:0 0 12px">You have <b>${p.hoursLeft} hour${p.hoursLeft === 1 ? '' : 's'}</b> left to respond to the introduction for <b>${esc(p.roleTitle)}</b> at ${esc(band)}.</p>
+       <p style="margin:0">If you don't respond by the deadline it will expire and the company won't be able to connect.</p>`,
+      { label: 'Respond now', href: `${APP_URL}/opportunities` },
+    ),
+  };
+}
+
+// Introduction expired — to the company. No candidate response in the window.
+export function introductionExpiredEmail(p: {
+  roleTitle: string;
+  candidateName: string;
+}): { subject: string; html: string } {
+  return {
+    subject: `Introduction expired — ${p.roleTitle}`,
+    html: shell(
+      'An introduction expired',
+      `<p style="margin:0 0 12px"><b>${esc(p.candidateName)}</b> didn't respond to your introduction for <b>${esc(p.roleTitle)}</b> within the response window, so it has expired.</p>
+       <p style="margin:0">Their seat on the shortlist is free again — you can send another introduction from the role's shortlist.</p>`,
+      { label: 'View the shortlist', href: `${APP_URL}/roles` },
+    ),
+  };
+}
+
 // Introduction accepted — to the candidate. Company + hiring contact revealed.
 export function introductionAcceptedCandidateEmail(p: {
   roleTitle: string;
