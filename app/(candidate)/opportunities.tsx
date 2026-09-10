@@ -8,6 +8,8 @@ import { useAuth } from '@/lib/useAuth';
 import { supabase } from '@/lib/supabase';
 import { TIER_CONFIG, Tier } from '@/lib/mock-data';
 import { notify } from '@/lib/notify';
+import { getIntroductionContact, IntroductionContact } from '@/lib/introductionContact';
+import ContactReveal from '@/components/ContactReveal';
 
 // Replaces the old Tinder-style swipe deck over mock roles. Under the real
 // architecture, candidates don't browse and swipe an open pool — a company's
@@ -49,6 +51,7 @@ interface AcceptedIntro {
   roleTitle: string;
   roleTier: Tier;
   companyName: string;
+  contact: IntroductionContact | null;
 }
 
 export default function OpportunitiesScreen() {
@@ -113,11 +116,13 @@ export default function OpportunitiesScreen() {
         const { data: role } = await supabase.from('roles').select('title, tier, company_id').eq('id', intro.role_id).maybeSingle();
         if (!role) continue;
         const { data: company } = await supabase.from('companies').select('legal_name').eq('id', role.company_id).maybeSingle();
+        const contact = await getIntroductionContact(intro.id);
         acceptedDetails.push({
           introductionId: intro.id,
           roleTitle: role.title,
           roleTier: role.tier as Tier,
-          companyName: company?.legal_name ?? 'Company',
+          companyName: contact?.companyName ?? company?.legal_name ?? 'Company',
+          contact,
         });
       }
     }
@@ -220,10 +225,16 @@ export default function OpportunitiesScreen() {
                       <Text style={[st.tierText, { color: cfg.accent }]}>{cfg.label.toUpperCase()}</Text>
                     </View>
                     <Text style={st.roleTitle}>{a.roleTitle}</Text>
-                    <View style={st.metaRow}>
-                      <Ionicons name="business-outline" size={14} color={T.textSecondary} />
-                      <Text style={st.metaText}>{a.companyName}</Text>
-                    </View>
+                    {a.contact ? (
+                      <View style={{ marginTop: 6 }}>
+                        <ContactReveal contact={a.contact} viewer="candidate" />
+                      </View>
+                    ) : (
+                      <View style={st.metaRow}>
+                        <Ionicons name="business-outline" size={14} color={T.textSecondary} />
+                        <Text style={st.metaText}>{a.companyName}</Text>
+                      </View>
+                    )}
                   </View>
                 );
               })}

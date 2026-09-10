@@ -1,2 +1,4 @@
-import ChatScreen from '@/components/ChatScreen';
-export default ChatScreen;
+import ConnectionsScreen from '@/components/ConnectionsScreen';
+export default function CompanyConnectionsTab() {
+  return <ConnectionsScreen persona="company" />;
+}

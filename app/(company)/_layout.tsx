@@ -66,9 +66,9 @@ export default function CompanyTabLayout() {
       <Tabs.Screen
         name="messages"
         options={{
-          title: 'Chat',
+          title: 'Connections',
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon name={focused ? 'chatbubbles' : 'chatbubbles-outline'} label="Chat" color={color} />
+            <TabIcon name={focused ? 'people' : 'people-outline'} label="Connections" color={color} />
           ),
         }}
       />

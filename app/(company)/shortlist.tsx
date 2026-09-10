@@ -9,6 +9,8 @@ import { supabase } from '@/lib/supabase';
 import { TIER_CONFIG, Tier } from '@/lib/mock-data';
 import { notify } from '@/lib/notify';
 import { requestMatching } from '@/lib/requestMatching';
+import { getIntroductionContact, IntroductionContact } from '@/lib/introductionContact';
+import ContactReveal from '@/components/ContactReveal';
 
 // Response-window hours per tier (architecture doc §7.4).
 const RESPONSE_WINDOW_HOURS: Record<Tier, number> = {
@@ -31,9 +33,11 @@ interface CandidateCard {
 }
 
 interface IntroducedCard {
+  introductionId: string;
   candidateId: string;
   fullName: string;
   status: string;
+  contact: IntroductionContact | null;
 }
 
 type MatchingState = 'idle' | 'running' | 'unavailable';
@@ -66,16 +70,21 @@ export default function ShortlistScreen() {
 
     const { data: intros } = await supabase
       .from('introductions')
-      .select('candidate_id, status, candidates(full_name)')
+      .select('id, candidate_id, status, candidates(full_name)')
       .eq('role_id', roleId);
     const introducedIds = new Set((intros ?? []).map((i) => i.candidate_id));
-    setIntroduced(
-      (intros ?? []).map((i: any) => ({
+    const introducedCards: IntroducedCard[] = [];
+    for (const i of (intros ?? []) as any[]) {
+      const contact = i.status === 'accepted' ? await getIntroductionContact(i.id) : null;
+      introducedCards.push({
+        introductionId: i.id,
         candidateId: i.candidate_id,
-        fullName: i.candidates?.full_name ?? 'Candidate',
+        fullName: contact?.candidateName ?? i.candidates?.full_name ?? 'Candidate',
         status: i.status,
-      })),
-    );
+        contact,
+      });
+    }
+    setIntroduced(introducedCards);
 
     const { data: scores, error } = await supabase
       .from('match_scores')
@@ -257,9 +266,15 @@ export default function ShortlistScreen() {
             <>
               <Text style={st.sectionLabel}>INTRODUCED</Text>
               {introduced.map((i) => (
-                <View key={i.candidateId} style={st.introducedRow}>
-                  <Text style={st.introducedName}>{i.fullName}</Text>
-                  <Text style={st.introducedStatus}>{i.status}</Text>
+                <View key={i.introductionId} style={i.contact ? st.introducedCard : st.introducedRow}>
+                  {i.contact ? (
+                    <ContactReveal contact={i.contact} viewer="company" />
+                  ) : (
+                    <>
+                      <Text style={st.introducedName}>{i.fullName}</Text>
+                      <Text style={st.introducedStatus}>{i.status}</Text>
+                    </>
+                  )}
                 </View>
               ))}
             </>
@@ -369,6 +384,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   acceptBtn: { flex: 1, backgroundColor: T.emeraldBg, borderColor: T.emerald },
   acceptText: { fontSize: 14, fontWeight: '700', color: T.emerald },
   introducedRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: T.border },
+  introducedCard: { marginBottom: 12 },
   introducedName: { fontSize: 14, fontWeight: '600', color: T.textPrimary },
   introducedStatus: { fontSize: 12, color: T.textMuted, fontWeight: '600', textTransform: 'capitalize' },
 });

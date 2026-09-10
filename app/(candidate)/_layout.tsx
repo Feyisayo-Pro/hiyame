@@ -75,9 +75,9 @@ export default function CandidateTabLayout() {
       <Tabs.Screen
         name="messages"
         options={{
-          title: 'Chat',
+          title: 'Connections',
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon icon={<Ionicons name={focused ? 'chatbubbles' : 'chatbubbles-outline'} size={22} color={color} />} label="Chat" color={color} />
+            <TabIcon icon={<Ionicons name={focused ? 'people' : 'people-outline'} size={22} color={color} />} label="Connections" color={color} />
           ),
         }}
       />

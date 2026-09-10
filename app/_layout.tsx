@@ -13,7 +13,6 @@ import { ApplicationProvider } from '@/lib/applicationStore';
 import { SwipeStoreProvider } from '@/lib/swipeStore';
 import { SubscriptionProvider } from '@/lib/subscriptionStore';
 import { HiyameThemeProvider, useTheme, ThemePalette } from '@/lib/theme';
-import { ChatProvider } from '@/lib/chatStore';
 import { AuthProvider, useAuth } from '@/lib/useAuth';
 import 'react-native-reanimated';
 
@@ -141,9 +140,8 @@ function RootLayoutNav() {
       <ApplicationProvider>
         <SubscriptionProvider>
           <SwipeStoreProvider>
-            <ChatProvider>
-              <VerificationProvider>
-                <CandidateProfileProvider>
+            <VerificationProvider>
+              <CandidateProfileProvider>
                   <ThemeProvider value={navTheme}>
                     {/* On web there's no phone frame to cap the width, so a desktop browser
                         stretches every screen full-monitor-wide. This centers the app in the
@@ -174,7 +172,6 @@ function RootLayoutNav() {
                   </ThemeProvider>
                 </CandidateProfileProvider>
               </VerificationProvider>
-            </ChatProvider>
           </SwipeStoreProvider>
         </SubscriptionProvider>
       </ApplicationProvider>
