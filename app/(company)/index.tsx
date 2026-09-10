@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback } from 'react';
+import React, { useMemo, useState, useCallback, useEffect } from 'react';
 import {
   StyleSheet,
   View,
@@ -7,14 +7,17 @@ import {
   Pressable,
   Modal,
   Switch,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { useTheme, useThemeToggle, ThemePalette } from '@/lib/theme';
-import { useSwipeStore, SwipeMatch } from '@/lib/swipeStore';
 import { useSubscription } from '@/lib/subscriptionStore';
+import { useAuth } from '@/lib/useAuth';
+import { getCompanyStats, CompanyStats, relativeTime } from '@/lib/dashboardStats';
+import { TIER_CONFIG } from '@/lib/mock-data';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import { Text } from '@/components/Themed';
 
@@ -27,29 +30,20 @@ function getGreeting(): string {
   return 'Good evening';
 }
 
-function timeSince(dateIso: string): string {
-  const seconds = Math.floor((Date.now() - new Date(dateIso).getTime()) / 1000);
-  if (seconds < 60) return 'just now';
-  const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return minutes + 'm ago';
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return hours + 'h ago';
-  const days = Math.floor(hours / 24);
-  if (days < 7) return days + 'd ago';
-  const weeks = Math.floor(days / 7);
-  return weeks + 'w ago';
-}
-
 type StatusMeta = { label: string; color: string; bg: string };
 
-function getStatusMeta(status: SwipeMatch['status'], T: ThemePalette): StatusMeta {
+function getIntroStatusMeta(status: string, T: ThemePalette): StatusMeta {
   switch (status) {
-    case 'new': return { label: 'NEW', color: T.emerald, bg: T.emeraldBg };
-    case 'pending': return { label: 'PENDING', color: T.amber, bg: T.amberBg };
-    case 'in_conversation': return { label: 'IN CONVERSATION', color: T.indigo, bg: T.indigoBg };
-    case 'hired': return { label: 'HIRED', color: T.accent, bg: T.accentBg };
-    default: return { label: status, color: T.textSecondary, bg: T.surface };
+    case 'sent': return { label: 'PENDING', color: T.amber, bg: T.amberBg };
+    case 'accepted': return { label: 'ACCEPTED', color: T.emerald, bg: T.emeraldBg };
+    case 'declined': return { label: 'DECLINED', color: T.textSecondary, bg: T.surface };
+    case 'expired': return { label: 'EXPIRED', color: T.danger, bg: T.dangerBg };
+    default: return { label: status.toUpperCase(), color: T.textSecondary, bg: T.surface };
   }
+}
+
+function initialsOf(name: string): string {
+  return name.split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]?.toUpperCase() ?? '').join('') || '?';
 }
 
 // ── Config Modal ──
@@ -174,18 +168,26 @@ export default function CompanyDashboardScreen() {
   const T = useTheme();
   const styles = useMemo(() => makeStyles(T), [T]);
   const router = useRouter();
-  const { matches, metrics } = useSwipeStore();
+  const { companyId } = useAuth();
   const { tier, config, trialDaysLeft } = useSubscription();
   const [showConfig, setShowConfig] = useState(false);
+  const [stats, setStats] = useState<CompanyStats | null>(null);
+
+  useEffect(() => {
+    if (!companyId) { setStats(null); return; }
+    let alive = true;
+    getCompanyStats(companyId).then((s) => { if (alive) setStats(s); });
+    return () => { alive = false; };
+  }, [companyId]);
 
   const greeting = useMemo(() => getGreeting(), []);
   const showUpgradeBar = tier !== 'enterprise';
 
   const metricCards = [
-    { key: 'swiped', label: 'Profiles Swiped', value: metrics.profilesSwiped, icon: 'swap-horizontal' as const, color: T.accent, bg: T.accentBg },
-    { key: 'matches', label: 'Active Matches', value: metrics.activeMatches, icon: 'heart' as const, color: T.emerald, bg: T.emeraldBg },
-    { key: 'conversation', label: 'In Conversation', value: metrics.inConversation, icon: 'chatbubbles' as const, color: T.indigo, bg: T.indigoBg },
-    { key: 'hired', label: 'Hired', value: metrics.hired, icon: 'checkmark-done-circle' as const, color: T.amber, bg: T.amberBg },
+    { key: 'roles', label: 'Open Roles', value: stats?.openRoles ?? 0, icon: 'briefcase' as const, color: T.accent, bg: T.accentBg },
+    { key: 'shortlisted', label: 'Shortlisted', value: stats?.shortlisted ?? 0, icon: 'people' as const, color: T.indigo, bg: T.indigoBg },
+    { key: 'sent', label: 'Introductions', value: stats?.introsSent ?? 0, icon: 'paper-plane' as const, color: T.amber, bg: T.amberBg },
+    { key: 'accepted', label: 'Accepted', value: stats?.introsAccepted ?? 0, icon: 'checkmark-done-circle' as const, color: T.emerald, bg: T.emeraldBg },
   ];
 
   return (
@@ -196,7 +198,7 @@ export default function CompanyDashboardScreen() {
           <View style={styles.header}>
             <View style={styles.headerTextBlock}>
               <Text style={styles.greeting}>{greeting},</Text>
-              <Text style={styles.companyName}>Vertex Global</Text>
+              <Text style={styles.companyName}>{stats?.companyName ?? '…'}</Text>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
               <View style={styles.planBadge}>
@@ -259,42 +261,45 @@ export default function CompanyDashboardScreen() {
           </View>
         </SwipeFadeContainer>
 
-        {/* Recent Matches */}
+        {/* Recent introductions */}
         <SwipeFadeContainer direction="left" triggerKey="matches" delay={240}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Recent Matches</Text>
-            <TouchableOpacity onPress={() => router.push('/(company)/matches' as any)}>
-              <Text style={styles.sectionLink}>See all</Text>
+            <Text style={styles.sectionTitle}>Recent Introductions</Text>
+            <TouchableOpacity onPress={() => router.push('/(company)/roles')}>
+              <Text style={styles.sectionLink}>My roles</Text>
             </TouchableOpacity>
           </View>
 
           <View style={styles.matchesList}>
-            {matches.length === 0 ? (
+            {stats === null ? (
+              <View style={styles.emptyState}><ActivityIndicator color={T.accent} /></View>
+            ) : stats.recentIntros.length === 0 ? (
               <View style={styles.emptyState}>
-                <Ionicons name="people-outline" size={28} color={T.textMuted} />
-                <Text style={styles.emptyStateText}>No matches yet</Text>
+                <Ionicons name="paper-plane-outline" size={28} color={T.textMuted} />
+                <Text style={styles.emptyStateText}>No introductions yet — post a role and review its shortlist</Text>
               </View>
             ) : (
-              matches.slice(0, 6).map((match) => {
-                const statusMeta = getStatusMeta(match.status, T);
+              stats.recentIntros.map((intro) => {
+                const statusMeta = getIntroStatusMeta(intro.status, T);
+                const cfg = TIER_CONFIG[intro.roleTier];
                 return (
                   <Pressable
-                    key={match.candidateId + '-' + match.matchedAt}
+                    key={intro.id}
                     style={({ pressed }) => [styles.matchRow, pressed && styles.matchRowPressed]}
-                    onPress={() => router.push('/(company)/matches' as any)}
+                    onPress={() => router.push('/(company)/roles')}
                   >
                     <View style={styles.avatarCircle}>
-                      <Text style={styles.avatarInitials}>{match.candidateInitials}</Text>
+                      <Text style={styles.avatarInitials}>{initialsOf(intro.counterpartyName)}</Text>
                     </View>
                     <View style={styles.matchInfo}>
-                      <Text style={styles.matchName} numberOfLines={1}>{match.candidateName}</Text>
-                      <Text style={styles.matchTitle} numberOfLines={1}>{match.candidateTitle}</Text>
+                      <Text style={styles.matchName} numberOfLines={1}>{intro.counterpartyName}</Text>
+                      <Text style={styles.matchTitle} numberOfLines={1}>{cfg.label} · {intro.roleTitle}</Text>
                     </View>
                     <View style={styles.matchMeta}>
                       <View style={[styles.statusBadge, { backgroundColor: statusMeta.bg }]}>
                         <Text style={[styles.statusBadgeText, { color: statusMeta.color }]}>{statusMeta.label}</Text>
                       </View>
-                      <Text style={styles.matchTime}>{timeSince(match.matchedAt)}</Text>
+                      <Text style={styles.matchTime}>{relativeTime(intro.at)}</Text>
                     </View>
                   </Pressable>
                 );
@@ -307,20 +312,20 @@ export default function CompanyDashboardScreen() {
         <SwipeFadeContainer direction="left" triggerKey="actions" delay={270}>
           <Text style={styles.sectionTitle}>Quick Actions</Text>
           <View style={styles.quickActionsRow}>
-            <TouchableOpacity style={styles.quickActionCard} onPress={() => router.push('/(company)/roles')} activeOpacity={0.85}>
+            <TouchableOpacity style={styles.quickActionCard} onPress={() => router.push('/(company)/create-role')} activeOpacity={0.85}>
               <View style={[styles.quickActionIconWrap, { backgroundColor: T.accentBg }]}>
-                <Ionicons name="albums-outline" size={22} color={T.accent} />
+                <Ionicons name="add-circle-outline" size={22} color={T.accent} />
               </View>
-              <Text style={styles.quickActionTitle}>Review Candidates</Text>
-              <Text style={styles.quickActionSubtitle}>Discover new talent</Text>
+              <Text style={styles.quickActionTitle}>Post a Role</Text>
+              <Text style={styles.quickActionSubtitle}>Start a new shortlist</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.quickActionCard} onPress={() => router.push('/(company)/messages')} activeOpacity={0.85}>
               <View style={[styles.quickActionIconWrap, { backgroundColor: T.indigoBg }]}>
-                <Ionicons name="chatbubbles-outline" size={22} color={T.indigo} />
+                <Ionicons name="people-outline" size={22} color={T.indigo} />
               </View>
-              <Text style={styles.quickActionTitle}>Open Chat</Text>
-              <Text style={styles.quickActionSubtitle}>Message matches</Text>
+              <Text style={styles.quickActionTitle}>Connections</Text>
+              <Text style={styles.quickActionSubtitle}>Accepted introductions</Text>
             </TouchableOpacity>
           </View>
         </SwipeFadeContainer>

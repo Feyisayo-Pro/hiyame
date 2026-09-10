@@ -9,8 +9,6 @@ import { WEB_APP_MAX_WIDTH } from '@/lib/screen';
 import { StatusBar } from 'expo-status-bar';
 import { CandidateProfileProvider } from '@/lib/candidateProfile';
 import { VerificationProvider } from '@/lib/useVerification';
-import { ApplicationProvider } from '@/lib/applicationStore';
-import { SwipeStoreProvider } from '@/lib/swipeStore';
 import { SubscriptionProvider } from '@/lib/subscriptionStore';
 import { HiyameThemeProvider, useTheme, ThemePalette } from '@/lib/theme';
 import { AuthProvider, useAuth } from '@/lib/useAuth';
@@ -137,9 +135,7 @@ function RootLayoutNav() {
 
   return (
     <AuthProvider>
-      <ApplicationProvider>
         <SubscriptionProvider>
-          <SwipeStoreProvider>
             <VerificationProvider>
               <CandidateProfileProvider>
                   <ThemeProvider value={navTheme}>
@@ -172,9 +168,7 @@ function RootLayoutNav() {
                   </ThemeProvider>
                 </CandidateProfileProvider>
               </VerificationProvider>
-          </SwipeStoreProvider>
         </SubscriptionProvider>
-      </ApplicationProvider>
     </AuthProvider>
   );
 }
