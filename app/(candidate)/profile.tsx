@@ -5,7 +5,6 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useCandidateProfile } from '@/lib/candidateProfile';
-import { useVerification } from '@/lib/useVerification';
 import { useAuth } from '@/lib/useAuth';
 import { supabase } from '@/lib/supabase';
 import { pickAndUploadCandidatePhoto } from '@/lib/uploadCandidatePhoto';
@@ -21,30 +20,39 @@ interface RealProfile {
   photoUrl: string | null;
 }
 
+// Matches the 4 components lib/matchingPipeline.ts scores against — same keys
+// app/(candidate)/index.tsx already reads from verification_records for the
+// home-screen checklist.
+const VERIFICATION_COMPONENTS = [
+  { key: 'identity', icon: 'id-card-outline' as const, label: 'Identity Check' },
+  { key: 'video_intro', icon: 'videocam-outline' as const, label: 'Video Introduction' },
+  { key: 'skills_assessment', icon: 'shield-checkmark-outline' as const, label: 'Skills Assessment' },
+  { key: 'employer_review', icon: 'star-outline' as const, label: 'Employer Review' },
+];
+
 export default function CandidateProfileScreen() {
   const T = useTheme();
   const { mode, toggleTheme } = useThemeToggle();
   const st = useMemo(() => makeStyles(T), [T]);
   const { candidateId } = useAuth();
 
-  // The rest of this screen (checklist, stats) still reads lib/candidateProfile's
-  // in-memory mock — a known gap, not part of this fix. Identity + photo now come
-  // from the real candidates row so they don't silently show "Anonymous
-  // Professional" for every real signed-up candidate.
+  // The professional-title field still has nowhere real to live (no such
+  // column exists on candidates, and nothing ever collects it) — that stays
+  // on lib/candidateProfile's mock for now. Everything else on this screen
+  // (name, skills, rate, photo, and the verification checklist below) reads
+  // the real candidates / verification_records rows.
   const { professionalTitle } = useCandidateProfile();
-  const verification = useVerification();
-  const { completedCount, totalCount, isFullyVerified } = verification;
 
   const [real, setReal] = useState<RealProfile | null>(null);
+  const [passedComponents, setPassedComponents] = useState<Set<string>>(new Set());
   const [uploading, setUploading] = useState(false);
 
   const loadReal = async () => {
     if (!candidateId) return;
-    const { data } = await supabase
-      .from('candidates')
-      .select('full_name, skill_tags, rate_preferred, photo_url')
-      .eq('id', candidateId)
-      .maybeSingle();
+    const [{ data }, { data: vrecs }] = await Promise.all([
+      supabase.from('candidates').select('full_name, skill_tags, rate_preferred, photo_url').eq('id', candidateId).maybeSingle(),
+      supabase.from('verification_records').select('component, status').eq('candidate_id', candidateId),
+    ]);
     if (data) {
       setReal({
         fullName: data.full_name,
@@ -53,6 +61,7 @@ export default function CandidateProfileScreen() {
         photoUrl: data.photo_url,
       });
     }
+    setPassedComponents(new Set((vrecs ?? []).filter((v) => v.status === 'passed').map((v) => v.component)));
   };
 
   useEffect(() => { loadReal(); }, [candidateId]);
@@ -63,6 +72,10 @@ export default function CandidateProfileScreen() {
   const targetMinRate = real?.ratePreferred ?? 0;
   const photoUrl = real?.photoUrl ?? null;
   const hasProfilePhoto = !!photoUrl;
+
+  const completedCount = passedComponents.size;
+  const totalCount = VERIFICATION_COMPONENTS.length;
+  const isFullyVerified = completedCount === totalCount;
 
   const handlePhotoPress = async () => {
     if (uploading) return;
@@ -82,10 +95,7 @@ export default function CandidateProfileScreen() {
 
   const checklistItems = [
     { icon: 'camera-outline' as const, label: 'Profile Picture', done: hasProfilePhoto, optional: true },
-    { icon: 'id-card-outline' as const, label: 'Identity Check', done: verification.identityVerified, optional: false },
-    { icon: 'videocam-outline' as const, label: 'Video Introduction', done: verification.videoIntroUploaded, optional: false },
-    { icon: 'shield-checkmark-outline' as const, label: 'Skills Assessment', done: verification.assessmentCompleted, optional: false },
-    { icon: 'star-outline' as const, label: 'Employer Review', done: verification.employerReviewSecured, optional: false },
+    ...VERIFICATION_COMPONENTS.map((c) => ({ icon: c.icon, label: c.label, done: passedComponents.has(c.key), optional: false })),
   ];
 
   return (
