@@ -1,4 +1,6 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
+import { supabase } from './supabase';
+import { useAuth } from './useAuth';
 
 // ── Tier Definitions ──
 // Matches the architecture doc's companies.plan_tier enum exactly
@@ -93,9 +95,25 @@ export interface SubscriptionState {
 const SubscriptionContext = createContext<SubscriptionState | null>(null);
 
 export function SubscriptionProvider({ children }: { children: ReactNode }) {
-  const [tier, setTierState] = useState<SubscriptionTier>('enterprise');
+  const { companyId } = useAuth();
+  // 'pilot' (the schema's own default, and the least entitlement) rather than
+  // 'enterprise' — this is the honest state before the real plan loads, not an
+  // assumption of the best plan. Synced from companies.plan_tier below.
+  const [tier, setTierState] = useState<SubscriptionTier>('pilot');
   const [swipesToday, setSwipesToday] = useState(0);
   const [trialDaysLeft] = useState(14);
+
+  // Real plan, read from the company's own row. There's no payment gateway yet
+  // (real billing is deferred), but the *selection* itself is real and durable —
+  // it must not silently reset to a hardcoded default on every reload.
+  useEffect(() => {
+    if (!companyId) return;
+    let alive = true;
+    supabase.from('companies').select('plan_tier').eq('id', companyId).maybeSingle().then(({ data }) => {
+      if (alive && data?.plan_tier) setTierState(data.plan_tier as SubscriptionTier);
+    });
+    return () => { alive = false; };
+  }, [companyId]);
 
   const config = TIER_CONFIGS[tier];
   const canSwipe = config.swipesPerDay === -1 || swipesToday < config.swipesPerDay;
@@ -109,7 +127,12 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const setTier = useCallback((t: SubscriptionTier) => {
     setTierState(t);
     setSwipesToday(0);
-  }, []);
+    if (companyId) {
+      supabase.from('companies').update({ plan_tier: t }).eq('id', companyId).then(({ error }) => {
+        if (error) console.warn('Failed to persist plan tier:', error.message);
+      });
+    }
+  }, [companyId]);
 
   const value: SubscriptionState = {
     tier, config, trialDaysLeft, swipesToday, canSwipe, recordSwipe, setTier,

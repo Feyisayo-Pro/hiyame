@@ -14,7 +14,7 @@ import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, ThemePalette } from '@/lib/theme';
-import { useSubscription, SubscriptionTier } from '@/lib/subscriptionStore';
+import { SubscriptionTier } from '@/lib/subscriptionStore';
 import { supabase } from '@/lib/supabase';
 
 /* ── Constants ── */
@@ -132,7 +132,6 @@ function SelectChip({ label, selected, onPress, T }: {
 export default function CompanySignupScreen() {
   const T = useTheme();
   const st = useMemo(() => makeStyles(T), [T]);
-  const { setTier } = useSubscription();
 
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -226,6 +225,7 @@ export default function CompanySignupScreen() {
           hq_location: hqLocation.trim(),
           website_url: website.trim(),
           description: bio.trim(),
+          plan_tier: selectedTier,
         },
       },
     });
@@ -236,7 +236,6 @@ export default function CompanySignupScreen() {
       return;
     }
 
-    setTier(selectedTier);
     setLoading(false);
 
     if (!data.session) {
@@ -244,7 +243,7 @@ export default function CompanySignupScreen() {
       return;
     }
     router.replace('/(company)');
-  }, [step, validateStep, selectedTier, setTier, email, password, companyName, industry, companySize, hqLocation, website, bio]);
+  }, [step, validateStep, selectedTier, email, password, companyName, industry, companySize, hqLocation, website, bio]);
 
   const handleBack = useCallback(() => {
     if (step > 0) {

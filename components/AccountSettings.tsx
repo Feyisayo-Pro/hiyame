@@ -10,6 +10,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useTheme, useThemeToggle, ThemePalette } from '@/lib/theme';
 import { useSubscription } from '@/lib/subscriptionStore';
+import { useAuth } from '@/lib/useAuth';
+import { supabase } from '@/lib/supabase';
+import ChangePasswordModal from '@/components/ChangePasswordModal';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import ScreenFrame from '@/components/ScreenFrame';
 
@@ -45,8 +48,12 @@ export default function AccountSettings({ persona = 'company' }: { persona?: Per
   const router = useRouter();
   const { mode, toggleTheme } = useThemeToggle();
   const { config } = useSubscription();
+  const { session } = useAuth();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [emailUpdates, setEmailUpdates] = useState(true);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+
+  const profileRoute = persona === 'company' ? '/(company)/profile' : '/(candidate)/profile';
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: T.bg }} edges={['top', 'left', 'right']}>
@@ -80,10 +87,10 @@ export default function AccountSettings({ persona = 'company' }: { persona?: Per
           <View style={{ marginBottom: 24 }}>
             <Text style={{ fontSize: 14, fontWeight: '700', color: T.textMuted, paddingHorizontal: 20, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.3 }}>Account</Text>
             <View style={{ backgroundColor: T.card, borderTopWidth: 1, borderBottomWidth: 1, borderColor: T.border }}>
-              <SettingsRow icon="person-outline" label="Edit Profile" value={persona === 'company' ? 'Vertex Global' : 'Amara Osei'} onPress={() => {}} T={T} />
-              <SettingsRow icon="mail-outline" label="Email" value="contact@example.com" onPress={() => {}} T={T} />
-              <SettingsRow icon="lock-closed-outline" label="Password" value="Last changed 30d ago" onPress={() => {}} T={T} />
-              <SettingsRow icon="globe-outline" label="Language" value="English" onPress={() => {}} T={T} />
+              <SettingsRow icon="person-outline" label="Edit Profile" onPress={() => router.push(profileRoute as any)} T={T} />
+              <SettingsRow icon="mail-outline" label="Email" value={session?.user?.email ?? '—'} T={T} />
+              <SettingsRow icon="lock-closed-outline" label="Password" onPress={() => setShowPasswordModal(true)} T={T} />
+              <SettingsRow icon="globe-outline" label="Language" value="English" T={T} />
             </View>
           </View>
 
@@ -109,21 +116,14 @@ export default function AccountSettings({ persona = 'company' }: { persona?: Per
             </View>
           </View>
 
-          {/* Support */}
-          <View style={{ marginBottom: 24 }}>
-            <Text style={{ fontSize: 14, fontWeight: '700', color: T.textMuted, paddingHorizontal: 20, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.3 }}>Support</Text>
-            <View style={{ backgroundColor: T.card, borderTopWidth: 1, borderBottomWidth: 1, borderColor: T.border }}>
-              <SettingsRow icon="help-circle-outline" label="Help Center" onPress={() => {}} T={T} />
-              <SettingsRow icon="chatbubble-outline" label="Contact Support" onPress={() => {}} T={T} />
-              <SettingsRow icon="document-text-outline" label="Terms of Service" onPress={() => {}} T={T} />
-              <SettingsRow icon="shield-outline" label="Privacy Policy" onPress={() => {}} T={T} />
-            </View>
-          </View>
+          {/* Support — Help Center / Terms / Privacy hidden until there's real
+              content behind them; a tappable row that goes nowhere is worse
+              than no row at all. */}
 
           {/* Danger Zone */}
           <View>
             <View style={{ backgroundColor: T.card, borderTopWidth: 1, borderBottomWidth: 1, borderColor: T.border }}>
-              <SettingsRow icon="log-out-outline" label="Sign Out" onPress={() => {}} T={T} danger />
+              <SettingsRow icon="log-out-outline" label="Sign Out" onPress={() => supabase.auth.signOut()} T={T} danger />
             </View>
           </View>
 
@@ -134,6 +134,8 @@ export default function AccountSettings({ persona = 'company' }: { persona?: Per
         </SwipeFadeContainer>
       </ScrollView>
       </ScreenFrame>
+
+      <ChangePasswordModal visible={showPasswordModal} onClose={() => setShowPasswordModal(false)} />
     </SafeAreaView>
   );
 }

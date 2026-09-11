@@ -67,7 +67,7 @@ async function completePendingSignup(userId: string): Promise<void> {
       rate_preferred: meta.target_min_rate ?? null,
     });
   } else if (meta.pending_signup === 'company') {
-    await supabase.rpc('create_company_and_claim', {
+    const { data: newCompanyId } = await supabase.rpc('create_company_and_claim', {
       company_data: {
         legal_name: meta.legal_name,
         trading_name: meta.trading_name,
@@ -78,6 +78,14 @@ async function completePendingSignup(userId: string): Promise<void> {
         description: meta.description,
       },
     });
+    // create_company_and_claim only inserts the columns it whitelists (deliberately,
+    // for security) — plan_tier isn't one of them, so the plan chosen at signup is
+    // applied as a follow-up update once the row (and this session's company_users
+    // membership) exists. RLS's companies_update_own already covers this: no new
+    // grant/migration needed.
+    if (newCompanyId && typeof meta.plan_tier === 'string') {
+      await supabase.from('companies').update({ plan_tier: meta.plan_tier }).eq('id', newCompanyId);
+    }
   }
   // Clear the flag so a later sign-in never re-runs this (insert would just fail
   // harmlessly on the unique auth_user_id constraint anyway, but this is cleaner).

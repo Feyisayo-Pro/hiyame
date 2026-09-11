@@ -10,6 +10,7 @@ import { supabase } from '@/lib/supabase';
 import { pickAndUploadCandidatePhoto } from '@/lib/uploadCandidatePhoto';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import ScreenFrame from '@/components/ScreenFrame';
+import EditCandidateProfileModal from '@/components/EditCandidateProfileModal';
 import { useTheme, useThemeToggle, ThemePalette } from '@/lib/theme';
 import { notify } from '@/lib/notify';
 
@@ -46,6 +47,7 @@ export default function CandidateProfileScreen() {
   const [real, setReal] = useState<RealProfile | null>(null);
   const [passedComponents, setPassedComponents] = useState<Set<string>>(new Set());
   const [uploading, setUploading] = useState(false);
+  const [showEdit, setShowEdit] = useState(false);
 
   const loadReal = async () => {
     if (!candidateId) return;
@@ -273,13 +275,13 @@ export default function CandidateProfileScreen() {
 
         {/* ── Account Actions ── */}
         <View style={st.section}>
-          <Pressable style={st.actionItem}>
+          <Pressable style={st.actionItem} onPress={() => setShowEdit(true)}>
             <View style={st.actionIconWrap}>
               <Ionicons name="create-outline" size={18} color={T.accent} />
             </View>
             <View style={st.actionContent}>
               <Text style={st.actionLabel}>Edit Profile</Text>
-              <Text style={st.actionDesc}>Update name, title, skills, rate, photos</Text>
+              <Text style={st.actionDesc}>Update name, skills, rate</Text>
             </View>
             <Ionicons name="chevron-forward" size={18} color={T.textMuted} />
           </Pressable>
@@ -308,7 +310,7 @@ export default function CandidateProfileScreen() {
             <Ionicons name="chevron-forward" size={18} color={T.textMuted} />
           </Pressable>
 
-          <Pressable style={st.actionItem}>
+          <Pressable style={st.actionItem} onPress={() => router.push('/(candidate)/settings')}>
             <View style={st.actionIconWrap}>
               <Ionicons name="settings-outline" size={18} color={T.accent} />
             </View>
@@ -321,7 +323,7 @@ export default function CandidateProfileScreen() {
         </View>
 
         {/* ── Sign Out ── */}
-        <Pressable style={st.signOutBtn} onPress={() => router.replace('/(auth)/welcome')}>
+        <Pressable style={st.signOutBtn} onPress={() => supabase.auth.signOut()}>
           <Ionicons name="log-out-outline" size={18} color={T.danger} />
           <Text style={st.signOutText}>Sign Out</Text>
         </Pressable>
@@ -330,6 +332,14 @@ export default function CandidateProfileScreen() {
         </SwipeFadeContainer>
       </ScrollView>
       </ScreenFrame>
+
+      <EditCandidateProfileModal
+        visible={showEdit}
+        candidateId={candidateId}
+        initial={{ fullName: real?.fullName ?? '', skillTags: coreSkills, ratePreferred: real?.ratePreferred ?? null }}
+        onClose={() => setShowEdit(false)}
+        onSaved={(updated) => setReal((prev) => ({ fullName: updated.fullName, skillTags: updated.skillTags, ratePreferred: updated.ratePreferred, photoUrl: prev?.photoUrl ?? null }))}
+      />
     </SafeAreaView>
   );
 }
