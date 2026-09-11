@@ -1,28 +1,84 @@
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { useMemo } from 'react';
+import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
 import { Text } from '@/components/Themed';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useCandidateProfile } from '@/lib/candidateProfile';
 import { useVerification } from '@/lib/useVerification';
+import { useAuth } from '@/lib/useAuth';
+import { supabase } from '@/lib/supabase';
+import { pickAndUploadCandidatePhoto } from '@/lib/uploadCandidatePhoto';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import ScreenFrame from '@/components/ScreenFrame';
 import { useTheme, useThemeToggle, ThemePalette } from '@/lib/theme';
 import { notify } from '@/lib/notify';
 
+interface RealProfile {
+  fullName: string;
+  skillTags: string[];
+  ratePreferred: number | null;
+  photoUrl: string | null;
+}
+
 export default function CandidateProfileScreen() {
   const T = useTheme();
   const { mode, toggleTheme } = useThemeToggle();
   const st = useMemo(() => makeStyles(T), [T]);
+  const { candidateId } = useAuth();
 
-  const { fullName, professionalTitle, coreSkills, targetMinRate, photos, setPhotos, profileCompleted } = useCandidateProfile();
+  // The rest of this screen (checklist, stats) still reads lib/candidateProfile's
+  // in-memory mock — a known gap, not part of this fix. Identity + photo now come
+  // from the real candidates row so they don't silently show "Anonymous
+  // Professional" for every real signed-up candidate.
+  const { professionalTitle } = useCandidateProfile();
   const verification = useVerification();
   const { completedCount, totalCount, isFullyVerified } = verification;
 
-  const displayName = fullName || 'Anonymous Professional';
+  const [real, setReal] = useState<RealProfile | null>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const loadReal = async () => {
+    if (!candidateId) return;
+    const { data } = await supabase
+      .from('candidates')
+      .select('full_name, skill_tags, rate_preferred, photo_url')
+      .eq('id', candidateId)
+      .maybeSingle();
+    if (data) {
+      setReal({
+        fullName: data.full_name,
+        skillTags: data.skill_tags ?? [],
+        ratePreferred: data.rate_preferred,
+        photoUrl: data.photo_url,
+      });
+    }
+  };
+
+  useEffect(() => { loadReal(); }, [candidateId]);
+
+  const displayName = real?.fullName || 'Anonymous Professional';
   const displayTitle = professionalTitle || 'Career Professional';
-  const hasProfilePhoto = photos.length > 0;
+  const coreSkills = real?.skillTags ?? [];
+  const targetMinRate = real?.ratePreferred ?? 0;
+  const photoUrl = real?.photoUrl ?? null;
+  const hasProfilePhoto = !!photoUrl;
+
+  const handlePhotoPress = async () => {
+    if (uploading) return;
+    setUploading(true);
+    try {
+      const url = await pickAndUploadCandidatePhoto();
+      setReal((prev) => (prev ? { ...prev, photoUrl: url } : prev));
+      notify('Photo updated', 'Your profile photo is live.');
+    } catch (e: any) {
+      if (e?.message !== 'No photo selected.') {
+        notify('Upload failed', e?.message || 'Something went wrong. Please try again.');
+      }
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const checklistItems = [
     { icon: 'camera-outline' as const, label: 'Profile Picture', done: hasProfilePhoto, optional: true },
@@ -47,16 +103,18 @@ export default function CandidateProfileScreen() {
 
         {/* ── Personal Card ── */}
         <View style={st.personalCard}>
-          <Pressable
-            style={st.avatarWrap}
-            onPress={() => {
-              const mockUri = `mock-photo://${Date.now()}-${photos.length}`;
-              setPhotos([...photos, mockUri]);
-              notify('Photo Upload', 'Profile picture added! In production this will open your camera roll.');
-            }}
-          >
+          <Pressable style={st.avatarWrap} onPress={handlePhotoPress} disabled={uploading} accessibilityRole="button" accessibilityLabel="Change profile photo">
             <View style={[st.avatar, isFullyVerified && st.avatarVerified]}>
-              <Ionicons name="person" size={28} color={T.accent} />
+              {photoUrl ? (
+                <Image source={{ uri: photoUrl }} style={st.avatarImage} resizeMode="cover" />
+              ) : (
+                <Ionicons name="person" size={28} color={T.accent} />
+              )}
+              {uploading && (
+                <View style={st.avatarUploadingOverlay}>
+                  <Ionicons name="cloud-upload-outline" size={20} color={T.white} />
+                </View>
+              )}
             </View>
             {/* Camera overlay */}
             <View style={st.cameraOverlay}>
@@ -282,11 +340,18 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   },
   avatarWrap: { position: 'relative', marginBottom: 14 },
   avatar: {
-    width: 72, height: 72, borderRadius: 36, backgroundColor: T.surface,
+    width: 96, height: 96, borderRadius: 48, backgroundColor: T.surface,
     borderWidth: 2.5, borderColor: T.border,
     alignItems: 'center', justifyContent: 'center',
+    overflow: 'hidden',
   },
   avatarVerified: { borderColor: T.emerald },
+  avatarImage: { width: '100%', height: '100%' },
+  avatarUploadingOverlay: {
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(15,20,25,0.45)',
+    alignItems: 'center', justifyContent: 'center',
+  },
   cameraOverlay: {
     position: 'absolute', bottom: 0, right: 0,
     width: 26, height: 26, borderRadius: 13,
