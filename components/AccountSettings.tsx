@@ -2,8 +2,8 @@
  * AccountSettings -- premium account settings & SaaS subscription gateway.
  * Shared component for both candidate and company personas.
  */
-import { useState } from 'react';
-import { Pressable, ScrollView, Switch, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Linking, Pressable, ScrollView, Switch, View } from 'react-native';
 import { Text } from '@/components/Themed';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -48,12 +48,51 @@ export default function AccountSettings({ persona = 'company' }: { persona?: Per
   const router = useRouter();
   const { mode, toggleTheme } = useThemeToggle();
   const { config } = useSubscription();
-  const { session } = useAuth();
+  const { session, candidateId } = useAuth();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [emailUpdates, setEmailUpdates] = useState(true);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
 
   const profileRoute = persona === 'company' ? '/(company)/profile' : '/(candidate)/profile';
+  const helpRoute = persona === 'company' ? '/(company)/help' : '/(candidate)/help';
+  const legalRoute = persona === 'company' ? '/(company)/legal' : '/(candidate)/legal';
+
+  // Real persistence for the two toggles below — behind a migration
+  // (supabase/migrations/20260911140000_notification_prefs.sql) this
+  // environment couldn't apply for lack of a linked Supabase CLI session.
+  // Until it's run, the select/update below fail silently (unknown column)
+  // and the toggles behave exactly as before: session-local only. Once it's
+  // applied, this starts persisting with no further deploy.
+  useEffect(() => {
+    (async () => {
+      if (persona === 'candidate' && candidateId) {
+        const { data } = await supabase.from('candidates').select('notification_prefs').eq('id', candidateId).maybeSingle();
+        if (data?.notification_prefs) {
+          setNotificationsEnabled(data.notification_prefs.push ?? true);
+          setEmailUpdates(data.notification_prefs.email ?? true);
+        }
+      } else if (persona === 'company' && session?.user?.id) {
+        const { data } = await supabase.from('company_users').select('notification_prefs').eq('auth_user_id', session.user.id).maybeSingle();
+        if (data?.notification_prefs) {
+          setNotificationsEnabled(data.notification_prefs.push ?? true);
+          setEmailUpdates(data.notification_prefs.email ?? true);
+        }
+      }
+    })().catch(() => {}); // column may not exist yet — degrade to local-only
+  }, [persona, candidateId, session?.user?.id]);
+
+  const persistPrefs = (next: { push?: boolean; email?: boolean }) => {
+    const merged = { push: next.push ?? notificationsEnabled, email: next.email ?? emailUpdates };
+    const write = persona === 'candidate' && candidateId
+      ? supabase.from('candidates').update({ notification_prefs: merged }).eq('id', candidateId)
+      : persona === 'company' && session?.user?.id
+        ? supabase.from('company_users').update({ notification_prefs: merged }).eq('auth_user_id', session.user.id)
+        : null;
+    write?.then(({ error }) => { if (error) console.warn('Could not persist notification prefs (migration pending?):', error.message); });
+  };
+
+  const setNotifications = (v: boolean) => { setNotificationsEnabled(v); persistPrefs({ push: v }); };
+  const setEmail = (v: boolean) => { setEmailUpdates(v); persistPrefs({ email: v }); };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: T.bg }} edges={['top', 'left', 'right']}>
@@ -106,19 +145,26 @@ export default function AccountSettings({ persona = 'company' }: { persona?: Per
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: T.border }}>
                 <Ionicons name="notifications-outline" size={20} color={T.textSecondary} />
                 <Text style={{ flex: 1, fontSize: 14, fontWeight: '500', color: T.textPrimary }}>Push Notifications</Text>
-                <Switch value={notificationsEnabled} onValueChange={setNotificationsEnabled} trackColor={{ false: T.surface, true: T.accent }} thumbColor={T.white} />
+                <Switch value={notificationsEnabled} onValueChange={setNotifications} trackColor={{ false: T.surface, true: T.accent }} thumbColor={T.white} />
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, paddingHorizontal: 16 }}>
                 <Ionicons name="mail-outline" size={20} color={T.textSecondary} />
                 <Text style={{ flex: 1, fontSize: 14, fontWeight: '500', color: T.textPrimary }}>Email Updates</Text>
-                <Switch value={emailUpdates} onValueChange={setEmailUpdates} trackColor={{ false: T.surface, true: T.accent }} thumbColor={T.white} />
+                <Switch value={emailUpdates} onValueChange={setEmail} trackColor={{ false: T.surface, true: T.accent }} thumbColor={T.white} />
               </View>
             </View>
           </View>
 
-          {/* Support — Help Center / Terms / Privacy hidden until there's real
-              content behind them; a tappable row that goes nowhere is worse
-              than no row at all. */}
+          {/* Support */}
+          <View style={{ marginBottom: 24 }}>
+            <Text style={{ fontSize: 14, fontWeight: '700', color: T.textMuted, paddingHorizontal: 20, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.3 }}>Support</Text>
+            <View style={{ backgroundColor: T.card, borderTopWidth: 1, borderBottomWidth: 1, borderColor: T.border }}>
+              <SettingsRow icon="help-circle-outline" label="Help Center" onPress={() => router.push(helpRoute as any)} T={T} />
+              <SettingsRow icon="chatbubble-outline" label="Contact Support" onPress={() => Linking.openURL('mailto:strivoglobal@gmail.com?subject=Hiyame%20Support')} T={T} />
+              <SettingsRow icon="document-text-outline" label="Terms of Service" onPress={() => router.push({ pathname: legalRoute as any, params: { tab: 'terms' } })} T={T} />
+              <SettingsRow icon="shield-outline" label="Privacy Policy" onPress={() => router.push({ pathname: legalRoute as any, params: { tab: 'privacy' } })} T={T} />
+            </View>
+          </View>
 
           {/* Danger Zone */}
           <View>

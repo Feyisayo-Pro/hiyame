@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import ScreenFrame from '@/components/ScreenFrame';
+import AnimatedPressable from '@/components/AnimatedPressable';
 import { useTheme, ThemePalette } from '@/lib/theme';
 import { useAuth } from '@/lib/useAuth';
 import { getCompanyFeed, FeedItem, relativeTime } from '@/lib/dashboardStats';
@@ -72,31 +73,32 @@ export default function CompanyNotificationsScreen() {
             <Text style={st.emptyText}>Nothing yet. Introduction activity across your roles shows up here.</Text>
           </View>
         ) : (
-          <SwipeFadeContainer>
-            {items.map((item) => {
+          <>
+            {items.map((item, i) => {
               const s = tone(item, T);
               return (
-                <Pressable
-                  key={item.id}
-                  style={[st.card, { backgroundColor: s.bg, borderLeftColor: s.accent }]}
-                  onPress={() => { if (item.href) router.push(item.href as any); }}
-                >
-                  <View style={st.row}>
-                    <View style={[st.iconWrap, { backgroundColor: s.iconBg }]}>
-                      <Ionicons name={ICON[item.kind]} size={18} color={s.accent} />
+                <SwipeFadeContainer key={item.id} axis="y" offset={14} duration={240} delay={Math.min(i, 8) * 40}>
+                  <AnimatedPressable
+                    style={[st.card, { backgroundColor: s.bg, borderLeftColor: s.accent }]}
+                    onPress={() => { if (item.href) router.push(item.href as any); }}
+                  >
+                    <View style={st.row}>
+                      <View style={[st.iconWrap, { backgroundColor: s.iconBg }]}>
+                        <Ionicons name={ICON[item.kind]} size={18} color={s.accent} />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={st.title}>{item.title}</Text>
+                        <Text style={st.body}>{item.body}</Text>
+                        {item.at && new Date(item.at).getTime() > 0 ? (
+                          <Text style={st.time}>{relativeTime(item.at)}</Text>
+                        ) : null}
+                      </View>
                     </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={st.title}>{item.title}</Text>
-                      <Text style={st.body}>{item.body}</Text>
-                      {item.at && new Date(item.at).getTime() > 0 ? (
-                        <Text style={st.time}>{relativeTime(item.at)}</Text>
-                      ) : null}
-                    </View>
-                  </View>
-                </Pressable>
+                  </AnimatedPressable>
+                </SwipeFadeContainer>
               );
             })}
-          </SwipeFadeContainer>
+          </>
         )}
       </ScrollView>
       </ScreenFrame>

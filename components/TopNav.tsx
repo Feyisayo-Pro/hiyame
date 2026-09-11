@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Text } from '@/components/Themed';
 import { useTheme, useThemeToggle, ThemePalette, ICON, RADIUS } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
+import AnimatedPressable from '@/components/AnimatedPressable';
 
 // Persistent left sidebar for desktop web. The tab layouts render this beside
 // the screen content (flexDirection: row) and hide the bottom tab bar at this
@@ -64,57 +65,62 @@ export default function SideNav({ role }: { role: 'candidate' | 'company' }) {
         {items.map((it) => {
           const active = it.screen === activeScreen;
           return (
-            <Pressable
+            <AnimatedPressable
               key={it.screen}
+              scaleTo={0.97}
               onPress={() => router.navigate(it.route as any)}
-              style={({ pressed }) => [st.link, active && st.linkActive, pressed && !active && st.linkPressed]}
+              style={({ pressed }: { pressed: boolean }) => [st.link, active && st.linkActive, pressed && !active && st.linkPressed]}
               accessibilityRole="link"
               accessibilityState={{ selected: active }}
             >
               <Ionicons name={active ? filled(it.icon) : it.icon} size={ICON.lg} color={active ? T.accent : T.textSecondary} />
               <Text style={[st.linkText, active && st.linkTextActive]}>{it.label}</Text>
-            </Pressable>
+            </AnimatedPressable>
           );
         })}
       </View>
 
       <View style={st.footer}>
-        <Pressable
-          style={({ pressed }) => [st.footRow, pressed && st.linkPressed]}
+        <AnimatedPressable
+          scaleTo={0.97}
+          style={({ pressed }: { pressed: boolean }) => [st.footRow, pressed && st.linkPressed]}
           onPress={() => router.navigate(`${base}/notifications` as any)}
           accessibilityRole="link"
           accessibilityLabel="Notifications"
         >
           <Ionicons name="notifications-outline" size={ICON.md} color={T.textSecondary} />
           <Text style={st.footText}>Notifications</Text>
-        </Pressable>
-        <Pressable
-          style={({ pressed }) => [st.footRow, pressed && st.linkPressed]}
+        </AnimatedPressable>
+        <AnimatedPressable
+          scaleTo={0.97}
+          style={({ pressed }: { pressed: boolean }) => [st.footRow, pressed && st.linkPressed]}
           onPress={toggleTheme}
           accessibilityRole="button"
           accessibilityLabel={mode === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
         >
           <Ionicons name={mode === 'light' ? 'moon-outline' : 'sunny-outline'} size={ICON.md} color={T.textSecondary} />
           <Text style={st.footText}>{mode === 'light' ? 'Dark mode' : 'Light mode'}</Text>
-        </Pressable>
-        <Pressable
-          style={({ pressed }) => [st.footRow, pressed && st.linkPressed]}
+        </AnimatedPressable>
+        <AnimatedPressable
+          scaleTo={0.97}
+          style={({ pressed }: { pressed: boolean }) => [st.footRow, pressed && st.linkPressed]}
           onPress={() => router.navigate(`${base}/settings` as any)}
           accessibilityRole="link"
           accessibilityLabel="Settings"
         >
           <Ionicons name="settings-outline" size={ICON.md} color={T.textSecondary} />
           <Text style={st.footText}>Settings</Text>
-        </Pressable>
-        <Pressable
-          style={({ pressed }) => [st.footRow, pressed && st.linkPressed]}
+        </AnimatedPressable>
+        <AnimatedPressable
+          scaleTo={0.97}
+          style={({ pressed }: { pressed: boolean }) => [st.footRow, pressed && st.linkPressed]}
           onPress={() => supabase.auth.signOut()}
           accessibilityRole="button"
           accessibilityLabel="Sign out"
         >
           <Ionicons name="log-out-outline" size={ICON.md} color={T.danger} />
           <Text style={[st.footText, { color: T.danger }]}>Sign out</Text>
-        </Pressable>
+        </AnimatedPressable>
       </View>
     </View>
   );

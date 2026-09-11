@@ -11,6 +11,8 @@ import { notify } from '@/lib/notify';
 import { getIntroductionContact, IntroductionContact } from '@/lib/introductionContact';
 import ContactReveal from '@/components/ContactReveal';
 import ScreenFrame from '@/components/ScreenFrame';
+import SwipeFadeContainer from '@/components/SwipeFadeContainer';
+import AnimatedPressable from '@/components/AnimatedPressable';
 import { notifyIntroduction } from '@/lib/requestNotify';
 
 // Replaces the old Tinder-style swipe deck over mock roles. Under the real
@@ -183,38 +185,40 @@ export default function OpportunitiesScreen() {
             </View>
           )}
 
-          {pending.filter((p) => !p.expired).map((intro) => {
+          {pending.filter((p) => !p.expired).map((intro, i) => {
             const cfg = TIER_CONFIG[intro.roleTier];
             const hoursLeft = Math.max(0, Math.round(
               (new Date(intro.sentAt).getTime() + intro.responseWindowHours * 60 * 60 * 1000 - Date.now()) / (60 * 60 * 1000),
             ));
             return (
-              <View key={intro.introductionId} style={st.card}>
-                <View style={st.lockedRow}>
-                  <View style={st.lockIcon}>
-                    <Ionicons name="lock-closed" size={14} color={T.textMuted} />
+              <SwipeFadeContainer key={intro.introductionId} axis="y" offset={16} duration={250} delay={Math.min(i, 8) * 40}>
+                <View style={st.card}>
+                  <View style={st.lockedRow}>
+                    <View style={st.lockIcon}>
+                      <Ionicons name="lock-closed" size={14} color={T.textMuted} />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={st.lockedLabel}>Company identity revealed after you accept</Text>
+                      <Text style={st.metaText}>{intro.companyIndustry ?? 'Unknown industry'} · {intro.companySizeRange ?? 'Size not specified'}</Text>
+                    </View>
                   </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={st.lockedLabel}>Company identity revealed after you accept</Text>
-                    <Text style={st.metaText}>{intro.companyIndustry ?? 'Unknown industry'} · {intro.companySizeRange ?? 'Size not specified'}</Text>
+                  <Text style={st.roleTitle}>{intro.roleTitle}</Text>
+                  <View style={[st.tierPill, { backgroundColor: cfg.accent + '14' }]}>
+                    <Text style={[st.tierText, { color: cfg.accent }]}>{cfg.label.toUpperCase()}</Text>
+                  </View>
+                  <Text style={st.deadlineText}>{hoursLeft}h left to respond</Text>
+                  <View style={st.actionsRow}>
+                    <AnimatedPressable style={[st.actionBtn, st.declineBtn]} onPress={() => respond(intro.introductionId, 'declined')} disabled={busyId === intro.introductionId}>
+                      <Ionicons name="close" size={18} color={T.danger} />
+                      <Text style={st.declineText}>Decline</Text>
+                    </AnimatedPressable>
+                    <AnimatedPressable style={[st.actionBtn, st.acceptBtn]} onPress={() => respond(intro.introductionId, 'accepted')} disabled={busyId === intro.introductionId}>
+                      <Ionicons name="checkmark" size={18} color={T.emerald} />
+                      <Text style={st.acceptText}>Accept</Text>
+                    </AnimatedPressable>
                   </View>
                 </View>
-                <Text style={st.roleTitle}>{intro.roleTitle}</Text>
-                <View style={[st.tierPill, { backgroundColor: cfg.accent + '14' }]}>
-                  <Text style={[st.tierText, { color: cfg.accent }]}>{cfg.label.toUpperCase()}</Text>
-                </View>
-                <Text style={st.deadlineText}>{hoursLeft}h left to respond</Text>
-                <View style={st.actionsRow}>
-                  <Pressable style={[st.actionBtn, st.declineBtn]} onPress={() => respond(intro.introductionId, 'declined')} disabled={busyId === intro.introductionId}>
-                    <Ionicons name="close" size={18} color={T.danger} />
-                    <Text style={st.declineText}>Decline</Text>
-                  </Pressable>
-                  <Pressable style={[st.actionBtn, st.acceptBtn]} onPress={() => respond(intro.introductionId, 'accepted')} disabled={busyId === intro.introductionId}>
-                    <Ionicons name="checkmark" size={18} color={T.emerald} />
-                    <Text style={st.acceptText}>Accept</Text>
-                  </Pressable>
-                </View>
-              </View>
+              </SwipeFadeContainer>
             );
           })}
 

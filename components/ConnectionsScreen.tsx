@@ -10,6 +10,7 @@ import { TIER_CONFIG, Tier } from '@/lib/mock-data';
 import { getIntroductionContact, IntroductionContact } from '@/lib/introductionContact';
 import ContactReveal from '@/components/ContactReveal';
 import ScreenFrame from '@/components/ScreenFrame';
+import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 
 // The "Connections" tab — every accepted introduction for the signed-in user,
 // across all roles, with the contact details revealed on acceptance
@@ -112,22 +113,24 @@ export default function ConnectionsScreen({ persona }: { persona: 'candidate' | 
               </Text>
             </View>
           ) : (
-            connections.map((c) => {
+            connections.map((c, i) => {
               const cfg = TIER_CONFIG[c.roleTier];
               return (
-                <View key={c.introductionId} style={st.block}>
-                  <View style={st.blockHead}>
-                    <Text style={st.roleTitle} numberOfLines={1}>{c.roleTitle}</Text>
-                    <View style={[st.tierPill, { backgroundColor: cfg.accent + '14' }]}>
-                      <Text style={[st.tierText, { color: cfg.accent }]}>{cfg.label.toUpperCase()}</Text>
+                <SwipeFadeContainer key={c.introductionId} axis="y" offset={14} duration={240} delay={Math.min(i, 8) * 40}>
+                  <View style={st.block}>
+                    <View style={st.blockHead}>
+                      <Text style={st.roleTitle} numberOfLines={1}>{c.roleTitle}</Text>
+                      <View style={[st.tierPill, { backgroundColor: cfg.accent + '14' }]}>
+                        <Text style={[st.tierText, { color: cfg.accent }]}>{cfg.label.toUpperCase()}</Text>
+                      </View>
                     </View>
+                    {c.contact ? (
+                      <ContactReveal contact={c.contact} viewer={persona} />
+                    ) : (
+                      <Text style={st.pendingText}>Contact details unavailable.</Text>
+                    )}
                   </View>
-                  {c.contact ? (
-                    <ContactReveal contact={c.contact} viewer={persona} />
-                  ) : (
-                    <Text style={st.pendingText}>Contact details unavailable.</Text>
-                  )}
-                </View>
+                </SwipeFadeContainer>
               );
             })
           )}

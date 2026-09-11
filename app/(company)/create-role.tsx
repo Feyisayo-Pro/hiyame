@@ -10,6 +10,7 @@ import { supabase } from '@/lib/supabase';
 import { notify } from '@/lib/notify';
 import { requestMatching } from '@/lib/requestMatching';
 import ScreenFrame from '@/components/ScreenFrame';
+import AnimatedPressable from '@/components/AnimatedPressable';
 import { TIER_CONFIG, Tier } from '@/lib/mock-data';
 
 // Only Corporate/Short-Term are postable here — Gig stays a Phase 3 stub
@@ -271,7 +272,7 @@ export default function CreateRoleScreen() {
             {errors.description ? <Text style={st.errorText}>{errors.description}</Text> : null}
           </View>
 
-          <Pressable style={[st.submitButton, loading && st.submitButtonDisabled]} onPress={handleSubmit} disabled={loading}>
+          <AnimatedPressable style={[st.submitButton, loading && st.submitButtonDisabled]} onPress={handleSubmit} disabled={loading}>
             {loading ? (
               <Text style={st.submitText}>Posting...</Text>
             ) : (
@@ -280,7 +281,7 @@ export default function CreateRoleScreen() {
                 <Ionicons name="arrow-forward" size={18} color={T.textOnAccent} />
               </>
             )}
-          </Pressable>
+          </AnimatedPressable>
         </ScrollView>
         </ScreenFrame>
       </KeyboardAvoidingView>

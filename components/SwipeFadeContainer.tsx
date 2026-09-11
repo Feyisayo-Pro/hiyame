@@ -3,9 +3,11 @@ import { Animated, Easing, ViewStyle, StyleProp } from 'react-native';
 
 interface SwipeFadeContainerProps {
   children: ReactNode;
-  /** Slide direction: 'left' = enter from right, 'right' = enter from left */
+  /** Slide direction: 'left' = enter from right, 'right' = enter from left (axis 'x'); ignored for axis 'y' (always rises from below) */
   direction?: 'left' | 'right';
-  /** Horizontal offset in pixels (default 60) */
+  /** 'x' slides horizontally (default, original behaviour); 'y' rises in from below — a better fit for staggered card grids/lists */
+  axis?: 'x' | 'y';
+  /** Offset in pixels (default 60) */
   offset?: number;
   /** Animation duration in ms (default 300) */
   duration?: number;
@@ -20,6 +22,7 @@ interface SwipeFadeContainerProps {
 export default function SwipeFadeContainer({
   children,
   direction = 'left',
+  axis = 'x',
   offset = 60,
   duration = 300,
   delay = 150,
@@ -27,12 +30,12 @@ export default function SwipeFadeContainer({
   triggerKey,
 }: SwipeFadeContainerProps) {
   const opacity = useRef(new Animated.Value(0)).current;
-  const translateX = useRef(new Animated.Value(0)).current;
+  const translate = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    const startX = direction === 'left' ? offset : -offset;
+    const start = axis === 'y' ? offset : direction === 'left' ? offset : -offset;
     opacity.setValue(0);
-    translateX.setValue(startX);
+    translate.setValue(start);
 
     Animated.parallel([
       Animated.timing(opacity, {
@@ -42,7 +45,7 @@ export default function SwipeFadeContainer({
         easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }),
-      Animated.timing(translateX, {
+      Animated.timing(translate, {
         toValue: 0,
         duration,
         delay,
@@ -52,10 +55,12 @@ export default function SwipeFadeContainer({
     ]).start();
   }, [triggerKey]);
 
+  const transform = axis === 'y' ? [{ translateY: translate }] : [{ translateX: translate }];
+
   return (
     <Animated.View
       style={[
-        { opacity, transform: [{ translateX }] },
+        { opacity, transform },
         style,
       ]}
     >

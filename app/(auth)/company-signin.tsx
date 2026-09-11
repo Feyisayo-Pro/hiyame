@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, ThemePalette } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
+import AnimatedPressable from '@/components/AnimatedPressable';
 
 export default function CompanySignInScreen() {
   const T = useTheme();
@@ -147,7 +148,7 @@ export default function CompanySignInScreen() {
             <View style={st.spacer} />
 
             {/* Sign In Button */}
-            <Pressable
+            <AnimatedPressable
               style={[st.signInButton, loading && st.signInButtonDisabled]}
               onPress={handleSignIn}
               disabled={loading}
@@ -160,7 +161,7 @@ export default function CompanySignInScreen() {
                   <Ionicons name="arrow-forward" size={18} color={T.textOnAccent} />
                 </>
               )}
-            </Pressable>
+            </AnimatedPressable>
 
             {/* Security Note */}
             <View style={st.securityNote}>

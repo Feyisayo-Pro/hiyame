@@ -12,6 +12,8 @@ import { requestMatching } from '@/lib/requestMatching';
 import { getIntroductionContact, IntroductionContact } from '@/lib/introductionContact';
 import ContactReveal from '@/components/ContactReveal';
 import ScreenFrame from '@/components/ScreenFrame';
+import SwipeFadeContainer from '@/components/SwipeFadeContainer';
+import AnimatedPressable from '@/components/AnimatedPressable';
 import { notifyIntroduction } from '@/lib/requestNotify';
 import { useIsDesktopWeb } from '@/components/TopNav';
 
@@ -262,10 +264,12 @@ export default function ShortlistScreen() {
             <>
               <Text style={st.sectionLabel}>SHORTLIST</Text>
               <View style={st.grid}>
-                {active.map((c) => (
+                {active.map((c, i) => (
                   <View key={c.matchScoreId} style={[st.gridItem, isDesktop && st.gridItemHalf]}>
-                    <CandidateCardView T={T} st={st} card={c} busy={busyId === c.matchScoreId}
-                      onAccept={() => handleAccept(c)} onSkip={() => handleAction(c, 'skipped')} onSave={() => handleAction(c, 'saved')} />
+                    <SwipeFadeContainer axis="y" offset={18} duration={260} delay={Math.min(i, 8) * 45}>
+                      <CandidateCardView T={T} st={st} card={c} busy={busyId === c.matchScoreId}
+                        onAccept={() => handleAccept(c)} onSkip={() => handleAction(c, 'skipped')} onSave={() => handleAction(c, 'saved')} />
+                    </SwipeFadeContainer>
                   </View>
                 ))}
               </View>
@@ -276,10 +280,12 @@ export default function ShortlistScreen() {
             <>
               <Text style={st.sectionLabel}>ALTERNATES</Text>
               <View style={st.grid}>
-                {alternates.map((c) => (
+                {alternates.map((c, i) => (
                   <View key={c.matchScoreId} style={[st.gridItem, isDesktop && st.gridItemHalf]}>
-                    <CandidateCardView T={T} st={st} card={c} busy={busyId === c.matchScoreId}
-                      onAccept={() => handleAccept(c)} onSkip={() => handleAction(c, 'skipped')} onSave={() => handleAction(c, 'saved')} />
+                    <SwipeFadeContainer axis="y" offset={18} duration={260} delay={Math.min(i, 8) * 45}>
+                      <CandidateCardView T={T} st={st} card={c} busy={busyId === c.matchScoreId}
+                        onAccept={() => handleAccept(c)} onSkip={() => handleAction(c, 'skipped')} onSave={() => handleAction(c, 'saved')} />
+                    </SwipeFadeContainer>
                   </View>
                 ))}
               </View>
@@ -367,16 +373,16 @@ function CandidateCardView({ T, st, card, busy, onAccept, onSkip, onSave }: {
       </View>
 
       <View style={st.actionsRow}>
-        <Pressable style={[st.actionBtn, st.skipBtn]} onPress={onSkip} disabled={busy} accessibilityRole="button" accessibilityLabel={`Skip ${card.fullName}`}>
+        <AnimatedPressable style={[st.actionBtn, st.skipBtn]} onPress={onSkip} disabled={busy} accessibilityRole="button" accessibilityLabel={`Skip ${card.fullName}`}>
           <Ionicons name="close" size={ICON.md} color={T.danger} />
-        </Pressable>
-        <Pressable style={[st.actionBtn, st.saveBtn]} onPress={onSave} disabled={busy} accessibilityRole="button" accessibilityLabel={`Save ${card.fullName}`}>
+        </AnimatedPressable>
+        <AnimatedPressable style={[st.actionBtn, st.saveBtn]} onPress={onSave} disabled={busy} accessibilityRole="button" accessibilityLabel={`Save ${card.fullName}`}>
           <Ionicons name="bookmark-outline" size={ICON.sm} color={T.accent} />
-        </Pressable>
-        <Pressable style={[st.actionBtn, st.acceptBtn]} onPress={onAccept} disabled={busy} accessibilityRole="button" accessibilityLabel={`Accept ${card.fullName}`}>
+        </AnimatedPressable>
+        <AnimatedPressable style={[st.actionBtn, st.acceptBtn]} onPress={onAccept} disabled={busy} accessibilityRole="button" accessibilityLabel={`Accept ${card.fullName}`}>
           <Ionicons name="checkmark" size={ICON.md} color={T.white} />
           <Text style={st.acceptText}>Accept</Text>
-        </Pressable>
+        </AnimatedPressable>
       </View>
     </View>
   );

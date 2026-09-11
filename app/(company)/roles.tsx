@@ -9,6 +9,8 @@ import { useAuth } from '@/lib/useAuth';
 import { supabase } from '@/lib/supabase';
 import { TIER_CONFIG, Tier } from '@/lib/mock-data';
 import ScreenFrame from '@/components/ScreenFrame';
+import SwipeFadeContainer from '@/components/SwipeFadeContainer';
+import AnimatedPressable from '@/components/AnimatedPressable';
 
 // This screen replaces what used to be a Tinder-style swipe deck over an open
 // candidate pool. Under the real architecture, matching is per-ROLE (a company
@@ -101,9 +103,9 @@ export default function CompanyRolesScreen() {
           <Text style={st.headerTitle}>My Roles</Text>
           <Text style={st.headerSub}>Tap a role to review its shortlist</Text>
         </View>
-        <Pressable style={st.postButton} onPress={() => router.push('/(company)/create-role')} accessibilityRole="button" accessibilityLabel="Post a role">
+        <AnimatedPressable style={st.postButton} onPress={() => router.push('/(company)/create-role')} accessibilityRole="button" accessibilityLabel="Post a role">
           <Ionicons name="add" size={20} color={T.textOnAccent} />
-        </Pressable>
+        </AnimatedPressable>
       </View>
 
       {roles === null ? (
@@ -120,40 +122,41 @@ export default function CompanyRolesScreen() {
           </View>
           <Text style={st.emptyTitle}>No roles yet</Text>
           <Text style={st.emptySub}>Post your first role to start building a shortlist.</Text>
-          <Pressable style={st.emptyPostButton} onPress={() => router.push('/(company)/create-role')}>
+          <AnimatedPressable style={st.emptyPostButton} onPress={() => router.push('/(company)/create-role')}>
             <Ionicons name="add" size={18} color={T.textOnAccent} />
             <Text style={st.emptyPostButtonText}>Post a Role</Text>
-          </Pressable>
+          </AnimatedPressable>
         </ScrollView>
       ) : (
         <ScrollView
           contentContainerStyle={st.scroll}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={T.accent} colors={[T.accent]} />}
         >
-          {roles.map((role) => {
+          {roles.map((role, i) => {
             const cfg = TIER_CONFIG[role.tier];
             return (
-              <Pressable
-                key={role.id}
-                style={st.card}
-                onPress={() => router.push({ pathname: '/(company)/shortlist', params: { roleId: role.id } })}
-              >
-                <View style={st.cardTop}>
-                  <View style={[st.tierPill, { backgroundColor: cfg.accent + '14' }]}>
-                    <Ionicons name={cfg.icon as keyof typeof Ionicons.glyphMap} size={12} color={cfg.accent} />
-                    <Text style={[st.tierText, { color: cfg.accent }]}>{cfg.label.toUpperCase()}</Text>
+              <SwipeFadeContainer key={role.id} axis="y" offset={16} duration={250} delay={Math.min(i, 8) * 40}>
+                <AnimatedPressable
+                  style={st.card}
+                  onPress={() => router.push({ pathname: '/(company)/shortlist', params: { roleId: role.id } })}
+                >
+                  <View style={st.cardTop}>
+                    <View style={[st.tierPill, { backgroundColor: cfg.accent + '14' }]}>
+                      <Ionicons name={cfg.icon as keyof typeof Ionicons.glyphMap} size={12} color={cfg.accent} />
+                      <Text style={[st.tierText, { color: cfg.accent }]}>{cfg.label.toUpperCase()}</Text>
+                    </View>
+                    <Text style={st.statusText}>{role.status}</Text>
                   </View>
-                  <Text style={st.statusText}>{role.status}</Text>
-                </View>
-                <Text style={st.roleTitle}>{role.title}</Text>
-                <View style={st.cardBottom}>
-                  <Ionicons name="people-outline" size={14} color={T.textSecondary} />
-                  <Text style={st.shortlistText}>
-                    {role.shortlistCount} {role.shortlistCount === 1 ? 'candidate' : 'candidates'} shortlisted
-                  </Text>
-                  <Ionicons name="chevron-forward" size={16} color={T.textMuted} style={{ marginLeft: 'auto' }} />
-                </View>
-              </Pressable>
+                  <Text style={st.roleTitle}>{role.title}</Text>
+                  <View style={st.cardBottom}>
+                    <Ionicons name="people-outline" size={14} color={T.textSecondary} />
+                    <Text style={st.shortlistText}>
+                      {role.shortlistCount} {role.shortlistCount === 1 ? 'candidate' : 'candidates'} shortlisted
+                    </Text>
+                    <Ionicons name="chevron-forward" size={16} color={T.textMuted} style={{ marginLeft: 'auto' }} />
+                  </View>
+                </AnimatedPressable>
+              </SwipeFadeContainer>
             );
           })}
         </ScrollView>
