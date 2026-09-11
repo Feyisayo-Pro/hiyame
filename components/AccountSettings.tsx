@@ -11,6 +11,7 @@ import { useRouter } from 'expo-router';
 import { useTheme, useThemeToggle, ThemePalette } from '@/lib/theme';
 import { useSubscription } from '@/lib/subscriptionStore';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
+import ScreenFrame from '@/components/ScreenFrame';
 
 type Persona = 'company' | 'candidate';
 
@@ -49,6 +50,7 @@ export default function AccountSettings({ persona = 'company' }: { persona?: Per
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: T.bg }} edges={['top', 'left', 'right']}>
+      <ScreenFrame>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
         <SwipeFadeContainer>
           {/* Header */}
@@ -131,6 +133,7 @@ export default function AccountSettings({ persona = 'company' }: { persona?: Per
           </View>
         </SwipeFadeContainer>
       </ScrollView>
+      </ScreenFrame>
     </SafeAreaView>
   );
 }

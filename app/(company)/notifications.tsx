@@ -5,6 +5,7 @@ import { Text } from '@/components/Themed';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
+import ScreenFrame from '@/components/ScreenFrame';
 import { useTheme, ThemePalette } from '@/lib/theme';
 import { useAuth } from '@/lib/useAuth';
 import { getCompanyFeed, FeedItem, relativeTime } from '@/lib/dashboardStats';
@@ -49,6 +50,7 @@ export default function CompanyNotificationsScreen() {
 
   return (
     <SafeAreaView style={st.container} edges={['top', 'left', 'right']}>
+      <ScreenFrame>
       <View style={st.header}>
         <View style={st.headerLeft}>
           <Ionicons name="notifications" size={22} color={T.accent} />
@@ -97,6 +99,7 @@ export default function CompanyNotificationsScreen() {
           </SwipeFadeContainer>
         )}
       </ScrollView>
+      </ScreenFrame>
     </SafeAreaView>
   );
 }

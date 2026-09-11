@@ -11,6 +11,7 @@ import { notify } from '@/lib/notify';
 import { requestMatching } from '@/lib/requestMatching';
 import { getIntroductionContact, IntroductionContact } from '@/lib/introductionContact';
 import ContactReveal from '@/components/ContactReveal';
+import ScreenFrame from '@/components/ScreenFrame';
 import { notifyIntroduction } from '@/lib/requestNotify';
 import { useIsDesktopWeb } from '@/components/TopNav';
 
@@ -195,6 +196,7 @@ export default function ShortlistScreen() {
 
   return (
     <SafeAreaView style={st.container} edges={['top', 'left', 'right']}>
+      <ScreenFrame>
       <View style={st.header}>
         <Pressable style={st.backButton} onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Go back">
           <Ionicons name="arrow-back" size={20} color={T.textPrimary} />
@@ -303,6 +305,7 @@ export default function ShortlistScreen() {
           )}
         </ScrollView>
       )}
+      </ScreenFrame>
     </SafeAreaView>
   );
 }
@@ -421,7 +424,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   actionBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, height: 42, borderRadius: RADIUS.control },
   skipBtn: { width: 44, backgroundColor: T.surface },
   saveBtn: { width: 44, backgroundColor: T.accentBg },
-  acceptBtn: { flex: 1, backgroundColor: T.accent },
+  acceptBtn: { minWidth: 128, paddingHorizontal: 24, backgroundColor: T.accent },
   acceptText: { fontSize: 14, fontWeight: '700', color: T.white, letterSpacing: -0.1 },
   introducedRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: T.border },
   introducedCard: { marginBottom: 12 },

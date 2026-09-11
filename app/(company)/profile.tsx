@@ -5,6 +5,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
+import ScreenFrame from '@/components/ScreenFrame';
 import { useTheme, useThemeToggle, ThemePalette } from '@/lib/theme';
 
 // Mock company data — will be replaced by real context in Phase 3
@@ -27,6 +28,7 @@ export default function CompanyProfileScreen() {
 
   return (
     <SafeAreaView style={st.container} edges={['top', 'left', 'right']}>
+      <ScreenFrame>
       <ScrollView contentContainerStyle={st.scroll} showsVerticalScrollIndicator={false}>
         <SwipeFadeContainer>
         {/* ── Header ── */}
@@ -197,6 +199,7 @@ export default function CompanyProfileScreen() {
         <View style={{ height: 16 }} />
         </SwipeFadeContainer>
       </ScrollView>
+      </ScreenFrame>
     </SafeAreaView>
   );
 }

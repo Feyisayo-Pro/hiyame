@@ -24,10 +24,13 @@ export default function CompanyTabLayout() {
   const T = useTheme();
   const desktop = useIsDesktopWeb();
 
+  // Content width is capped + centred per-screen via <ScreenFrame>: on web the
+  // <Tabs> scene container ignores width constraints set out here, so the layout
+  // only owns the sidebar + a plain flex column for the screens.
   return (
     <View style={{ flex: 1, flexDirection: desktop ? 'row' : 'column', backgroundColor: T.bg }}>
       <TopNav role="company" />
-      <View style={{ flex: 1, minWidth: 0, maxWidth: desktop ? 960 : undefined }}>
+      <View style={{ flex: 1, minWidth: 0, paddingTop: desktop ? 16 : 0 }}>
       <Tabs
       screenOptions={{
         headerShown: false,

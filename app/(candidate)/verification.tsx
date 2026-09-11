@@ -6,6 +6,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useCandidateProfile } from '@/lib/candidateProfile';
 import { useVerification } from '@/lib/useVerification';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
+import ScreenFrame from '@/components/ScreenFrame';
 import SmileIdVerificationModal from '@/components/SmileIdVerificationModal';
 import { useTheme, ThemePalette } from '@/lib/theme';
 
@@ -86,6 +87,7 @@ export default function VerificationScreen() {
 
   return (
     <SafeAreaView style={st.container} edges={['top', 'left', 'right']}>
+      <ScreenFrame>
       <ScrollView
         contentContainerStyle={st.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -257,6 +259,7 @@ export default function VerificationScreen() {
         <View style={{ height: 32 }} />
         </SwipeFadeContainer>
       </ScrollView>
+      </ScreenFrame>
 
       <SmileIdVerificationModal
         visible={showSmileId}

@@ -8,6 +8,7 @@ import { Text } from '@/components/Themed';
 import { useTheme, ThemePalette } from '@/lib/theme';
 import { useSubscription, SubscriptionTier } from '@/lib/subscriptionStore';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
+import ScreenFrame from '@/components/ScreenFrame';
 import { notify } from '@/lib/notify';
 
 // ── Plan copy (maps onto the underlying pilot/starter/growth/enterprise tiers) ──
@@ -182,6 +183,7 @@ export default function SubscriptionsScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+      <ScreenFrame>
       <View style={styles.header}>
         <Pressable style={styles.backBtn} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={20} color={T.textPrimary} />
@@ -207,6 +209,7 @@ export default function SubscriptionsScreen() {
           ))}
         </SwipeFadeContainer>
       </ScrollView>
+      </ScreenFrame>
     </SafeAreaView>
   );
 }

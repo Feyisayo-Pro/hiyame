@@ -19,6 +19,7 @@ import { useAuth } from '@/lib/useAuth';
 import { getCompanyStats, CompanyStats, relativeTime } from '@/lib/dashboardStats';
 import { TIER_CONFIG } from '@/lib/mock-data';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
+import ScreenFrame from '@/components/ScreenFrame';
 import { Text } from '@/components/Themed';
 
 // ── Helpers ──
@@ -192,6 +193,7 @@ export default function CompanyDashboardScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+      <ScreenFrame>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <SwipeFadeContainer direction="left" triggerKey="header">
           {/* Header */}
@@ -379,6 +381,7 @@ export default function CompanyDashboardScreen() {
 
         <View style={{ height: 32 }} />
       </ScrollView>
+      </ScreenFrame>
 
       {/* Config Modal */}
       <ConfigModal visible={showConfig} onClose={() => setShowConfig(false)} T={T} />

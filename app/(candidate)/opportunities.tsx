@@ -10,6 +10,7 @@ import { TIER_CONFIG, Tier } from '@/lib/mock-data';
 import { notify } from '@/lib/notify';
 import { getIntroductionContact, IntroductionContact } from '@/lib/introductionContact';
 import ContactReveal from '@/components/ContactReveal';
+import ScreenFrame from '@/components/ScreenFrame';
 import { notifyIntroduction } from '@/lib/requestNotify';
 
 // Replaces the old Tinder-style swipe deck over mock roles. Under the real
@@ -157,6 +158,7 @@ export default function OpportunitiesScreen() {
 
   return (
     <SafeAreaView style={st.container} edges={['top', 'left', 'right']}>
+      <ScreenFrame>
       <View style={st.header}>
         <Text style={st.headerTitle}>Introductions</Text>
         <Text style={st.headerSub}>Companies interested in working with you</Text>
@@ -244,6 +246,7 @@ export default function OpportunitiesScreen() {
           )}
         </ScrollView>
       )}
+      </ScreenFrame>
     </SafeAreaView>
   );
 }

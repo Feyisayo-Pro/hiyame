@@ -9,6 +9,7 @@ import { supabase } from '@/lib/supabase';
 import { getCandidateStats, CandidateStats, relativeTime } from '@/lib/dashboardStats';
 import { TIER_CONFIG } from '@/lib/mock-data';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
+import ScreenFrame from '@/components/ScreenFrame';
 import { useIsDesktopWeb } from '@/components/TopNav';
 import { useTheme, useThemeToggle, ThemePalette, ELEVATION } from '@/lib/theme';
 
@@ -76,6 +77,7 @@ export default function CandidateHomeScreen() {
 
   return (
     <SafeAreaView style={st.container} edges={['top', 'left', 'right']}>
+      <ScreenFrame>
       <ScrollView
         contentContainerStyle={st.scroll}
         showsVerticalScrollIndicator={false}
@@ -240,6 +242,7 @@ export default function CandidateHomeScreen() {
           <View style={{ height: 16 }} />
         </SwipeFadeContainer>
       </ScrollView>
+      </ScreenFrame>
     </SafeAreaView>
   );
 }

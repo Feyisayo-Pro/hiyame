@@ -10,6 +10,7 @@ import { useSubscription } from '@/lib/subscriptionStore';
 import { useAuth } from '@/lib/useAuth';
 import { supabase } from '@/lib/supabase';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
+import ScreenFrame from '@/components/ScreenFrame';
 import { notify } from '@/lib/notify';
 
 // The team roster is real: it reads and writes the company_users table
@@ -159,6 +160,7 @@ export default function TeamMembersScreen() {
 
   return (
     <SafeAreaView style={s.safeArea} edges={['top', 'left', 'right']}>
+      <ScreenFrame>
       <View style={s.header}>
         <Pressable style={s.backBtn} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={20} color={T.textPrimary} />
@@ -273,6 +275,7 @@ export default function TeamMembersScreen() {
 
         <View style={{ height: 32 }} />
       </ScrollView>
+      </ScreenFrame>
     </SafeAreaView>
   );
 }

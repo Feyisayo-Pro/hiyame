@@ -8,6 +8,7 @@ import { useTheme, ThemePalette } from '@/lib/theme';
 import { useAuth } from '@/lib/useAuth';
 import { supabase } from '@/lib/supabase';
 import { TIER_CONFIG, Tier } from '@/lib/mock-data';
+import ScreenFrame from '@/components/ScreenFrame';
 
 // This screen replaces what used to be a Tinder-style swipe deck over an open
 // candidate pool. Under the real architecture, matching is per-ROLE (a company
@@ -94,6 +95,7 @@ export default function CompanyRolesScreen() {
 
   return (
     <SafeAreaView style={st.container} edges={['top', 'left', 'right']}>
+      <ScreenFrame>
       <View style={st.header}>
         <View style={{ flex: 1 }}>
           <Text style={st.headerTitle}>My Roles</Text>
@@ -156,6 +158,7 @@ export default function CompanyRolesScreen() {
           })}
         </ScrollView>
       )}
+      </ScreenFrame>
     </SafeAreaView>
   );
 }

@@ -7,6 +7,7 @@ import { router } from 'expo-router';
 import { useCandidateProfile } from '@/lib/candidateProfile';
 import { useVerification } from '@/lib/useVerification';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
+import ScreenFrame from '@/components/ScreenFrame';
 import { useTheme, useThemeToggle, ThemePalette } from '@/lib/theme';
 import { notify } from '@/lib/notify';
 
@@ -33,6 +34,7 @@ export default function CandidateProfileScreen() {
 
   return (
     <SafeAreaView style={st.container} edges={['top', 'left', 'right']}>
+      <ScreenFrame>
       <ScrollView contentContainerStyle={st.scroll} showsVerticalScrollIndicator={false}>
         <SwipeFadeContainer>
         {/* ── Header ── */}
@@ -259,6 +261,7 @@ export default function CandidateProfileScreen() {
         <View style={{ height: 16 }} />
         </SwipeFadeContainer>
       </ScrollView>
+      </ScreenFrame>
     </SafeAreaView>
   );
 }

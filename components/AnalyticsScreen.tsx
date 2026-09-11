@@ -15,6 +15,7 @@ import { useTheme, ThemePalette } from '@/lib/theme';
 import { useAuth } from '@/lib/useAuth';
 import { getCompanyStats, getCandidateStats, CompanyStats, CandidateStats } from '@/lib/dashboardStats';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
+import ScreenFrame from '@/components/ScreenFrame';
 
 type Persona = 'company' | 'candidate';
 
@@ -179,6 +180,7 @@ export default function AnalyticsScreen({ persona = 'company' }: { persona?: Per
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: T.bg }} edges={['top', 'left', 'right']}>
+      <ScreenFrame>
       <View style={{ paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: T.border }}>
         <Text style={{ fontSize: 22, fontWeight: '800', color: T.textPrimary }}>Insights</Text>
         <Text style={{ fontSize: 12, color: T.textSecondary }}>
@@ -195,6 +197,7 @@ export default function AnalyticsScreen({ persona = 'company' }: { persona?: Per
       ) : (
         <CandidateAnalytics T={T} stats={candidate as CandidateStats} />
       )}
+      </ScreenFrame>
     </SafeAreaView>
   );
 }

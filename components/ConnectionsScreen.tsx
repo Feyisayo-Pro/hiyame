@@ -9,6 +9,7 @@ import { supabase } from '@/lib/supabase';
 import { TIER_CONFIG, Tier } from '@/lib/mock-data';
 import { getIntroductionContact, IntroductionContact } from '@/lib/introductionContact';
 import ContactReveal from '@/components/ContactReveal';
+import ScreenFrame from '@/components/ScreenFrame';
 
 // The "Connections" tab — every accepted introduction for the signed-in user,
 // across all roles, with the contact details revealed on acceptance
@@ -81,6 +82,7 @@ export default function ConnectionsScreen({ persona }: { persona: 'candidate' | 
 
   return (
     <SafeAreaView style={st.container} edges={['top', 'left', 'right']}>
+      <ScreenFrame>
       <View style={st.header}>
         <Text style={st.headerTitle}>Connections</Text>
         <Text style={st.headerSub}>
@@ -131,6 +133,7 @@ export default function ConnectionsScreen({ persona }: { persona: 'candidate' | 
           )}
         </ScrollView>
       )}
+      </ScreenFrame>
     </SafeAreaView>
   );
 }

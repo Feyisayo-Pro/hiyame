@@ -9,6 +9,7 @@ import { useAuth } from '@/lib/useAuth';
 import { supabase } from '@/lib/supabase';
 import { notify } from '@/lib/notify';
 import { requestMatching } from '@/lib/requestMatching';
+import ScreenFrame from '@/components/ScreenFrame';
 import { TIER_CONFIG, Tier } from '@/lib/mock-data';
 
 // Only Corporate/Short-Term are postable here — Gig stays a Phase 3 stub
@@ -115,6 +116,7 @@ export default function CreateRoleScreen() {
   return (
     <SafeAreaView style={st.container} edges={['top', 'left', 'right']}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScreenFrame>
         <View style={st.header}>
           <Pressable style={st.backButton} onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Go back">
             <Ionicons name="arrow-back" size={20} color={T.textPrimary} />
@@ -280,6 +282,7 @@ export default function CreateRoleScreen() {
             )}
           </Pressable>
         </ScrollView>
+        </ScreenFrame>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
