@@ -324,7 +324,7 @@ function CandidateCardView({ T, st, card, busy, onAccept, onSkip, onSave }: {
     <View style={st.card}>
       <View style={st.profileRow}>
         {card.photoUrl ? (
-          <Image source={{ uri: card.photoUrl }} style={st.photo} />
+          <Image source={{ uri: card.photoUrl }} style={st.photo} resizeMode="cover" />
         ) : (
           <View style={[st.photo, st.photoFallback]}>
             <Text style={st.photoInitials}>{initials(card.fullName)}</Text>
@@ -402,11 +402,11 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   gridItem: { width: '100%' },
   gridItemHalf: { width: '48.5%' },
   card: { flex: 1, backgroundColor: T.card, borderRadius: RADIUS.card, padding: 18, marginBottom: 0, borderWidth: 1, borderColor: T.border, ...ELEVATION.card },
-  profileRow: { flexDirection: 'row', gap: 14, marginBottom: 14 },
-  photo: { width: 68, height: 68, borderRadius: 18, backgroundColor: T.surface },
+  profileRow: { flexDirection: 'row', gap: 16, marginBottom: 16 },
+  photo: { width: 108, height: 108, borderRadius: 26, backgroundColor: T.surface },
   photoFallback: { alignItems: 'center', justifyContent: 'center' },
-  photoInitials: { fontSize: 22, fontWeight: '800', color: T.accent, letterSpacing: -0.5 },
-  profileBody: { flex: 1, minWidth: 0, gap: 7, justifyContent: 'center' },
+  photoInitials: { fontSize: 32, fontWeight: '800', color: T.accent, letterSpacing: -0.5 },
+  profileBody: { flex: 1, minWidth: 0, gap: 8, justifyContent: 'center' },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   candidateName: { flex: 1, fontSize: 17, fontWeight: '800', color: T.textPrimary, letterSpacing: -0.3 },
   scoreRing: { minWidth: 46, height: 26, borderRadius: RADIUS.chip, backgroundColor: T.emeraldBg, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8 },
