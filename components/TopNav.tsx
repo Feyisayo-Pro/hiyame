@@ -1,10 +1,12 @@
-import { useMemo } from 'react';
-import { Platform, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { Image, Platform, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { router, usePathname } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Text } from '@/components/Themed';
 import { useTheme, useThemeToggle, ThemePalette, ICON, RADIUS } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/lib/useAuth';
+import { initials } from '@/lib/format';
 import AnimatedPressable from '@/components/AnimatedPressable';
 
 // Persistent left sidebar for desktop web. The tab layouts render this beside
@@ -44,6 +46,23 @@ export default function SideNav({ role }: { role: 'candidate' | 'company' }) {
   const { mode, toggleTheme } = useThemeToggle();
   const pathname = usePathname();
   const isDesktop = useIsDesktopWeb();
+  const { candidateId, companyId } = useAuth();
+
+  const [identity, setIdentity] = useState<{ name: string; photoUrl: string | null } | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      if (role === 'candidate' && candidateId) {
+        const { data } = await supabase.from('candidates').select('full_name, photo_url').eq('id', candidateId).maybeSingle();
+        if (alive && data) setIdentity({ name: data.full_name, photoUrl: data.photo_url });
+      } else if (role === 'company' && companyId) {
+        const { data } = await supabase.from('companies').select('trading_name, legal_name').eq('id', companyId).maybeSingle();
+        if (alive && data) setIdentity({ name: data.trading_name || data.legal_name, photoUrl: null });
+      }
+    })();
+    return () => { alive = false; };
+  }, [role, candidateId, companyId]);
 
   if (!isDesktop) return null;
 
@@ -79,6 +98,26 @@ export default function SideNav({ role }: { role: 'candidate' | 'company' }) {
           );
         })}
       </View>
+
+      <AnimatedPressable
+        scaleTo={0.98}
+        style={({ pressed }: { pressed: boolean }) => [st.identityRow, pressed && st.linkPressed]}
+        onPress={() => router.navigate(`${base}/profile` as any)}
+        accessibilityRole="link"
+        accessibilityLabel="Your profile"
+      >
+        <View style={st.avatarWrap}>
+          {identity?.photoUrl ? (
+            <Image source={{ uri: identity.photoUrl }} style={st.avatarImage} resizeMode="cover" />
+          ) : (
+            <Text style={st.avatarInitials}>{initials(identity?.name || (role === 'candidate' ? 'You' : 'Co'))}</Text>
+          )}
+        </View>
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <Text numberOfLines={1} style={st.identityName}>{identity?.name || (role === 'candidate' ? 'Your profile' : 'Your company')}</Text>
+          <Text style={st.identityRole}>{role === 'candidate' ? 'Candidate' : 'Company'}</Text>
+        </View>
+      </AnimatedPressable>
 
       <View style={st.footer}>
         <AnimatedPressable
@@ -151,4 +190,18 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   footer: { gap: 3, borderTopWidth: 1, borderTopColor: T.border, paddingTop: 10, marginTop: 10 },
   footRow: { flexDirection: 'row', alignItems: 'center', gap: 12, height: 40, paddingHorizontal: 12, borderRadius: RADIUS.control },
   footText: { fontSize: 13.5, fontWeight: '600', color: T.textSecondary },
+  identityRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    paddingHorizontal: 12, paddingVertical: 8, borderRadius: RADIUS.control,
+    backgroundColor: T.surface, borderWidth: 1, borderColor: T.border,
+  },
+  avatarWrap: {
+    width: 34, height: 34, borderRadius: 11, backgroundColor: T.accentBg,
+    borderWidth: 1, borderColor: T.accentBg20,
+    alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
+  },
+  avatarImage: { width: '100%', height: '100%' },
+  avatarInitials: { fontSize: 13, fontWeight: '800', color: T.accent },
+  identityName: { fontSize: 13.5, fontWeight: '700', color: T.textPrimary },
+  identityRole: { fontSize: 11, color: T.textMuted, fontWeight: '600', marginTop: 1 },
 });

@@ -18,6 +18,7 @@ import { useSubscription } from '@/lib/subscriptionStore';
 import { useAuth } from '@/lib/useAuth';
 import { getCompanyStats, CompanyStats, relativeTime } from '@/lib/dashboardStats';
 import { TIER_CONFIG } from '@/lib/mock-data';
+import { initials } from '@/lib/format';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import ScreenFrame from '@/components/ScreenFrame';
 import { Text } from '@/components/Themed';
@@ -41,10 +42,6 @@ function getIntroStatusMeta(status: string, T: ThemePalette): StatusMeta {
     case 'expired': return { label: 'EXPIRED', color: T.danger, bg: T.dangerBg };
     default: return { label: status.toUpperCase(), color: T.textSecondary, bg: T.surface };
   }
-}
-
-function initialsOf(name: string): string {
-  return name.split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]?.toUpperCase() ?? '').join('') || '?';
 }
 
 // ── Config Modal ──
@@ -291,7 +288,7 @@ export default function CompanyDashboardScreen() {
                     onPress={() => router.push('/(company)/roles')}
                   >
                     <View style={styles.avatarCircle}>
-                      <Text style={styles.avatarInitials}>{initialsOf(intro.counterpartyName)}</Text>
+                      <Text style={styles.avatarInitials}>{initials(intro.counterpartyName)}</Text>
                     </View>
                     <View style={styles.matchInfo}>
                       <Text style={styles.matchName} numberOfLines={1}>{intro.counterpartyName}</Text>

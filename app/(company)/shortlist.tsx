@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, ThemePalette, RADIUS, ELEVATION, ICON } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
 import { TIER_CONFIG, Tier } from '@/lib/mock-data';
+import { initials } from '@/lib/format';
 import { notify } from '@/lib/notify';
 import { requestMatching } from '@/lib/requestMatching';
 import { getIntroductionContact, IntroductionContact } from '@/lib/introductionContact';
@@ -38,9 +39,6 @@ interface CandidateCard {
   rateMin: number | null;
 }
 
-function initials(name: string): string {
-  return name.split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]?.toUpperCase() ?? '').join('') || '?';
-}
 
 interface IntroducedCard {
   introductionId: string;
