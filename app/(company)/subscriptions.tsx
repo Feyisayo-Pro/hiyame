@@ -9,7 +9,6 @@ import { useTheme, ThemePalette } from '@/lib/theme';
 import { useSubscription, SubscriptionTier } from '@/lib/subscriptionStore';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import ScreenFrame from '@/components/ScreenFrame';
-import { LiquidMetalButton } from '@/components/LiquidMetalButton';
 import { notify } from '@/lib/notify';
 
 // ── Plan copy (maps onto the underlying pilot/starter/growth/enterprise tiers) ──
@@ -134,27 +133,19 @@ function PricingCard({
         ))}
       </View>
 
-      {/* Enterprise gets the premium chrome treatment — a distinct, top-tier
-          call-to-action rather than the same blue pill every other plan uses. */}
-      {plan.id === 'enterprise' && !isCurrent ? (
-        <View style={s.premiumCtaWrap}>
-          <LiquidMetalButton label="Go Enterprise" onPress={onSelect} />
-        </View>
-      ) : (
-        <Pressable
-          disabled={isCurrent}
-          onPress={onSelect}
-          style={({ pressed }) => [
-            s.ctaBtn,
-            isCurrent && s.ctaBtnCurrent,
-            pressed && !isCurrent && { opacity: 0.85 },
-          ]}
-        >
-          <Text style={[s.ctaBtnText, isCurrent && s.ctaBtnTextCurrent]}>
-            {isCurrent ? 'Current Plan' : 'Select Package'}
-          </Text>
-        </Pressable>
-      )}
+      <Pressable
+        disabled={isCurrent}
+        onPress={onSelect}
+        style={({ pressed }) => [
+          s.ctaBtn,
+          isCurrent && s.ctaBtnCurrent,
+          pressed && !isCurrent && { opacity: 0.85 },
+        ]}
+      >
+        <Text style={[s.ctaBtnText, isCurrent && s.ctaBtnTextCurrent]}>
+          {isCurrent ? 'Current Plan' : 'Select Package'}
+        </Text>
+      </Pressable>
     </View>
   );
 }
@@ -270,5 +261,4 @@ const makeCardStyles = (T: ThemePalette) => StyleSheet.create({
   ctaBtnCurrent: { backgroundColor: T.surface, borderWidth: 1, borderColor: T.border },
   ctaBtnText: { fontSize: 15, fontWeight: '700', color: T.textOnAccent },
   ctaBtnTextCurrent: { color: T.textSecondary },
-  premiumCtaWrap: { alignItems: 'center', paddingVertical: 2 },
 });
