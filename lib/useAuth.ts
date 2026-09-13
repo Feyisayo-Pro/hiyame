@@ -86,6 +86,16 @@ async function completePendingSignup(userId: string): Promise<void> {
     if (newCompanyId && typeof meta.plan_tier === 'string') {
       await supabase.from('companies').update({ plan_tier: meta.plan_tier }).eq('id', newCompanyId);
     }
+    // Same follow-up-update pattern as plan_tier above: create_company_and_claim
+    // doesn't take a name for the company_users row it inserts, so the signer's
+    // real name (collected at signup) is applied right after. Needs
+    // supabase/migrations/20260911140000_notification_prefs.sql's
+    // `grant update (full_name) on company_users` — until that's run this
+    // silently affects 0 rows (same RLS behavior as an unmatched row), not an
+    // error, so it's safe to call either way.
+    if (typeof meta.contact_name === 'string' && meta.contact_name.trim()) {
+      await supabase.from('company_users').update({ full_name: meta.contact_name.trim() }).eq('auth_user_id', userId);
+    }
   }
   // Clear the flag so a later sign-in never re-runs this (insert would just fail
   // harmlessly on the unique auth_user_id constraint anyway, but this is cleaner).

@@ -12,6 +12,7 @@ import { supabase } from '@/lib/supabase';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import ScreenFrame from '@/components/ScreenFrame';
 import { notify } from '@/lib/notify';
+import { initials } from '@/lib/format';
 
 // The team roster is real: it reads and writes the company_users table
 // (scoped to the signed-in user's company via RLS). An "invite" is a
@@ -24,6 +25,7 @@ import { notify } from '@/lib/notify';
 interface Member {
   id: string;
   email: string | null;
+  full_name: string | null;
   role: string | null;
   status: 'active' | 'pending';
   auth_user_id: string | null;
@@ -31,13 +33,18 @@ interface Member {
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-function displayName(email: string | null): string {
-  if (!email) return 'Unknown';
-  return email.split('@')[0];
+// No more falling back to the email's local-part as a "name" — that's what
+// produced rows like "feyilive+newco1789052090". A real full_name (collected
+// at invite time now, or at signup for the account owner) wins; otherwise a
+// clean generic label.
+function displayName(m: Pick<Member, 'full_name' | 'email'>): string {
+  if (m.full_name?.trim()) return m.full_name.trim();
+  return 'Hiring Manager';
 }
 
-function initialsFor(email: string | null): string {
-  return displayName(email).slice(0, 2).toUpperCase();
+function initialsFor(m: Pick<Member, 'full_name' | 'email'>): string {
+  if (m.full_name?.trim()) return initials(m.full_name.trim());
+  return 'HM';
 }
 
 function roleLabel(m: Member): string {
@@ -54,6 +61,7 @@ export default function TeamMembersScreen() {
   const { companyId, session } = useAuth();
 
   const [members, setMembers] = useState<Member[] | null>(null);
+  const [inviteName, setInviteName] = useState('');
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviting, setInviting] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -65,7 +73,7 @@ export default function TeamMembersScreen() {
     }
     const { data, error } = await supabase
       .from('company_users')
-      .select('id, email, role, status, auth_user_id')
+      .select('id, email, full_name, role, status, auth_user_id')
       .eq('company_id', companyId)
       .order('created_at', { ascending: true });
     if (error) {
@@ -97,6 +105,11 @@ export default function TeamMembersScreen() {
       return;
     }
     const email = inviteEmail.trim().toLowerCase();
+    const name = inviteName.trim();
+    if (!name) {
+      notify('Name required', "Enter your teammate's name.");
+      return;
+    }
     if (!email) return;
     if (!EMAIL_RE.test(email)) {
       notify('Invalid email', 'Enter a valid email address.');
@@ -110,7 +123,7 @@ export default function TeamMembersScreen() {
     setInviting(true);
     const { error } = await supabase
       .from('company_users')
-      .insert({ company_id: companyId, email, role: 'hiring_manager', status: 'pending' });
+      .insert({ company_id: companyId, email, full_name: name, role: 'hiring_manager', status: 'pending' });
     setInviting(false);
 
     if (error) {
@@ -121,9 +134,10 @@ export default function TeamMembersScreen() {
       }
       return;
     }
+    setInviteName('');
     setInviteEmail('');
     await load();
-  }, [seatsFull, config.name, seatCap, router, inviteEmail, companyId, load]);
+  }, [seatsFull, config.name, seatCap, router, inviteName, inviteEmail, companyId, load]);
 
   const handleRemove = useCallback(
     (member: Member) => {
@@ -135,7 +149,7 @@ export default function TeamMembersScreen() {
         member.status === 'pending' ? 'Cancel Invite' : 'Remove Team Member',
         member.status === 'pending'
           ? `Cancel the pending invite for ${member.email}?`
-          : `Remove ${displayName(member.email)} from your team? This frees up a seat immediately.`,
+          : `Remove ${displayName(member)} from your team? This frees up a seat immediately.`,
         [
           { text: 'Cancel', style: 'cancel' },
           {
@@ -202,11 +216,11 @@ export default function TeamMembersScreen() {
                 return (
                   <View key={m.id} style={[s.memberRow, i < members.length - 1 && s.memberRowBorder]}>
                     <View style={s.avatarCircle}>
-                      <Text style={s.avatarInitials}>{initialsFor(m.email)}</Text>
+                      <Text style={s.avatarInitials}>{initialsFor(m)}</Text>
                     </View>
                     <View style={{ flex: 1 }}>
                       <Text style={s.memberName}>
-                        {displayName(m.email)}
+                        {displayName(m)}
                         {isSelf ? ' (you)' : ''}
                       </Text>
                       <Text style={s.memberEmail}>{m.email}</Text>
@@ -240,6 +254,15 @@ export default function TeamMembersScreen() {
           {/* Invite section */}
           <Text style={s.sectionLabel}>INVITE A TEAMMATE</Text>
           <View style={s.inviteCard}>
+            <TextInput
+              value={inviteName}
+              onChangeText={setInviteName}
+              placeholder="Teammate's full name"
+              placeholderTextColor={T.inputPlaceholder}
+              autoCapitalize="words"
+              editable={!seatsFull && !inviting}
+              style={[s.inviteInput, (seatsFull || inviting) && s.inviteInputDisabled]}
+            />
             <TextInput
               value={inviteEmail}
               onChangeText={setInviteEmail}

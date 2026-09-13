@@ -1,14 +1,28 @@
-import { useState, useCallback, useMemo} from 'react';
+import { useState, useCallback, useEffect, useMemo} from 'react';
 import { StyleSheet, View, ScrollView, TouchableOpacity } from 'react-native';
 import { Text } from '@/components/Themed';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCandidateProfile } from '@/lib/candidateProfile';
 import { useVerification } from '@/lib/useVerification';
+import { useAuth } from '@/lib/useAuth';
+import { supabase } from '@/lib/supabase';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import ScreenFrame from '@/components/ScreenFrame';
 import SmileIdVerificationModal from '@/components/SmileIdVerificationModal';
 import { useTheme, ThemePalette } from '@/lib/theme';
+
+// Real component keys in verification_records — the same table
+// app/(candidate)/index.tsx, profile.tsx and Insights already read. This
+// screen used to be the only one of the four still reading purely from
+// lib/useVerification.ts's local mock, which is why it could show "0/4
+// Pending" for an account every other screen agreed was "4/4 Verified".
+const REAL_COMPONENT_KEY: Record<string, string> = {
+  identity: 'identity',
+  video: 'video_intro',
+  assessment: 'skills_assessment',
+  review: 'employer_review',
+};
 
 // ==========================================
 // VERIFICATION STEP DEFINITIONS
@@ -62,10 +76,24 @@ export default function VerificationScreen() {
   const insets = useSafeAreaInsets();
   const { fullName, professionalTitle, profileCompleted } = useCandidateProfile();
   const { identityVerified, setIdentityVerified } = useVerification();
+  const { candidateId } = useAuth();
   const [showSmileId, setShowSmileId] = useState(false);
+  const [passedComponents, setPassedComponents] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (!candidateId) return;
+    let alive = true;
+    supabase.from('verification_records').select('component, status').eq('candidate_id', candidateId).then(({ data }) => {
+      if (alive) setPassedComponents(new Set((data ?? []).filter((v) => v.status === 'passed').map((v) => v.component)));
+    });
+    return () => { alive = false; };
+  }, [candidateId]);
 
   // 'identity' is real, backed by lib/useVerification.ts + the Smile ID flow below.
-  // The other 3 steps remain a local dev toggle until their own integrations exist.
+  // The other 3 steps remain a local dev toggle until their own integrations exist —
+  // but every step's *displayed* done-state now also checks the real
+  // verification_records row, so an already-verified candidate shows correctly
+  // here without needing to re-toggle anything, matching Home/Profile/Insights.
   const [completed, setCompleted] = useState<Record<string, boolean>>({
     video: false,
     assessment: false,
@@ -80,7 +108,12 @@ export default function VerificationScreen() {
     setCompleted((prev) => ({ ...prev, [key]: !prev[key] }));
   }, []);
 
-  const allCompleted: Record<string, boolean> = { ...completed, identity: identityVerified };
+  const allCompleted: Record<string, boolean> = {
+    identity: identityVerified || passedComponents.has(REAL_COMPONENT_KEY.identity),
+    video: completed.video || passedComponents.has(REAL_COMPONENT_KEY.video),
+    assessment: completed.assessment || passedComponents.has(REAL_COMPONENT_KEY.assessment),
+    review: completed.review || passedComponents.has(REAL_COMPONENT_KEY.review),
+  };
   const completedCount = Object.values(allCompleted).filter(Boolean).length;
   const isFullyVerified = completedCount === 4;
   const progressPercent = (completedCount / 4) * 100;

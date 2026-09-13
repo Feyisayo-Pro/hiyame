@@ -141,6 +141,7 @@ export default function CompanySignupScreen() {
   const [showVerify, setShowVerify] = useState(false);
 
   // Step 0 — Account
+  const [contactName, setContactName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -174,6 +175,9 @@ export default function CompanySignupScreen() {
     const newErrors: Record<string, string> = {};
 
     if (step === 0) {
+      if (!contactName.trim()) {
+        newErrors.contactName = 'Your name is required';
+      }
       if (!email.trim()) {
         newErrors.email = 'Email is required';
       } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
@@ -196,7 +200,7 @@ export default function CompanySignupScreen() {
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  }, [step, email, password, companyName, industry, companySize, bio]);
+  }, [step, contactName, email, password, companyName, industry, companySize, bio]);
 
   const handleNext = useCallback(async () => {
     if (!validateStep()) return;
@@ -221,6 +225,7 @@ export default function CompanySignupScreen() {
       options: {
         data: {
           pending_signup: 'company',
+          contact_name: contactName.trim(),
           legal_name: companyName.trim(),
           trading_name: companyName.trim(),
           industry,
@@ -246,7 +251,7 @@ export default function CompanySignupScreen() {
       return;
     }
     router.replace('/(company)');
-  }, [step, validateStep, selectedTier, email, password, companyName, industry, companySize, hqLocation, website, bio]);
+  }, [step, validateStep, selectedTier, contactName, email, password, companyName, industry, companySize, hqLocation, website, bio]);
 
   const handleBack = useCallback(() => {
     if (step > 0) {
@@ -263,6 +268,22 @@ export default function CompanySignupScreen() {
     <>
       <Text style={st.stepTitle}>Create Your Account</Text>
       <Text style={st.stepSubtitle}>You'll use this to sign in to your hiring workspace</Text>
+
+      <View style={st.fieldWrap}>
+        <Text style={st.label}>Your Full Name *</Text>
+        <View style={[st.inputWrap, errors.contactName ? st.inputError : null]}>
+          <Ionicons name="person-outline" size={18} color={errors.contactName ? T.danger : T.textMuted} />
+          <TextInput
+            style={st.input}
+            placeholder="Amara Osei"
+            placeholderTextColor={T.textMuted}
+            autoCapitalize="words"
+            value={contactName}
+            onChangeText={(t) => { setContactName(t); clearError('contactName'); }}
+          />
+        </View>
+        {errors.contactName ? <Text style={st.errorText}>{errors.contactName}</Text> : null}
+      </View>
 
       <View style={st.fieldWrap}>
         <Text style={st.label}>Work Email *</Text>

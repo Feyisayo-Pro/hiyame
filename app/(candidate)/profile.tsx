@@ -8,6 +8,7 @@ import { useCandidateProfile } from '@/lib/candidateProfile';
 import { useAuth } from '@/lib/useAuth';
 import { supabase } from '@/lib/supabase';
 import { pickAndUploadCandidatePhoto } from '@/lib/uploadCandidatePhoto';
+import { getCandidateStats, CandidateStats } from '@/lib/dashboardStats';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import ScreenFrame from '@/components/ScreenFrame';
 import EditCandidateProfileModal from '@/components/EditCandidateProfileModal';
@@ -46,14 +47,16 @@ export default function CandidateProfileScreen() {
 
   const [real, setReal] = useState<RealProfile | null>(null);
   const [passedComponents, setPassedComponents] = useState<Set<string>>(new Set());
+  const [stats, setStats] = useState<CandidateStats | null>(null);
   const [uploading, setUploading] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
 
   const loadReal = async () => {
     if (!candidateId) return;
-    const [{ data }, { data: vrecs }] = await Promise.all([
+    const [{ data }, { data: vrecs }, candidateStats] = await Promise.all([
       supabase.from('candidates').select('full_name, skill_tags, rate_preferred, photo_url').eq('id', candidateId).maybeSingle(),
       supabase.from('verification_records').select('component, status').eq('candidate_id', candidateId),
+      getCandidateStats(candidateId),
     ]);
     if (data) {
       setReal({
@@ -64,6 +67,7 @@ export default function CandidateProfileScreen() {
       });
     }
     setPassedComponents(new Set((vrecs ?? []).filter((v) => v.status === 'passed').map((v) => v.component)));
+    setStats(candidateStats);
   };
 
   useEffect(() => { loadReal(); }, [candidateId]);
@@ -248,28 +252,27 @@ export default function CandidateProfileScreen() {
           </View>
         </View>
 
-        {/* ── Quick Stats ── */}
+        {/* ── Quick Stats — real introduction counts, same source as Home
+              (lib/dashboardStats.ts). The old "Matches" / "Saved" tiles here
+              were hardcoded to 0 — neither concept exists anywhere in this
+              app (nothing lets a candidate browse or save a listing), so
+              they're dropped rather than wired to fake data. Verification
+              stays out of this row since the checklist right below already
+              covers it in full. */}
         <View style={st.statsRow}>
           <View style={st.statCard}>
             <View style={[st.statIconWrap, { backgroundColor: T.accentBg }]}>
-              <Ionicons name="heart" size={16} color={T.accent} />
+              <Ionicons name="mail-unread" size={16} color={T.accent} />
             </View>
-            <Text style={st.statValue}>0</Text>
-            <Text style={st.statLabel}>Matches</Text>
-          </View>
-          <View style={st.statCard}>
-            <View style={[st.statIconWrap, { backgroundColor: T.accentBg }]}>
-              <Ionicons name="bookmark" size={16} color={T.accent} />
-            </View>
-            <Text style={st.statValue}>0</Text>
-            <Text style={st.statLabel}>Saved</Text>
+            <Text style={st.statValue}>{stats?.introsPending ?? 0}</Text>
+            <Text style={st.statLabel}>To respond</Text>
           </View>
           <View style={st.statCard}>
             <View style={[st.statIconWrap, { backgroundColor: T.emeraldBg }]}>
               <Ionicons name="people" size={16} color={T.emerald} />
             </View>
-            <Text style={st.statValue}>0</Text>
-            <Text style={st.statLabel}>Intros</Text>
+            <Text style={st.statValue}>{stats?.introsAccepted ?? 0}</Text>
+            <Text style={st.statLabel}>Connected</Text>
           </View>
         </View>
 

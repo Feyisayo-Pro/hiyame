@@ -44,7 +44,7 @@ export default function ContactReveal({
           ) : null}
 
           <Text style={st.subhead}>Hiring contact</Text>
-          <Text style={st.contactName}>{contact.hiringContactName ?? 'Hiring team'}</Text>
+          <Text style={st.contactName}>{contact.hiringContactName ?? 'Hiring Manager'}</Text>
           {contact.hiringContactEmail ? (
             <Row icon="mail-outline" label={contact.hiringContactEmail} st={st} T={T}
               onPress={() => open(`mailto:${contact.hiringContactEmail}`)} />

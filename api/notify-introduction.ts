@@ -136,7 +136,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const mail = introductionAcceptedCandidateEmail({
       roleTitle: role.title,
       companyName,
-      hiringContactName: hiring?.full_name ?? (hiring?.email ? hiring.email.split('@')[0] : null),
+      // No more email-prefix fallback — lib/email.ts already omits the
+      // "Contact:" line entirely when this is null, which reads better than
+      // a name built out of someone's email address.
+      hiringContactName: hiring?.full_name ?? null,
       hiringContactEmail: hiring?.email ?? null,
     });
     results.candidate = await sendEmail({ to: candidate.email, ...mail });
