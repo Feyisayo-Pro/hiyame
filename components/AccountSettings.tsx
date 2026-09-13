@@ -15,7 +15,6 @@ import { supabase } from '@/lib/supabase';
 import ChangePasswordModal from '@/components/ChangePasswordModal';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import ScreenFrame from '@/components/ScreenFrame';
-import AppFooter from '@/components/AppFooter';
 
 type Persona = 'company' | 'candidate';
 
@@ -174,9 +173,11 @@ export default function AccountSettings({ persona = 'company' }: { persona?: Per
             </View>
           </View>
 
+          {/* Version */}
+          <View style={{ alignItems: 'center', paddingTop: 24 }}>
+            <Text style={{ fontSize: 12, color: T.textMuted }}>hiyame v1.0.0</Text>
+          </View>
         </SwipeFadeContainer>
-
-        <AppFooter persona={persona} />
       </ScrollView>
       </ScreenFrame>
 
