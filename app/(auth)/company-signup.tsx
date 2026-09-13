@@ -14,6 +14,7 @@ import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, ThemePalette } from '@/lib/theme';
+import ScreenFrame from '@/components/ScreenFrame';
 import { SubscriptionTier } from '@/lib/subscriptionStore';
 import { supabase } from '@/lib/supabase';
 
@@ -558,6 +559,7 @@ export default function CompanySignupScreen() {
 
   return (
     <SafeAreaView style={st.container} edges={['top', 'left', 'right', 'bottom']}>
+      <ScreenFrame maxWidth={440}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -625,6 +627,7 @@ export default function CompanySignupScreen() {
           </SwipeFadeContainer>
         </ScrollView>
       </KeyboardAvoidingView>
+      </ScreenFrame>
     </SafeAreaView>
   );
 }

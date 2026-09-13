@@ -5,6 +5,7 @@ import { Text } from '@/components/Themed';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme, ThemePalette } from '@/lib/theme';
+import ScreenFrame from '@/components/ScreenFrame';
 
 type UserRole = 'candidate' | 'company';
 
@@ -20,6 +21,7 @@ export default function RegisterScreen() {
   ];
 
   return (
+    <ScreenFrame maxWidth={440}>
     <View style={[styles.container, { paddingTop: insets.top + 12 }]}>
       <Pressable style={styles.backButton} onPress={() => router.back()}>
         <Ionicons name="arrow-back" size={20} color={T.textPrimary} />
@@ -75,6 +77,7 @@ export default function RegisterScreen() {
         </View>
       )}
     </View>
+    </ScreenFrame>
   );
 }
 

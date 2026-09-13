@@ -14,10 +14,10 @@ import { View, StyleSheet } from 'react-native';
  */
 export const CONTENT_MAX_WIDTH = 1180;
 
-export default function ScreenFrame({ children, style }: { children: ReactNode; style?: any }) {
-  return <View style={[styles.body, style]}>{children}</View>;
+export default function ScreenFrame({ children, style, maxWidth = CONTENT_MAX_WIDTH }: { children: ReactNode; style?: any; maxWidth?: number }) {
+  return <View style={[styles.body, { maxWidth }, style]}>{children}</View>;
 }
 
 const styles = StyleSheet.create({
-  body: { flex: 1, width: '100%', maxWidth: CONTENT_MAX_WIDTH, alignSelf: 'center' },
+  body: { flex: 1, width: '100%', alignSelf: 'center' },
 });

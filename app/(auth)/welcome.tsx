@@ -5,7 +5,14 @@ import { Text } from '@/components/Themed';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme, ThemePalette } from '@/lib/theme';
-import { SCREEN_W as width } from '@/lib/screen';
+import ScreenFrame from '@/components/ScreenFrame';
+
+// Fixed design width for this screen's decorative hero graphics — not the
+// live window width. On web this screen is capped + centred to a phone-like
+// column (see the ScreenFrame below) regardless of the actual browser width,
+// so the blobs need to be sized to that column, not to a 1920px monitor.
+const AUTH_COLUMN_WIDTH = 440;
+const width = AUTH_COLUMN_WIDTH;
 
 export default function WelcomeScreen() {
   const T = useTheme();
@@ -39,6 +46,7 @@ export default function WelcomeScreen() {
   };
 
   return (
+    <ScreenFrame maxWidth={AUTH_COLUMN_WIDTH}>
     <View style={[styles.container, { paddingTop: insets.top + 12 }]}>
 
       <View style={styles.topBar}>
@@ -107,6 +115,7 @@ export default function WelcomeScreen() {
         </Pressable>
       </Animated.View>
     </View>
+    </ScreenFrame>
   );
 }
 

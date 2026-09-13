@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, ThemePalette } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
+import ScreenFrame from '@/components/ScreenFrame';
 
 // Lands here from a Supabase invite email's magic link — the user is already
 // authenticated (in a "needs a password" state) via that link. Sets a real
@@ -65,6 +66,7 @@ export default function ClaimAccountScreen() {
 
   return (
     <SafeAreaView style={st.container} edges={['top', 'left', 'right', 'bottom']}>
+      <ScreenFrame maxWidth={440}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View style={st.content}>
           <View style={st.iconWrap}>
@@ -107,6 +109,7 @@ export default function ClaimAccountScreen() {
           </Pressable>
         </View>
       </KeyboardAvoidingView>
+      </ScreenFrame>
     </SafeAreaView>
   );
 }

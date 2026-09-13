@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, ThemePalette } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
 import AnimatedPressable from '@/components/AnimatedPressable';
+import ScreenFrame from '@/components/ScreenFrame';
 
 export default function CandidateSignInScreen() {
   const T = useTheme();
@@ -66,6 +67,7 @@ export default function CandidateSignInScreen() {
 
   return (
     <SafeAreaView style={st.container} edges={['top', 'left', 'right', 'bottom']}>
+      <ScreenFrame maxWidth={440}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -173,6 +175,7 @@ export default function CandidateSignInScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+      </ScreenFrame>
     </SafeAreaView>
   );
 }

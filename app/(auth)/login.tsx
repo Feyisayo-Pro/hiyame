@@ -5,6 +5,7 @@ import { Text } from '@/components/Themed';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, ThemePalette } from '@/lib/theme';
+import ScreenFrame from '@/components/ScreenFrame';
 
 interface SignInOption {
   key: string;
@@ -58,6 +59,7 @@ export default function LoginScreen() {
 
   return (
     <SafeAreaView style={st.container} edges={['top', 'left', 'right', 'bottom']}>
+      <ScreenFrame maxWidth={440}>
       {/* Back Button */}
       <Pressable style={st.backButton} onPress={() => router.back()}>
         <Ionicons name="arrow-back" size={20} color={T.textPrimary} />
@@ -119,6 +121,7 @@ export default function LoginScreen() {
           </Pressable>
         </View>
       </ScrollView>
+      </ScreenFrame>
     </SafeAreaView>
   );
 }

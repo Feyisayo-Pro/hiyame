@@ -16,6 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useCandidateProfile } from '@/lib/candidateProfile';
 import { useTheme, ThemePalette } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
+import ScreenFrame from '@/components/ScreenFrame';
 
 const SUGGESTED_SKILLS = [
   'React Native', 'TypeScript', 'Node.js', 'Python', 'PostgreSQL',
@@ -128,6 +129,7 @@ export default function CandidateSignupScreen() {
 
   return (
     <SafeAreaView style={st.container} edges={['top', 'left', 'right', 'bottom']}>
+      <ScreenFrame maxWidth={440}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -323,6 +325,7 @@ export default function CandidateSignupScreen() {
           </SwipeFadeContainer>
         </ScrollView>
       </KeyboardAvoidingView>
+      </ScreenFrame>
     </SafeAreaView>
   );
 }
