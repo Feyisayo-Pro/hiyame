@@ -17,6 +17,7 @@ import { useCandidateProfile } from '@/lib/candidateProfile';
 import { useTheme, ThemePalette } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
 import ScreenFrame from '@/components/ScreenFrame';
+import VerifyEmailModal from '@/components/VerifyEmailModal';
 
 const SUGGESTED_SKILLS = [
   'React Native', 'TypeScript', 'Node.js', 'Python', 'PostgreSQL',
@@ -29,6 +30,7 @@ export default function CandidateSignupScreen() {
   const st = useMemo(() => makeStyles(T), [T]);
 
   const { setProfile } = useCandidateProfile();
+  const [showVerify, setShowVerify] = useState(false);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -117,9 +119,10 @@ export default function CandidateSignupScreen() {
 
     setLoading(false);
     if (!data.session) {
-      // No session yet — confirmation email sent, nothing more to do here until
-      // they confirm and sign in for the first time.
-      setErrors((e) => ({ ...e, general: 'Check your email to confirm your account, then sign in.' }));
+      // No session yet — confirmation email sent (with a 6-digit code) and
+      // nothing in candidates/etc. exists until they verify. Collect the code
+      // right here instead of sending them off to their inbox to click a link.
+      setShowVerify(true);
       return;
     }
     router.replace('/(candidate)/verification');
@@ -326,6 +329,16 @@ export default function CandidateSignupScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
       </ScreenFrame>
+
+      <VerifyEmailModal
+        visible={showVerify}
+        email={email.trim()}
+        onClose={() => setShowVerify(false)}
+        onVerified={() => {
+          setShowVerify(false);
+          router.replace('/(candidate)/verification');
+        }}
+      />
     </SafeAreaView>
   );
 }

@@ -1,0 +1,50 @@
+<!--
+  Hiyame-branded "Confirm signup" template for Supabase.
+
+  This can't be pushed from code — Supabase Auth email templates are project
+  config, edited via Dashboard → Authentication → Emails → "Confirm signup"
+  (or Authentication → Email Templates on older dashboard layouts), not
+  something the CLI/migrations touch. Paste this file's body into that
+  template's HTML editor and save.
+
+  {{ .Token }} is the real 6-digit code — same one components/VerifyEmailModal.tsx
+  asks the user to type back into the app after signup. {{ .ConfirmationURL }}
+  keeps the one-click link working as a fallback for anyone who'd rather tap
+  it on their phone. Both are provided by Supabase automatically; nothing else
+  needs to change for these to populate correctly.
+-->
+<!doctype html>
+<html>
+<body style="margin:0;background:#f8f9fa;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f8f9fa;padding:32px 16px">
+    <tr><td align="center">
+      <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="max-width:480px;background:#fff;border:1px solid #e1e8ed;border-radius:16px;overflow:hidden">
+        <tr><td style="padding:22px 28px;border-bottom:1px solid #e1e8ed">
+          <span style="font-size:18px;font-weight:800;letter-spacing:-0.3px;color:#14171a">Hiyame</span>
+        </td></tr>
+        <tr><td style="padding:28px">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+            <tr><td style="font-size:20px;font-weight:800;color:#14171a;padding-bottom:12px">Confirm your email</td></tr>
+            <tr><td style="font-size:14px;line-height:22px;color:#536471;padding-bottom:20px">
+              Welcome to Hiyame. Enter this code in the app to verify your account —
+              it expires in 1 hour.
+            </td></tr>
+            <tr><td align="center" style="padding-bottom:20px">
+              <span style="display:inline-block;background:#f0f8ff;border:1.5px solid #1DA1F2;border-radius:14px;padding:16px 32px;font-size:32px;font-weight:800;letter-spacing:10px;color:#14171a">{{ .Token }}</span>
+            </td></tr>
+            <tr><td style="font-size:13px;line-height:20px;color:#8899a6;padding-bottom:8px">
+              Or, if you're reading this on the device you signed up on, you can confirm with one tap instead:
+            </td></tr>
+            <tr><td style="padding-bottom:4px">
+              <a href="{{ .ConfirmationURL }}" style="display:inline-block;background:#1DA1F2;color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:12px 22px;border-radius:12px">Confirm automatically</a>
+            </td></tr>
+            <tr><td style="font-size:12px;line-height:18px;color:#8899a6;padding-top:20px;border-top:1px solid #f0f0f0;margin-top:16px">
+              Didn't try to sign up for Hiyame? You can safely ignore this email.
+            </td></tr>
+          </table>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>

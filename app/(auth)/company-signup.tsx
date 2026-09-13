@@ -17,6 +17,7 @@ import { useTheme, ThemePalette } from '@/lib/theme';
 import ScreenFrame from '@/components/ScreenFrame';
 import { SubscriptionTier } from '@/lib/subscriptionStore';
 import { supabase } from '@/lib/supabase';
+import VerifyEmailModal from '@/components/VerifyEmailModal';
 
 /* ── Constants ── */
 
@@ -137,6 +138,7 @@ export default function CompanySignupScreen() {
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showVerify, setShowVerify] = useState(false);
 
   // Step 0 — Account
   const [email, setEmail] = useState('');
@@ -240,7 +242,7 @@ export default function CompanySignupScreen() {
     setLoading(false);
 
     if (!data.session) {
-      setErrors((e) => ({ ...e, general: 'Check your email to confirm your account, then sign in.' }));
+      setShowVerify(true);
       return;
     }
     router.replace('/(company)');
@@ -628,6 +630,16 @@ export default function CompanySignupScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
       </ScreenFrame>
+
+      <VerifyEmailModal
+        visible={showVerify}
+        email={email.trim()}
+        onClose={() => setShowVerify(false)}
+        onVerified={() => {
+          setShowVerify(false);
+          router.replace('/(company)');
+        }}
+      />
     </SafeAreaView>
   );
 }
