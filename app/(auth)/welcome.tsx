@@ -11,7 +11,7 @@ import ScreenFrame from '@/components/ScreenFrame';
 // live window width. On web this screen is capped + centred to a phone-like
 // column (see the ScreenFrame below) regardless of the actual browser width,
 // so the blobs need to be sized to that column, not to a 1920px monitor.
-const AUTH_COLUMN_WIDTH = 440;
+const AUTH_COLUMN_WIDTH = 560;
 const width = AUTH_COLUMN_WIDTH;
 
 export default function WelcomeScreen() {

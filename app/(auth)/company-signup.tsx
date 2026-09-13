@@ -561,7 +561,7 @@ export default function CompanySignupScreen() {
 
   return (
     <SafeAreaView style={st.container} edges={['top', 'left', 'right', 'bottom']}>
-      <ScreenFrame maxWidth={440}>
+      <ScreenFrame maxWidth={560}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}

@@ -21,7 +21,7 @@ export default function RegisterScreen() {
   ];
 
   return (
-    <ScreenFrame maxWidth={440}>
+    <ScreenFrame maxWidth={560}>
     <View style={[styles.container, { paddingTop: insets.top + 12 }]}>
       <Pressable style={styles.backButton} onPress={() => router.back()}>
         <Ionicons name="arrow-back" size={20} color={T.textPrimary} />
