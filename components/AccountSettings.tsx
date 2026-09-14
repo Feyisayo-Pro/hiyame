@@ -14,6 +14,7 @@ import { useAuth } from '@/lib/useAuth';
 import { supabase } from '@/lib/supabase';
 import { notify } from '@/lib/notify';
 import { requestDeleteAccount } from '@/lib/requestDeleteAccount';
+import { subscribeToPush, unsubscribeFromPush } from '@/lib/webPush';
 import ChangePasswordModal from '@/components/ChangePasswordModal';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import ScreenFrame from '@/components/ScreenFrame';
@@ -94,7 +95,21 @@ export default function AccountSettings({ persona = 'company' }: { persona?: Per
     write?.then(({ error }) => { if (error) console.warn('Could not persist notification prefs (migration pending?):', error.message); });
   };
 
-  const setNotifications = (v: boolean) => { setNotificationsEnabled(v); persistPrefs({ push: v }); };
+  const setNotifications = (v: boolean) => {
+    setNotificationsEnabled(v);
+    persistPrefs({ push: v });
+    // Toggling this on for the first time is what actually asks the browser
+    // for notification permission and registers the push subscription —
+    // notification_prefs.push alone only controls whether the *server*
+    // sends, this is what makes the *browser* able to receive at all.
+    if (v) {
+      subscribeToPush().then((ok) => {
+        if (!ok) notify('Enable notifications in your browser', 'Push notifications need permission — check your browser\'s site settings if this didn\'t prompt you.');
+      });
+    } else {
+      void unsubscribeFromPush();
+    }
+  };
   const setEmail = (v: boolean) => { setEmailUpdates(v); persistPrefs({ email: v }); };
 
   const handleDeleteAccount = () => {

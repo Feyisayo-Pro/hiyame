@@ -6,6 +6,7 @@ import {
   introductionAcceptedCompanyEmail,
   introductionAcceptedCandidateEmail,
 } from '../lib/email';
+import { sendPushToUser } from '../lib/webPushSend';
 
 // Sends the introduction-lifecycle emails (architecture doc §7.4) via Resend.
 // Called fire-and-forget by the app after it creates an introduction
@@ -98,6 +99,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
     const r = await sendEmail({ to: candidate.email, ...mail });
     if (!r.ok && !r.skipped) return res.status(502).json({ error: r.error });
+    if (candidate.auth_user_id) {
+      await sendPushToUser(admin, candidate.auth_user_id, {
+        title: 'A company wants to connect',
+        body: `${role.title} — respond within ${intro.response_window_hours}h.`,
+        url: '/(candidate)/opportunities',
+      });
+    }
     await admin.from('introductions').update({ notified_sent_at: new Date().toISOString() }).eq('id', intro.id);
     return res.status(200).json({ sent: r.ok, skipped: r.skipped ?? false });
   }
@@ -113,7 +121,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     .maybeSingle();
   const { data: hiring } = await admin
     .from('company_users')
-    .select('full_name, email')
+    .select('full_name, email, auth_user_id')
     .eq('company_id', role.company_id)
     .eq('status', 'active')
     .order('created_at')
@@ -132,6 +140,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
     results.company = await sendEmail({ to: hiring.email, ...mail });
   }
+  if (hiring?.auth_user_id) {
+    await sendPushToUser(admin, hiring.auth_user_id, {
+      title: 'Introduction accepted',
+      body: `${candidate?.full_name ?? 'A candidate'} accepted your introduction for ${role.title}.`,
+      url: '/(company)/messages',
+    });
+  }
   if (candidate?.email) {
     const mail = introductionAcceptedCandidateEmail({
       roleTitle: role.title,
@@ -143,6 +158,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       hiringContactEmail: hiring?.email ?? null,
     });
     results.candidate = await sendEmail({ to: candidate.email, ...mail });
+  }
+  if (candidate?.auth_user_id) {
+    await sendPushToUser(admin, candidate.auth_user_id, {
+      title: `You're connected with ${companyName}`,
+      body: `Your introduction for ${role.title} is confirmed.`,
+      url: '/(candidate)/messages',
+    });
   }
 
   await admin.from('introductions').update({ notified_accepted_at: new Date().toISOString() }).eq('id', intro.id);

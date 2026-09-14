@@ -51,7 +51,14 @@
           }
         }
       ],
-      "expo-image"
+      "expo-image",
+      [
+        "@sentry/react-native/expo",
+        {
+          "organization": null,
+          "project": null
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

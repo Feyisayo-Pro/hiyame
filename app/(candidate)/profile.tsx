@@ -12,6 +12,7 @@ import { getCandidateStats, CandidateStats } from '@/lib/dashboardStats';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import ScreenFrame from '@/components/ScreenFrame';
 import EditCandidateProfileModal from '@/components/EditCandidateProfileModal';
+import PortfolioSection from '@/components/PortfolioSection';
 import { useTheme, useThemeToggle, ThemePalette } from '@/lib/theme';
 import { notify } from '@/lib/notify';
 import { formatNaira } from '@/lib/currency';
@@ -194,6 +195,9 @@ export default function CandidateProfileScreen() {
             </View>
           )}
         </View>
+
+        {/* ── Portfolio ── */}
+        <PortfolioSection candidateId={candidateId} />
 
         {/* ── Verification Checklist ── */}
         <View style={st.section}>

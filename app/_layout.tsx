@@ -12,7 +12,12 @@ import { SubscriptionProvider } from '@/lib/subscriptionStore';
 import { HiyameThemeProvider, useTheme, ThemePalette } from '@/lib/theme';
 import { AuthProvider, useAuth } from '@/lib/useAuth';
 import { useGlobalFocusRing } from '@/lib/focusRing';
+import { initSentry, Sentry } from '@/lib/sentry';
 import 'react-native-reanimated';
+
+// Runs once at module load, before the app tree mounts — the earliest point
+// crashes can be caught from.
+initSentry();
 
 // Redirects based on real auth state: signed out + outside (auth) -> welcome;
 // signed in with a resolved persona + inside (auth) -> that persona's home.
@@ -88,7 +93,7 @@ export const unstable_settings = {
 
 SplashScreen.preventAutoHideAsync();
 
-export default function RootLayout() {
+function RootLayout() {
   const [loaded, error] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
@@ -166,3 +171,5 @@ function RootLayoutNav() {
     </AuthProvider>
   );
 }
+
+export default Sentry.wrap(RootLayout);
