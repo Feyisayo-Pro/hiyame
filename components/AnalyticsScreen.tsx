@@ -70,9 +70,9 @@ function FunnelRow({ label, value, of, color, T }: { label: string; value: numbe
   );
 }
 
-function Card({ title, subtitle, children, T }: { title: string; subtitle?: string; children: React.ReactNode; T: ThemePalette }) {
+function Card({ title, subtitle, children, T, style }: { title: string; subtitle?: string; children: React.ReactNode; T: ThemePalette; style?: object }) {
   return (
-    <View style={{ backgroundColor: T.card, borderRadius: 16, padding: 16, marginBottom: 16, borderWidth: 1, borderColor: T.border }}>
+    <View style={[{ backgroundColor: T.card, borderRadius: 16, padding: 16, marginBottom: 16, borderWidth: 1, borderColor: T.border }, style]}>
       <Text style={{ fontSize: 16, fontWeight: '700', color: T.textPrimary }}>{title}</Text>
       {subtitle ? <Text style={{ fontSize: 12, color: T.textSecondary, marginTop: 2, marginBottom: 14 }}>{subtitle}</Text> : <View style={{ height: 14 }} />}
       {children}
@@ -99,7 +99,7 @@ function CompanyAnalytics({ T, stats }: { T: ThemePalette; stats: CompanyStats }
           />
         </View>
 
-        <Card title="Introduction funnel" T={T}>
+        <Card title="Introduction funnel" T={T} style={{ maxWidth: 480 }}>
           <FunnelRow label="Sent" value={stats.introsSent} of={stats.introsSent} color={T.accent} T={T} />
           <FunnelRow label="Accepted" value={stats.introsAccepted} of={stats.introsSent} color={T.emerald} T={T} />
           <FunnelRow label="Expired" value={stats.introsExpired} of={stats.introsSent} color={T.danger} T={T} />
@@ -145,7 +145,7 @@ function CandidateAnalytics({ T, stats }: { T: ThemePalette; stats: CandidateSta
           </View>
         </Card>
 
-        <Card title="Introduction funnel" T={T}>
+        <Card title="Introduction funnel" T={T} style={{ maxWidth: 480 }}>
           <FunnelRow label="Received" value={stats.introsTotal} of={stats.introsTotal} color={T.accent} T={T} />
           <FunnelRow label="Accepted" value={stats.introsAccepted} of={stats.introsTotal} color={T.emerald} T={T} />
           <FunnelRow label="Awaiting your reply" value={stats.introsPending} of={stats.introsTotal} color={T.amber} T={T} />

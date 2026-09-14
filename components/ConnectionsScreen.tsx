@@ -3,7 +3,7 @@ import { RefreshControl, ScrollView, StyleSheet, View, ActivityIndicator } from 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Text } from '@/components/Themed';
-import { useTheme, ThemePalette } from '@/lib/theme';
+import { useTheme, ThemePalette, ELEVATION } from '@/lib/theme';
 import { useAuth } from '@/lib/useAuth';
 import { supabase } from '@/lib/supabase';
 import { TIER_CONFIG, Tier } from '@/lib/mock-data';
@@ -11,6 +11,7 @@ import { getIntroductionContact, IntroductionContact } from '@/lib/introductionC
 import ContactReveal from '@/components/ContactReveal';
 import ScreenFrame from '@/components/ScreenFrame';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
+import { useIsDesktopWeb } from '@/components/TopNav';
 
 // The "Connections" tab — every accepted introduction for the signed-in user,
 // across all roles, with the contact details revealed on acceptance
@@ -30,6 +31,7 @@ export default function ConnectionsScreen({ persona }: { persona: 'candidate' | 
   const T = useTheme();
   const st = useMemo(() => makeStyles(T), [T]);
   const { candidateId, companyId } = useAuth();
+  const isDesktop = useIsDesktopWeb();
 
   const [connections, setConnections] = useState<Connection[] | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -113,26 +115,28 @@ export default function ConnectionsScreen({ persona }: { persona: 'candidate' | 
               </Text>
             </View>
           ) : (
-            connections.map((c, i) => {
-              const cfg = TIER_CONFIG[c.roleTier];
-              return (
-                <SwipeFadeContainer key={c.introductionId} axis="y" offset={14} duration={240} delay={Math.min(i, 8) * 40}>
-                  <View style={st.block}>
-                    <View style={st.blockHead}>
-                      <Text style={st.roleTitle} numberOfLines={1}>{c.roleTitle}</Text>
-                      <View style={[st.tierPill, { backgroundColor: cfg.accent + '14' }]}>
-                        <Text style={[st.tierText, { color: cfg.accent }]}>{cfg.label.toUpperCase()}</Text>
+            <View style={st.grid}>
+              {connections.map((c, i) => {
+                const cfg = TIER_CONFIG[c.roleTier];
+                return (
+                  <SwipeFadeContainer key={c.introductionId} axis="y" offset={14} duration={240} delay={Math.min(i, 8) * 40} style={[st.gridItem, isDesktop && st.gridItemHalf]}>
+                    <View style={st.block}>
+                      <View style={st.blockHead}>
+                        <Text style={st.roleTitle} numberOfLines={1}>{c.roleTitle}</Text>
+                        <View style={[st.tierPill, { backgroundColor: cfg.accent + '14' }]}>
+                          <Text style={[st.tierText, { color: cfg.accent }]}>{cfg.label.toUpperCase()}</Text>
+                        </View>
                       </View>
+                      {c.contact ? (
+                        <ContactReveal contact={c.contact} viewer={persona} />
+                      ) : (
+                        <Text style={st.pendingText}>Contact details unavailable.</Text>
+                      )}
                     </View>
-                    {c.contact ? (
-                      <ContactReveal contact={c.contact} viewer={persona} />
-                    ) : (
-                      <Text style={st.pendingText}>Contact details unavailable.</Text>
-                    )}
-                  </View>
-                </SwipeFadeContainer>
-              );
-            })
+                  </SwipeFadeContainer>
+                );
+              })}
+            </View>
           )}
         </ScrollView>
       )}
@@ -151,7 +155,13 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   emptyBlock: { alignItems: 'center', paddingTop: 60, paddingHorizontal: 20 },
   emptyTitle: { fontSize: 17, fontWeight: '800', color: T.textPrimary, marginTop: 12, marginBottom: 6 },
   emptySub: { fontSize: 13, color: T.textSecondary, textAlign: 'center', lineHeight: 19 },
-  block: { marginBottom: 18 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 14 },
+  gridItem: { width: '100%' },
+  gridItemHalf: { width: '48.5%' },
+  block: {
+    marginBottom: 18, backgroundColor: T.card, borderRadius: 16, padding: 16,
+    borderWidth: 1, borderColor: T.border, ...ELEVATION.card,
+  },
   blockHead: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 },
   roleTitle: { fontSize: 15, fontWeight: '700', color: T.textPrimary, flexShrink: 1 },
   tierPill: { paddingHorizontal: 9, paddingVertical: 3, borderRadius: 7 },

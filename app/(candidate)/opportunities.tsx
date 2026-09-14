@@ -14,6 +14,7 @@ import ScreenFrame from '@/components/ScreenFrame';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import AnimatedPressable from '@/components/AnimatedPressable';
 import { notifyIntroduction } from '@/lib/requestNotify';
+import { useIsDesktopWeb } from '@/components/TopNav';
 
 // Replaces the old Tinder-style swipe deck over mock roles. Under the real
 // architecture, candidates don't browse and swipe an open pool — a company's
@@ -62,6 +63,7 @@ export default function OpportunitiesScreen() {
   const T = useTheme();
   const st = useMemo(() => makeStyles(T), [T]);
   const { candidateId } = useAuth();
+  const isDesktop = useIsDesktopWeb();
 
   const [pending, setPending] = useState<PendingIntro[] | null>(null);
   const [accepted, setAccepted] = useState<AcceptedIntro[]>([]);
@@ -185,67 +187,72 @@ export default function OpportunitiesScreen() {
             </View>
           )}
 
-          {pending.filter((p) => !p.expired).map((intro, i) => {
-            const cfg = TIER_CONFIG[intro.roleTier];
-            const hoursLeft = Math.max(0, Math.round(
-              (new Date(intro.sentAt).getTime() + intro.responseWindowHours * 60 * 60 * 1000 - Date.now()) / (60 * 60 * 1000),
-            ));
-            return (
-              <SwipeFadeContainer key={intro.introductionId} axis="y" offset={16} duration={250} delay={Math.min(i, 8) * 40}>
-                <View style={st.card}>
-                  <View style={st.lockedRow}>
-                    <View style={st.lockIcon}>
-                      <Ionicons name="lock-closed" size={14} color={T.textMuted} />
+          <View style={st.grid}>
+            {pending.filter((p) => !p.expired).map((intro, i) => {
+              const cfg = TIER_CONFIG[intro.roleTier];
+              const hoursLeft = (new Date(intro.sentAt).getTime() + intro.responseWindowHours * 60 * 60 * 1000 - Date.now()) / (60 * 60 * 1000);
+              const deadlineText = hoursLeft < 1 ? 'Less than 1 hour left' : `${Math.round(hoursLeft)}h left to respond`;
+              return (
+                <SwipeFadeContainer key={intro.introductionId} axis="y" offset={16} duration={250} delay={Math.min(i, 8) * 40} style={[st.gridItem, isDesktop && st.gridItemHalf]}>
+                  <View style={st.card}>
+                    <View style={st.lockedRow}>
+                      <View style={st.lockIcon}>
+                        <Ionicons name="lock-closed" size={14} color={T.textMuted} />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={st.lockedLabel}>Company identity revealed after you accept</Text>
+                        <Text style={st.metaText}>{intro.companyIndustry ?? 'Unknown industry'} · {intro.companySizeRange ?? 'Size not specified'}</Text>
+                      </View>
                     </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={st.lockedLabel}>Company identity revealed after you accept</Text>
-                      <Text style={st.metaText}>{intro.companyIndustry ?? 'Unknown industry'} · {intro.companySizeRange ?? 'Size not specified'}</Text>
+                    <Text style={st.roleTitle}>{intro.roleTitle}</Text>
+                    <View style={[st.tierPill, { backgroundColor: cfg.accent + '14' }]}>
+                      <Text style={[st.tierText, { color: cfg.accent }]}>{cfg.label.toUpperCase()}</Text>
+                    </View>
+                    <Text style={st.deadlineText}>{deadlineText}</Text>
+                    <View style={st.actionsRow}>
+                      <AnimatedPressable style={[st.actionBtn, st.declineBtn]} onPress={() => respond(intro.introductionId, 'declined')} disabled={busyId === intro.introductionId}>
+                        <Ionicons name="close" size={18} color={T.danger} />
+                        <Text style={st.declineText}>Decline</Text>
+                      </AnimatedPressable>
+                      <AnimatedPressable style={[st.actionBtn, st.acceptBtn]} onPress={() => respond(intro.introductionId, 'accepted')} disabled={busyId === intro.introductionId}>
+                        <Ionicons name="checkmark" size={18} color={T.emerald} />
+                        <Text style={st.acceptText}>Accept</Text>
+                      </AnimatedPressable>
                     </View>
                   </View>
-                  <Text style={st.roleTitle}>{intro.roleTitle}</Text>
-                  <View style={[st.tierPill, { backgroundColor: cfg.accent + '14' }]}>
-                    <Text style={[st.tierText, { color: cfg.accent }]}>{cfg.label.toUpperCase()}</Text>
-                  </View>
-                  <Text style={st.deadlineText}>{hoursLeft}h left to respond</Text>
-                  <View style={st.actionsRow}>
-                    <AnimatedPressable style={[st.actionBtn, st.declineBtn]} onPress={() => respond(intro.introductionId, 'declined')} disabled={busyId === intro.introductionId}>
-                      <Ionicons name="close" size={18} color={T.danger} />
-                      <Text style={st.declineText}>Decline</Text>
-                    </AnimatedPressable>
-                    <AnimatedPressable style={[st.actionBtn, st.acceptBtn]} onPress={() => respond(intro.introductionId, 'accepted')} disabled={busyId === intro.introductionId}>
-                      <Ionicons name="checkmark" size={18} color={T.emerald} />
-                      <Text style={st.acceptText}>Accept</Text>
-                    </AnimatedPressable>
-                  </View>
-                </View>
-              </SwipeFadeContainer>
-            );
-          })}
+                </SwipeFadeContainer>
+              );
+            })}
+          </View>
 
           {accepted.length > 0 && (
             <>
               <Text style={st.sectionLabel}>ACCEPTED</Text>
-              {accepted.map((a) => {
-                const cfg = TIER_CONFIG[a.roleTier];
-                return (
-                  <View key={a.introductionId} style={st.card}>
-                    <View style={[st.tierPill, { backgroundColor: cfg.accent + '14', alignSelf: 'flex-start', marginBottom: 8 }]}>
-                      <Text style={[st.tierText, { color: cfg.accent }]}>{cfg.label.toUpperCase()}</Text>
+              <View style={st.grid}>
+                {accepted.map((a) => {
+                  const cfg = TIER_CONFIG[a.roleTier];
+                  return (
+                    <View key={a.introductionId} style={[st.gridItem, isDesktop && st.gridItemHalf]}>
+                      <View style={st.card}>
+                        <View style={[st.tierPill, { backgroundColor: cfg.accent + '14', alignSelf: 'flex-start', marginBottom: 8 }]}>
+                          <Text style={[st.tierText, { color: cfg.accent }]}>{cfg.label.toUpperCase()}</Text>
+                        </View>
+                        <Text style={st.roleTitle}>{a.roleTitle}</Text>
+                        {a.contact ? (
+                          <View style={{ marginTop: 6 }}>
+                            <ContactReveal contact={a.contact} viewer="candidate" />
+                          </View>
+                        ) : (
+                          <View style={st.metaRow}>
+                            <Ionicons name="business-outline" size={14} color={T.textSecondary} />
+                            <Text style={st.metaText}>{a.companyName}</Text>
+                          </View>
+                        )}
+                      </View>
                     </View>
-                    <Text style={st.roleTitle}>{a.roleTitle}</Text>
-                    {a.contact ? (
-                      <View style={{ marginTop: 6 }}>
-                        <ContactReveal contact={a.contact} viewer="candidate" />
-                      </View>
-                    ) : (
-                      <View style={st.metaRow}>
-                        <Ionicons name="business-outline" size={14} color={T.textSecondary} />
-                        <Text style={st.metaText}>{a.companyName}</Text>
-                      </View>
-                    )}
-                  </View>
-                );
-              })}
+                  );
+                })}
+              </View>
             </>
           )}
         </ScrollView>
@@ -266,7 +273,10 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   emptyBlock: { alignItems: 'center', paddingTop: 60, paddingHorizontal: 20 },
   emptyTitle: { fontSize: 17, fontWeight: '800', color: T.textPrimary, marginTop: 12, marginBottom: 6 },
   emptySub: { fontSize: 13, color: T.textSecondary, textAlign: 'center', lineHeight: 19 },
-  card: { backgroundColor: T.card, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: T.border, ...ELEVATION.card },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 14 },
+  gridItem: { width: '100%' },
+  gridItemHalf: { width: '48.5%' },
+  card: { backgroundColor: T.card, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: T.border, ...ELEVATION.card },
   lockedRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 },
   lockIcon: { width: 32, height: 32, borderRadius: 10, backgroundColor: T.surface, alignItems: 'center', justifyContent: 'center' },
   lockedLabel: { fontSize: 11, color: T.textMuted, fontWeight: '600', marginBottom: 2 },

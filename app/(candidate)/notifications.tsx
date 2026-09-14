@@ -10,6 +10,7 @@ import AnimatedPressable from '@/components/AnimatedPressable';
 import { useTheme, ThemePalette } from '@/lib/theme';
 import { useAuth } from '@/lib/useAuth';
 import { getCandidateFeed, FeedItem, relativeTime } from '@/lib/dashboardStats';
+import { useIsDesktopWeb } from '@/components/TopNav';
 
 const ICON: Record<FeedItem['kind'], keyof typeof Ionicons.glyphMap> = {
   intro_sent: 'mail-unread-outline',
@@ -30,6 +31,7 @@ export default function CandidateNotificationsScreen() {
   const T = useTheme();
   const st = useMemo(() => makeStyles(T), [T]);
   const { candidateId } = useAuth();
+  const isDesktop = useIsDesktopWeb();
 
   const [items, setItems] = useState<FeedItem[] | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -75,11 +77,11 @@ export default function CandidateNotificationsScreen() {
             <Text style={st.emptyText}>Nothing yet. Introductions and verification updates show up here.</Text>
           </View>
         ) : (
-          <>
+          <View style={st.grid}>
             {items.map((item, i) => {
               const s = tone(item, T);
               return (
-                <SwipeFadeContainer key={item.id} axis="y" offset={14} duration={240} delay={Math.min(i, 8) * 40}>
+                <SwipeFadeContainer key={item.id} axis="y" offset={14} duration={240} delay={Math.min(i, 8) * 40} style={[st.gridItem, isDesktop && st.gridItemHalf]}>
                   <AnimatedPressable
                     style={[st.card, { backgroundColor: s.bg, borderLeftColor: s.accent }]}
                     onPress={() => { if (item.href) router.push(item.href as any); }}
@@ -106,7 +108,7 @@ export default function CandidateNotificationsScreen() {
                 </SwipeFadeContainer>
               );
             })}
-          </>
+          </View>
         )}
       </ScrollView>
       </ScreenFrame>
@@ -124,7 +126,10 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   headerBadgeText: { fontSize: 11, fontWeight: '700', color: T.white },
   empty: { alignItems: 'center', gap: 10, paddingTop: 64, paddingHorizontal: 24 },
   emptyText: { fontSize: 13, color: T.textMuted, textAlign: 'center', lineHeight: 18 },
-  card: { borderRadius: 14, borderLeftWidth: 3, padding: 16, marginTop: 12, borderWidth: 1, borderColor: T.border },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 14, marginTop: 12 },
+  gridItem: { width: '100%' },
+  gridItemHalf: { width: '48.5%' },
+  card: { borderRadius: 14, borderLeftWidth: 3, padding: 16, borderWidth: 1, borderColor: T.border },
   row: { flexDirection: 'row', gap: 12 },
   iconWrap: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   title: { fontSize: 14, fontWeight: '700', color: T.textPrimary, marginBottom: 4 },

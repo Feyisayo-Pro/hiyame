@@ -11,6 +11,7 @@ import { TIER_CONFIG, Tier } from '@/lib/mock-data';
 import ScreenFrame from '@/components/ScreenFrame';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import AnimatedPressable from '@/components/AnimatedPressable';
+import { useIsDesktopWeb } from '@/components/TopNav';
 
 // This screen replaces what used to be a Tinder-style swipe deck over an open
 // candidate pool. Under the real architecture, matching is per-ROLE (a company
@@ -34,6 +35,7 @@ export default function CompanyRolesScreen() {
   const T = useTheme();
   const st = useMemo(() => makeStyles(T), [T]);
   const { companyId } = useAuth();
+  const isDesktop = useIsDesktopWeb();
 
   const [roles, setRoles] = useState<RoleListItem[] | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -132,33 +134,35 @@ export default function CompanyRolesScreen() {
           contentContainerStyle={st.scroll}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={T.accent} colors={[T.accent]} />}
         >
-          {roles.map((role, i) => {
-            const cfg = TIER_CONFIG[role.tier];
-            return (
-              <SwipeFadeContainer key={role.id} axis="y" offset={16} duration={250} delay={Math.min(i, 8) * 40}>
-                <AnimatedPressable
-                  style={st.card}
-                  onPress={() => router.push({ pathname: '/(company)/shortlist', params: { roleId: role.id } })}
-                >
-                  <View style={st.cardTop}>
-                    <View style={[st.tierPill, { backgroundColor: cfg.accent + '14' }]}>
-                      <Ionicons name={cfg.icon as keyof typeof Ionicons.glyphMap} size={12} color={cfg.accent} />
-                      <Text style={[st.tierText, { color: cfg.accent }]}>{cfg.label.toUpperCase()}</Text>
+          <View style={st.grid}>
+            {roles.map((role, i) => {
+              const cfg = TIER_CONFIG[role.tier];
+              return (
+                <SwipeFadeContainer key={role.id} axis="y" offset={16} duration={250} delay={Math.min(i, 8) * 40} style={[st.gridItem, isDesktop && st.gridItemHalf]}>
+                  <AnimatedPressable
+                    style={st.card}
+                    onPress={() => router.push({ pathname: '/(company)/shortlist', params: { roleId: role.id } })}
+                  >
+                    <View style={st.cardTop}>
+                      <View style={[st.tierPill, { backgroundColor: cfg.accent + '14' }]}>
+                        <Ionicons name={cfg.icon as keyof typeof Ionicons.glyphMap} size={12} color={cfg.accent} />
+                        <Text style={[st.tierText, { color: cfg.accent }]}>{cfg.label.toUpperCase()}</Text>
+                      </View>
+                      <Text style={st.statusText}>{role.status}</Text>
                     </View>
-                    <Text style={st.statusText}>{role.status}</Text>
-                  </View>
-                  <Text style={st.roleTitle}>{role.title}</Text>
-                  <View style={st.cardBottom}>
-                    <Ionicons name="people-outline" size={14} color={T.textSecondary} />
-                    <Text style={st.shortlistText}>
-                      {role.shortlistCount} {role.shortlistCount === 1 ? 'candidate' : 'candidates'} shortlisted
-                    </Text>
-                    <Ionicons name="chevron-forward" size={16} color={T.textMuted} style={{ marginLeft: 'auto' }} />
-                  </View>
-                </AnimatedPressable>
-              </SwipeFadeContainer>
-            );
-          })}
+                    <Text style={st.roleTitle}>{role.title}</Text>
+                    <View style={st.cardBottom}>
+                      <Ionicons name="people-outline" size={14} color={T.textSecondary} />
+                      <Text style={st.shortlistText}>
+                        {role.shortlistCount} {role.shortlistCount === 1 ? 'candidate' : 'candidates'} shortlisted
+                      </Text>
+                      <Ionicons name="chevron-forward" size={16} color={T.textMuted} style={{ marginLeft: 'auto' }} />
+                    </View>
+                  </AnimatedPressable>
+                </SwipeFadeContainer>
+              );
+            })}
+          </View>
         </ScrollView>
       )}
       </ScreenFrame>
@@ -177,7 +181,10 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   headerTitle: { fontSize: 24, fontWeight: '800', color: T.textPrimary, letterSpacing: -0.3 },
   headerSub: { fontSize: 14, color: T.textSecondary, marginTop: 4 },
   centerFill: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  scroll: { paddingHorizontal: 20, paddingBottom: 32, gap: 12 },
+  scroll: { paddingHorizontal: 20, paddingBottom: 32 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 14 },
+  gridItem: { width: '100%' },
+  gridItemHalf: { width: '48.5%' },
   emptyScroll: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 40 },
   emptyIcon: {
     width: 64, height: 64, borderRadius: 20, backgroundColor: T.surface,
@@ -191,7 +198,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   },
   emptyPostButtonText: { fontSize: 14, fontWeight: '700', color: T.textOnAccent },
   card: {
-    backgroundColor: T.card, borderRadius: 16, padding: 16, marginBottom: 12,
+    backgroundColor: T.card, borderRadius: 16, padding: 16,
     borderWidth: 1, borderColor: T.border,
   },
   cardTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
