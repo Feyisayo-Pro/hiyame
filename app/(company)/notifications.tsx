@@ -10,7 +10,7 @@ import AnimatedPressable from '@/components/AnimatedPressable';
 import { useTheme, ThemePalette } from '@/lib/theme';
 import { useAuth } from '@/lib/useAuth';
 import { getCompanyFeed, FeedItem, relativeTime } from '@/lib/dashboardStats';
-import { useIsDesktopWeb } from '@/components/TopNav';
+import { useIsDesktopWeb, useIsWideDesktopWeb } from '@/components/TopNav';
 
 const ICON: Record<FeedItem['kind'], keyof typeof Ionicons.glyphMap> = {
   intro_sent: 'paper-plane-outline',
@@ -32,6 +32,8 @@ export default function CompanyNotificationsScreen() {
   const st = useMemo(() => makeStyles(T), [T]);
   const { companyId } = useAuth();
   const isDesktop = useIsDesktopWeb();
+  const isWideDesktop = useIsWideDesktopWeb();
+  const gridItemStyle = isWideDesktop ? st.gridItemThird : isDesktop && st.gridItemHalf;
 
   const [items, setItems] = useState<FeedItem[] | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -79,7 +81,7 @@ export default function CompanyNotificationsScreen() {
             {items.map((item, i) => {
               const s = tone(item, T);
               return (
-                <SwipeFadeContainer key={item.id} axis="y" offset={14} duration={240} delay={Math.min(i, 8) * 40} style={[st.gridItem, isDesktop && st.gridItemHalf]}>
+                <SwipeFadeContainer key={item.id} axis="y" offset={14} duration={240} delay={Math.min(i, 8) * 40} style={[st.gridItem, gridItemStyle]}>
                   <AnimatedPressable
                     style={[st.card, { backgroundColor: s.bg, borderLeftColor: s.accent }]}
                     onPress={() => { if (item.href) router.push(item.href as any); }}
@@ -121,6 +123,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 14, marginTop: 12 },
   gridItem: { width: '100%' },
   gridItemHalf: { width: '48.5%' },
+  gridItemThird: { width: '32%' },
   card: { borderRadius: 14, borderLeftWidth: 3, padding: 16, borderWidth: 1, borderColor: T.border },
   row: { flexDirection: 'row', gap: 12 },
   iconWrap: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },

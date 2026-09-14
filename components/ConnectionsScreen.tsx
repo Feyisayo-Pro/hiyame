@@ -11,7 +11,7 @@ import { getIntroductionContact, IntroductionContact } from '@/lib/introductionC
 import ContactReveal from '@/components/ContactReveal';
 import ScreenFrame from '@/components/ScreenFrame';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
-import { useIsDesktopWeb } from '@/components/TopNav';
+import { useIsDesktopWeb, useIsWideDesktopWeb } from '@/components/TopNav';
 
 // The "Connections" tab — every accepted introduction for the signed-in user,
 // across all roles, with the contact details revealed on acceptance
@@ -32,6 +32,8 @@ export default function ConnectionsScreen({ persona }: { persona: 'candidate' | 
   const st = useMemo(() => makeStyles(T), [T]);
   const { candidateId, companyId } = useAuth();
   const isDesktop = useIsDesktopWeb();
+  const isWideDesktop = useIsWideDesktopWeb();
+  const gridItemStyle = isWideDesktop ? st.gridItemThird : isDesktop && st.gridItemHalf;
 
   const [connections, setConnections] = useState<Connection[] | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -119,7 +121,7 @@ export default function ConnectionsScreen({ persona }: { persona: 'candidate' | 
               {connections.map((c, i) => {
                 const cfg = TIER_CONFIG[c.roleTier];
                 return (
-                  <SwipeFadeContainer key={c.introductionId} axis="y" offset={14} duration={240} delay={Math.min(i, 8) * 40} style={[st.gridItem, isDesktop && st.gridItemHalf]}>
+                  <SwipeFadeContainer key={c.introductionId} axis="y" offset={14} duration={240} delay={Math.min(i, 8) * 40} style={[st.gridItem, gridItemStyle]}>
                     <View style={st.block}>
                       <View style={st.blockHead}>
                         <Text style={st.roleTitle} numberOfLines={1}>{c.roleTitle}</Text>
@@ -158,6 +160,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 14 },
   gridItem: { width: '100%' },
   gridItemHalf: { width: '48.5%' },
+  gridItemThird: { width: '32%' },
   block: {
     marginBottom: 18, backgroundColor: T.card, borderRadius: 16, padding: 16,
     borderWidth: 1, borderColor: T.border, ...ELEVATION.card,

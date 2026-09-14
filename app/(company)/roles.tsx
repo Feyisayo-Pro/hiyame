@@ -11,7 +11,7 @@ import { TIER_CONFIG, Tier } from '@/lib/mock-data';
 import ScreenFrame from '@/components/ScreenFrame';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import AnimatedPressable from '@/components/AnimatedPressable';
-import { useIsDesktopWeb } from '@/components/TopNav';
+import { useIsDesktopWeb, useIsWideDesktopWeb } from '@/components/TopNav';
 import { SkeletonCard } from '@/components/Skeleton';
 
 // This screen replaces what used to be a Tinder-style swipe deck over an open
@@ -37,6 +37,8 @@ export default function CompanyRolesScreen() {
   const st = useMemo(() => makeStyles(T), [T]);
   const { companyId } = useAuth();
   const isDesktop = useIsDesktopWeb();
+  const isWideDesktop = useIsWideDesktopWeb();
+  const gridItemStyle = isWideDesktop ? st.gridItemThird : isDesktop && st.gridItemHalf;
 
   const [roles, setRoles] = useState<RoleListItem[] | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -114,10 +116,10 @@ export default function CompanyRolesScreen() {
       {roles === null ? (
         <ScrollView contentContainerStyle={st.scroll}>
           <View style={st.grid}>
-            <View style={[st.gridItem, isDesktop && st.gridItemHalf]}><SkeletonCard /></View>
-            <View style={[st.gridItem, isDesktop && st.gridItemHalf]}><SkeletonCard /></View>
-            <View style={[st.gridItem, isDesktop && st.gridItemHalf]}><SkeletonCard /></View>
-            <View style={[st.gridItem, isDesktop && st.gridItemHalf]}><SkeletonCard /></View>
+            <View style={[st.gridItem, gridItemStyle]}><SkeletonCard /></View>
+            <View style={[st.gridItem, gridItemStyle]}><SkeletonCard /></View>
+            <View style={[st.gridItem, gridItemStyle]}><SkeletonCard /></View>
+            <View style={[st.gridItem, gridItemStyle]}><SkeletonCard /></View>
           </View>
         </ScrollView>
       ) : roles.length === 0 ? (
@@ -144,7 +146,7 @@ export default function CompanyRolesScreen() {
             {roles.map((role, i) => {
               const cfg = TIER_CONFIG[role.tier];
               return (
-                <SwipeFadeContainer key={role.id} axis="y" offset={16} duration={250} delay={Math.min(i, 8) * 40} style={[st.gridItem, isDesktop && st.gridItemHalf]}>
+                <SwipeFadeContainer key={role.id} axis="y" offset={16} duration={250} delay={Math.min(i, 8) * 40} style={[st.gridItem, gridItemStyle]}>
                   <AnimatedPressable
                     style={st.card}
                     onPress={() => router.push({ pathname: '/(company)/shortlist', params: { roleId: role.id } })}
@@ -191,6 +193,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 14 },
   gridItem: { width: '100%' },
   gridItemHalf: { width: '48.5%' },
+  gridItemThird: { width: '32%' },
   emptyScroll: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 40 },
   emptyIcon: {
     width: 64, height: 64, borderRadius: 20, backgroundColor: T.surface,

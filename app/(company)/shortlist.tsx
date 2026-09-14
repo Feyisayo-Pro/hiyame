@@ -16,7 +16,7 @@ import ScreenFrame from '@/components/ScreenFrame';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import AnimatedPressable from '@/components/AnimatedPressable';
 import { notifyIntroduction } from '@/lib/requestNotify';
-import { useIsDesktopWeb } from '@/components/TopNav';
+import { useIsDesktopWeb, useIsWideDesktopWeb } from '@/components/TopNav';
 import { formatNaira } from '@/lib/currency';
 import { SkeletonCard } from '@/components/Skeleton';
 
@@ -56,6 +56,8 @@ export default function ShortlistScreen() {
   const T = useTheme();
   const st = useMemo(() => makeStyles(T), [T]);
   const isDesktop = useIsDesktopWeb();
+  const isWideDesktop = useIsWideDesktopWeb();
+  const gridItemStyle = isWideDesktop ? st.gridItemThird : isDesktop && st.gridItemHalf;
   const { roleId } = useLocalSearchParams<{ roleId: string }>();
 
   const [roleTitle, setRoleTitle] = useState<string | null>(null);
@@ -229,10 +231,10 @@ export default function ShortlistScreen() {
       {cards === null ? (
         <ScrollView contentContainerStyle={st.scroll}>
           <View style={st.grid}>
-            <View style={[st.gridItem, isDesktop && st.gridItemHalf]}><SkeletonCard /></View>
-            <View style={[st.gridItem, isDesktop && st.gridItemHalf]}><SkeletonCard /></View>
-            <View style={[st.gridItem, isDesktop && st.gridItemHalf]}><SkeletonCard /></View>
-            <View style={[st.gridItem, isDesktop && st.gridItemHalf]}><SkeletonCard /></View>
+            <View style={[st.gridItem, gridItemStyle]}><SkeletonCard /></View>
+            <View style={[st.gridItem, gridItemStyle]}><SkeletonCard /></View>
+            <View style={[st.gridItem, gridItemStyle]}><SkeletonCard /></View>
+            <View style={[st.gridItem, gridItemStyle]}><SkeletonCard /></View>
           </View>
         </ScrollView>
       ) : (
@@ -270,7 +272,7 @@ export default function ShortlistScreen() {
               <Text style={st.sectionLabel}>SHORTLIST</Text>
               <View style={st.grid}>
                 {active.map((c, i) => (
-                  <View key={c.matchScoreId} style={[st.gridItem, isDesktop && st.gridItemHalf]}>
+                  <View key={c.matchScoreId} style={[st.gridItem, gridItemStyle]}>
                     <SwipeFadeContainer axis="y" offset={18} duration={260} delay={Math.min(i, 8) * 45}>
                       <CandidateCardView T={T} st={st} card={c} busy={busyId === c.matchScoreId}
                         onAccept={() => handleAccept(c)} onSkip={() => handleAction(c, 'skipped')} onSave={() => handleAction(c, 'saved')} />
@@ -286,7 +288,7 @@ export default function ShortlistScreen() {
               <Text style={st.sectionLabel}>ALTERNATES</Text>
               <View style={st.grid}>
                 {alternates.map((c, i) => (
-                  <View key={c.matchScoreId} style={[st.gridItem, isDesktop && st.gridItemHalf]}>
+                  <View key={c.matchScoreId} style={[st.gridItem, gridItemStyle]}>
                     <SwipeFadeContainer axis="y" offset={18} duration={260} delay={Math.min(i, 8) * 45}>
                       <CandidateCardView T={T} st={st} card={c} busy={busyId === c.matchScoreId}
                         onAccept={() => handleAccept(c)} onSkip={() => handleAction(c, 'skipped')} onSave={() => handleAction(c, 'saved')} />
@@ -412,6 +414,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 14 },
   gridItem: { width: '100%' },
   gridItemHalf: { width: '48.5%' },
+  gridItemThird: { width: '32%' },
   card: { flex: 1, backgroundColor: T.card, borderRadius: RADIUS.card, padding: 18, marginBottom: 0, borderWidth: 1, borderColor: T.border, ...ELEVATION.card },
   profileRow: { flexDirection: 'row', gap: 16, marginBottom: 16 },
   photo: { width: 108, height: 108, borderRadius: 26, backgroundColor: T.surface },

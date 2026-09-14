@@ -14,6 +14,12 @@ import AnimatedPressable from '@/components/AnimatedPressable';
 // width; on mobile / narrow web it renders nothing and the bottom tabs stay.
 export const DESKTOP_NAV_BREAKPOINT = 900;
 export const SIDEBAR_WIDTH = 236;
+// Content (ScreenFrame) caps at 1180px and centers once the sidebar's own
+// 236px is accounted for — so the content pane already hits that 1180px cap
+// once the viewport reaches SIDEBAR_WIDTH + CONTENT_MAX_WIDTH (236 + 1180 =
+// 1416). Past that point there's headroom to go from 2 columns to 3 without
+// making cards any narrower than they already are at exactly 2-column width.
+export const WIDE_DESKTOP_BREAKPOINT = 1440;
 
 type Item = { label: string; route: string; screen: string; icon: keyof typeof Ionicons.glyphMap };
 
@@ -34,6 +40,11 @@ const COMPANY: Item[] = [
 export function useIsDesktopWeb(): boolean {
   const { width } = useWindowDimensions();
   return Platform.OS === 'web' && width >= DESKTOP_NAV_BREAKPOINT;
+}
+
+export function useIsWideDesktopWeb(): boolean {
+  const { width } = useWindowDimensions();
+  return Platform.OS === 'web' && width >= WIDE_DESKTOP_BREAKPOINT;
 }
 
 function filled(icon: string): keyof typeof Ionicons.glyphMap {

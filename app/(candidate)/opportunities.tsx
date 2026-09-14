@@ -14,7 +14,7 @@ import ScreenFrame from '@/components/ScreenFrame';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import AnimatedPressable from '@/components/AnimatedPressable';
 import { notifyIntroduction } from '@/lib/requestNotify';
-import { useIsDesktopWeb } from '@/components/TopNav';
+import { useIsDesktopWeb, useIsWideDesktopWeb } from '@/components/TopNav';
 
 // Replaces the old Tinder-style swipe deck over mock roles. Under the real
 // architecture, candidates don't browse and swipe an open pool — a company's
@@ -64,6 +64,8 @@ export default function OpportunitiesScreen() {
   const st = useMemo(() => makeStyles(T), [T]);
   const { candidateId } = useAuth();
   const isDesktop = useIsDesktopWeb();
+  const isWideDesktop = useIsWideDesktopWeb();
+  const gridItemStyle = isWideDesktop ? st.gridItemThird : isDesktop && st.gridItemHalf;
 
   const [pending, setPending] = useState<PendingIntro[] | null>(null);
   const [accepted, setAccepted] = useState<AcceptedIntro[]>([]);
@@ -193,7 +195,7 @@ export default function OpportunitiesScreen() {
               const hoursLeft = (new Date(intro.sentAt).getTime() + intro.responseWindowHours * 60 * 60 * 1000 - Date.now()) / (60 * 60 * 1000);
               const deadlineText = hoursLeft < 1 ? 'Less than 1 hour left' : `${Math.round(hoursLeft)}h left to respond`;
               return (
-                <SwipeFadeContainer key={intro.introductionId} axis="y" offset={16} duration={250} delay={Math.min(i, 8) * 40} style={[st.gridItem, isDesktop && st.gridItemHalf]}>
+                <SwipeFadeContainer key={intro.introductionId} axis="y" offset={16} duration={250} delay={Math.min(i, 8) * 40} style={[st.gridItem, gridItemStyle]}>
                   <View style={st.card}>
                     <View style={st.lockedRow}>
                       <View style={st.lockIcon}>
@@ -232,7 +234,7 @@ export default function OpportunitiesScreen() {
                 {accepted.map((a) => {
                   const cfg = TIER_CONFIG[a.roleTier];
                   return (
-                    <View key={a.introductionId} style={[st.gridItem, isDesktop && st.gridItemHalf]}>
+                    <View key={a.introductionId} style={[st.gridItem, gridItemStyle]}>
                       <View style={st.card}>
                         <View style={[st.tierPill, { backgroundColor: cfg.accent + '14', alignSelf: 'flex-start', marginBottom: 8 }]}>
                           <Text style={[st.tierText, { color: cfg.accent }]}>{cfg.label.toUpperCase()}</Text>
@@ -276,6 +278,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 14 },
   gridItem: { width: '100%' },
   gridItemHalf: { width: '48.5%' },
+  gridItemThird: { width: '32%' },
   card: { backgroundColor: T.card, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: T.border, ...ELEVATION.card },
   lockedRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 },
   lockIcon: { width: 32, height: 32, borderRadius: 10, backgroundColor: T.surface, alignItems: 'center', justifyContent: 'center' },
