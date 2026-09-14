@@ -153,6 +153,7 @@ export default function CompanySignupScreen() {
 
   // Step 2 — Industry & Scale
   const [industry, setIndustry] = useState('');
+  const [industryOther, setIndustryOther] = useState('');
   const [companySize, setCompanySize] = useState('');
   const [hqLocation, setHqLocation] = useState('');
 
@@ -192,6 +193,7 @@ export default function CompanySignupScreen() {
       if (!companyName.trim()) newErrors.companyName = 'Company name is required';
     } else if (step === 2) {
       if (!industry) newErrors.industry = 'Select your industry';
+      else if (industry === 'Other' && !industryOther.trim()) newErrors.industryOther = 'Tell us what industry you\'re in';
       if (!companySize) newErrors.companySize = 'Select company size';
     } else if (step === 3) {
       if (!bio.trim()) newErrors.bio = 'A brief description is required';
@@ -200,7 +202,7 @@ export default function CompanySignupScreen() {
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  }, [step, contactName, email, password, companyName, industry, companySize, bio]);
+  }, [step, contactName, email, password, companyName, industry, industryOther, companySize, bio]);
 
   const handleNext = useCallback(async () => {
     if (!validateStep()) return;
@@ -228,7 +230,7 @@ export default function CompanySignupScreen() {
           contact_name: contactName.trim(),
           legal_name: companyName.trim(),
           trading_name: companyName.trim(),
-          industry,
+          industry: industry === 'Other' ? industryOther.trim() : industry,
           size_range: companySize,
           hq_location: hqLocation.trim(),
           website_url: website.trim(),
@@ -251,7 +253,7 @@ export default function CompanySignupScreen() {
       return;
     }
     router.replace('/(company)');
-  }, [step, validateStep, selectedTier, contactName, email, password, companyName, industry, companySize, hqLocation, website, bio]);
+  }, [step, validateStep, selectedTier, contactName, email, password, companyName, industry, industryOther, companySize, hqLocation, website, bio]);
 
   const handleBack = useCallback(() => {
     if (step > 0) {
@@ -399,6 +401,18 @@ export default function CompanySignupScreen() {
             />
           ))}
         </View>
+        {industry === 'Other' ? (
+          <View style={[st.inputWrap, errors.industryOther ? st.inputError : null, { marginTop: 8 }]}>
+            <TextInput
+              style={st.input}
+              placeholder="Tell us your industry"
+              placeholderTextColor={T.textMuted}
+              value={industryOther}
+              onChangeText={(t) => { setIndustryOther(t); clearError('industryOther'); }}
+            />
+          </View>
+        ) : null}
+        {errors.industryOther ? <Text style={st.errorText}>{errors.industryOther}</Text> : null}
       </View>
 
       <View style={st.fieldWrap}>

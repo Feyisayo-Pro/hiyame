@@ -11,6 +11,7 @@ import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import ScreenFrame from '@/components/ScreenFrame';
 import SmileIdVerificationModal from '@/components/SmileIdVerificationModal';
 import { useTheme, ThemePalette } from '@/lib/theme';
+import { FULL_VERIFICATION_THRESHOLD, TOTAL_VERIFICATION_COMPONENTS } from '@/lib/verification';
 
 // Real component keys in verification_records — the same table
 // app/(candidate)/index.tsx, profile.tsx and Insights already read. This
@@ -115,8 +116,8 @@ export default function VerificationScreen() {
     review: completed.review || passedComponents.has(REAL_COMPONENT_KEY.review),
   };
   const completedCount = Object.values(allCompleted).filter(Boolean).length;
-  const isFullyVerified = completedCount === 4;
-  const progressPercent = (completedCount / 4) * 100;
+  const isFullyVerified = completedCount >= FULL_VERIFICATION_THRESHOLD;
+  const progressPercent = (completedCount / TOTAL_VERIFICATION_COMPONENTS) * 100;
 
   return (
     <SafeAreaView style={st.container} edges={['top', 'left', 'right']}>
@@ -160,8 +161,10 @@ export default function VerificationScreen() {
                 </Text>
                 <Text style={st.progressSub}>
                   {isFullyVerified
-                    ? 'You are eligible for all tier matches'
-                    : `${4 - completedCount} step${4 - completedCount !== 1 ? 's' : ''} remaining`}
+                    ? (completedCount === TOTAL_VERIFICATION_COMPONENTS
+                      ? 'You are eligible for all tier matches'
+                      : 'Eligible for Short-Term matches — identity check is paused for now')
+                    : `${TOTAL_VERIFICATION_COMPONENTS - completedCount} step${TOTAL_VERIFICATION_COMPONENTS - completedCount !== 1 ? 's' : ''} remaining`}
                 </Text>
               </View>
             </View>
@@ -193,14 +196,17 @@ export default function VerificationScreen() {
             <View style={{ flex: 1 }}>
               <Text style={st.verifiedBannerTitle}>Profile Fully Verified</Text>
               <Text style={st.verifiedBannerSub}>
-                You now qualify for Corporate, Short-Term, and Gig tier matching. Companies can see your verified badge.
+                {completedCount === TOTAL_VERIFICATION_COMPONENTS
+                  ? 'You now qualify for Corporate, Short-Term, and Gig tier matching. Companies can see your verified badge.'
+                  : 'You now qualify for Short-Term tier matching. Companies can see your verified badge.'}
               </Text>
             </View>
           </View>
         )}
 
-        {/* Gating Notice (when incomplete) */}
-        {!isFullyVerified && (
+        {/* Gating Notice — Corporate genuinely still needs all 4, identity
+            included, regardless of the relaxed "fully verified" badge above. */}
+        {completedCount < TOTAL_VERIFICATION_COMPONENTS && (
           <View style={st.gatingNotice}>
             <Ionicons name="information-circle-outline" size={18} color={T.amber} />
             <Text style={st.gatingNoticeText}>

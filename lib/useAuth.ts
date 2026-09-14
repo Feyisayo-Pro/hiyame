@@ -65,6 +65,9 @@ async function completePendingSignup(userId: string): Promise<void> {
       email: userData.user!.email,
       skill_tags: meta.core_skills ?? [],
       rate_preferred: meta.target_min_rate ?? null,
+      // No dedicated "industry" column exists — function_tags already exists
+      // for exactly this kind of categorization and was otherwise unused.
+      function_tags: typeof meta.industry === 'string' && meta.industry ? [meta.industry] : [],
     });
   } else if (meta.pending_signup === 'company') {
     const { data: newCompanyId } = await supabase.rpc('create_company_and_claim', {

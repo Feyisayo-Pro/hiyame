@@ -228,7 +228,7 @@ export default function CreateRoleScreen() {
           </View>
 
           <View style={st.fieldWrap}>
-            <Text style={st.label}>Rate</Text>
+            <Text style={st.label}>Rate (₦)</Text>
             <View style={{ flexDirection: 'row', gap: 10, marginBottom: 12 }}>
               <View style={[st.inputWrap, { flex: 1 }, errors.rateMin ? st.inputError : null]}>
                 <TextInput style={st.input} placeholder="Min" placeholderTextColor={T.textMuted} keyboardType="numeric" value={rateMin} onChangeText={(t) => { setRateMin(t); setErrors((e) => ({ ...e, rateMin: '' })); }} />

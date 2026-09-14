@@ -12,6 +12,8 @@ import { useTheme, useThemeToggle, ThemePalette } from '@/lib/theme';
 import { useSubscription } from '@/lib/subscriptionStore';
 import { useAuth } from '@/lib/useAuth';
 import { supabase } from '@/lib/supabase';
+import { notify } from '@/lib/notify';
+import { requestDeleteAccount } from '@/lib/requestDeleteAccount';
 import ChangePasswordModal from '@/components/ChangePasswordModal';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import ScreenFrame from '@/components/ScreenFrame';
@@ -52,6 +54,7 @@ export default function AccountSettings({ persona = 'company' }: { persona?: Per
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [emailUpdates, setEmailUpdates] = useState(true);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const profileRoute = persona === 'company' ? '/(company)/profile' : '/(candidate)/profile';
   const helpRoute = persona === 'company' ? '/(company)/help' : '/(candidate)/help';
@@ -93,6 +96,32 @@ export default function AccountSettings({ persona = 'company' }: { persona?: Per
 
   const setNotifications = (v: boolean) => { setNotificationsEnabled(v); persistPrefs({ push: v }); };
   const setEmail = (v: boolean) => { setEmailUpdates(v); persistPrefs({ email: v }); };
+
+  const handleDeleteAccount = () => {
+    notify(
+      'Delete Account',
+      persona === 'company'
+        ? "This permanently deletes your account. If you're the last person on your team, your company, its roles and all its data go with it. This can't be undone."
+        : 'This permanently deletes your profile, verification status and introduction history. This can\'t be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            setDeleting(true);
+            const outcome = await requestDeleteAccount();
+            setDeleting(false);
+            if (!outcome.ok) {
+              notify('Could not delete account', outcome.message);
+              return;
+            }
+            await supabase.auth.signOut();
+          },
+        },
+      ],
+    );
+  };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: T.bg }} edges={['top', 'left', 'right']}>
@@ -170,6 +199,13 @@ export default function AccountSettings({ persona = 'company' }: { persona?: Per
           <View>
             <View style={{ backgroundColor: T.card, borderTopWidth: 1, borderBottomWidth: 1, borderColor: T.border }}>
               <SettingsRow icon="log-out-outline" label="Sign Out" onPress={() => supabase.auth.signOut()} T={T} danger />
+              <SettingsRow
+                icon="trash-outline"
+                label={deleting ? 'Deleting...' : 'Delete Account'}
+                onPress={deleting ? undefined : handleDeleteAccount}
+                T={T}
+                danger
+              />
             </View>
           </View>
 

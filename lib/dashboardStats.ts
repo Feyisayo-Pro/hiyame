@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import type { Tier } from './mock-data';
+import { FULL_VERIFICATION_THRESHOLD } from './verification';
 
 // Real numbers for the home dashboards, the Insights tab, and the notification
 // feeds. Everything here is derived from rows that actually exist
@@ -227,7 +228,7 @@ export async function getCandidateFeed(candidateId: string): Promise<FeedItem[]>
     }
   }
 
-  if (stats.verifiedCount < 4) {
+  if (stats.verifiedCount < FULL_VERIFICATION_THRESHOLD) {
     items.push({
       id: 'verify-prompt',
       kind: 'verify_prompt',

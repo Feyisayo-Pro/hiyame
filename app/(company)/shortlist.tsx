@@ -17,6 +17,7 @@ import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import AnimatedPressable from '@/components/AnimatedPressable';
 import { notifyIntroduction } from '@/lib/requestNotify';
 import { useIsDesktopWeb } from '@/components/TopNav';
+import { formatNaira } from '@/lib/currency';
 
 // Response-window hours per tier (architecture doc §7.4).
 const RESPONSE_WINDOW_HOURS: Record<Tier, number> = {
@@ -321,7 +322,7 @@ function CandidateCardView({ T, st, card, busy, onAccept, onSkip, onSave }: {
   const meta = [
     card.experienceLevel,
     card.location,
-    card.rateMin ? `from $${card.rateMin.toLocaleString()}` : null,
+    card.rateMin ? `from ${formatNaira(card.rateMin)}` : null,
   ].filter(Boolean).join('  ·  ');
 
   return (

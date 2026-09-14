@@ -18,12 +18,7 @@ import { useTheme, ThemePalette } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
 import ScreenFrame from '@/components/ScreenFrame';
 import VerifyEmailModal from '@/components/VerifyEmailModal';
-
-const SUGGESTED_SKILLS = [
-  'React Native', 'TypeScript', 'Node.js', 'Python', 'PostgreSQL',
-  'AWS', 'Figma', 'UI/UX Design', 'Product Management', 'Data Analysis',
-  'DevOps', 'Flutter', 'Go', 'Rust', 'Machine Learning',
-];
+import { INDUSTRIES, SKILLS_BY_INDUSTRY, DEFAULT_SKILL_SUGGESTIONS } from '@/lib/industrySkills';
 
 export default function CandidateSignupScreen() {
   const T = useTheme();
@@ -37,6 +32,7 @@ export default function CandidateSignupScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [fullName, setFullName] = useState('');
   const [professionalTitle, setProfessionalTitle] = useState('');
+  const [industry, setIndustry] = useState('');
   const [skillInput, setSkillInput] = useState('');
   const [coreSkills, setCoreSkills] = useState<string[]>([]);
   const [rateInput, setRateInput] = useState('');
@@ -70,6 +66,7 @@ export default function CandidateSignupScreen() {
     }
     if (!fullName.trim()) newErrors.fullName = 'Full name is required';
     if (!professionalTitle.trim()) newErrors.title = 'Professional title is required';
+    if (!industry) newErrors.industry = 'Select your industry';
     if (coreSkills.length === 0) newErrors.skills = 'Add at least one core skill';
     if (!rateInput.trim()) {
       newErrors.rate = 'Target rate is required';
@@ -97,6 +94,7 @@ export default function CandidateSignupScreen() {
         data: {
           pending_signup: 'candidate',
           full_name: fullName.trim(),
+          industry,
           core_skills: coreSkills,
           target_min_rate: Number(rateInput),
         },
@@ -128,7 +126,8 @@ export default function CandidateSignupScreen() {
     router.replace('/(candidate)/verification');
   };
 
-  const availableSuggestions = SUGGESTED_SKILLS.filter((s) => !coreSkills.includes(s));
+  const suggestedSkills = industry ? (SKILLS_BY_INDUSTRY[industry] ?? DEFAULT_SKILL_SUGGESTIONS) : DEFAULT_SKILL_SUGGESTIONS;
+  const availableSuggestions = suggestedSkills.filter((s) => !coreSkills.includes(s));
 
   return (
     <SafeAreaView style={st.container} edges={['top', 'left', 'right', 'bottom']}>
@@ -230,6 +229,23 @@ export default function CandidateSignupScreen() {
             </View>
 
             <View style={st.fieldWrap}>
+              <Text style={st.label}>Industry</Text>
+              {errors.industry ? <Text style={st.errorText}>{errors.industry}</Text> : null}
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 4 }}>
+                {INDUSTRIES.map((ind) => (
+                  <Pressable
+                    key={ind}
+                    onPress={() => { setIndustry(ind); setErrors((e) => ({ ...e, industry: '' })); }}
+                    style={[st.industryChip, industry === ind && st.industryChipActive]}
+                  >
+                    <Text style={[st.industryChipText, industry === ind && st.industryChipTextActive]}>{ind}</Text>
+                  </Pressable>
+                ))}
+              </View>
+              <Text style={st.industryHint}>Helps us suggest skills relevant to your field.</Text>
+            </View>
+
+            <View style={st.fieldWrap}>
               <Text style={st.label}>Core Skills</Text>
               <View style={[st.inputWrap, errors.skills ? st.inputError : null]}>
                 <Ionicons name="code-slash-outline" size={18} color={errors.skills ? T.danger : T.textMuted} />
@@ -281,12 +297,12 @@ export default function CandidateSignupScreen() {
             </View>
 
             <View style={st.fieldWrap}>
-              <Text style={st.label}>Target Minimum Rate ($/month)</Text>
+              <Text style={st.label}>Target Minimum Rate (₦/month)</Text>
               <View style={[st.inputWrap, errors.rate ? st.inputError : null]}>
-                <Text style={[st.currencyPrefix, errors.rate ? { color: T.danger } : null]}>$</Text>
+                <Text style={[st.currencyPrefix, errors.rate ? { color: T.danger } : null]}>₦</Text>
                 <TextInput
                   style={st.input}
-                  placeholder="5000"
+                  placeholder="500000"
                   placeholderTextColor={T.textMuted}
                   keyboardType="numeric"
                   value={rateInput}
@@ -377,6 +393,15 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
     backgroundColor: T.accent,
     alignItems: 'center', justifyContent: 'center',
   },
+  industryChip: {
+    paddingHorizontal: 14, paddingVertical: 10, borderRadius: 10,
+    borderWidth: 1.5, borderColor: T.border, backgroundColor: T.surface,
+    marginRight: 8, marginBottom: 8,
+  },
+  industryChipActive: { borderColor: T.accent, backgroundColor: T.accentBg },
+  industryChipText: { fontSize: 13, fontWeight: '500', color: T.textSecondary },
+  industryChipTextActive: { fontWeight: '700', color: T.accent },
+  industryHint: { fontSize: 12, color: T.textMuted, marginTop: 2 },
   skillsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 },
   skillChip: {
     flexDirection: 'row', alignItems: 'center', gap: 6,

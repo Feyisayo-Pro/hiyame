@@ -12,6 +12,7 @@ import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import ScreenFrame from '@/components/ScreenFrame';
 import { useIsDesktopWeb } from '@/components/TopNav';
 import { useTheme, useThemeToggle, ThemePalette, ELEVATION } from '@/lib/theme';
+import { FULL_VERIFICATION_THRESHOLD, TOTAL_VERIFICATION_COMPONENTS } from '@/lib/verification';
 
 const VERIFY_COMPONENTS: { key: string; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
   { key: 'identity', label: 'Identity Check', icon: 'id-card-outline' },
@@ -71,9 +72,12 @@ export default function CandidateHomeScreen() {
   }, [load]);
 
   const verifiedCount = passedComponents.size;
-  const isFullyVerified = verifiedCount === 4;
-  const firstName = stats?.fullName ? stats.fullName.split(' ')[0] : 'there';
-  const progressPercent = (verifiedCount / 4) * 100;
+  const isFullyVerified = verifiedCount >= FULL_VERIFICATION_THRESHOLD;
+  // A short/empty first token (a name with a leading space, a single initial,
+  // etc.) reads worse than just using the whole name or falling back further.
+  const firstNameToken = stats?.fullName?.trim().split(/\s+/)[0] ?? '';
+  const firstName = firstNameToken.length >= 2 ? firstNameToken : (stats?.fullName?.trim() || 'there');
+  const progressPercent = (verifiedCount / TOTAL_VERIFICATION_COMPONENTS) * 100;
 
   return (
     <SafeAreaView style={st.container} edges={['top', 'left', 'right']}>
@@ -120,8 +124,10 @@ export default function CandidateHomeScreen() {
                   <Text style={st.scoreTitle}>{isFullyVerified ? 'Profile Verified' : 'Verification In Progress'}</Text>
                   <Text style={st.scoreSub}>
                     {isFullyVerified
-                      ? 'All components complete — you are match-ready'
-                      : `${4 - verifiedCount} component${4 - verifiedCount !== 1 ? 's' : ''} remaining · unverified profiles aren't matched`}
+                      ? (verifiedCount === TOTAL_VERIFICATION_COMPONENTS
+                        ? 'All components complete — you are match-ready'
+                        : 'You are match-ready — identity check is paused for now')
+                      : `${TOTAL_VERIFICATION_COMPONENTS - verifiedCount} component${TOTAL_VERIFICATION_COMPONENTS - verifiedCount !== 1 ? 's' : ''} remaining · unverified profiles aren't matched`}
                   </Text>
                 </View>
               </View>

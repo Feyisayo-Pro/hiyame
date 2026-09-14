@@ -16,6 +16,7 @@ import { useAuth } from '@/lib/useAuth';
 import { getCompanyStats, getCandidateStats, CompanyStats, CandidateStats } from '@/lib/dashboardStats';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import ScreenFrame from '@/components/ScreenFrame';
+import { FULL_VERIFICATION_THRESHOLD } from '@/lib/verification';
 
 type Persona = 'company' | 'candidate';
 
@@ -127,7 +128,7 @@ function CandidateAnalytics({ T, stats }: { T: ThemePalette; stats: CandidateSta
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40 }}>
       <SwipeFadeContainer>
         <View style={{ flexDirection: 'row', gap: 10, marginBottom: 10 }}>
-          <MetricCard icon="shield-checkmark" label="Verified" value={`${stats.verifiedCount}/4`} subtitle={stats.verifiedCount === 4 ? 'Match-ready' : 'Incomplete'} color={T.accent} bg={T.accentBg} T={T} />
+          <MetricCard icon="shield-checkmark" label="Verified" value={`${stats.verifiedCount}/4`} subtitle={stats.verifiedCount >= FULL_VERIFICATION_THRESHOLD ? 'Match-ready' : 'Incomplete'} color={T.accent} bg={T.accentBg} T={T} />
           <MetricCard icon="mail-unread" label="To respond" value={stats.introsPending} color={T.amber} bg={T.amberBg} T={T} />
         </View>
         <View style={{ flexDirection: 'row', gap: 10, marginBottom: 24 }}>

@@ -94,12 +94,12 @@ export default function EditCandidateProfileModal({ visible, candidateId, initia
             <Text style={s.label}>Full name</Text>
             <TextInput style={s.input} value={fullName} onChangeText={setFullName} placeholder="Your name" placeholderTextColor={T.textMuted} />
 
-            <Text style={s.label}>Target rate ($/month)</Text>
+            <Text style={s.label}>Target rate (₦/month)</Text>
             <TextInput
               style={s.input}
               value={rate}
               onChangeText={setRate}
-              placeholder="e.g. 5000"
+              placeholder="e.g. 500000"
               placeholderTextColor={T.textMuted}
               keyboardType="numeric"
             />

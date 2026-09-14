@@ -14,6 +14,8 @@ import ScreenFrame from '@/components/ScreenFrame';
 import EditCandidateProfileModal from '@/components/EditCandidateProfileModal';
 import { useTheme, useThemeToggle, ThemePalette } from '@/lib/theme';
 import { notify } from '@/lib/notify';
+import { formatNaira } from '@/lib/currency';
+import { FULL_VERIFICATION_THRESHOLD } from '@/lib/verification';
 
 interface RealProfile {
   fullName: string;
@@ -81,7 +83,7 @@ export default function CandidateProfileScreen() {
 
   const completedCount = passedComponents.size;
   const totalCount = VERIFICATION_COMPONENTS.length;
-  const isFullyVerified = completedCount === totalCount;
+  const isFullyVerified = completedCount >= FULL_VERIFICATION_THRESHOLD;
 
   const handlePhotoPress = async () => {
     if (uploading) return;
@@ -163,7 +165,7 @@ export default function CandidateProfileScreen() {
             <View style={st.rateRow}>
               <Ionicons name="cash-outline" size={16} color={T.accent} />
               <Text style={st.rateLabel}>Target Min Rate</Text>
-              <Text style={st.rateValue}>${targetMinRate.toLocaleString()}/mo</Text>
+              <Text style={st.rateValue}>{formatNaira(targetMinRate)}/mo</Text>
             </View>
           )}
         </View>
