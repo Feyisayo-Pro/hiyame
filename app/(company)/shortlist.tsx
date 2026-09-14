@@ -18,6 +18,7 @@ import AnimatedPressable from '@/components/AnimatedPressable';
 import { notifyIntroduction } from '@/lib/requestNotify';
 import { useIsDesktopWeb } from '@/components/TopNav';
 import { formatNaira } from '@/lib/currency';
+import { SkeletonCard } from '@/components/Skeleton';
 
 // Response-window hours per tier (architecture doc §7.4).
 const RESPONSE_WINDOW_HOURS: Record<Tier, number> = {
@@ -226,9 +227,14 @@ export default function ShortlistScreen() {
       </View>
 
       {cards === null ? (
-        <View style={st.centerFill}>
-          <ActivityIndicator color={T.accent} />
-        </View>
+        <ScrollView contentContainerStyle={st.scroll}>
+          <View style={st.grid}>
+            <View style={[st.gridItem, isDesktop && st.gridItemHalf]}><SkeletonCard /></View>
+            <View style={[st.gridItem, isDesktop && st.gridItemHalf]}><SkeletonCard /></View>
+            <View style={[st.gridItem, isDesktop && st.gridItemHalf]}><SkeletonCard /></View>
+            <View style={[st.gridItem, isDesktop && st.gridItemHalf]}><SkeletonCard /></View>
+          </View>
+        </ScrollView>
       ) : (
         <ScrollView contentContainerStyle={st.scroll}>
           {!hasAnyCards && running && (

@@ -12,6 +12,7 @@ import ScreenFrame from '@/components/ScreenFrame';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import AnimatedPressable from '@/components/AnimatedPressable';
 import { useIsDesktopWeb } from '@/components/TopNav';
+import { SkeletonCard } from '@/components/Skeleton';
 
 // This screen replaces what used to be a Tinder-style swipe deck over an open
 // candidate pool. Under the real architecture, matching is per-ROLE (a company
@@ -111,9 +112,14 @@ export default function CompanyRolesScreen() {
       </View>
 
       {roles === null ? (
-        <View style={st.centerFill}>
-          <ActivityIndicator color={T.accent} />
-        </View>
+        <ScrollView contentContainerStyle={st.scroll}>
+          <View style={st.grid}>
+            <View style={[st.gridItem, isDesktop && st.gridItemHalf]}><SkeletonCard /></View>
+            <View style={[st.gridItem, isDesktop && st.gridItemHalf]}><SkeletonCard /></View>
+            <View style={[st.gridItem, isDesktop && st.gridItemHalf]}><SkeletonCard /></View>
+            <View style={[st.gridItem, isDesktop && st.gridItemHalf]}><SkeletonCard /></View>
+          </View>
+        </ScrollView>
       ) : roles.length === 0 ? (
         <ScrollView
           contentContainerStyle={st.emptyScroll}

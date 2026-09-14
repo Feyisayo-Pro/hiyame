@@ -13,6 +13,7 @@ import ScreenFrame from '@/components/ScreenFrame';
 import { useIsDesktopWeb } from '@/components/TopNav';
 import { useTheme, useThemeToggle, ThemePalette, ELEVATION } from '@/lib/theme';
 import { FULL_VERIFICATION_THRESHOLD, TOTAL_VERIFICATION_COMPONENTS } from '@/lib/verification';
+import { SkeletonRow } from '@/components/Skeleton';
 
 const VERIFY_COMPONENTS: { key: string; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
   { key: 'identity', label: 'Identity Check', icon: 'id-card-outline' },
@@ -211,7 +212,11 @@ export default function CandidateHomeScreen() {
             </View>
 
             {stats === null ? (
-              <View style={st.introEmpty}><ActivityIndicator color={T.accent} /></View>
+              <>
+                <SkeletonRow />
+                <SkeletonRow />
+                <SkeletonRow />
+              </>
             ) : stats.recentIntros.length === 0 ? (
               <View style={st.introEmpty}>
                 <Ionicons name="mail-outline" size={26} color={T.textMuted} />

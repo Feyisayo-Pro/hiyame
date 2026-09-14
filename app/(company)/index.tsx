@@ -22,6 +22,7 @@ import { initials } from '@/lib/format';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import ScreenFrame from '@/components/ScreenFrame';
 import { Text } from '@/components/Themed';
+import { SkeletonRow } from '@/components/Skeleton';
 
 // ── Helpers ──
 
@@ -271,7 +272,11 @@ export default function CompanyDashboardScreen() {
 
           <View style={styles.matchesList}>
             {stats === null ? (
-              <View style={styles.emptyState}><ActivityIndicator color={T.accent} /></View>
+              <>
+                <SkeletonRow />
+                <SkeletonRow />
+                <SkeletonRow />
+              </>
             ) : stats.recentIntros.length === 0 ? (
               <View style={styles.emptyState}>
                 <Ionicons name="paper-plane-outline" size={28} color={T.textMuted} />
