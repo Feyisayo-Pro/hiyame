@@ -11,6 +11,7 @@ import { VerificationProvider } from '@/lib/useVerification';
 import { SubscriptionProvider } from '@/lib/subscriptionStore';
 import { HiyameThemeProvider, useTheme, ThemePalette } from '@/lib/theme';
 import { AuthProvider, useAuth } from '@/lib/useAuth';
+import { useGlobalFocusRing } from '@/lib/focusRing';
 import 'react-native-reanimated';
 
 // Redirects based on real auth state: signed out + outside (auth) -> welcome;
@@ -91,6 +92,8 @@ export default function RootLayout() {
   const [loaded, error] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
+
+  useGlobalFocusRing();
 
   useEffect(() => {
     if (error) throw error;
