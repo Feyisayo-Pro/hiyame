@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Linking, Pressable, StyleSheet, View } from 'react-native';
+import { Image, Linking, Pressable, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Text } from '@/components/Themed';
 import { useTheme, ThemePalette } from '@/lib/theme';
@@ -31,7 +31,16 @@ export default function ContactReveal({
 
       {viewer === 'candidate' ? (
         <>
-          <Text style={st.name}>{contact.companyName}</Text>
+          <View style={st.companyHeadRow}>
+            <View style={st.companyLogoWrap}>
+              {contact.companyLogoUrl ? (
+                <Image source={{ uri: contact.companyLogoUrl }} style={st.companyLogo} resizeMode="cover" />
+              ) : (
+                <Ionicons name="business" size={16} color={T.emerald} />
+              )}
+            </View>
+            <Text style={st.name}>{contact.companyName}</Text>
+          </View>
           <View style={st.metaRow}>
             <Ionicons name="business-outline" size={13} color={T.textSecondary} />
             <Text style={st.metaText}>
@@ -105,6 +114,12 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   },
   headRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
   headText: { fontSize: 11, fontWeight: '700', color: T.emerald, flex: 1 },
+  companyHeadRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  companyLogoWrap: {
+    width: 28, height: 28, borderRadius: 8, backgroundColor: T.emeraldBg,
+    alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
+  },
+  companyLogo: { width: '100%', height: '100%' },
   name: { fontSize: 16, fontWeight: '800', color: T.textPrimary },
   subhead: { fontSize: 11, fontWeight: '700', color: T.textMuted, letterSpacing: 0.4, marginTop: 12, textTransform: 'uppercase' },
   contactName: { fontSize: 14, fontWeight: '600', color: T.textPrimary, marginTop: 2 },

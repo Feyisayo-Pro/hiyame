@@ -1,4 +1,4 @@
-import { StyleSheet, View, ScrollView, Pressable } from 'react-native';
+import { StyleSheet, View, ScrollView, Pressable, Image } from 'react-native';
 import { useEffect, useMemo, useState } from 'react';
 import { Text } from '@/components/Themed';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -11,9 +11,12 @@ import { useTheme, useThemeToggle, ThemePalette } from '@/lib/theme';
 import { useAuth } from '@/lib/useAuth';
 import { useSubscription } from '@/lib/subscriptionStore';
 import { supabase } from '@/lib/supabase';
+import { pickAndUploadCompanyLogo } from '@/lib/uploadCompanyLogo';
+import { notify } from '@/lib/notify';
 
 interface RealCompany extends CompanyEditable {
   verifiedAt: string | null;
+  logoUrl: string | null;
 }
 
 export default function CompanyProfileScreen() {
@@ -26,14 +29,21 @@ export default function CompanyProfileScreen() {
   const [real, setReal] = useState<RealCompany | null>(null);
   const [teamCount, setTeamCount] = useState<number | null>(null);
   const [showEdit, setShowEdit] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
 
   useEffect(() => {
     if (!companyId) return;
     let alive = true;
     (async () => {
-      const [{ data: company }, { count }] = await Promise.all([
+      // logo_url is fetched separately — it's on the same pending migration as
+      // full_name/notification_prefs (20260911140000_notification_prefs.sql),
+      // and selecting an unknown column fails the whole query, not just that
+      // field. Keeping it separate means the rest of this screen still works
+      // on a database that hasn't run that migration yet.
+      const [{ data: company }, { count }, { data: logoRow }] = await Promise.all([
         supabase.from('companies').select('legal_name, trading_name, industry, size_range, hq_location, website_url, description, verified_at').eq('id', companyId).maybeSingle(),
         supabase.from('company_users').select('id', { count: 'exact', head: true }).eq('company_id', companyId),
+        supabase.from('companies').select('logo_url').eq('id', companyId).maybeSingle(),
       ]);
       if (!alive) return;
       if (company) {
@@ -46,12 +56,29 @@ export default function CompanyProfileScreen() {
           websiteUrl: company.website_url,
           description: company.description,
           verifiedAt: company.verified_at,
+          logoUrl: logoRow?.logo_url ?? null,
         });
       }
       setTeamCount(count ?? 0);
     })();
     return () => { alive = false; };
   }, [companyId]);
+
+  const handleLogoPress = async () => {
+    if (uploadingLogo) return;
+    setUploadingLogo(true);
+    try {
+      const url = await pickAndUploadCompanyLogo();
+      setReal((prev) => (prev ? { ...prev, logoUrl: url } : prev));
+      notify('Logo updated', 'Your company logo is live.');
+    } catch (e: any) {
+      if (e?.message !== 'No logo selected.') {
+        notify('Upload failed', e?.message || 'Something went wrong. Please try again.');
+      }
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
 
   const displayName = real?.tradingName || real?.legalName || 'Your Company';
   const isVerified = !!real?.verifiedAt;
@@ -75,9 +102,23 @@ export default function CompanyProfileScreen() {
         {/* ── Workspace Card ── */}
         <View style={st.workspaceCard}>
           <View style={st.wsTop}>
-            <View style={st.wsAvatar}>
-              <Ionicons name="business" size={28} color={T.accent} />
-            </View>
+            <Pressable style={st.wsAvatarWrap} onPress={handleLogoPress} disabled={uploadingLogo} accessibilityRole="button" accessibilityLabel="Change company logo">
+              <View style={st.wsAvatar}>
+                {real?.logoUrl ? (
+                  <Image source={{ uri: real.logoUrl }} style={st.wsAvatarImage} resizeMode="cover" />
+                ) : (
+                  <Ionicons name="business" size={28} color={T.accent} />
+                )}
+                {uploadingLogo && (
+                  <View style={st.wsAvatarUploadingOverlay}>
+                    <Ionicons name="cloud-upload-outline" size={18} color={T.white} />
+                  </View>
+                )}
+              </View>
+              <View style={st.wsCameraOverlay}>
+                <Ionicons name="camera" size={12} color={T.white} />
+              </View>
+            </Pressable>
             <View style={st.wsInfo}>
               <Text style={st.wsName}>{displayName}</Text>
               <Text style={st.wsIndustry}>{[real?.industry, real?.sizeRange].filter(Boolean).join(' · ') || 'Add your industry and size'}</Text>
@@ -261,7 +302,7 @@ export default function CompanyProfileScreen() {
           description: real?.description ?? null,
         }}
         onClose={() => setShowEdit(false)}
-        onSaved={(updated) => setReal((prev) => ({ ...updated, verifiedAt: prev?.verifiedAt ?? null }))}
+        onSaved={(updated) => setReal((prev) => ({ ...updated, verifiedAt: prev?.verifiedAt ?? null, logoUrl: prev?.logoUrl ?? null }))}
       />
     </SafeAreaView>
   );
@@ -281,9 +322,20 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
     backgroundColor: T.card, borderWidth: 1, borderColor: T.border,
   },
   wsTop: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 16 },
+  wsAvatarWrap: { position: 'relative' },
   wsAvatar: {
     width: 56, height: 56, borderRadius: 16, backgroundColor: T.accentBg,
     borderWidth: 1.5, borderColor: T.accentBg20,
+    alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
+  },
+  wsAvatarImage: { width: '100%', height: '100%' },
+  wsAvatarUploadingOverlay: {
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.4)', alignItems: 'center', justifyContent: 'center',
+  },
+  wsCameraOverlay: {
+    position: 'absolute', bottom: -2, right: -2, width: 20, height: 20, borderRadius: 10,
+    backgroundColor: T.accent, borderWidth: 2, borderColor: T.card,
     alignItems: 'center', justifyContent: 'center',
   },
   wsInfo: { flex: 1 },

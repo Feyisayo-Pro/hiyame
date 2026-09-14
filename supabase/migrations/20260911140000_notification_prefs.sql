@@ -35,6 +35,12 @@ grant update (notification_prefs) on company_users to authenticated;
 -- "feyilive+newco1789052090" instead of a name or a generic label.
 grant update (full_name) on company_users to authenticated;
 
+-- Company logo upload (mirrors candidates.photo_url / candidate-photos bucket
+-- — see api/upload-company-logo.ts and lib/uploadCompanyLogo.ts). No new
+-- grant needed: companies has no column-restricted grant, so the existing
+-- companies_update_own RLS policy already covers it, same as plan_tier.
+alter table companies add column if not exists logo_url text;
+
 create or replace function get_introduction_contact(p_introduction_id uuid)
 returns table (
   introduction_id uuid,
@@ -43,6 +49,7 @@ returns table (
   company_website text,
   company_industry text,
   company_size_range text,
+  company_logo_url text,
   hiring_contact_name text,
   hiring_contact_email text,
   candidate_name text,
@@ -92,6 +99,7 @@ begin
     co.website_url,
     co.industry,
     co.size_range,
+    co.logo_url,
     hc.name,
     hc.email,
     ca.full_name,

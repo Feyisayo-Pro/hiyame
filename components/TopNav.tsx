@@ -57,8 +57,18 @@ export default function SideNav({ role }: { role: 'candidate' | 'company' }) {
         const { data } = await supabase.from('candidates').select('full_name, photo_url').eq('id', candidateId).maybeSingle();
         if (alive && data) setIdentity({ name: data.full_name, photoUrl: data.photo_url });
       } else if (role === 'company' && companyId) {
+        // logo_url is on the same pending migration as the full_name/
+        // notification_prefs grants (20260911140000_notification_prefs.sql) —
+        // selected separately so a not-yet-migrated database still shows the
+        // company name here instead of the whole query failing on an unknown
+        // column.
         const { data } = await supabase.from('companies').select('trading_name, legal_name').eq('id', companyId).maybeSingle();
-        if (alive && data) setIdentity({ name: data.trading_name || data.legal_name, photoUrl: null });
+        if (!alive || !data) return;
+        setIdentity({ name: data.trading_name || data.legal_name, photoUrl: null });
+        const { data: logoRow } = await supabase.from('companies').select('logo_url').eq('id', companyId).maybeSingle();
+        if (alive && logoRow?.logo_url) {
+          setIdentity((prev) => (prev ? { ...prev, photoUrl: logoRow.logo_url } : prev));
+        }
       }
     })();
     return () => { alive = false; };

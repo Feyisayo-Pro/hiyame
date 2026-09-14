@@ -11,6 +11,7 @@ export interface IntroductionContact {
   companyWebsite: string | null;
   companyIndustry: string | null;
   companySizeRange: string | null;
+  companyLogoUrl: string | null;
   hiringContactName: string | null;
   hiringContactEmail: string | null;
   candidateName: string;
@@ -27,6 +28,7 @@ interface IntroductionContactRow {
   company_website: string | null;
   company_industry: string | null;
   company_size_range: string | null;
+  company_logo_url: string | null;
   hiring_contact_name: string | null;
   hiring_contact_email: string | null;
   candidate_name: string;
@@ -48,6 +50,7 @@ export async function getIntroductionContact(
     companyWebsite: data.company_website,
     companyIndustry: data.company_industry,
     companySizeRange: data.company_size_range,
+    companyLogoUrl: data.company_logo_url,
     hiringContactName: data.hiring_contact_name,
     hiringContactEmail: data.hiring_contact_email,
     candidateName: data.candidate_name,
