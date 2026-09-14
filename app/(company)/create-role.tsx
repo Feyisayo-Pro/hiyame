@@ -48,6 +48,7 @@ export default function CreateRoleScreen() {
 
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showMore, setShowMore] = useState(false);
 
   const addTag = (value: string, list: string[], setList: (s: string[]) => void, clear: () => void) => {
     const trimmed = value.trim();
@@ -160,16 +161,29 @@ export default function CreateRoleScreen() {
             </View>
           </View>
 
-          <View style={st.fieldWrap}>
-            <Text style={st.label}>Function</Text>
-            <View style={st.inputWrap}>
-              <TextInput
-                style={st.input}
-                placeholder="Engineering, Sales, Design..."
-                placeholderTextColor={T.textMuted}
-                value={roleFunction}
-                onChangeText={setRoleFunction}
-              />
+          <View style={{ flexDirection: 'row', gap: 12 }}>
+            <View style={[st.fieldWrap, { flex: 1 }]}>
+              <Text style={st.label}>Function</Text>
+              <View style={st.inputWrap}>
+                <TextInput
+                  style={st.input}
+                  placeholder="Engineering, Sales..."
+                  placeholderTextColor={T.textMuted}
+                  value={roleFunction}
+                  onChangeText={setRoleFunction}
+                />
+              </View>
+            </View>
+
+            <View style={[st.fieldWrap, { flex: 1 }]}>
+              <Text style={st.label}>Experience</Text>
+              <View style={st.chipRow}>
+                {EXPERIENCE_LEVELS.map((lvl) => (
+                  <Pressable key={lvl} style={[st.chip, experienceLevel === lvl && st.chipActive]} onPress={() => setExperienceLevel(experienceLevel === lvl ? null : lvl)}>
+                    <Text style={[st.chipText, experienceLevel === lvl && st.chipTextActive]}>{lvl}</Text>
+                  </Pressable>
+                ))}
+              </View>
             </View>
           </View>
 
@@ -186,17 +200,6 @@ export default function CreateRoleScreen() {
             tags={niceToHave} onAdd={() => addTag(niceToHaveInput, niceToHave, setNiceToHave, () => setNiceToHaveInput(''))}
             onRemove={(s) => setNiceToHave(niceToHave.filter((x) => x !== s))}
           />
-
-          <View style={st.fieldWrap}>
-            <Text style={st.label}>Experience Level</Text>
-            <View style={st.chipRow}>
-              {EXPERIENCE_LEVELS.map((lvl) => (
-                <Pressable key={lvl} style={[st.chip, experienceLevel === lvl && st.chipActive]} onPress={() => setExperienceLevel(experienceLevel === lvl ? null : lvl)}>
-                  <Text style={[st.chipText, experienceLevel === lvl && st.chipTextActive]}>{lvl}</Text>
-                </Pressable>
-              ))}
-            </View>
-          </View>
 
           <View style={st.fieldWrap}>
             <Text style={st.label}>Location</Text>
@@ -221,13 +224,6 @@ export default function CreateRoleScreen() {
           </View>
 
           <View style={st.fieldWrap}>
-            <Text style={st.label}>Contract Length</Text>
-            <View style={st.inputWrap}>
-              <TextInput style={st.input} placeholder="Permanent, 6 months, etc." placeholderTextColor={T.textMuted} value={contractLength} onChangeText={setContractLength} />
-            </View>
-          </View>
-
-          <View style={st.fieldWrap}>
             <Text style={st.label}>Rate (₦)</Text>
             <View style={{ flexDirection: 'row', gap: 10, marginBottom: 12 }}>
               <View style={[st.inputWrap, { flex: 1 }, errors.rateMin ? st.inputError : null]}>
@@ -247,13 +243,30 @@ export default function CreateRoleScreen() {
             </View>
           </View>
 
-          <View style={st.fieldWrap}>
-            <Text style={st.label}>Start Date</Text>
-            <View style={[st.inputWrap, errors.startDate ? st.inputError : null]}>
-              <TextInput style={st.input} placeholder="YYYY-MM-DD" placeholderTextColor={T.textMuted} value={startDate} onChangeText={(t) => { setStartDate(t); setErrors((e) => ({ ...e, startDate: '' })); }} />
+          <Pressable style={st.moreDetailsToggle} onPress={() => setShowMore((v) => !v)} accessibilityRole="button" accessibilityLabel="Toggle more details">
+            <Text style={st.moreDetailsText}>More details</Text>
+            <Text style={st.moreDetailsHint}>Contract length, start date</Text>
+            <Ionicons name={showMore ? 'chevron-up' : 'chevron-down'} size={18} color={T.textSecondary} />
+          </Pressable>
+
+          {showMore && (
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+              <View style={[st.fieldWrap, { flex: 1 }]}>
+                <Text style={st.label}>Contract Length</Text>
+                <View style={st.inputWrap}>
+                  <TextInput style={st.input} placeholder="Permanent, 6 months..." placeholderTextColor={T.textMuted} value={contractLength} onChangeText={setContractLength} />
+                </View>
+              </View>
+
+              <View style={[st.fieldWrap, { flex: 1 }]}>
+                <Text style={st.label}>Start Date</Text>
+                <View style={[st.inputWrap, errors.startDate ? st.inputError : null]}>
+                  <TextInput style={st.input} placeholder="YYYY-MM-DD" placeholderTextColor={T.textMuted} value={startDate} onChangeText={(t) => { setStartDate(t); setErrors((e) => ({ ...e, startDate: '' })); }} />
+                </View>
+                {errors.startDate ? <Text style={st.errorText}>{errors.startDate}</Text> : null}
+              </View>
             </View>
-            {errors.startDate ? <Text style={st.errorText}>{errors.startDate}</Text> : null}
-          </View>
+          )}
 
           <View style={st.fieldWrap}>
             <Text style={st.label}>Description *</Text>
@@ -368,5 +381,12 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
     shadowOpacity: 0.3, shadowRadius: 16, elevation: 4,
   },
   submitButtonDisabled: { opacity: 0.7 },
+  moreDetailsToggle: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    paddingVertical: 12, paddingHorizontal: 4, marginBottom: 8,
+    borderTopWidth: 1, borderTopColor: T.border,
+  },
+  moreDetailsText: { fontSize: 14, fontWeight: '700', color: T.textPrimary },
+  moreDetailsHint: { flex: 1, fontSize: 12, color: T.textMuted },
   submitText: { fontSize: 17, fontWeight: '700', color: T.textOnAccent },
 });
