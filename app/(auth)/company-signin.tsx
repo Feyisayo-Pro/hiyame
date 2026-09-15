@@ -8,6 +8,8 @@ import { useTheme, ThemePalette } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
 import AnimatedPressable from '@/components/AnimatedPressable';
 import ScreenFrame from '@/components/ScreenFrame';
+import ForgotPasswordModal from '@/components/ForgotPasswordModal';
+import { useShake } from '@/lib/useShake';
 
 export default function CompanySignInScreen() {
   const T = useTheme();
@@ -18,6 +20,8 @@ export default function CompanySignInScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string; general?: string }>({});
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const { shake, shakeStyle } = useShake();
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(24)).current;
@@ -41,12 +45,13 @@ export default function CompanySignInScreen() {
     } else if (password.length < 6) {
       newErrors.password = 'Password must be at least 6 characters';
     }
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    const hasErrors = Object.keys(newErrors).length > 0;
+    setErrors(hasErrors ? { ...newErrors, general: 'Please fix the highlighted fields.' } : newErrors);
+    return !hasErrors;
   };
 
   const handleSignIn = async () => {
-    if (!validate()) return;
+    if (!validate()) { shake(); return; }
     setLoading(true);
     setErrors((e) => ({ ...e, general: undefined }));
 
@@ -58,6 +63,7 @@ export default function CompanySignInScreen() {
     setLoading(false);
     if (error) {
       setErrors((e) => ({ ...e, general: error.message }));
+      shake();
       return;
     }
     // AuthProvider picks up the new session via onAuthStateChange and the
@@ -135,15 +141,15 @@ export default function CompanySignInScreen() {
             </View>
 
             {/* Forgot Password */}
-            <Pressable style={st.forgotRow}>
+            <Pressable style={st.forgotRow} onPress={() => setShowForgotPassword(true)}>
               <Text style={st.forgotText}>Forgot password?</Text>
             </Pressable>
 
             {errors.general && (
-              <View style={st.generalErrorBanner}>
+              <Animated.View style={[st.generalErrorBanner, shakeStyle]}>
                 <Ionicons name="alert-circle" size={16} color={T.danger} />
                 <Text style={st.generalErrorText}>{errors.general}</Text>
-              </View>
+              </Animated.View>
             )}
 
             {/* Spacer between forgot link and sign-in button */}
@@ -184,6 +190,7 @@ export default function CompanySignInScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
       </ScreenFrame>
+      <ForgotPasswordModal visible={showForgotPassword} initialEmail={email} onClose={() => setShowForgotPassword(false)} />
     </SafeAreaView>
   );
 }

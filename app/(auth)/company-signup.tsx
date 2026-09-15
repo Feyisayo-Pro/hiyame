@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
 import {
+  Animated,
   Pressable,
   StyleSheet,
   TextInput,
@@ -18,6 +19,7 @@ import ScreenFrame from '@/components/ScreenFrame';
 import { SubscriptionTier } from '@/lib/subscriptionStore';
 import { supabase } from '@/lib/supabase';
 import VerifyEmailModal from '@/components/VerifyEmailModal';
+import { useShake } from '@/lib/useShake';
 
 /* ── Constants ── */
 
@@ -137,6 +139,7 @@ export default function CompanySignupScreen() {
 
   const [step, setStep] = useState(0);
   const [loading, setLoading] = useState(false);
+  const { shake, shakeStyle } = useShake();
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showVerify, setShowVerify] = useState(false);
 
@@ -200,12 +203,18 @@ export default function CompanySignupScreen() {
     }
     // Step 4 (tier) always valid — has a default
 
+    const hasErrors = Object.keys(newErrors).length > 0;
+    // A summary alongside the per-field messages so there's something
+    // visible near the Continue button (and something for the shake
+    // animation to actually shake) even when the failing field is the
+    // first one on the step, out of view above the fold.
+    if (hasErrors) newErrors.general = 'Please fix the highlighted fields above.';
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return !hasErrors;
   }, [step, contactName, email, password, companyName, industry, industryOther, companySize, bio]);
 
   const handleNext = useCallback(async () => {
-    if (!validateStep()) return;
+    if (!validateStep()) { shake(); return; }
 
     if (step < TOTAL_STEPS - 1) {
       setStep(step + 1);
@@ -243,6 +252,7 @@ export default function CompanySignupScreen() {
     if (error) {
       setLoading(false);
       setErrors((e) => ({ ...e, general: error.message }));
+      shake();
       return;
     }
 
@@ -253,7 +263,7 @@ export default function CompanySignupScreen() {
       return;
     }
     router.replace('/(company)');
-  }, [step, validateStep, selectedTier, contactName, email, password, companyName, industry, industryOther, companySize, hqLocation, website, bio]);
+  }, [step, validateStep, shake, selectedTier, contactName, email, password, companyName, industry, industryOther, companySize, hqLocation, website, bio]);
 
   const handleBack = useCallback(() => {
     if (step > 0) {
@@ -614,8 +624,8 @@ export default function CompanySignupScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <SwipeFadeContainer>
-            <View style={{ paddingHorizontal: 20 }}>
+          <SwipeFadeContainer triggerKey={step} duration={220} offset={40}>
+            <Animated.View style={[{ paddingHorizontal: 20 }, shakeStyle]}>
               <StepProgress current={step} total={TOTAL_STEPS} T={T} />
 
               {/* Logo */}
@@ -660,7 +670,7 @@ export default function CompanySignupScreen() {
                   )}
                 </Pressable>
               </View>
-            </View>
+            </Animated.View>
           </SwipeFadeContainer>
         </ScrollView>
       </KeyboardAvoidingView>

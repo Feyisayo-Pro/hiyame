@@ -1,5 +1,6 @@
-import { useState, useMemo} from 'react';
+import { useState, useMemo } from 'react';
 import {
+  Animated,
   Pressable,
   StyleSheet,
   TextInput,
@@ -19,6 +20,7 @@ import { supabase } from '@/lib/supabase';
 import ScreenFrame from '@/components/ScreenFrame';
 import VerifyEmailModal from '@/components/VerifyEmailModal';
 import { INDUSTRIES, SKILLS_BY_INDUSTRY, DEFAULT_SKILL_SUGGESTIONS } from '@/lib/industrySkills';
+import { useShake } from '@/lib/useShake';
 
 export default function CandidateSignupScreen() {
   const T = useTheme();
@@ -38,6 +40,7 @@ export default function CandidateSignupScreen() {
   const [rateInput, setRateInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const { shake, shakeStyle } = useShake();
 
   const addSkill = (skill: string) => {
     const trimmed = skill.trim();
@@ -73,12 +76,18 @@ export default function CandidateSignupScreen() {
     } else if (isNaN(Number(rateInput)) || Number(rateInput) <= 0) {
       newErrors.rate = 'Enter a valid rate amount';
     }
+    const hasErrors = Object.keys(newErrors).length > 0;
+    // A summary alongside the per-field messages — without it, a failure on
+    // a field scrolled out of view (this is a long single-page form) gives
+    // no visible feedback at all near the submit button, and nothing for
+    // the shake animation to shake.
+    if (hasErrors) newErrors.general = 'Please fix the highlighted fields above.';
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return !hasErrors;
   };
 
   const handleSubmit = async () => {
-    if (!validate()) return;
+    if (!validate()) { shake(); return; }
     setLoading(true);
     setErrors((e) => ({ ...e, general: '' }));
 
@@ -104,6 +113,7 @@ export default function CandidateSignupScreen() {
     if (error) {
       setLoading(false);
       setErrors((e) => ({ ...e, general: error.message }));
+      shake();
       return;
     }
 
@@ -321,10 +331,10 @@ export default function CandidateSignupScreen() {
             </View>
 
             {errors.general ? (
-              <View style={st.generalErrorBanner}>
+              <Animated.View style={[st.generalErrorBanner, shakeStyle]}>
                 <Ionicons name="alert-circle" size={16} color={T.danger} />
                 <Text style={st.generalErrorText}>{errors.general}</Text>
-              </View>
+              </Animated.View>
             ) : null}
 
             <Pressable

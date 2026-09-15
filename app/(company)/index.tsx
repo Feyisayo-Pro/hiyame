@@ -16,6 +16,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme, useThemeToggle, ThemePalette, ELEVATION } from '@/lib/theme';
 import { useSubscription } from '@/lib/subscriptionStore';
 import { useAuth } from '@/lib/useAuth';
+import { supabase } from '@/lib/supabase';
 import { getCompanyStats, CompanyStats, relativeTime } from '@/lib/dashboardStats';
 import { TIER_CONFIG } from '@/lib/mock-data';
 import { initials } from '@/lib/format';
@@ -141,9 +142,16 @@ function ConfigModal({ visible, onClose, T }: { visible: boolean; onClose: () =>
                 </View>
               ))}
 
-              {/* Sign Out */}
+              {/* Sign Out — was previously just closing this sheet and force-
+                  navigating without ever calling supabase.auth.signOut(), so
+                  the session stayed alive and AuthGate's own redirect logic
+                  would just send a still-authenticated user straight back
+                  here. Now matches the signOut() pattern used everywhere
+                  else (TopNav, both profile screens, AccountSettings) —
+                  onAuthStateChange picks up the cleared session and AuthGate
+                  handles the redirect itself, no manual router call needed. */}
               <Pressable
-                onPress={() => { onClose(); router.replace('/(auth)/welcome'); }}
+                onPress={() => { onClose(); supabase.auth.signOut(); }}
                 style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 16, marginHorizontal: 20 }}
               >
                 <Ionicons name="log-out-outline" size={18} color={T.danger} />
