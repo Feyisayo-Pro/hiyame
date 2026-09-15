@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, TextInput, View, KeyboardAvoidingView, Platform } from 'react-native';
 import { router } from 'expo-router';
 import { Text } from '@/components/Themed';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon, { AppIconName } from '@/components/AppIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, ThemePalette } from '@/lib/theme';
 import { useAuth } from '@/lib/useAuth';
@@ -121,7 +121,7 @@ export default function CreateRoleScreen() {
         <ScreenFrame>
         <View style={st.header}>
           <Pressable style={st.backButton} onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Go back">
-            <Ionicons name="arrow-back" size={20} color={T.textPrimary} />
+            <AppIcon name="arrow-back" size={20} color={T.textPrimary} />
           </Pressable>
           <Text style={st.headerTitle}>Post a Role</Text>
         </View>
@@ -153,7 +153,7 @@ export default function CreateRoleScreen() {
                     style={[st.tierCard, selected && { borderColor: cfg.accent, backgroundColor: cfg.accent + '10' }]}
                     onPress={() => setTier(t)}
                   >
-                    <Ionicons name={cfg.icon as keyof typeof Ionicons.glyphMap} size={18} color={selected ? cfg.accent : T.textMuted} />
+                    <AppIcon name={cfg.icon as AppIconName} size={18} color={selected ? cfg.accent : T.textMuted} />
                     <Text style={[st.tierCardText, selected && { color: cfg.accent, fontWeight: '700' }]}>{cfg.label}</Text>
                   </Pressable>
                 );
@@ -246,7 +246,7 @@ export default function CreateRoleScreen() {
           <Pressable style={st.moreDetailsToggle} onPress={() => setShowMore((v) => !v)} accessibilityRole="button" accessibilityLabel="Toggle more details">
             <Text style={st.moreDetailsText}>More details</Text>
             <Text style={st.moreDetailsHint}>Contract length, start date</Text>
-            <Ionicons name={showMore ? 'chevron-up' : 'chevron-down'} size={18} color={T.textSecondary} />
+            <AppIcon name={showMore ? 'chevron-up' : 'chevron-down'} size={18} color={T.textSecondary} />
           </Pressable>
 
           {showMore && (
@@ -291,7 +291,7 @@ export default function CreateRoleScreen() {
             ) : (
               <>
                 <Text style={st.submitText}>Post Role</Text>
-                <Ionicons name="arrow-forward" size={18} color={T.textOnAccent} />
+                <AppIcon name="arrow-forward" size={18} color={T.textOnAccent} />
               </>
             )}
           </AnimatedPressable>
@@ -322,7 +322,7 @@ function TagField({ T, st, label, inputValue, onInputChange, tags, onAdd, onRemo
         />
         {inputValue.trim().length > 0 && (
           <Pressable style={st.addTagBtn} onPress={onAdd} hitSlop={8} accessibilityRole="button" accessibilityLabel={`Add ${label.toLowerCase()} "${inputValue.trim()}"`}>
-            <Ionicons name="add" size={18} color={T.textOnAccent} />
+            <AppIcon name="add" size={18} color={T.textOnAccent} />
           </Pressable>
         )}
       </View>
@@ -332,7 +332,7 @@ function TagField({ T, st, label, inputValue, onInputChange, tags, onAdd, onRemo
             <View key={tag} style={st.tagChip}>
               <Text style={st.tagChipText}>{tag}</Text>
               <Pressable onPress={() => onRemove(tag)} hitSlop={6} accessibilityRole="button" accessibilityLabel={`Remove ${tag}`}>
-                <Ionicons name="close" size={14} color={T.accent} />
+                <AppIcon name="close" size={14} color={T.accent} />
               </Pressable>
             </View>
           ))}

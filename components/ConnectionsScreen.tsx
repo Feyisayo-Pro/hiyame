@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, View, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon from '@/components/AppIcon';
 import { Text } from '@/components/Themed';
 import { useTheme, ThemePalette, ELEVATION } from '@/lib/theme';
 import { useAuth } from '@/lib/useAuth';
@@ -108,7 +108,7 @@ export default function ConnectionsScreen({ persona }: { persona: 'candidate' | 
         >
           {connections.length === 0 ? (
             <View style={st.emptyBlock}>
-              <Ionicons name="people-outline" size={28} color={T.textMuted} />
+              <AppIcon name="people-outline" size={28} color={T.textMuted} />
               <Text style={st.emptyTitle}>No connections yet</Text>
               <Text style={st.emptySub}>
                 {persona === 'candidate'

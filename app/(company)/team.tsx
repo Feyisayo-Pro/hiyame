@@ -2,7 +2,7 @@ import { useMemo, useState, useCallback, useEffect } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon from '@/components/AppIcon';
 
 import { Text } from '@/components/Themed';
 import { useTheme, ThemePalette } from '@/lib/theme';
@@ -177,7 +177,7 @@ export default function TeamMembersScreen() {
       <ScreenFrame>
       <View style={s.header}>
         <Pressable style={s.backBtn} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={20} color={T.textPrimary} />
+          <AppIcon name="arrow-back" size={20} color={T.textPrimary} />
         </Pressable>
         <Text style={s.headerTitle}>Team Members</Text>
         <View style={{ width: 36 }} />
@@ -188,7 +188,7 @@ export default function TeamMembersScreen() {
           {/* Seat usage banner */}
           <View style={s.seatCard}>
             <View style={s.seatIconWrap}>
-              <Ionicons name="people" size={18} color={T.accent} />
+              <AppIcon name="people" size={18} color={T.accent} />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={s.seatTitle}>{config.name} Plan</Text>
@@ -242,7 +242,7 @@ export default function TeamMembersScreen() {
                         accessibilityRole="button"
                         accessibilityLabel={`${m.status === 'pending' ? 'Cancel invite for' : 'Remove'} ${m.email ?? 'member'}`}
                       >
-                        <Ionicons name="trash-outline" size={18} color={T.danger} />
+                        <AppIcon name="trash-outline" size={18} color={T.danger} />
                       </Pressable>
                     )}
                   </View>
@@ -278,7 +278,7 @@ export default function TeamMembersScreen() {
               disabled={inviting}
               style={[s.inviteBtn, (seatsFull || inviting) && s.inviteBtnDisabled]}
             >
-              <Ionicons name={seatsFull ? 'lock-closed' : 'person-add'} size={16} color={T.textOnAccent} />
+              <AppIcon name={seatsFull ? 'lock-closed' : 'person-add'} size={16} color={T.textOnAccent} />
               <Text style={s.inviteBtnText}>{inviting ? 'Inviting…' : 'Invite Member'}</Text>
             </Pressable>
             <Text style={s.inviteHint}>
@@ -288,7 +288,7 @@ export default function TeamMembersScreen() {
 
           {seatsFull && (
             <View style={s.limitNotice}>
-              <Ionicons name="alert-circle" size={16} color={T.amber} />
+              <AppIcon name="alert-circle" size={16} color={T.amber} />
               <Text style={s.limitNoticeText}>
                 Your {config.name} plan is limited to {seatCap} team seat{seatCap === 1 ? '' : 's'}. Upgrade to Enterprise for unlimited seats.
               </Text>

@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useMemo} from 'react';
 import { StyleSheet, View, ScrollView, TouchableOpacity } from 'react-native';
 import { Text } from '@/components/Themed';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import AppIcon, { AppIconName } from '@/components/AppIcon';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCandidateProfile } from '@/lib/candidateProfile';
 import { useVerification } from '@/lib/useVerification';
@@ -32,7 +32,7 @@ interface VerificationStep {
   key: string;
   title: string;
   subtitle: string;
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: AppIconName;
   description: string;
 }
 
@@ -169,7 +169,7 @@ export default function VerificationScreen() {
               </View>
             </View>
             {isFullyVerified && (
-              <MaterialCommunityIcons name="decagram" size={28} color={T.emerald} />
+              <AppIcon name="decagram" size={28} color={T.emerald} />
             )}
           </View>
 
@@ -191,7 +191,7 @@ export default function VerificationScreen() {
         {isFullyVerified && (
           <View style={st.verifiedBanner}>
             <View style={st.verifiedBannerIcon}>
-              <Ionicons name="checkmark-circle" size={24} color={T.emerald} />
+              <AppIcon name="checkmark-circle" size={24} color={T.emerald} />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={st.verifiedBannerTitle}>Profile Fully Verified</Text>
@@ -208,7 +208,7 @@ export default function VerificationScreen() {
             included, regardless of the relaxed "fully verified" badge above. */}
         {completedCount < TOTAL_VERIFICATION_COMPONENTS && (
           <View style={st.gatingNotice}>
-            <Ionicons name="information-circle-outline" size={18} color={T.amber} />
+            <AppIcon name="information-circle-outline" size={18} color={T.amber} />
             <Text style={st.gatingNoticeText}>
               The Phase 3 matching engine requires all 4 verification components to be fulfilled before you can be matched with Corporate-tier roles.
             </Text>
@@ -250,7 +250,7 @@ export default function VerificationScreen() {
                 <View style={st.stepNumberRow}>
                   <View style={[st.stepNumber, isDone && st.stepNumberDone]}>
                     {isDone ? (
-                      <Ionicons name="checkmark" size={14} color={T.textOnAccent} />
+                      <AppIcon name="checkmark" size={14} color={T.textOnAccent} />
                     ) : (
                       <Text style={st.stepNumberText}>{index + 1}</Text>
                     )}
@@ -270,7 +270,7 @@ export default function VerificationScreen() {
               {/* Icon + Description */}
               <View style={st.stepBody}>
                 <View style={[st.stepIconWrap, isDone && st.stepIconWrapDone]}>
-                  <Ionicons name={step.icon} size={22} color={isDone ? T.emerald : T.accent} />
+                  <AppIcon name={step.icon} size={22} color={isDone ? T.emerald : T.accent} />
                 </View>
                 <Text style={st.stepDescription}>{step.description}</Text>
               </View>
@@ -281,7 +281,7 @@ export default function VerificationScreen() {
                 onPress={() => toggleStep(step.key)}
                 activeOpacity={0.7}
               >
-                <Ionicons
+                <AppIcon
                   name={isDone ? (step.key === 'identity' ? 'checkmark-circle-outline' : 'close-circle-outline') : 'arrow-forward-circle-outline'}
                   size={18}
                   color={isDone ? T.textMuted : T.textOnAccent}

@@ -12,7 +12,7 @@ import {
 import { router } from 'expo-router';
 import { Text } from '@/components/Themed';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon from '@/components/AppIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useCandidateProfile } from '@/lib/candidateProfile';
 import { useTheme, ThemePalette } from '@/lib/theme';
@@ -147,7 +147,7 @@ export default function CandidateSignupScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <Pressable style={st.backButton} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={20} color={T.textPrimary} />
+          <AppIcon name="arrow-back" size={20} color={T.textPrimary} />
         </Pressable>
 
         <ScrollView
@@ -171,7 +171,7 @@ export default function CandidateSignupScreen() {
             <View style={st.fieldWrap}>
               <Text style={st.label}>Email Address</Text>
               <View style={[st.inputWrap, errors.email ? st.inputError : null]}>
-                <Ionicons name="mail-outline" size={18} color={errors.email ? T.danger : T.textMuted} />
+                <AppIcon name="mail-outline" size={18} color={errors.email ? T.danger : T.textMuted} />
                 <TextInput
                   style={st.input}
                   placeholder="you@example.com"
@@ -189,7 +189,7 @@ export default function CandidateSignupScreen() {
             <View style={st.fieldWrap}>
               <Text style={st.label}>Password</Text>
               <View style={[st.inputWrap, errors.password ? st.inputError : null]}>
-                <Ionicons name="lock-closed-outline" size={18} color={errors.password ? T.danger : T.textMuted} />
+                <AppIcon name="lock-closed-outline" size={18} color={errors.password ? T.danger : T.textMuted} />
                 <TextInput
                   style={st.input}
                   placeholder="At least 6 characters"
@@ -200,7 +200,7 @@ export default function CandidateSignupScreen() {
                   onChangeText={(t) => { setPassword(t); setErrors((e) => ({ ...e, password: '' })); }}
                 />
                 <Pressable onPress={() => setShowPassword(!showPassword)} hitSlop={8}>
-                  <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color={T.textMuted} />
+                  <AppIcon name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color={T.textMuted} />
                 </Pressable>
               </View>
               {errors.password ? <Text style={st.errorText}>{errors.password}</Text> : null}
@@ -209,7 +209,7 @@ export default function CandidateSignupScreen() {
             <View style={st.fieldWrap}>
               <Text style={st.label}>Full Name</Text>
               <View style={[st.inputWrap, errors.fullName ? st.inputError : null]}>
-                <Ionicons name="person-outline" size={18} color={errors.fullName ? T.danger : T.textMuted} />
+                <AppIcon name="person-outline" size={18} color={errors.fullName ? T.danger : T.textMuted} />
                 <TextInput
                   style={st.input}
                   placeholder="Amara Osei"
@@ -225,7 +225,7 @@ export default function CandidateSignupScreen() {
             <View style={st.fieldWrap}>
               <Text style={st.label}>Professional Title</Text>
               <View style={[st.inputWrap, errors.title ? st.inputError : null]}>
-                <Ionicons name="briefcase-outline" size={18} color={errors.title ? T.danger : T.textMuted} />
+                <AppIcon name="briefcase-outline" size={18} color={errors.title ? T.danger : T.textMuted} />
                 <TextInput
                   style={st.input}
                   placeholder="Senior Backend Engineer"
@@ -258,7 +258,7 @@ export default function CandidateSignupScreen() {
             <View style={st.fieldWrap}>
               <Text style={st.label}>Core Skills</Text>
               <View style={[st.inputWrap, errors.skills ? st.inputError : null]}>
-                <Ionicons name="code-slash-outline" size={18} color={errors.skills ? T.danger : T.textMuted} />
+                <AppIcon name="code-slash-outline" size={18} color={errors.skills ? T.danger : T.textMuted} />
                 <TextInput
                   style={st.input}
                   placeholder="Type a skill and press add"
@@ -270,7 +270,7 @@ export default function CandidateSignupScreen() {
                 />
                 {skillInput.trim().length > 0 && (
                   <Pressable style={st.addSkillBtn} onPress={() => addSkill(skillInput)} hitSlop={8}>
-                    <Ionicons name="add" size={18} color={T.textOnAccent} />
+                    <AppIcon name="add" size={18} color={T.textOnAccent} />
                   </Pressable>
                 )}
               </View>
@@ -282,7 +282,7 @@ export default function CandidateSignupScreen() {
                     <View key={skill} style={st.skillChip}>
                       <Text style={st.skillChipText}>{skill}</Text>
                       <Pressable onPress={() => removeSkill(skill)} hitSlop={6}>
-                        <Ionicons name="close" size={14} color={T.accent} />
+                        <AppIcon name="close" size={14} color={T.accent} />
                       </Pressable>
                     </View>
                   ))}
@@ -296,7 +296,7 @@ export default function CandidateSignupScreen() {
                     <View style={st.suggestionsRow}>
                       {availableSuggestions.slice(0, 6).map((skill) => (
                         <Pressable key={skill} style={st.suggestionChip} onPress={() => addSkill(skill)}>
-                          <Ionicons name="add" size={12} color={T.textSecondary} />
+                          <AppIcon name="add" size={12} color={T.textSecondary} />
                           <Text style={st.suggestionText}>{skill}</Text>
                         </Pressable>
                       ))}
@@ -324,7 +324,7 @@ export default function CandidateSignupScreen() {
             </View>
 
             <View style={st.infoCard}>
-              <Ionicons name="shield-checkmark-outline" size={18} color={T.accent} />
+              <AppIcon name="shield-checkmark-outline" size={18} color={T.accent} />
               <Text style={st.infoText}>
                 After setting up your profile, you'll be taken to the Verification Center to complete your 4-step verification (Identity, Video Intro, Skills Assessment, Employer Review).
               </Text>
@@ -332,7 +332,7 @@ export default function CandidateSignupScreen() {
 
             {errors.general ? (
               <Animated.View style={[st.generalErrorBanner, shakeStyle]}>
-                <Ionicons name="alert-circle" size={16} color={T.danger} />
+                <AppIcon name="alert-circle" size={16} color={T.danger} />
                 <Text style={st.generalErrorText}>{errors.general}</Text>
               </Animated.View>
             ) : null}
@@ -347,7 +347,7 @@ export default function CandidateSignupScreen() {
               ) : (
                 <>
                   <Text style={st.submitText}>Continue to Verification</Text>
-                  <Ionicons name="arrow-forward" size={18} color={T.textOnAccent} />
+                  <AppIcon name="arrow-forward" size={18} color={T.textOnAccent} />
                 </>
               )}
             </Pressable>

@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import { Animated, Easing, Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon, { AppIconName } from '@/components/AppIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Text } from '@/components/Themed';
@@ -11,7 +11,7 @@ import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 type Persona = 'candidate' | 'company';
 
 interface Faq { q: string; a: string }
-interface FaqSection { title: string; icon: keyof typeof Ionicons.glyphMap; items: Faq[] }
+interface FaqSection { title: string; icon: AppIconName; items: Faq[] }
 
 const CANDIDATE_SECTIONS: FaqSection[] = [
   {
@@ -101,7 +101,7 @@ function AccordionItem({ item, T }: { item: Faq; T: ThemePalette }) {
       >
         <Text style={{ flex: 1, fontSize: 14, fontWeight: '700', color: T.textPrimary }}>{item.q}</Text>
         <Animated.View style={{ transform: [{ rotate: spin }] }}>
-          <Ionicons name="chevron-down" size={18} color={T.textMuted} />
+          <AppIcon name="chevron-down" size={18} color={T.textMuted} />
         </Animated.View>
       </Pressable>
       {open && (
@@ -124,7 +124,7 @@ export default function HelpCenterScreen({ persona }: { persona: Persona }) {
       <ScreenFrame>
         <View style={st.header}>
           <Pressable style={st.backBtn} onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Go back">
-            <Ionicons name="arrow-back" size={20} color={T.textPrimary} />
+            <AppIcon name="arrow-back" size={20} color={T.textPrimary} />
           </Pressable>
           <View>
             <Text style={st.headerTitle}>Help Center</Text>
@@ -138,7 +138,7 @@ export default function HelpCenterScreen({ persona }: { persona: Persona }) {
               <View key={section.title} style={st.section}>
                 <View style={st.sectionHead}>
                   <View style={st.sectionIconWrap}>
-                    <Ionicons name={section.icon} size={16} color={T.accent} />
+                    <AppIcon name={section.icon} size={16} color={T.accent} />
                   </View>
                   <Text style={st.sectionTitle}>{section.title}</Text>
                 </View>
@@ -151,7 +151,7 @@ export default function HelpCenterScreen({ persona }: { persona: Persona }) {
             ))}
 
             <View style={st.contactCard}>
-              <Ionicons name="chatbubble-ellipses-outline" size={22} color={T.accent} />
+              <AppIcon name="chatbubble-ellipses-outline" size={22} color={T.accent} />
               <Text style={st.contactTitle}>Still stuck?</Text>
               <Text style={st.contactSub}>Email us and we'll get back to you.</Text>
               <Text style={st.contactEmail}>{contactEmail}</Text>

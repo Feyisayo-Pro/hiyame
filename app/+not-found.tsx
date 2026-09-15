@@ -1,7 +1,7 @@
 import { Link, Stack } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/Themed';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon from '@/components/AppIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, ThemePalette } from '@/lib/theme';
 import { useMemo } from 'react';
@@ -15,13 +15,13 @@ export default function NotFoundScreen() {
       <Stack.Screen options={{ title: 'Not Found', headerShown: false }} />
       <SafeAreaView style={st.container} edges={['top', 'left', 'right', 'bottom']}>
         <View style={st.iconWrap}>
-          <Ionicons name="compass-outline" size={32} color={T.accent} />
+          <AppIcon name="compass-outline" size={32} color={T.accent} />
         </View>
         <Text style={st.title}>Page not found</Text>
         <Text style={st.subtitle}>The screen you're looking for doesn't exist or may have moved.</Text>
         <Link href="/" asChild>
           <Pressable style={st.homeButton}>
-            <Ionicons name="home-outline" size={18} color={T.textOnAccent} />
+            <AppIcon name="home-outline" size={18} color={T.textOnAccent} />
             <Text style={st.homeButtonText}>Go to Home</Text>
           </Pressable>
         </Link>

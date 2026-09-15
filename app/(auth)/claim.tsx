@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { Pressable, StyleSheet, TextInput, View, KeyboardAvoidingView, Platform } from 'react-native';
 import { router } from 'expo-router';
 import { Text } from '@/components/Themed';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon from '@/components/AppIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, ThemePalette } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
@@ -70,7 +70,7 @@ export default function ClaimAccountScreen() {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View style={st.content}>
           <View style={st.iconWrap}>
-            <Ionicons name="shield-checkmark" size={28} color={T.accent} />
+            <AppIcon name="shield-checkmark" size={28} color={T.accent} />
           </View>
           <Text style={st.title}>Set Your Password</Text>
           <Text style={st.subtitle}>
@@ -80,7 +80,7 @@ export default function ClaimAccountScreen() {
           <View style={st.fieldWrap}>
             <Text style={st.label}>New Password</Text>
             <View style={[st.inputWrap, error ? st.inputError : null]}>
-              <Ionicons name="lock-closed-outline" size={18} color={error ? T.danger : T.textMuted} />
+              <AppIcon name="lock-closed-outline" size={18} color={error ? T.danger : T.textMuted} />
               <TextInput
                 style={st.input}
                 placeholder="At least 6 characters"
@@ -91,7 +91,7 @@ export default function ClaimAccountScreen() {
                 onChangeText={(t) => { setPassword(t); setError(''); }}
               />
               <Pressable onPress={() => setShowPassword(!showPassword)} hitSlop={8}>
-                <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color={T.textMuted} />
+                <AppIcon name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color={T.textMuted} />
               </Pressable>
             </View>
             {error ? <Text style={st.errorText}>{error}</Text> : null}
@@ -103,7 +103,7 @@ export default function ClaimAccountScreen() {
             ) : (
               <>
                 <Text style={st.buttonText}>Continue</Text>
-                <Ionicons name="arrow-forward" size={18} color={T.textOnAccent} />
+                <AppIcon name="arrow-forward" size={18} color={T.textOnAccent} />
               </>
             )}
           </Pressable>

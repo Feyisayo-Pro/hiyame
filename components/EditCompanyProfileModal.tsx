@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon from '@/components/AppIcon';
 import { Text } from '@/components/Themed';
 import { useTheme, ThemePalette } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
@@ -106,7 +106,7 @@ export default function EditCompanyProfileModal({ visible, companyId, initial, o
           <View style={s.headerRow}>
             <Text style={s.title}>Edit Company Profile</Text>
             <Pressable onPress={close} hitSlop={8}>
-              <Ionicons name="close" size={22} color={T.textMuted} />
+              <AppIcon name="close" size={22} color={T.textMuted} />
             </Pressable>
           </View>
 

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, useMemo } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, View, ActivityIndicator } from 'react-native';
 import { Text } from '@/components/Themed';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon from '@/components/AppIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, ThemePalette, ELEVATION } from '@/lib/theme';
 import { useAuth } from '@/lib/useAuth';
@@ -181,7 +181,7 @@ export default function OpportunitiesScreen() {
         >
           {pending.length === 0 && accepted.length === 0 && (
             <View style={st.emptyBlock}>
-              <Ionicons name="mail-outline" size={28} color={T.textMuted} />
+              <AppIcon name="mail-outline" size={28} color={T.textMuted} />
               <Text style={st.emptyTitle}>No introductions yet</Text>
               <Text style={st.emptySub}>
                 When a company wants to connect, it'll show up here. Complete verification to become eligible for matching.
@@ -199,7 +199,7 @@ export default function OpportunitiesScreen() {
                   <View style={st.card}>
                     <View style={st.lockedRow}>
                       <View style={st.lockIcon}>
-                        <Ionicons name="lock-closed" size={14} color={T.textMuted} />
+                        <AppIcon name="lock-closed" size={14} color={T.textMuted} />
                       </View>
                       <View style={{ flex: 1 }}>
                         <Text style={st.lockedLabel}>Company identity revealed after you accept</Text>
@@ -213,11 +213,11 @@ export default function OpportunitiesScreen() {
                     <Text style={st.deadlineText}>{deadlineText}</Text>
                     <View style={st.actionsRow}>
                       <AnimatedPressable style={[st.actionBtn, st.declineBtn]} onPress={() => respond(intro.introductionId, 'declined')} disabled={busyId === intro.introductionId}>
-                        <Ionicons name="close" size={18} color={T.danger} />
+                        <AppIcon name="close" size={18} color={T.danger} />
                         <Text style={st.declineText}>Decline</Text>
                       </AnimatedPressable>
                       <AnimatedPressable style={[st.actionBtn, st.acceptBtn]} onPress={() => respond(intro.introductionId, 'accepted')} disabled={busyId === intro.introductionId}>
-                        <Ionicons name="checkmark" size={18} color={T.emerald} />
+                        <AppIcon name="checkmark" size={18} color={T.emerald} />
                         <Text style={st.acceptText}>Accept</Text>
                       </AnimatedPressable>
                     </View>
@@ -246,7 +246,7 @@ export default function OpportunitiesScreen() {
                           </View>
                         ) : (
                           <View style={st.metaRow}>
-                            <Ionicons name="business-outline" size={14} color={T.textSecondary} />
+                            <AppIcon name="business-outline" size={14} color={T.textSecondary} />
                             <Text style={st.metaText}>{a.companyName}</Text>
                           </View>
                         )}

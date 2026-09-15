@@ -2,14 +2,14 @@ import { useRef, useEffect, useMemo} from 'react';
 import { Animated, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import { Text } from '@/components/Themed';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon, { AppIconName } from '@/components/AppIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, ThemePalette } from '@/lib/theme';
 import ScreenFrame from '@/components/ScreenFrame';
 
 interface SignInOption {
   key: string;
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: AppIconName;
   title: string;
   subtitle: string;
   micro: string;
@@ -62,7 +62,7 @@ export default function LoginScreen() {
       <ScreenFrame maxWidth={560}>
       {/* Back Button */}
       <Pressable style={st.backButton} onPress={() => router.back()}>
-        <Ionicons name="arrow-back" size={20} color={T.textPrimary} />
+        <AppIcon name="arrow-back" size={20} color={T.textPrimary} />
       </Pressable>
 
       <ScrollView
@@ -73,7 +73,7 @@ export default function LoginScreen() {
         {/* Header */}
         <Animated.View style={[st.headerWrap, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
           <View style={st.logoMark}>
-            <Ionicons name="leaf" size={20} color={T.textOnAccent} />
+            <AppIcon name="leaf" size={20} color={T.textOnAccent} />
           </View>
           <Text style={st.title}>Welcome Back</Text>
           <Text style={st.subtitle}>Choose how you'd like to sign in</Text>
@@ -89,16 +89,16 @@ export default function LoginScreen() {
             >
               <View style={st.optionTop}>
                 <View style={st.optionIconWrap}>
-                  <Ionicons name={opt.icon} size={26} color={T.accent} />
+                  <AppIcon name={opt.icon} size={26} color={T.accent} />
                 </View>
-                <Ionicons name="chevron-forward" size={20} color={T.textMuted} />
+                <AppIcon name="chevron-forward" size={20} color={T.textMuted} />
               </View>
 
               <Text style={st.optionTitle}>{opt.title}</Text>
               <Text style={st.optionSubtitle}>{opt.subtitle}</Text>
 
               <View style={st.microRow}>
-                <Ionicons name="sparkles-outline" size={12} color={T.accent} />
+                <AppIcon name="sparkles-outline" size={12} color={T.accent} />
                 <Text style={st.microText}>{opt.micro}</Text>
               </View>
             </Pressable>
@@ -116,7 +116,7 @@ export default function LoginScreen() {
             style={st.registerButton}
             onPress={() => router.push('/(auth)/register')}
           >
-            <Ionicons name="add-circle-outline" size={18} color={T.accent} />
+            <AppIcon name="add-circle-outline" size={18} color={T.accent} />
             <Text style={st.registerText}>Create an Account</Text>
           </Pressable>
         </View>

@@ -1,7 +1,7 @@
 import { StyleSheet, View, ScrollView, Pressable, Image } from 'react-native';
 import { useEffect, useMemo, useState } from 'react';
 import { Text } from '@/components/Themed';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import AppIcon from '@/components/AppIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
@@ -95,7 +95,7 @@ export default function CompanyProfileScreen() {
         <View style={st.header}>
           <Text style={st.headerTitle}>Company Profile</Text>
           <Pressable onPress={() => router.push('/(company)/settings')} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: T.surface, alignItems: 'center', justifyContent: 'center' }}>
-            <Ionicons name="settings-outline" size={20} color={T.textSecondary} />
+            <AppIcon name="settings-outline" size={20} color={T.textSecondary} />
           </Pressable>
         </View>
 
@@ -107,16 +107,16 @@ export default function CompanyProfileScreen() {
                 {real?.logoUrl ? (
                   <Image source={{ uri: real.logoUrl }} style={st.wsAvatarImage} resizeMode="cover" />
                 ) : (
-                  <Ionicons name="business" size={28} color={T.accent} />
+                  <AppIcon name="business" size={28} color={T.accent} />
                 )}
                 {uploadingLogo && (
                   <View style={st.wsAvatarUploadingOverlay}>
-                    <Ionicons name="cloud-upload-outline" size={18} color={T.white} />
+                    <AppIcon name="cloud-upload-outline" size={18} color={T.white} />
                   </View>
                 )}
               </View>
               <View style={st.wsCameraOverlay}>
-                <Ionicons name="camera" size={12} color={T.white} />
+                <AppIcon name="camera" size={12} color={T.white} />
               </View>
             </Pressable>
             <View style={st.wsInfo}>
@@ -127,17 +127,17 @@ export default function CompanyProfileScreen() {
 
           <View style={st.wsBadgeRow}>
             <View style={st.tierBadge}>
-              <MaterialCommunityIcons name="rocket-launch" size={13} color={T.textOnAccent} />
+              <AppIcon name="rocket-launch" size={13} color={T.textOnAccent} />
               <Text style={st.tierBadgeText}>{config.name} Tier</Text>
             </View>
             {isVerified ? (
               <View style={st.verifiedBadge}>
-                <Ionicons name="checkmark-circle" size={13} color={T.emerald} />
+                <AppIcon name="checkmark-circle" size={13} color={T.emerald} />
                 <Text style={st.verifiedText}>Verified</Text>
               </View>
             ) : (
               <View style={st.unverifiedBadge}>
-                <Ionicons name="time-outline" size={13} color={T.textMuted} />
+                <AppIcon name="time-outline" size={13} color={T.textMuted} />
                 <Text style={st.unverifiedText}>Not yet verified</Text>
               </View>
             )}
@@ -151,7 +151,7 @@ export default function CompanyProfileScreen() {
           <View style={st.fieldCard}>
             <View style={st.fieldRow}>
               <View style={st.fieldIconWrap}>
-                <Ionicons name="business-outline" size={18} color={T.accent} />
+                <AppIcon name="business-outline" size={18} color={T.accent} />
               </View>
               <View style={st.fieldContent}>
                 <Text style={st.fieldLabel}>Company Name</Text>
@@ -163,7 +163,7 @@ export default function CompanyProfileScreen() {
 
             <View style={st.fieldRow}>
               <View style={st.fieldIconWrap}>
-                <Ionicons name="mail-outline" size={18} color={T.accent} />
+                <AppIcon name="mail-outline" size={18} color={T.accent} />
               </View>
               <View style={st.fieldContent}>
                 <Text style={st.fieldLabel}>Signed-in Email</Text>
@@ -175,7 +175,7 @@ export default function CompanyProfileScreen() {
 
             <View style={st.fieldRow}>
               <View style={st.fieldIconWrap}>
-                <Ionicons name="globe-outline" size={18} color={T.accent} />
+                <AppIcon name="globe-outline" size={18} color={T.accent} />
               </View>
               <View style={st.fieldContent}>
                 <Text style={st.fieldLabel}>Industry Sector</Text>
@@ -191,7 +191,7 @@ export default function CompanyProfileScreen() {
                 (see app/(company)/team.tsx, same numbers). */}
             <View style={st.fieldRow}>
               <View style={st.fieldIconWrap}>
-                <Ionicons name="people-outline" size={18} color={T.accent} />
+                <AppIcon name="people-outline" size={18} color={T.accent} />
               </View>
               <View style={[st.fieldContent, { flex: 1 }]}>
                 <Text style={st.fieldLabel}>Team Seats</Text>
@@ -222,40 +222,40 @@ export default function CompanyProfileScreen() {
 
           <Pressable style={st.actionItem} onPress={() => setShowEdit(true)}>
             <View style={[st.actionIconWrap, { backgroundColor: T.accentBg }]}>
-              <Ionicons name="create-outline" size={18} color={T.accent} />
+              <AppIcon name="create-outline" size={18} color={T.accent} />
             </View>
             <View style={st.actionContent}>
               <Text style={st.actionLabel}>Edit Profile Information</Text>
               <Text style={st.actionDesc}>Update company name, industry, description</Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color={T.textMuted} />
+            <AppIcon name="chevron-forward" size={18} color={T.textMuted} />
           </Pressable>
 
           <Pressable style={st.actionItem} onPress={() => router.push('/(company)/subscriptions')}>
             <View style={[st.actionIconWrap, { backgroundColor: T.accentBg }]}>
-              <Ionicons name="card-outline" size={18} color={T.accent} />
+              <AppIcon name="card-outline" size={18} color={T.accent} />
             </View>
             <View style={st.actionContent}>
               <Text style={st.actionLabel}>Manage Subscription</Text>
               <Text style={st.actionDesc}>Upgrade tier, billing, invoices</Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color={T.textMuted} />
+            <AppIcon name="chevron-forward" size={18} color={T.textMuted} />
           </Pressable>
 
           <Pressable style={st.actionItem} onPress={() => router.push('/(company)/team')}>
             <View style={[st.actionIconWrap, { backgroundColor: T.accentBg }]}>
-              <Ionicons name="people-outline" size={18} color={T.accent} />
+              <AppIcon name="people-outline" size={18} color={T.accent} />
             </View>
             <View style={st.actionContent}>
               <Text style={st.actionLabel}>Team Members</Text>
               <Text style={st.actionDesc}>Manage hiring managers</Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color={T.textMuted} />
+            <AppIcon name="chevron-forward" size={18} color={T.textMuted} />
           </Pressable>
 
           <Pressable style={st.actionItem} onPress={toggleTheme}>
             <View style={[st.actionIconWrap, { backgroundColor: T.accentBg }]}>
-              <Ionicons name={mode === 'light' ? 'sunny-outline' : 'moon-outline'} size={18} color={T.accent} />
+              <AppIcon name={mode === 'light' ? 'sunny-outline' : 'moon-outline'} size={18} color={T.accent} />
             </View>
             <View style={st.actionContent}>
               <Text style={st.actionLabel}>Appearance</Text>
@@ -268,19 +268,19 @@ export default function CompanyProfileScreen() {
 
           <Pressable style={st.actionItem} onPress={() => router.push('/(company)/settings')}>
             <View style={[st.actionIconWrap, { backgroundColor: T.accentBg }]}>
-              <Ionicons name="settings-outline" size={18} color={T.accent} />
+              <AppIcon name="settings-outline" size={18} color={T.accent} />
             </View>
             <View style={st.actionContent}>
               <Text style={st.actionLabel}>Settings</Text>
               <Text style={st.actionDesc}>Notifications, privacy, preferences</Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color={T.textMuted} />
+            <AppIcon name="chevron-forward" size={18} color={T.textMuted} />
           </Pressable>
         </View>
 
         {/* ── Sign Out ── */}
         <Pressable style={st.signOutBtn} onPress={() => supabase.auth.signOut()}>
-          <Ionicons name="log-out-outline" size={18} color={T.danger} />
+          <AppIcon name="log-out-outline" size={18} color={T.danger} />
           <Text style={st.signOutText}>Sign Out</Text>
         </Pressable>
 

@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import AppIcon from '@/components/AppIcon';
 
 import { useTheme, useThemeToggle, ThemePalette, ELEVATION } from '@/lib/theme';
 import { useSubscription } from '@/lib/subscriptionStore';
@@ -86,7 +86,7 @@ function ConfigModal({ visible, onClose, T }: { visible: boolean; onClose: () =>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 12 }}>
               <Text style={{ fontSize: 20, fontWeight: '800', color: T.textPrimary }}>Settings</Text>
               <Pressable onPress={onClose} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: T.surface, alignItems: 'center', justifyContent: 'center' }}>
-                <Ionicons name="close" size={20} color={T.textPrimary} />
+                <AppIcon name="close" size={20} color={T.textPrimary} />
               </Pressable>
             </View>
 
@@ -95,7 +95,7 @@ function ConfigModal({ visible, onClose, T }: { visible: boolean; onClose: () =>
               <View style={{ marginHorizontal: 20, backgroundColor: T.accentBg, borderRadius: 16, padding: 16, marginBottom: 20, borderWidth: 1, borderColor: T.accent + '30' }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    <MaterialCommunityIcons name="crown-outline" size={18} color={T.accent} />
+                    <AppIcon name="crown-outline" size={18} color={T.accent} />
                     <Text style={{ fontSize: 16, fontWeight: '800', color: T.accent }}>{config.name} Plan</Text>
                   </View>
                   <View style={{ backgroundColor: T.accent, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6 }}>
@@ -107,7 +107,7 @@ function ConfigModal({ visible, onClose, T }: { visible: boolean; onClose: () =>
               {/* Theme Toggle */}
               <View style={{ marginHorizontal: 20, marginBottom: 20 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: T.card, borderRadius: 14, padding: 16, borderWidth: 1, borderColor: T.border, ...ELEVATION.card }}>
-                  <Ionicons name={mode === 'light' ? 'sunny-outline' : 'moon-outline'} size={20} color={T.textSecondary} />
+                  <AppIcon name={mode === 'light' ? 'sunny-outline' : 'moon-outline'} size={20} color={T.textSecondary} />
                   <Text style={{ flex: 1, fontSize: 14, fontWeight: '600', color: T.textPrimary }}>Dark Mode</Text>
                   <Switch value={mode === 'dark'} onValueChange={toggleTheme} trackColor={{ false: T.surface, true: T.accent }} thumbColor={T.white} />
                 </View>
@@ -130,12 +130,12 @@ function ConfigModal({ visible, onClose, T }: { visible: boolean; onClose: () =>
                           borderBottomColor: T.border,
                         })}
                       >
-                        <Ionicons name={item.icon as any} size={20} color={T.textSecondary} />
+                        <AppIcon name={item.icon as any} size={20} color={T.textSecondary} />
                         <View style={{ flex: 1 }}>
                           <Text style={{ fontSize: 14, fontWeight: '600', color: T.textPrimary }}>{item.label}</Text>
                           {'desc' in item && item.desc ? <Text style={{ fontSize: 12, color: T.textSecondary, marginTop: 1 }}>{item.desc}</Text> : null}
                         </View>
-                        <Ionicons name="chevron-forward" size={16} color={T.textMuted} />
+                        <AppIcon name="chevron-forward" size={16} color={T.textMuted} />
                       </Pressable>
                     ))}
                   </View>
@@ -154,7 +154,7 @@ function ConfigModal({ visible, onClose, T }: { visible: boolean; onClose: () =>
                 onPress={() => { onClose(); supabase.auth.signOut(); }}
                 style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 16, marginHorizontal: 20 }}
               >
-                <Ionicons name="log-out-outline" size={18} color={T.danger} />
+                <AppIcon name="log-out-outline" size={18} color={T.danger} />
                 <Text style={{ fontSize: 14, fontWeight: '600', color: T.danger }}>Sign Out</Text>
               </Pressable>
 
@@ -210,11 +210,11 @@ export default function CompanyDashboardScreen() {
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
               <View style={styles.planBadge}>
-                <MaterialCommunityIcons name="crown-outline" size={14} color={T.accent} style={{ marginRight: 4 }} />
+                <AppIcon name="crown-outline" size={14} color={T.accent} style={{ marginRight: 4 }} />
                 <Text style={styles.planBadgeText}>{config.name}</Text>
               </View>
               <Pressable onPress={() => setShowConfig(true)} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: T.surface, alignItems: 'center', justifyContent: 'center' }}>
-                <Ionicons name="settings-outline" size={20} color={T.textSecondary} />
+                <AppIcon name="settings-outline" size={20} color={T.textSecondary} />
               </Pressable>
             </View>
           </View>
@@ -227,13 +227,13 @@ export default function CompanyDashboardScreen() {
             onPress={() => router.push('/(company)/subscriptions')}
           >
             <View style={styles.planBannerIconWrap}>
-              <MaterialCommunityIcons name="crown-outline" size={20} color={T.accent} />
+              <AppIcon name="crown-outline" size={20} color={T.accent} />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.planBannerTitle}>Active Plan: {config.name}</Text>
               <Text style={styles.planBannerSubtitle}>Tap to view or upgrade your subscription</Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color={T.accent} />
+            <AppIcon name="chevron-forward" size={18} color={T.accent} />
           </Pressable>
         </SwipeFadeContainer>
 
@@ -242,7 +242,7 @@ export default function CompanyDashboardScreen() {
           <SwipeFadeContainer direction="left" triggerKey="statusbar" delay={180}>
             <View style={styles.statusBar}>
               <View style={styles.statusBarLeft}>
-                <Ionicons name="time-outline" size={16} color={T.accent} />
+                <AppIcon name="time-outline" size={16} color={T.accent} />
                 <Text style={styles.statusBarText}>
                   {trialDaysLeft > 0 ? trialDaysLeft + ' day' + (trialDaysLeft === 1 ? '' : 's') + ' left in trial' : 'Trial ended'}
                 </Text>
@@ -260,7 +260,7 @@ export default function CompanyDashboardScreen() {
             {metricCards.map((m) => (
               <View key={m.key} style={styles.metricCard}>
                 <View style={[styles.metricIconWrap, { backgroundColor: m.bg }]}>
-                  <Ionicons name={m.icon} size={20} color={m.color} />
+                  <AppIcon name={m.icon} size={20} color={m.color} />
                 </View>
                 <Text style={styles.metricValue}>{m.value}</Text>
                 <Text style={styles.metricLabel}>{m.label}</Text>
@@ -287,7 +287,7 @@ export default function CompanyDashboardScreen() {
               </>
             ) : stats.recentIntros.length === 0 ? (
               <View style={styles.emptyState}>
-                <Ionicons name="paper-plane-outline" size={28} color={T.textMuted} />
+                <AppIcon name="paper-plane-outline" size={28} color={T.textMuted} />
                 <Text style={styles.emptyStateText}>No introductions yet — post a role and review its shortlist</Text>
               </View>
             ) : (
@@ -326,7 +326,7 @@ export default function CompanyDashboardScreen() {
           <View style={styles.quickActionsRow}>
             <TouchableOpacity style={styles.quickActionCard} onPress={() => router.push('/(company)/create-role')} activeOpacity={0.85}>
               <View style={[styles.quickActionIconWrap, { backgroundColor: T.accentBg }]}>
-                <Ionicons name="add-circle-outline" size={22} color={T.accent} />
+                <AppIcon name="add-circle-outline" size={22} color={T.accent} />
               </View>
               <Text style={styles.quickActionTitle}>Post a Role</Text>
               <Text style={styles.quickActionSubtitle}>Start a new shortlist</Text>
@@ -334,7 +334,7 @@ export default function CompanyDashboardScreen() {
 
             <TouchableOpacity style={styles.quickActionCard} onPress={() => router.push('/(company)/messages')} activeOpacity={0.85}>
               <View style={[styles.quickActionIconWrap, { backgroundColor: T.indigoBg }]}>
-                <Ionicons name="people-outline" size={22} color={T.indigo} />
+                <AppIcon name="people-outline" size={22} color={T.indigo} />
               </View>
               <Text style={styles.quickActionTitle}>Connections</Text>
               <Text style={styles.quickActionSubtitle}>Accepted introductions</Text>
@@ -352,7 +352,7 @@ export default function CompanyDashboardScreen() {
           >
             <View style={[styles.atsRow, tier !== 'enterprise' && styles.atsRowLocked]} pointerEvents={tier !== 'enterprise' ? 'none' : 'auto'}>
               <View style={styles.atsIconWrap}>
-                <MaterialCommunityIcons name="sync-circle" size={20} color={T.emerald} />
+                <AppIcon name="sync-circle" size={20} color={T.emerald} />
               </View>
               <View style={styles.atsTextBlock}>
                 <Text style={styles.atsTitle}>ATS / HRMS Integration</Text>
@@ -366,7 +366,7 @@ export default function CompanyDashboardScreen() {
             </View>
             {tier !== 'enterprise' && (
               <View style={styles.enterpriseRibbon}>
-                <Ionicons name="lock-closed" size={11} color={T.textOnAccent} />
+                <AppIcon name="lock-closed" size={11} color={T.textOnAccent} />
                 <Text style={styles.enterpriseRibbonText}>ENTERPRISE TIER ONLY</Text>
               </View>
             )}
@@ -378,13 +378,13 @@ export default function CompanyDashboardScreen() {
           <SwipeFadeContainer direction="left" triggerKey="scale-extras" delay={330}>
             <TouchableOpacity style={styles.talentPoolsCard} activeOpacity={0.85}>
               <View style={[styles.quickActionIconWrap, { backgroundColor: T.amberBg }]}>
-                <MaterialCommunityIcons name="account-group-outline" size={22} color={T.amber} />
+                <AppIcon name="account-group-outline" size={22} color={T.amber} />
               </View>
               <View style={styles.talentPoolsTextBlock}>
                 <Text style={styles.quickActionTitle}>Talent Pools</Text>
                 <Text style={styles.quickActionSubtitle}>Organize candidates into custom hiring pools</Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color={T.textMuted} />
+              <AppIcon name="chevron-forward" size={18} color={T.textMuted} />
             </TouchableOpacity>
           </SwipeFadeContainer>
         )}

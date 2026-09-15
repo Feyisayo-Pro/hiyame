@@ -5,7 +5,7 @@
 import { useEffect, useState } from 'react';
 import { Linking, Pressable, ScrollView, Switch, View } from 'react-native';
 import { Text } from '@/components/Themed';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon from '@/components/AppIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useTheme, useThemeToggle, ThemePalette } from '@/lib/theme';
@@ -36,10 +36,10 @@ function SettingsRow({ icon, label, value, onPress, T, danger }: {
         borderBottomWidth: 1, borderBottomColor: T.border,
       })}
     >
-      <Ionicons name={icon as any} size={20} color={danger ? T.danger : T.textSecondary} />
+      <AppIcon name={icon as any} size={20} color={danger ? T.danger : T.textSecondary} />
       <Text style={{ flex: 1, fontSize: 14, fontWeight: '500', color: danger ? T.danger : T.textPrimary }}>{label}</Text>
       {value && <Text style={{ fontSize: 13, color: T.textSecondary }}>{value}</Text>}
-      {onPress && <Ionicons name="chevron-forward" size={16} color={T.textMuted} />}
+      {onPress && <AppIcon name="chevron-forward" size={16} color={T.textMuted} />}
     </Pressable>
   );
 }
@@ -182,17 +182,17 @@ export default function AccountSettings({ persona = 'company' }: { persona?: Per
             <Text style={{ fontSize: 14, fontWeight: '700', color: T.textMuted, paddingHorizontal: 20, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.3 }}>Preferences</Text>
             <View style={{ backgroundColor: T.card, borderTopWidth: 1, borderBottomWidth: 1, borderColor: T.border }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: T.border }}>
-                <Ionicons name={mode === 'light' ? 'sunny-outline' : 'moon-outline'} size={20} color={T.textSecondary} />
+                <AppIcon name={mode === 'light' ? 'sunny-outline' : 'moon-outline'} size={20} color={T.textSecondary} />
                 <Text style={{ flex: 1, fontSize: 14, fontWeight: '500', color: T.textPrimary }}>Dark Mode</Text>
                 <Switch value={mode === 'dark'} onValueChange={toggleTheme} trackColor={{ false: T.surface, true: T.accent }} thumbColor={T.white} />
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: T.border }}>
-                <Ionicons name="notifications-outline" size={20} color={T.textSecondary} />
+                <AppIcon name="notifications-outline" size={20} color={T.textSecondary} />
                 <Text style={{ flex: 1, fontSize: 14, fontWeight: '500', color: T.textPrimary }}>Push Notifications</Text>
                 <Switch value={notificationsEnabled} onValueChange={setNotifications} trackColor={{ false: T.surface, true: T.accent }} thumbColor={T.white} />
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, paddingHorizontal: 16 }}>
-                <Ionicons name="mail-outline" size={20} color={T.textSecondary} />
+                <AppIcon name="mail-outline" size={20} color={T.textSecondary} />
                 <Text style={{ flex: 1, fontSize: 14, fontWeight: '500', color: T.textPrimary }}>Email Updates</Text>
                 <Switch value={emailUpdates} onValueChange={setEmail} trackColor={{ false: T.surface, true: T.accent }} thumbColor={T.white} />
               </View>

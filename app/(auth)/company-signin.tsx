@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useMemo} from 'react';
 import { Animated, Pressable, ScrollView, StyleSheet, TextInput, View, KeyboardAvoidingView, Platform } from 'react-native';
 import { router } from 'expo-router';
 import { Text } from '@/components/Themed';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon from '@/components/AppIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, ThemePalette } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
@@ -87,14 +87,14 @@ export default function CompanySignInScreen() {
         >
           {/* Back */}
           <Pressable style={st.backButton} onPress={() => router.back()}>
-            <Ionicons name="arrow-back" size={20} color={T.textPrimary} />
+            <AppIcon name="arrow-back" size={20} color={T.textPrimary} />
           </Pressable>
 
           <Animated.View style={[st.content, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
             {/* Header */}
             <View style={st.iconRow}>
               <View style={st.iconWrap}>
-                <Ionicons name="business" size={24} color={T.accent} />
+                <AppIcon name="business" size={24} color={T.accent} />
               </View>
             </View>
             <Text style={st.title}>Company Partner</Text>
@@ -104,7 +104,7 @@ export default function CompanySignInScreen() {
             <View style={st.fieldWrap}>
               <Text style={st.label}>Work Email</Text>
               <View style={[st.inputWrap, errors.email ? st.inputError : null]}>
-                <Ionicons name="mail-outline" size={18} color={errors.email ? T.danger : T.textMuted} />
+                <AppIcon name="mail-outline" size={18} color={errors.email ? T.danger : T.textMuted} />
                 <TextInput
                   style={st.input}
                   placeholder="hiring@company.com"
@@ -123,7 +123,7 @@ export default function CompanySignInScreen() {
             <View style={st.fieldWrap}>
               <Text style={st.label}>Password</Text>
               <View style={[st.inputWrap, errors.password ? st.inputError : null]}>
-                <Ionicons name="lock-closed-outline" size={18} color={errors.password ? T.danger : T.textMuted} />
+                <AppIcon name="lock-closed-outline" size={18} color={errors.password ? T.danger : T.textMuted} />
                 <TextInput
                   style={st.input}
                   placeholder="Enter your password"
@@ -134,7 +134,7 @@ export default function CompanySignInScreen() {
                   onChangeText={(t) => { setPassword(t); setErrors((e) => ({ ...e, password: undefined })); }}
                 />
                 <Pressable onPress={() => setShowPassword(!showPassword)} hitSlop={8}>
-                  <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color={T.textMuted} />
+                  <AppIcon name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color={T.textMuted} />
                 </Pressable>
               </View>
               {errors.password && <Text style={st.errorText}>{errors.password}</Text>}
@@ -147,7 +147,7 @@ export default function CompanySignInScreen() {
 
             {errors.general && (
               <Animated.View style={[st.generalErrorBanner, shakeStyle]}>
-                <Ionicons name="alert-circle" size={16} color={T.danger} />
+                <AppIcon name="alert-circle" size={16} color={T.danger} />
                 <Text style={st.generalErrorText}>{errors.general}</Text>
               </Animated.View>
             )}
@@ -166,14 +166,14 @@ export default function CompanySignInScreen() {
               ) : (
                 <>
                   <Text style={st.signInText}>Sign In</Text>
-                  <Ionicons name="arrow-forward" size={18} color={T.textOnAccent} />
+                  <AppIcon name="arrow-forward" size={18} color={T.textOnAccent} />
                 </>
               )}
             </AnimatedPressable>
 
             {/* Security Note */}
             <View style={st.securityNote}>
-              <Ionicons name="shield-checkmark-outline" size={14} color={T.accent} />
+              <AppIcon name="shield-checkmark-outline" size={14} color={T.accent} />
               <Text style={st.securityText}>
                 Company accounts are verified. Only authorized hiring managers can access the workspace.
               </Text>

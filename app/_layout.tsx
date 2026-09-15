@@ -4,7 +4,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useMemo, ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View, StatusBar as RNStatusBar, Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon from '@/components/AppIcon';
 import { StatusBar } from 'expo-status-bar';
 import { CandidateProfileProvider } from '@/lib/candidateProfile';
 import { VerificationProvider } from '@/lib/useVerification';
@@ -53,12 +53,12 @@ export function ErrorBoundary({ error, retry }: { error: Error; retry: () => voi
   return (
     <View style={st.container}>
       <View style={st.iconWrap}>
-        <Ionicons name="warning-outline" size={32} color={T.danger} />
+        <AppIcon name="warning-outline" size={32} color={T.danger} />
       </View>
       <Text style={st.title}>Something went wrong</Text>
       <Text style={st.subtitle}>{error.message}</Text>
       <Pressable style={st.retryButton} onPress={retry}>
-        <Ionicons name="refresh" size={18} color={T.textOnAccent} />
+        <AppIcon name="refresh" size={18} color={T.textOnAccent} />
         <Text style={st.retryButtonText}>Try Again</Text>
       </Pressable>
     </View>

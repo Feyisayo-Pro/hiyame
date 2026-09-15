@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, View, ActivityIndicator } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Text } from '@/components/Themed';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon from '@/components/AppIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, ThemePalette, RADIUS, ELEVATION, ICON } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
@@ -203,7 +203,7 @@ export default function ShortlistScreen() {
       <ScreenFrame>
       <View style={st.header}>
         <Pressable style={st.backButton} onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Go back">
-          <Ionicons name="arrow-back" size={20} color={T.textPrimary} />
+          <AppIcon name="arrow-back" size={20} color={T.textPrimary} />
         </Pressable>
         <View style={{ flex: 1 }}>
           <Text style={st.headerTitle} numberOfLines={1}>{roleTitle ?? 'Shortlist'}</Text>
@@ -223,7 +223,7 @@ export default function ShortlistScreen() {
           {running ? (
             <ActivityIndicator size="small" color={T.accent} />
           ) : (
-            <Ionicons name="refresh" size={18} color={T.accent} />
+            <AppIcon name="refresh" size={18} color={T.accent} />
           )}
         </Pressable>
       </View>
@@ -249,7 +249,7 @@ export default function ShortlistScreen() {
 
           {!hasAnyCards && !running && matchingState === 'unavailable' && (
             <View style={st.emptyBlock}>
-              <Ionicons name="cloud-offline-outline" size={28} color={T.textMuted} />
+              <AppIcon name="cloud-offline-outline" size={28} color={T.textMuted} />
               <Text style={st.emptyTitle}>Matching runs on the live site</Text>
               <Text style={st.emptySub}>The matching service isn’t available in local preview. Open this role on the deployed site to build its shortlist.</Text>
             </View>
@@ -257,11 +257,11 @@ export default function ShortlistScreen() {
 
           {!hasAnyCards && !running && matchingState !== 'unavailable' && matchingRanAt !== null && (
             <View style={st.emptyBlock}>
-              <Ionicons name="search" size={28} color={T.textMuted} />
+              <AppIcon name="search" size={28} color={T.textMuted} />
               <Text style={st.emptyTitle}>No candidates matched yet</Text>
               <Text style={st.emptySub}>No one in the pool cleared the bar for this role. Widening the skills or rate range, then re-running, may surface more.</Text>
               <Pressable style={st.rerunPill} onPress={runMatching}>
-                <Ionicons name="refresh" size={15} color={T.textOnAccent} />
+                <AppIcon name="refresh" size={15} color={T.textOnAccent} />
                 <Text style={st.rerunPillText}>Re-run matching</Text>
               </Pressable>
             </View>
@@ -355,13 +355,13 @@ function CandidateCardView({ T, st, card, busy, onAccept, onSkip, onSave }: {
           <View style={st.badgeRow}>
             {card.verified === true && (
               <View style={[st.badge, st.badgeVerified]}>
-                <Ionicons name="shield-checkmark" size={ICON.xs} color={T.emerald} />
+                <AppIcon name="shield-checkmark" size={ICON.xs} color={T.emerald} />
                 <Text style={[st.badgeText, { color: T.emerald }]}>Verified</Text>
               </View>
             )}
             {card.verified === false && (
               <View style={[st.badge, st.badgeUnverified]}>
-                <Ionicons name="shield-outline" size={ICON.xs} color={T.textMuted} />
+                <AppIcon name="shield-outline" size={ICON.xs} color={T.textMuted} />
                 <Text style={[st.badgeText, { color: T.textMuted }]}>Not yet verified</Text>
               </View>
             )}
@@ -381,13 +381,13 @@ function CandidateCardView({ T, st, card, busy, onAccept, onSkip, onSave }: {
 
       <View style={st.actionsRow}>
         <AnimatedPressable style={[st.actionBtn, st.skipBtn]} onPress={onSkip} disabled={busy} accessibilityRole="button" accessibilityLabel={`Skip ${card.fullName}`}>
-          <Ionicons name="close" size={ICON.md} color={T.danger} />
+          <AppIcon name="close" size={ICON.md} color={T.danger} />
         </AnimatedPressable>
         <AnimatedPressable style={[st.actionBtn, st.saveBtn]} onPress={onSave} disabled={busy} accessibilityRole="button" accessibilityLabel={`Save ${card.fullName}`}>
-          <Ionicons name="bookmark-outline" size={ICON.sm} color={T.accent} />
+          <AppIcon name="bookmark-outline" size={ICON.sm} color={T.accent} />
         </AnimatedPressable>
         <AnimatedPressable style={[st.actionBtn, st.acceptBtn]} onPress={onAccept} disabled={busy} accessibilityRole="button" accessibilityLabel={`Accept ${card.fullName}`}>
-          <Ionicons name="checkmark" size={ICON.md} color={T.white} />
+          <AppIcon name="checkmark" size={ICON.md} color={T.white} />
           <Text style={st.acceptText}>Accept</Text>
         </AnimatedPressable>
       </View>

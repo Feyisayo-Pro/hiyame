@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon from '@/components/AppIcon';
 import { Text } from '@/components/Themed';
 import { useTheme, ThemePalette } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
@@ -57,7 +57,7 @@ export default function ForgotPasswordModal({ visible, initialEmail = '', onClos
           {sent ? (
             <>
               <View style={s.iconWrap}>
-                <Ionicons name="checkmark-circle" size={26} color={T.emerald} />
+                <AppIcon name="checkmark-circle" size={26} color={T.emerald} />
               </View>
               <Text style={s.title}>Check your email</Text>
               <Text style={s.subtitle}>
@@ -71,7 +71,7 @@ export default function ForgotPasswordModal({ visible, initialEmail = '', onClos
           ) : (
             <>
               <View style={s.iconWrap}>
-                <Ionicons name="key-outline" size={26} color={T.accent} />
+                <AppIcon name="key-outline" size={26} color={T.accent} />
               </View>
               <Text style={s.title}>Reset your password</Text>
               <Text style={s.subtitle}>We'll email you a link to set a new one.</Text>

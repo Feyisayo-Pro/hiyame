@@ -5,7 +5,7 @@
 // sibling SmileIdVerificationModal.tsx, which Metro picks for iOS/Android).
 import { useMemo } from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon from '@/components/AppIcon';
 
 import { Text } from '@/components/Themed';
 import { useTheme, ThemePalette } from '@/lib/theme';
@@ -26,7 +26,7 @@ export default function SmileIdVerificationModal({ visible, onClose }: Props) {
     <Modal visible={visible} animationType="slide" onRequestClose={onClose} transparent>
       <View style={s.overlay}>
         <View style={s.card}>
-          <Ionicons name="phone-portrait-outline" size={32} color={T.textMuted} />
+          <AppIcon name="phone-portrait-outline" size={32} color={T.textMuted} />
           <Text style={s.title}>Coming Soon</Text>
           <Text style={s.body}>
             Identity verification uses native camera and liveness capture, so it only runs in the

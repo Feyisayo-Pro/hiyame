@@ -2,14 +2,14 @@ import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon, { AppIconName } from '@/components/AppIcon';
 import { Text } from '@/components/Themed';
 import { useTheme, ThemePalette } from '@/lib/theme';
 import { useAuth } from '@/lib/useAuth';
 import { supabase } from '@/lib/supabase';
 
 interface Step {
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: AppIconName;
   title: string;
   body: string;
 }
@@ -77,7 +77,7 @@ export default function WelcomeTourScreen() {
 
         <View style={st.body}>
           <View style={st.iconWrap}>
-            <Ionicons name={step.icon} size={30} color={T.accent} />
+            <AppIcon name={step.icon} size={30} color={T.accent} />
           </View>
           <Text style={st.title}>{step.title}</Text>
           <Text style={st.text}>{step.body}</Text>
@@ -91,7 +91,7 @@ export default function WelcomeTourScreen() {
             accessibilityRole="button"
             accessibilityLabel="Previous"
           >
-            <Ionicons name="arrow-back" size={18} color={T.textSecondary} />
+            <AppIcon name="arrow-back" size={18} color={T.textSecondary} />
             <Text style={st.backText}>Back</Text>
           </Pressable>
 
@@ -103,7 +103,7 @@ export default function WelcomeTourScreen() {
             accessibilityLabel={last ? 'Get started' : 'Next'}
           >
             <Text style={st.nextText}>{last ? 'Get started' : 'Next'}</Text>
-            <Ionicons name="arrow-forward" size={18} color={T.textOnAccent} />
+            <AppIcon name="arrow-forward" size={18} color={T.textOnAccent} />
           </Pressable>
         </View>
       </View>

@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import { Tabs } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon from '@/components/AppIcon';
 import { Text, View, Platform, OpaqueColorValue } from 'react-native';
 import { useTheme } from '@/lib/theme';
 import TopNav, { useIsDesktopWeb } from '@/components/TopNav';
@@ -9,7 +9,7 @@ function ProfileAvatar({ color, focused }: { color: string | OpaqueColorValue; f
   const T = useTheme();
   return (
     <View style={[{ width: 28, height: 28, borderRadius: 14, backgroundColor: T.surface, alignItems: 'center', justifyContent: 'center' }, focused && { borderWidth: 1, borderColor: T.textPrimary }]}>
-      <Ionicons name={focused ? 'person' : 'person-outline'} size={18} color={color} />
+      <AppIcon name={focused ? 'person' : 'person-outline'} size={18} color={color} />
     </View>
   );
 }
@@ -67,7 +67,7 @@ export default function CandidateTabLayout() {
         options={{
           title: 'Home',
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon icon={<Ionicons name={focused ? 'home' : 'home-outline'} size={22} color={color} />} label="Home" color={color} />
+            <TabIcon icon={<AppIcon name={focused ? 'home' : 'home-outline'} size={22} color={color} />} label="Home" color={color} />
           ),
         }}
       />
@@ -76,7 +76,7 @@ export default function CandidateTabLayout() {
         options={{
           title: 'Jobs',
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon icon={<Ionicons name={focused ? 'briefcase' : 'briefcase-outline'} size={22} color={color} />} label="Jobs" color={color} />
+            <TabIcon icon={<AppIcon name={focused ? 'briefcase' : 'briefcase-outline'} size={22} color={color} />} label="Jobs" color={color} />
           ),
         }}
       />
@@ -85,7 +85,7 @@ export default function CandidateTabLayout() {
         options={{
           title: 'Connections',
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon icon={<Ionicons name={focused ? 'people' : 'people-outline'} size={22} color={color} />} label="Connections" color={color} />
+            <TabIcon icon={<AppIcon name={focused ? 'people' : 'people-outline'} size={22} color={color} />} label="Connections" color={color} />
           ),
         }}
       />

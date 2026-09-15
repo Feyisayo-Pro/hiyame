@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Image, Linking, Pressable, StyleSheet, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon, { AppIconName } from '@/components/AppIcon';
 import { Text } from '@/components/Themed';
 import { useTheme, ThemePalette } from '@/lib/theme';
 import type { IntroductionContact } from '@/lib/introductionContact';
@@ -25,7 +25,7 @@ export default function ContactReveal({
   return (
     <View style={st.card}>
       <View style={st.headRow}>
-        <Ionicons name="sparkles" size={14} color={T.emerald} />
+        <AppIcon name="sparkles" size={14} color={T.emerald} />
         <Text style={st.headText}>Introduction accepted — you can now reach out directly</Text>
       </View>
 
@@ -36,13 +36,13 @@ export default function ContactReveal({
               {contact.companyLogoUrl ? (
                 <Image source={{ uri: contact.companyLogoUrl }} style={st.companyLogo} resizeMode="cover" />
               ) : (
-                <Ionicons name="business" size={16} color={T.emerald} />
+                <AppIcon name="business" size={16} color={T.emerald} />
               )}
             </View>
             <Text style={st.name}>{contact.companyName}</Text>
           </View>
           <View style={st.metaRow}>
-            <Ionicons name="business-outline" size={13} color={T.textSecondary} />
+            <AppIcon name="business-outline" size={13} color={T.textSecondary} />
             <Text style={st.metaText}>
               {[contact.companyIndustry, contact.companySizeRange].filter(Boolean).join(' · ') || 'Company'}
             </Text>
@@ -82,7 +82,7 @@ export default function ContactReveal({
 }
 
 function Row({ icon, label, onPress, st, T }: {
-  icon: keyof typeof Ionicons.glyphMap;
+  icon: AppIconName;
   label: string;
   onPress: () => void;
   st: ReturnType<typeof makeStyles>;
@@ -90,7 +90,7 @@ function Row({ icon, label, onPress, st, T }: {
 }) {
   return (
     <Pressable style={st.linkRow} onPress={onPress} accessibilityRole="link">
-      <Ionicons name={icon} size={14} color={T.accent} />
+      <AppIcon name={icon} size={14} color={T.accent} />
       <Text style={st.linkText} numberOfLines={1}>{label}</Text>
     </Pressable>
   );

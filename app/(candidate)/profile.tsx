@@ -1,7 +1,7 @@
 import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useEffect, useMemo, useState } from 'react';
 import { Text } from '@/components/Themed';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import AppIcon from '@/components/AppIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useCandidateProfile } from '@/lib/candidateProfile';
@@ -116,7 +116,7 @@ export default function CandidateProfileScreen() {
         <View style={st.header}>
           <Text style={st.headerTitle}>Profile</Text>
           <Pressable onPress={() => router.push('/(candidate)/settings')} style={st.settingsBtn}>
-            <Ionicons name="settings-outline" size={20} color={T.textSecondary} />
+            <AppIcon name="settings-outline" size={20} color={T.textSecondary} />
           </Pressable>
         </View>
 
@@ -127,21 +127,21 @@ export default function CandidateProfileScreen() {
               {photoUrl ? (
                 <Image source={{ uri: photoUrl }} style={st.avatarImage} resizeMode="cover" />
               ) : (
-                <Ionicons name="person" size={28} color={T.accent} />
+                <AppIcon name="person" size={28} color={T.accent} />
               )}
               {uploading && (
                 <View style={st.avatarUploadingOverlay}>
-                  <Ionicons name="cloud-upload-outline" size={20} color={T.white} />
+                  <AppIcon name="cloud-upload-outline" size={20} color={T.white} />
                 </View>
               )}
             </View>
             {/* Camera overlay */}
             <View style={st.cameraOverlay}>
-              <Ionicons name="camera" size={14} color={T.white} />
+              <AppIcon name="camera" size={14} color={T.white} />
             </View>
             {isFullyVerified && (
               <View style={st.verifiedCheck}>
-                <MaterialCommunityIcons name="decagram" size={22} color={T.emerald} />
+                <AppIcon name="decagram" size={22} color={T.emerald} />
               </View>
             )}
           </Pressable>
@@ -151,7 +151,7 @@ export default function CandidateProfileScreen() {
 
           {/* Verification badge */}
           <View style={[st.verBadge, isFullyVerified ? st.verBadgeFull : st.verBadgePartial]}>
-            <Ionicons
+            <AppIcon
               name="shield-checkmark"
               size={13}
               color={isFullyVerified ? T.emerald : T.accent}
@@ -164,7 +164,7 @@ export default function CandidateProfileScreen() {
           {/* Target Rate */}
           {targetMinRate > 0 && (
             <View style={st.rateRow}>
-              <Ionicons name="cash-outline" size={16} color={T.accent} />
+              <AppIcon name="cash-outline" size={16} color={T.accent} />
               <Text style={st.rateLabel}>Target Min Rate</Text>
               <Text style={st.rateValue}>{formatNaira(targetMinRate)}/mo</Text>
             </View>
@@ -190,7 +190,7 @@ export default function CandidateProfileScreen() {
             </View>
           ) : (
             <View style={st.emptySkills}>
-              <Ionicons name="sparkles-outline" size={20} color={T.textMuted} />
+              <AppIcon name="sparkles-outline" size={20} color={T.textMuted} />
               <Text style={st.emptySkillsText}>Complete your profile to add skills</Text>
             </View>
           )}
@@ -205,7 +205,7 @@ export default function CandidateProfileScreen() {
             <Text style={st.sectionTitle}>Verification Status</Text>
             <Pressable onPress={() => router.push('/(candidate)/verification')} style={st.seeAll}>
               <Text style={st.seeAllText}>Manage</Text>
-              <Ionicons name="arrow-forward" size={14} color={T.accent} />
+              <AppIcon name="arrow-forward" size={14} color={T.accent} />
             </Pressable>
           </View>
 
@@ -241,7 +241,7 @@ export default function CandidateProfileScreen() {
                 onPress={() => router.push('/(candidate)/verification')}
               >
                 <View style={[st.checkIconWrap, item.done ? st.checkIconDone : st.checkIconPending]}>
-                  <Ionicons
+                  <AppIcon
                     name={item.done ? 'checkmark-circle' : item.icon}
                     size={18}
                     color={item.done ? T.emerald : T.accent}
@@ -268,14 +268,14 @@ export default function CandidateProfileScreen() {
         <View style={st.statsRow}>
           <View style={st.statCard}>
             <View style={[st.statIconWrap, { backgroundColor: T.accentBg }]}>
-              <Ionicons name="mail-unread" size={16} color={T.accent} />
+              <AppIcon name="mail-unread" size={16} color={T.accent} />
             </View>
             <Text style={st.statValue}>{stats?.introsPending ?? 0}</Text>
             <Text style={st.statLabel}>To respond</Text>
           </View>
           <View style={st.statCard}>
             <View style={[st.statIconWrap, { backgroundColor: T.emeraldBg }]}>
-              <Ionicons name="people" size={16} color={T.emerald} />
+              <AppIcon name="people" size={16} color={T.emerald} />
             </View>
             <Text style={st.statValue}>{stats?.introsAccepted ?? 0}</Text>
             <Text style={st.statLabel}>Connected</Text>
@@ -286,18 +286,18 @@ export default function CandidateProfileScreen() {
         <View style={st.section}>
           <Pressable style={st.actionItem} onPress={() => setShowEdit(true)}>
             <View style={st.actionIconWrap}>
-              <Ionicons name="create-outline" size={18} color={T.accent} />
+              <AppIcon name="create-outline" size={18} color={T.accent} />
             </View>
             <View style={st.actionContent}>
               <Text style={st.actionLabel}>Edit Profile</Text>
               <Text style={st.actionDesc}>Update name, skills, rate</Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color={T.textMuted} />
+            <AppIcon name="chevron-forward" size={18} color={T.textMuted} />
           </Pressable>
 
           <Pressable style={st.actionItem} onPress={toggleTheme}>
             <View style={st.actionIconWrap}>
-              <Ionicons name={mode === 'light' ? 'sunny-outline' : 'moon-outline'} size={18} color={T.accent} />
+              <AppIcon name={mode === 'light' ? 'sunny-outline' : 'moon-outline'} size={18} color={T.accent} />
             </View>
             <View style={st.actionContent}>
               <Text style={st.actionLabel}>Appearance</Text>
@@ -310,30 +310,30 @@ export default function CandidateProfileScreen() {
 
           <Pressable style={st.actionItem} onPress={() => router.push('/(candidate)/welcome-tour' as any)}>
             <View style={st.actionIconWrap}>
-              <Ionicons name="help-buoy-outline" size={18} color={T.accent} />
+              <AppIcon name="help-buoy-outline" size={18} color={T.accent} />
             </View>
             <View style={st.actionContent}>
               <Text style={st.actionLabel}>How Hiyame works</Text>
               <Text style={st.actionDesc}>Replay the welcome walkthrough</Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color={T.textMuted} />
+            <AppIcon name="chevron-forward" size={18} color={T.textMuted} />
           </Pressable>
 
           <Pressable style={st.actionItem} onPress={() => router.push('/(candidate)/settings')}>
             <View style={st.actionIconWrap}>
-              <Ionicons name="settings-outline" size={18} color={T.accent} />
+              <AppIcon name="settings-outline" size={18} color={T.accent} />
             </View>
             <View style={st.actionContent}>
               <Text style={st.actionLabel}>Settings</Text>
               <Text style={st.actionDesc}>Notifications, privacy, preferences</Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color={T.textMuted} />
+            <AppIcon name="chevron-forward" size={18} color={T.textMuted} />
           </Pressable>
         </View>
 
         {/* ── Sign Out ── */}
         <Pressable style={st.signOutBtn} onPress={() => supabase.auth.signOut()}>
-          <Ionicons name="log-out-outline" size={18} color={T.danger} />
+          <AppIcon name="log-out-outline" size={18} color={T.danger} />
           <Text style={st.signOutText}>Sign Out</Text>
         </Pressable>
 

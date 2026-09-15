@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon from '@/components/AppIcon';
 
 import { Text } from '@/components/Themed';
 import { useTheme, ThemePalette } from '@/lib/theme';
@@ -127,7 +127,7 @@ function PricingCard({
       <View style={s.featuresList}>
         {plan.features.map((f) => (
           <View key={f} style={s.featureRow}>
-            <Ionicons name="checkmark-circle" size={16} color={T.accent} />
+            <AppIcon name="checkmark-circle" size={16} color={T.accent} />
             <Text style={s.featureText}>{f}</Text>
           </View>
         ))}
@@ -186,7 +186,7 @@ export default function SubscriptionsScreen() {
       <ScreenFrame>
       <View style={styles.header}>
         <Pressable style={styles.backBtn} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={20} color={T.textPrimary} />
+          <AppIcon name="arrow-back" size={20} color={T.textPrimary} />
         </Pressable>
         <Text style={styles.headerTitle}>Plans & Pricing</Text>
         <View style={{ width: 36 }} />

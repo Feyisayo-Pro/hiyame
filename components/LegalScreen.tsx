@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon from '@/components/AppIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Text } from '@/components/Themed';
@@ -55,7 +55,7 @@ export default function LegalScreen() {
       <ScreenFrame>
         <View style={st.header}>
           <Pressable style={st.backBtn} onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Go back">
-            <Ionicons name="arrow-back" size={20} color={T.textPrimary} />
+            <AppIcon name="arrow-back" size={20} color={T.textPrimary} />
           </Pressable>
           <View>
             <Text style={st.headerTitle}>{tab === 'terms' ? 'Terms of Service' : 'Privacy Policy'}</Text>

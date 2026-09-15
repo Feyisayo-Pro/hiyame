@@ -12,7 +12,7 @@ import {
 import { router } from 'expo-router';
 import { Text } from '@/components/Themed';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import AppIcon from '@/components/AppIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, ThemePalette } from '@/lib/theme';
 import ScreenFrame from '@/components/ScreenFrame';
@@ -284,7 +284,7 @@ export default function CompanySignupScreen() {
       <View style={st.fieldWrap}>
         <Text style={st.label}>Your Full Name *</Text>
         <View style={[st.inputWrap, errors.contactName ? st.inputError : null]}>
-          <Ionicons name="person-outline" size={18} color={errors.contactName ? T.danger : T.textMuted} />
+          <AppIcon name="person-outline" size={18} color={errors.contactName ? T.danger : T.textMuted} />
           <TextInput
             style={st.input}
             placeholder="Amara Osei"
@@ -300,7 +300,7 @@ export default function CompanySignupScreen() {
       <View style={st.fieldWrap}>
         <Text style={st.label}>Work Email *</Text>
         <View style={[st.inputWrap, errors.email ? st.inputError : null]}>
-          <Ionicons name="mail-outline" size={18} color={errors.email ? T.danger : T.textMuted} />
+          <AppIcon name="mail-outline" size={18} color={errors.email ? T.danger : T.textMuted} />
           <TextInput
             style={st.input}
             placeholder="hiring@company.com"
@@ -318,7 +318,7 @@ export default function CompanySignupScreen() {
       <View style={st.fieldWrap}>
         <Text style={st.label}>Password *</Text>
         <View style={[st.inputWrap, errors.password ? st.inputError : null]}>
-          <Ionicons name="lock-closed-outline" size={18} color={errors.password ? T.danger : T.textMuted} />
+          <AppIcon name="lock-closed-outline" size={18} color={errors.password ? T.danger : T.textMuted} />
           <TextInput
             style={st.input}
             placeholder="At least 6 characters"
@@ -329,7 +329,7 @@ export default function CompanySignupScreen() {
             onChangeText={(t) => { setPassword(t); clearError('password'); }}
           />
           <Pressable onPress={() => setShowPassword(!showPassword)} hitSlop={8}>
-            <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color={T.textMuted} />
+            <AppIcon name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color={T.textMuted} />
           </Pressable>
         </View>
         {errors.password ? <Text style={st.errorText}>{errors.password}</Text> : null}
@@ -345,7 +345,7 @@ export default function CompanySignupScreen() {
       <View style={st.fieldWrap}>
         <Text style={st.label}>Company Name *</Text>
         <View style={[st.inputWrap, errors.companyName ? st.inputError : null]}>
-          <Ionicons name="business-outline" size={18} color={errors.companyName ? T.danger : T.textMuted} />
+          <AppIcon name="business-outline" size={18} color={errors.companyName ? T.danger : T.textMuted} />
           <TextInput
             style={st.input}
             placeholder="Acme Corp"
@@ -361,7 +361,7 @@ export default function CompanySignupScreen() {
       <View style={st.fieldWrap}>
         <Text style={st.label}>Registration / Tax ID</Text>
         <View style={st.inputWrap}>
-          <Ionicons name="document-text-outline" size={18} color={T.textMuted} />
+          <AppIcon name="document-text-outline" size={18} color={T.textMuted} />
           <TextInput
             style={st.input}
             placeholder="Optional - RC12345678"
@@ -377,7 +377,7 @@ export default function CompanySignupScreen() {
       <View style={st.fieldWrap}>
         <Text style={st.label}>Corporate Website</Text>
         <View style={st.inputWrap}>
-          <Ionicons name="globe-outline" size={18} color={T.textMuted} />
+          <AppIcon name="globe-outline" size={18} color={T.textMuted} />
           <TextInput
             style={st.input}
             placeholder="https://acmecorp.com"
@@ -462,7 +462,7 @@ export default function CompanySignupScreen() {
       <View style={st.fieldWrap}>
         <Text style={st.label}>Headquarters Location</Text>
         <View style={st.inputWrap}>
-          <Ionicons name="location-outline" size={18} color={T.textMuted} />
+          <AppIcon name="location-outline" size={18} color={T.textMuted} />
           <TextInput
             style={st.input}
             placeholder="Lagos, Nigeria"
@@ -516,7 +516,7 @@ export default function CompanySignupScreen() {
           {logoUploaded ? (
             <>
               <View style={{ width: 56, height: 56, borderRadius: 16, backgroundColor: T.emerald + '20', alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
-                <Ionicons name="checkmark-circle" size={28} color={T.emerald} />
+                <AppIcon name="checkmark-circle" size={28} color={T.emerald} />
               </View>
               <Text style={{ fontSize: 14, fontWeight: '700', color: T.emerald }}>Logo uploaded</Text>
               <Text style={{ fontSize: 12, color: T.textSecondary, marginTop: 2 }}>Tap to remove</Text>
@@ -524,7 +524,7 @@ export default function CompanySignupScreen() {
           ) : (
             <>
               <View style={{ width: 56, height: 56, borderRadius: 16, backgroundColor: T.accentBg, alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
-                <Ionicons name="cloud-upload-outline" size={28} color={T.accent} />
+                <AppIcon name="cloud-upload-outline" size={28} color={T.accent} />
               </View>
               <Text style={{ fontSize: 14, fontWeight: '700', color: T.textPrimary }}>Upload Logo</Text>
               <Text style={{ fontSize: 12, color: T.textSecondary, marginTop: 2 }}>PNG, JPG, or SVG (max 2MB)</Text>
@@ -582,7 +582,7 @@ export default function CompanySignupScreen() {
               <View style={{ gap: 6 }}>
                 {plan.features.map((f) => (
                   <View key={f} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <Ionicons name="checkmark-circle" size={14} color={isSelected ? T.accent : T.emerald} />
+                    <AppIcon name="checkmark-circle" size={14} color={isSelected ? T.accent : T.emerald} />
                     <Text style={{ fontSize: 12, color: T.textSecondary }}>{f}</Text>
                   </View>
                 ))}
@@ -593,7 +593,7 @@ export default function CompanySignupScreen() {
       </View>
 
       <View style={st.infoCard}>
-        <Ionicons name="information-circle-outline" size={18} color={T.accent} />
+        <AppIcon name="information-circle-outline" size={18} color={T.accent} />
         <Text style={st.infoText}>
           All plans include a 14-day free trial of premium features. You can change your plan anytime from Settings.
         </Text>
@@ -614,7 +614,7 @@ export default function CompanySignupScreen() {
         {/* Top Bar */}
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 8, paddingBottom: 4 }}>
           <Pressable style={st.backButton} onPress={handleBack}>
-            <Ionicons name="arrow-back" size={20} color={T.textPrimary} />
+            <AppIcon name="arrow-back" size={20} color={T.textPrimary} />
           </Pressable>
           <Text style={{ fontSize: 12, fontWeight: '600', color: T.textMuted }}>Step {step + 1} of {TOTAL_STEPS}</Text>
         </View>
@@ -631,7 +631,7 @@ export default function CompanySignupScreen() {
               {/* Logo */}
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 20 }}>
                 <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: T.accent, alignItems: 'center', justifyContent: 'center' }}>
-                  <Ionicons name="business" size={18} color={T.textOnAccent} />
+                  <AppIcon name="business" size={18} color={T.textOnAccent} />
                 </View>
                 <View>
                   <Text style={{ fontSize: 12, fontWeight: '600', color: T.textMuted }}>COMPANY REGISTRATION</Text>
@@ -643,7 +643,7 @@ export default function CompanySignupScreen() {
 
               {errors.general ? (
                 <View style={st.generalErrorBanner}>
-                  <Ionicons name="alert-circle" size={16} color={T.danger} />
+                  <AppIcon name="alert-circle" size={16} color={T.danger} />
                   <Text style={st.generalErrorText}>{errors.general}</Text>
                 </View>
               ) : null}
@@ -660,12 +660,12 @@ export default function CompanySignupScreen() {
                   ) : step < TOTAL_STEPS - 1 ? (
                     <>
                       <Text style={st.continueText}>Continue</Text>
-                      <Ionicons name="arrow-forward" size={18} color={T.textOnAccent} />
+                      <AppIcon name="arrow-forward" size={18} color={T.textOnAccent} />
                     </>
                   ) : (
                     <>
                       <Text style={st.continueText}>Launch Dashboard</Text>
-                      <Ionicons name="rocket-outline" size={18} color={T.textOnAccent} />
+                      <AppIcon name="rocket-outline" size={18} color={T.textOnAccent} />
                     </>
                   )}
                 </Pressable>

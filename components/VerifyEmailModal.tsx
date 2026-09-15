@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon from '@/components/AppIcon';
 import { Text } from '@/components/Themed';
 import { useTheme, ThemePalette } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
@@ -91,7 +91,7 @@ export default function VerifyEmailModal({ visible, email, onClose, onVerified }
       <View style={s.overlay}>
         <View style={s.card}>
           <View style={s.iconWrap}>
-            <Ionicons name="mail-outline" size={26} color={T.accent} />
+            <AppIcon name="mail-outline" size={26} color={T.accent} />
           </View>
           <Text style={s.title}>Check your email</Text>
           <Text style={s.subtitle}>

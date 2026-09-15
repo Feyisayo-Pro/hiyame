@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon from '@/components/AppIcon';
 import { Text } from '@/components/Themed';
 import { useTheme, ThemePalette } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
@@ -86,7 +86,7 @@ export default function EditCandidateProfileModal({ visible, candidateId, initia
           <View style={s.headerRow}>
             <Text style={s.title}>Edit Profile</Text>
             <Pressable onPress={close} hitSlop={8}>
-              <Ionicons name="close" size={22} color={T.textMuted} />
+              <AppIcon name="close" size={22} color={T.textMuted} />
             </Pressable>
           </View>
 
@@ -117,7 +117,7 @@ export default function EditCandidateProfileModal({ visible, candidateId, initia
               />
               {skillInput.trim().length > 0 && (
                 <Pressable style={s.addBtn} onPress={() => addSkill(skillInput)} hitSlop={8}>
-                  <Ionicons name="add" size={18} color={T.textOnAccent} />
+                  <AppIcon name="add" size={18} color={T.textOnAccent} />
                 </Pressable>
               )}
             </View>
@@ -127,7 +127,7 @@ export default function EditCandidateProfileModal({ visible, candidateId, initia
                   <View key={skill} style={s.chip}>
                     <Text style={s.chipText}>{skill}</Text>
                     <Pressable onPress={() => removeSkill(skill)} hitSlop={6}>
-                      <Ionicons name="close" size={13} color={T.accent} />
+                      <AppIcon name="close" size={13} color={T.accent} />
                     </Pressable>
                   </View>
                 ))}

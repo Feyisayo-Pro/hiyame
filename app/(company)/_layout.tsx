@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon, { AppIconName } from '@/components/AppIcon';
 import { Text, View, Platform, OpaqueColorValue } from 'react-native';
 import { useTheme } from '@/lib/theme';
 import TopNav, { useIsDesktopWeb } from '@/components/TopNav';
@@ -9,10 +9,10 @@ import TopNav, { useIsDesktopWeb } from '@/components/TopNav';
 // prop still gets forced into that same wrapper, so no amount of styling escapes it.
 // Rendering icon+label together via tabBarIcon (a slot with no such restriction) and
 // turning the built-in label off entirely (tabBarShowLabel: false) sidesteps it.
-function TabIcon({ name, label, color }: { name: keyof typeof Ionicons.glyphMap; label: string; color: string | OpaqueColorValue }) {
+function TabIcon({ name, label, color }: { name: AppIconName; label: string; color: string | OpaqueColorValue }) {
   return (
     <View style={{ alignItems: 'center', justifyContent: 'center', gap: 2 }}>
-      <Ionicons name={name} size={22} color={color} />
+      <AppIcon name={name} size={22} color={color} />
       <Text style={{ fontSize: 11, fontWeight: '700', letterSpacing: 0.2, color }} numberOfLines={1}>
         {label}
       </Text>

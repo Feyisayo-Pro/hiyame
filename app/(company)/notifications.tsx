@@ -2,7 +2,7 @@ import { useCallback, useState, useMemo, useEffect } from 'react';
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import { Text } from '@/components/Themed';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon, { AppIconName } from '@/components/AppIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import ScreenFrame from '@/components/ScreenFrame';
@@ -12,7 +12,7 @@ import { useAuth } from '@/lib/useAuth';
 import { getCompanyFeed, FeedItem, relativeTime } from '@/lib/dashboardStats';
 import { useIsDesktopWeb, useIsWideDesktopWeb } from '@/components/TopNav';
 
-const ICON: Record<FeedItem['kind'], keyof typeof Ionicons.glyphMap> = {
+const ICON: Record<FeedItem['kind'], AppIconName> = {
   intro_sent: 'paper-plane-outline',
   intro_accepted: 'people-outline',
   intro_declined: 'close-circle-outline',
@@ -58,7 +58,7 @@ export default function CompanyNotificationsScreen() {
       <ScreenFrame>
       <View style={st.header}>
         <View style={st.headerLeft}>
-          <Ionicons name="notifications" size={22} color={T.accent} />
+          <AppIcon name="notifications" size={22} color={T.accent} />
           <Text style={st.headerTitle}>Alerts</Text>
           {fresh > 0 && <View style={st.headerBadge}><Text style={st.headerBadgeText}>{fresh}</Text></View>}
         </View>
@@ -73,7 +73,7 @@ export default function CompanyNotificationsScreen() {
           <View style={st.empty}><ActivityIndicator color={T.accent} /></View>
         ) : items.length === 0 ? (
           <View style={st.empty}>
-            <Ionicons name="notifications-outline" size={28} color={T.textMuted} />
+            <AppIcon name="notifications-outline" size={28} color={T.textMuted} />
             <Text style={st.emptyText}>Nothing yet. Introduction activity across your roles shows up here.</Text>
           </View>
         ) : (
@@ -88,7 +88,7 @@ export default function CompanyNotificationsScreen() {
                   >
                     <View style={st.row}>
                       <View style={[st.iconWrap, { backgroundColor: s.iconBg }]}>
-                        <Ionicons name={ICON[item.kind]} size={18} color={s.accent} />
+                        <AppIcon name={ICON[item.kind]} size={18} color={s.accent} />
                       </View>
                       <View style={{ flex: 1 }}>
                         <Text style={st.title}>{item.title}</Text>

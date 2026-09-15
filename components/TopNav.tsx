@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Image, Platform, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { router, usePathname } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon, { AppIconName } from '@/components/AppIcon';
 import { Text } from '@/components/Themed';
 import { useTheme, useThemeToggle, ThemePalette, ICON, RADIUS } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
@@ -21,7 +21,7 @@ export const SIDEBAR_WIDTH = 236;
 // making cards any narrower than they already are at exactly 2-column width.
 export const WIDE_DESKTOP_BREAKPOINT = 1440;
 
-type Item = { label: string; route: string; screen: string; icon: keyof typeof Ionicons.glyphMap };
+type Item = { label: string; route: string; screen: string; icon: AppIconName };
 
 const CANDIDATE: Item[] = [
   { label: 'Home', route: '/(candidate)', screen: 'index', icon: 'home-outline' },
@@ -47,8 +47,8 @@ export function useIsWideDesktopWeb(): boolean {
   return Platform.OS === 'web' && width >= WIDE_DESKTOP_BREAKPOINT;
 }
 
-function filled(icon: string): keyof typeof Ionicons.glyphMap {
-  return icon.replace('-outline', '') as keyof typeof Ionicons.glyphMap;
+function filled(icon: string): AppIconName {
+  return icon.replace('-outline', '') as AppIconName;
 }
 
 export default function SideNav({ role }: { role: 'candidate' | 'company' }) {
@@ -96,7 +96,7 @@ export default function SideNav({ role }: { role: 'candidate' | 'company' }) {
     <View style={st.bar}>
       <Pressable style={st.brand} onPress={() => router.navigate(items[0].route as any)} accessibilityRole="link">
         <View style={st.brandDot}>
-          <Ionicons name="flash" size={ICON.md} color={T.textOnAccent} />
+          <AppIcon name="flash" size={ICON.md} color={T.textOnAccent} />
         </View>
         <Text style={st.brandText}>Hiyame</Text>
       </Pressable>
@@ -113,7 +113,7 @@ export default function SideNav({ role }: { role: 'candidate' | 'company' }) {
               accessibilityRole="link"
               accessibilityState={{ selected: active }}
             >
-              <Ionicons name={active ? filled(it.icon) : it.icon} size={ICON.lg} color={active ? T.accent : T.textSecondary} />
+              <AppIcon name={active ? filled(it.icon) : it.icon} size={ICON.lg} color={active ? T.accent : T.textSecondary} />
               <Text style={[st.linkText, active && st.linkTextActive]}>{it.label}</Text>
             </AnimatedPressable>
           );
@@ -148,7 +148,7 @@ export default function SideNav({ role }: { role: 'candidate' | 'company' }) {
           accessibilityRole="link"
           accessibilityLabel="Notifications"
         >
-          <Ionicons name="notifications-outline" size={ICON.md} color={T.textSecondary} />
+          <AppIcon name="notifications-outline" size={ICON.md} color={T.textSecondary} />
           <Text style={st.footText}>Notifications</Text>
         </AnimatedPressable>
         <AnimatedPressable
@@ -158,7 +158,7 @@ export default function SideNav({ role }: { role: 'candidate' | 'company' }) {
           accessibilityRole="button"
           accessibilityLabel={mode === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
         >
-          <Ionicons name={mode === 'light' ? 'moon-outline' : 'sunny-outline'} size={ICON.md} color={T.textSecondary} />
+          <AppIcon name={mode === 'light' ? 'moon-outline' : 'sunny-outline'} size={ICON.md} color={T.textSecondary} />
           <Text style={st.footText}>{mode === 'light' ? 'Dark mode' : 'Light mode'}</Text>
         </AnimatedPressable>
         <AnimatedPressable
@@ -168,7 +168,7 @@ export default function SideNav({ role }: { role: 'candidate' | 'company' }) {
           accessibilityRole="link"
           accessibilityLabel="Settings"
         >
-          <Ionicons name="settings-outline" size={ICON.md} color={T.textSecondary} />
+          <AppIcon name="settings-outline" size={ICON.md} color={T.textSecondary} />
           <Text style={st.footText}>Settings</Text>
         </AnimatedPressable>
         <AnimatedPressable
@@ -178,7 +178,7 @@ export default function SideNav({ role }: { role: 'candidate' | 'company' }) {
           accessibilityRole="button"
           accessibilityLabel="Sign out"
         >
-          <Ionicons name="log-out-outline" size={ICON.md} color={T.danger} />
+          <AppIcon name="log-out-outline" size={ICON.md} color={T.danger} />
           <Text style={[st.footText, { color: T.danger }]}>Sign out</Text>
         </AnimatedPressable>
       </View>

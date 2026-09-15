@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState, useMemo } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, View, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
 import { Text } from '@/components/Themed';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon, { AppIconName } from '@/components/AppIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, ThemePalette } from '@/lib/theme';
 import { useAuth } from '@/lib/useAuth';
@@ -109,7 +109,7 @@ export default function CompanyRolesScreen() {
           <Text style={st.headerSub}>Tap a role to review its shortlist</Text>
         </View>
         <AnimatedPressable style={st.postButton} onPress={() => router.push('/(company)/create-role')} accessibilityRole="button" accessibilityLabel="Post a role">
-          <Ionicons name="add" size={20} color={T.textOnAccent} />
+          <AppIcon name="add" size={20} color={T.textOnAccent} />
         </AnimatedPressable>
       </View>
 
@@ -128,12 +128,12 @@ export default function CompanyRolesScreen() {
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={T.accent} colors={[T.accent]} />}
         >
           <View style={st.emptyIcon}>
-            <Ionicons name="briefcase-outline" size={32} color={T.textMuted} />
+            <AppIcon name="briefcase-outline" size={32} color={T.textMuted} />
           </View>
           <Text style={st.emptyTitle}>No roles yet</Text>
           <Text style={st.emptySub}>Post your first role to start building a shortlist.</Text>
           <AnimatedPressable style={st.emptyPostButton} onPress={() => router.push('/(company)/create-role')}>
-            <Ionicons name="add" size={18} color={T.textOnAccent} />
+            <AppIcon name="add" size={18} color={T.textOnAccent} />
             <Text style={st.emptyPostButtonText}>Post a Role</Text>
           </AnimatedPressable>
         </ScrollView>
@@ -153,18 +153,18 @@ export default function CompanyRolesScreen() {
                   >
                     <View style={st.cardTop}>
                       <View style={[st.tierPill, { backgroundColor: cfg.accent + '14' }]}>
-                        <Ionicons name={cfg.icon as keyof typeof Ionicons.glyphMap} size={12} color={cfg.accent} />
+                        <AppIcon name={cfg.icon as AppIconName} size={12} color={cfg.accent} />
                         <Text style={[st.tierText, { color: cfg.accent }]}>{cfg.label.toUpperCase()}</Text>
                       </View>
                       <Text style={st.statusText}>{role.status}</Text>
                     </View>
                     <Text style={st.roleTitle}>{role.title}</Text>
                     <View style={st.cardBottom}>
-                      <Ionicons name="people-outline" size={14} color={T.textSecondary} />
+                      <AppIcon name="people-outline" size={14} color={T.textSecondary} />
                       <Text style={st.shortlistText}>
                         {role.shortlistCount} {role.shortlistCount === 1 ? 'candidate' : 'candidates'} shortlisted
                       </Text>
-                      <Ionicons name="chevron-forward" size={16} color={T.textMuted} style={{ marginLeft: 'auto' }} />
+                      <AppIcon name="chevron-forward" size={16} color={T.textMuted} style={{ marginLeft: 'auto' }} />
                     </View>
                   </AnimatedPressable>
                 </SwipeFadeContainer>

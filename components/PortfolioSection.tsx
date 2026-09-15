@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, TextInput, View, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon from '@/components/AppIcon';
 import { Text } from '@/components/Themed';
 import { useTheme, ThemePalette } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
@@ -80,7 +80,7 @@ export default function PortfolioSection({ candidateId }: { candidateId: string 
 
       {items.length === 0 && !adding ? (
         <View style={st.empty}>
-          <Ionicons name="briefcase-outline" size={20} color={T.textMuted} />
+          <AppIcon name="briefcase-outline" size={20} color={T.textMuted} />
           <Text style={st.emptyText}>Add work samples companies can see once they connect with you.</Text>
         </View>
       ) : (
@@ -91,7 +91,7 @@ export default function PortfolioSection({ candidateId }: { candidateId: string 
               {item.description ? <Text style={st.cardDesc}>{item.description}</Text> : null}
             </View>
             <Pressable onPress={() => handleRemove(item.id)} hitSlop={8} accessibilityRole="button" accessibilityLabel={`Remove ${item.title}`}>
-              <Ionicons name="close" size={16} color={T.textMuted} />
+              <AppIcon name="close" size={16} color={T.textMuted} />
             </Pressable>
           </View>
         ))
@@ -112,7 +112,7 @@ export default function PortfolioSection({ candidateId }: { candidateId: string 
         </View>
       ) : items.length < MAX_ITEMS ? (
         <Pressable style={st.addRow} onPress={() => setAdding(true)}>
-          <Ionicons name="add" size={16} color={T.accent} />
+          <AppIcon name="add" size={16} color={T.accent} />
           <Text style={st.addRowText}>Add portfolio item</Text>
         </Pressable>
       ) : null}

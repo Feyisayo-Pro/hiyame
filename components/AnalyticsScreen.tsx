@@ -9,7 +9,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, View } from 'react-native';
 import { Text } from '@/components/Themed';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon, { AppIconName } from '@/components/AppIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, ThemePalette } from '@/lib/theme';
 import { useAuth } from '@/lib/useAuth';
@@ -41,12 +41,12 @@ function BarChart({ data, T, barColor, height = 120 }: {
 }
 
 function MetricCard({ icon, label, value, subtitle, color, bg, T }: {
-  icon: keyof typeof Ionicons.glyphMap; label: string; value: string | number; subtitle?: string; color: string; bg: string; T: ThemePalette;
+  icon: AppIconName; label: string; value: string | number; subtitle?: string; color: string; bg: string; T: ThemePalette;
 }) {
   return (
     <View style={{ flex: 1, backgroundColor: T.card, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: T.border }}>
       <View style={{ width: 36, height: 36, borderRadius: 12, backgroundColor: bg, alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
-        <Ionicons name={icon} size={18} color={color} />
+        <AppIcon name={icon} size={18} color={color} />
       </View>
       <Text style={{ fontSize: 22, fontWeight: '800', color: T.textPrimary }}>{value}</Text>
       <Text style={{ fontSize: 12, fontWeight: '600', color: T.textSecondary, marginTop: 2 }}>{label}</Text>
@@ -111,7 +111,7 @@ function CompanyAnalytics({ T, stats }: { T: ThemePalette; stats: CompanyStats }
 
         <Card title="Team" T={T}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-            <Ionicons name="people-circle-outline" size={22} color={T.textSecondary} />
+            <AppIcon name="people-circle-outline" size={22} color={T.textSecondary} />
             <Text style={{ fontSize: 14, color: T.textPrimary, fontWeight: '600' }}>
               {stats.teamSize} member{stats.teamSize === 1 ? '' : 's'} on this account
             </Text>
@@ -153,7 +153,7 @@ function CandidateAnalytics({ T, stats }: { T: ThemePalette; stats: CandidateSta
 
         {stats.verifiedCount < 4 ? (
           <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10, backgroundColor: T.accentBg, borderRadius: 14, padding: 14, borderWidth: 1, borderColor: T.accent + '30' }}>
-            <Ionicons name="information-circle" size={18} color={T.accent} />
+            <AppIcon name="information-circle" size={18} color={T.accent} />
             <Text style={{ flex: 1, fontSize: 13, color: T.textPrimary, lineHeight: 18 }}>
               Unverified profiles don't enter matching. Complete all 4 verification components to start receiving introductions.
             </Text>

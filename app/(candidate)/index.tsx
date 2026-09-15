@@ -2,7 +2,7 @@ import { useCallback, useState, useMemo, useEffect } from 'react';
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import { Text } from '@/components/Themed';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import AppIcon, { AppIconName } from '@/components/AppIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/lib/useAuth';
 import { supabase } from '@/lib/supabase';
@@ -15,7 +15,7 @@ import { useTheme, useThemeToggle, ThemePalette, ELEVATION } from '@/lib/theme';
 import { FULL_VERIFICATION_THRESHOLD, TOTAL_VERIFICATION_COMPONENTS } from '@/lib/verification';
 import { SkeletonRow } from '@/components/Skeleton';
 
-const VERIFY_COMPONENTS: { key: string; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
+const VERIFY_COMPONENTS: { key: string; label: string; icon: AppIconName }[] = [
   { key: 'identity', label: 'Identity Check', icon: 'id-card-outline' },
   { key: 'video_intro', label: 'Video Introduction', icon: 'videocam-outline' },
   { key: 'skills_assessment', label: 'Skills Assessment', icon: 'shield-checkmark-outline' },
@@ -94,7 +94,7 @@ export default function CandidateHomeScreen() {
             <View style={st.headerRow}>
               <View style={st.profileRow}>
                 <View style={st.avatar}>
-                  <Ionicons name="person" size={16} color={T.accent} />
+                  <AppIcon name="person" size={16} color={T.accent} />
                 </View>
                 <View>
                   <Text style={st.greeting}>{greeting()}</Text>
@@ -104,10 +104,10 @@ export default function CandidateHomeScreen() {
               {!isDesktop && (
                 <View style={st.headerActions}>
                   <Pressable style={st.iconBtn} onPress={toggleTheme} accessibilityRole="button" accessibilityLabel="Toggle theme">
-                    <Ionicons name={mode === 'light' ? 'sunny-outline' : 'moon-outline'} size={20} color={T.textSecondary} />
+                    <AppIcon name={mode === 'light' ? 'sunny-outline' : 'moon-outline'} size={20} color={T.textSecondary} />
                   </Pressable>
                   <Pressable style={st.iconBtn} onPress={() => supabase.auth.signOut()} accessibilityRole="button" accessibilityLabel="Sign out">
-                    <Ionicons name="log-out-outline" size={20} color={T.textSecondary} />
+                    <AppIcon name="log-out-outline" size={20} color={T.textSecondary} />
                   </Pressable>
                 </View>
               )}
@@ -132,7 +132,7 @@ export default function CandidateHomeScreen() {
                   </Text>
                 </View>
               </View>
-              {isFullyVerified && <MaterialCommunityIcons name="decagram" size={28} color={T.emerald} />}
+              {isFullyVerified && <AppIcon name="decagram" size={28} color={T.emerald} />}
             </View>
 
             <View style={st.progressBarBg}>
@@ -141,9 +141,9 @@ export default function CandidateHomeScreen() {
 
             {!isFullyVerified && (
               <Pressable style={st.verifyLink} onPress={() => router.push('/(candidate)/verification')}>
-                <Ionicons name="shield-checkmark-outline" size={16} color={T.accent} />
+                <AppIcon name="shield-checkmark-outline" size={16} color={T.accent} />
                 <Text style={st.verifyLinkText}>Continue Verification</Text>
-                <Ionicons name="arrow-forward" size={14} color={T.accent} />
+                <AppIcon name="arrow-forward" size={14} color={T.accent} />
               </Pressable>
             )}
           </View>
@@ -152,21 +152,21 @@ export default function CandidateHomeScreen() {
           <View style={st.statsRow}>
             <View style={st.statCard}>
               <View style={[st.statIconWrap, { backgroundColor: T.accentBg }]}>
-                <Ionicons name="shield-checkmark" size={16} color={T.accent} />
+                <AppIcon name="shield-checkmark" size={16} color={T.accent} />
               </View>
               <Text style={st.statValue}>{verifiedCount}/4</Text>
               <Text style={st.statLabel}>Verified</Text>
             </View>
             <View style={st.statCard}>
               <View style={[st.statIconWrap, { backgroundColor: T.accentBg }]}>
-                <Ionicons name="mail-unread" size={16} color={T.accent} />
+                <AppIcon name="mail-unread" size={16} color={T.accent} />
               </View>
               <Text style={st.statValue}>{stats?.introsPending ?? 0}</Text>
               <Text style={st.statLabel}>To respond</Text>
             </View>
             <View style={st.statCard}>
               <View style={[st.statIconWrap, { backgroundColor: T.accentBg }]}>
-                <Ionicons name="people" size={16} color={T.accent} />
+                <AppIcon name="people" size={16} color={T.accent} />
               </View>
               <Text style={st.statValue}>{stats?.introsAccepted ?? 0}</Text>
               <Text style={st.statLabel}>Connected</Text>
@@ -179,7 +179,7 @@ export default function CandidateHomeScreen() {
               <Text style={st.sectionTitle}>Verification Checklist</Text>
               <Pressable onPress={() => router.push('/(candidate)/verification')} style={st.seeAll}>
                 <Text style={st.seeAllText}>View All</Text>
-                <Ionicons name="arrow-forward" size={14} color={T.accent} />
+                <AppIcon name="arrow-forward" size={14} color={T.accent} />
               </Pressable>
             </View>
 
@@ -188,7 +188,7 @@ export default function CandidateHomeScreen() {
               return (
                 <View key={item.key} style={st.checkItem}>
                   <View style={[st.checkIconWrap, done && st.checkIconDone]}>
-                    <Ionicons name={item.icon} size={18} color={done ? T.emerald : T.accent} />
+                    <AppIcon name={item.icon} size={18} color={done ? T.emerald : T.accent} />
                   </View>
                   <Text style={[st.checkLabel, done && st.checkLabelDone]}>{item.label}</Text>
                   <View style={[st.checkStatus, done ? st.checkStatusDone : st.checkStatusPending]}>
@@ -207,7 +207,7 @@ export default function CandidateHomeScreen() {
               <Text style={st.sectionTitle}>Your Introductions</Text>
               <Pressable onPress={() => router.push('/(candidate)/opportunities')} style={st.seeAll}>
                 <Text style={st.seeAllText}>View All</Text>
-                <Ionicons name="arrow-forward" size={14} color={T.accent} />
+                <AppIcon name="arrow-forward" size={14} color={T.accent} />
               </Pressable>
             </View>
 
@@ -219,7 +219,7 @@ export default function CandidateHomeScreen() {
               </>
             ) : stats.recentIntros.length === 0 ? (
               <View style={st.introEmpty}>
-                <Ionicons name="mail-outline" size={26} color={T.textMuted} />
+                <AppIcon name="mail-outline" size={26} color={T.textMuted} />
                 <Text style={st.introEmptyText}>
                   {isFullyVerified
                     ? "No introductions yet. When a company wants to connect, it'll show up here."
@@ -233,7 +233,7 @@ export default function CandidateHomeScreen() {
                 return (
                   <Pressable key={intro.id} style={st.introRow} onPress={() => router.push('/(candidate)/opportunities')}>
                     <View style={[st.introIcon, { backgroundColor: cfg.accent + '18' }]}>
-                      <Ionicons name={cfg.icon as keyof typeof Ionicons.glyphMap} size={16} color={cfg.accent} />
+                      <AppIcon name={cfg.icon as AppIconName} size={16} color={cfg.accent} />
                     </View>
                     <View style={{ flex: 1 }}>
                       <Text style={st.introTitle} numberOfLines={1}>

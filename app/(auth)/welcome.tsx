@@ -2,7 +2,7 @@ import { useMemo, useRef, useState } from 'react';
 import { Animated, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { router } from 'expo-router';
 import { Text } from '@/components/Themed';
-import { Ionicons } from '@expo/vector-icons';
+import AppIcon from '@/components/AppIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, ThemePalette } from '@/lib/theme';
 import ScreenFrame from '@/components/ScreenFrame';
@@ -66,7 +66,7 @@ export default function WelcomeScreen() {
         <View style={[st.navPill, stacked && st.navPillStacked]}>
           <View style={st.brandRow}>
             <View style={st.brandDot}>
-              <Ionicons name="flash" size={16} color="#FFFFFF" />
+              <AppIcon name="flash" size={16} color="#FFFFFF" />
             </View>
             <Text style={st.brandText}>Hiyame</Text>
           </View>
@@ -123,7 +123,7 @@ export default function WelcomeScreen() {
                   </Text>
                   <View style={st.panelCta}>
                     <Text style={st.panelCtaTextLight}>Post a role</Text>
-                    <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
+                    <AppIcon name="arrow-forward" size={16} color="#FFFFFF" />
                   </View>
                 </Animated.View>
 
@@ -172,14 +172,14 @@ export default function WelcomeScreen() {
                   </Text>
                   <View style={[st.panelCta, st.panelCtaOnBlue]}>
                     <Text style={st.panelCtaTextDark}>Get verified</Text>
-                    <Ionicons name="arrow-forward" size={16} color={COMPANY_COLOR} />
+                    <AppIcon name="arrow-forward" size={16} color={COMPANY_COLOR} />
                   </View>
                 </Animated.View>
 
                 {!stacked && (
                   <Animated.View style={[st.mockCard, st.mockCardCandidate, { transform: [{ rotate: candidateCardTilt }] }]}>
                     <View style={st.mockMatchHead}>
-                      <Ionicons name="sparkles" size={13} color="#17A75B" />
+                      <AppIcon name="sparkles" size={13} color="#17A75B" />
                       <Text style={st.mockMatchHeadText}>You've been matched</Text>
                     </View>
                     <Text style={st.mockCardName}>Data Analyst</Text>
