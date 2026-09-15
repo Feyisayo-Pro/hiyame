@@ -78,6 +78,78 @@ export const TIER_CONFIGS: Record<SubscriptionTier, TierConfig> = {
   },
 };
 
+// ── Public plan copy ──
+// Human-facing names/prices/feature bullets for the 4 tiers above. Single
+// source of truth for both the in-app subscriptions screen (app/(company)/
+// subscriptions.tsx) and the logged-out marketing pricing page (app/(auth)/
+// pricing.tsx) — previously lived only in the former, which would have let
+// the two silently drift apart the next time either got edited.
+export interface PricingPlan {
+  id: SubscriptionTier;
+  name: string;
+  subtitle: string;
+  price: string;
+  period: string;
+  features: string[];
+  highlight?: boolean;
+}
+
+export const PLANS: PricingPlan[] = [
+  {
+    id: 'pilot',
+    name: 'Pilot',
+    subtitle: 'Try it out',
+    price: '₦0',
+    period: '/mo',
+    features: [
+      '1 candidate match / month',
+      'Basic search & filtering',
+      'Standard email support',
+      '1 team seat',
+    ],
+  },
+  {
+    id: 'starter',
+    name: 'Starter',
+    subtitle: 'Free',
+    price: '₦0',
+    period: '/mo',
+    features: [
+      '5 candidate matches / month',
+      'Basic search & filtering',
+      'Standard email support',
+      '1 team seat',
+    ],
+  },
+  {
+    id: 'growth',
+    name: 'Growth',
+    subtitle: 'Pro',
+    price: '₦250,000',
+    period: '/mo',
+    features: [
+      'Unlimited candidate matches',
+      'Priority candidate filtering',
+      'Up to 3 team seats',
+      'Priority support',
+    ],
+    highlight: true,
+  },
+  {
+    id: 'enterprise',
+    name: 'Enterprise',
+    subtitle: 'Scale',
+    price: '₦650,000',
+    period: '/mo',
+    features: [
+      'Unlimited candidate matches',
+      'Dedicated sourcing dashboard',
+      'Unlimited team seats',
+      'Dedicated account manager',
+    ],
+  },
+];
+
 // ── Context ──
 // Team roster lives in Supabase (company_users), not here — see
 // app/(company)/team.tsx. This store only owns the per-tier seat *cap*

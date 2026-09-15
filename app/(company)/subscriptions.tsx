@@ -6,77 +6,13 @@ import AppIcon from '@/components/AppIcon';
 
 import { Text } from '@/components/Themed';
 import { useTheme, ThemePalette } from '@/lib/theme';
-import { useSubscription, SubscriptionTier } from '@/lib/subscriptionStore';
+import { useSubscription, SubscriptionTier, PricingPlan, PLANS } from '@/lib/subscriptionStore';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import ScreenFrame from '@/components/ScreenFrame';
 import { notify } from '@/lib/notify';
 
-// ── Plan copy (maps onto the underlying pilot/starter/growth/enterprise tiers) ──
-interface PricingPlan {
-  id: SubscriptionTier;
-  name: string;
-  subtitle: string;
-  price: string;
-  period: string;
-  features: string[];
-  highlight?: boolean;
-}
-
-const PLANS: PricingPlan[] = [
-  {
-    id: 'pilot',
-    name: 'Pilot',
-    subtitle: 'Try it out',
-    price: '₦0',
-    period: '/mo',
-    features: [
-      '1 candidate match / month',
-      'Basic search & filtering',
-      'Standard email support',
-      '1 team seat',
-    ],
-  },
-  {
-    id: 'starter',
-    name: 'Starter',
-    subtitle: 'Free',
-    price: '₦0',
-    period: '/mo',
-    features: [
-      '5 candidate matches / month',
-      'Basic search & filtering',
-      'Standard email support',
-      '1 team seat',
-    ],
-  },
-  {
-    id: 'growth',
-    name: 'Growth',
-    subtitle: 'Pro',
-    price: '₦250,000',
-    period: '/mo',
-    features: [
-      'Unlimited candidate matches',
-      'Priority candidate filtering',
-      'Up to 3 team seats',
-      'Priority support',
-    ],
-    highlight: true,
-  },
-  {
-    id: 'enterprise',
-    name: 'Enterprise',
-    subtitle: 'Scale',
-    price: '₦650,000',
-    period: '/mo',
-    features: [
-      'Unlimited candidate matches',
-      'Dedicated sourcing dashboard',
-      'Unlimited team seats',
-      'Dedicated account manager',
-    ],
-  },
-];
+// Plan copy (id/name/price/features) now lives in lib/subscriptionStore.ts,
+// shared with the logged-out marketing pricing page — see PLANS there.
 
 // ── Paystack checkout placeholder ──
 // Logs the selected tier's payload and mocks the gateway round-trip. When the

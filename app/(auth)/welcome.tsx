@@ -6,6 +6,7 @@ import AppIcon from '@/components/AppIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, ThemePalette } from '@/lib/theme';
 import ScreenFrame from '@/components/ScreenFrame';
+import PublicNav from '@/components/PublicNav';
 
 // The landing screen — folds the old two-step welcome-carousel → register
 // flow into one decisive screen (per the redesign brief: Viamatch's whole
@@ -63,37 +64,7 @@ export default function WelcomeScreen() {
       <ScreenFrame maxWidth={1120} style={st.frame}>
       <ScrollView contentContainerStyle={st.scrollContent} showsVerticalScrollIndicator={false}>
         {/* ── Nav ── */}
-        <View style={[st.navPill, stacked && st.navPillStacked]}>
-          <View style={st.brandRow}>
-            <View style={st.brandDot}>
-              <AppIcon name="flash" size={16} color="#FFFFFF" />
-            </View>
-            <Text style={st.brandText}>Hiyame</Text>
-          </View>
-
-          {!stacked && (
-            <View style={st.navLinks}>
-              <Pressable onPress={goCompany} style={st.navLink} onHoverIn={() => focusPanel('company')} onHoverOut={resetFocus}>
-                <Text style={st.navLinkText}>For Companies</Text>
-              </Pressable>
-              <Pressable onPress={goCandidate} style={st.navLink} onHoverIn={() => focusPanel('candidate')} onHoverOut={resetFocus}>
-                <Text style={st.navLinkText}>For Candidates</Text>
-              </Pressable>
-            </View>
-          )}
-
-          <View style={st.navActions}>
-            <Pressable style={st.loginPill} onPress={() => router.push('/(auth)/login')}>
-              <Text style={st.loginPillText}>Login</Text>
-            </Pressable>
-            {/* Candidates are Hiyame's larger, lower-friction audience by far
-                (over a thousand vs. a couple dozen companies) — the sensible
-                default for a generic "Sign up" with no persona context yet. */}
-            <Pressable style={st.signUpPill} onPress={goCandidate}>
-              <Text style={st.signUpPillText}>Sign up</Text>
-            </Pressable>
-          </View>
-        </View>
+        <PublicNav stacked={stacked} />
 
         {/* ── Headline ── */}
         <View style={[st.headlineBlock, stacked && st.headlineBlockStacked]}>
@@ -203,30 +174,6 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: PAGE_BG },
   frame: { paddingHorizontal: 20, paddingTop: 16 },
   scrollContent: { flexGrow: 1, paddingBottom: 24 },
-
-  navPill: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: '#FFFFFF', borderRadius: 999,
-    paddingVertical: 8, paddingLeft: 14, paddingRight: 8,
-    marginBottom: 28,
-    shadowColor: '#0B1220', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2,
-  },
-  // Mobile fold: the two stacked panels alone (2 × panelStacked) already
-  // approach a phone's real viewport height, so every other block on this
-  // screen gets trimmed too — this is what keeps the whole thing a single
-  // no-scroll hero on a real device instead of just on a 900px desktop tab.
-  navPillStacked: { marginBottom: 16 },
-  brandRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  brandDot: { width: 28, height: 28, borderRadius: 9, backgroundColor: CANDIDATE_COLOR, alignItems: 'center', justifyContent: 'center' },
-  brandText: { fontSize: 16, fontWeight: '800', color: COMPANY_COLOR, letterSpacing: -0.3 },
-  navLinks: { flexDirection: 'row', gap: 4, flex: 1, justifyContent: 'center' },
-  navLink: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999 },
-  navLinkText: { fontSize: 13, fontWeight: '600', color: '#536471' },
-  navActions: { flexDirection: 'row', alignItems: 'center', gap: 6, marginLeft: 'auto' },
-  loginPill: { paddingHorizontal: 16, paddingVertical: 9, borderRadius: 999, borderWidth: 1, borderColor: '#E1E8ED' },
-  loginPillText: { fontSize: 13, fontWeight: '700', color: COMPANY_COLOR },
-  signUpPill: { backgroundColor: CANDIDATE_COLOR, paddingHorizontal: 18, paddingVertical: 9, borderRadius: 999 },
-  signUpPillText: { fontSize: 13, fontWeight: '700', color: '#FFFFFF' },
 
   headlineBlock: { alignItems: 'center', marginBottom: 28, paddingHorizontal: 12 },
   headlineBlockStacked: { marginBottom: 16 },
