@@ -7,12 +7,21 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, ThemePalette } from '@/lib/theme';
 import ScreenFrame from '@/components/ScreenFrame';
 import PublicNav from '@/components/PublicNav';
+import PublicFooter from '@/components/PublicFooter';
+import PersonaSwitcher, { PersonaMode } from '@/components/PersonaSwitcher';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 
 // The landing screen — folds the old two-step welcome-carousel → register
 // flow into one decisive screen (per the redesign brief: Viamatch's whole
 // landing is one full-viewport screen, not a carousel then a separate list).
 // register.tsx now just redirects here.
+//
+// That "one screen" rule is specifically about the HERO (the two-panel
+// block above) staying a single no-scroll viewport on every device — a real
+// bug was fixed here once already (mobile hero overflow). It was never a
+// rule against the page ever scrolling: everything below the hero (How It
+// Works, footer) is deliberate additional content, the same way a normal
+// landing page has a hero fold and more underneath.
 //
 // Fixed hero identity colors, not theme tokens — same precedent this screen
 // already used before this pass (the old hero hardcoded '#1DA1F2' directly).
@@ -28,6 +37,30 @@ const STACK_BREAKPOINT = 760;
 
 type PanelKey = 'company' | 'candidate';
 
+// "How it works" content for both personas — real steps matching what the
+// product actually does (app/(company)/create-role.tsx's form, lib/
+// matchingEngine.ts's scoring, app/(company)/shortlist.tsx's ranked list;
+// candidate side reuses the same 3 steps as app/(auth)/about.tsx so the two
+// pages never describe the flow differently).
+interface HowItWorksStep {
+  tab: string;
+  icon: string;
+  title: string;
+  body: string;
+}
+
+const HIRING_STEPS: HowItWorksStep[] = [
+  { tab: 'Post a role', icon: 'create-outline', title: 'Post a role', body: "Tell us the title, tier, must-have skills, and rate. It goes live and starts matching right away — no job board listing to write." },
+  { tab: 'We match', icon: 'compass-outline', title: 'We match', body: "A scoring engine ranks every verified candidate against your role's real requirements — skill fit, experience, rate, and availability." },
+  { tab: 'Review shortlist', icon: 'people-outline', title: 'Review your shortlist', body: "Get a ranked shortlist of verified candidates. Send a real introduction to the ones you like — no résumé pile to sift through." },
+];
+
+const CANDIDATE_STEPS: HowItWorksStep[] = [
+  { tab: 'Verify', icon: 'shield-checkmark-outline', title: 'Verify once', body: 'Identity, video introduction, skills assessment, and employer reference checks — once, not for every application you make.' },
+  { tab: 'Get matched', icon: 'compass-outline', title: 'Get matched', body: 'The same scoring engine ranks you against real open roles — skill fit, experience, rate, and availability, not keyword luck.' },
+  { tab: 'Get introduced', icon: 'paper-plane-outline', title: 'Get introduced', body: "Companies send you a real introduction and you respond — no cold applications, no job board to keep refreshing." },
+];
+
 export default function WelcomeScreen() {
   const T = useTheme();
   const st = useMemo(() => makeStyles(T), [T]);
@@ -40,6 +73,14 @@ export default function WelcomeScreen() {
   // recede, never independent.
   const focus = useRef(new Animated.Value(0)).current;
   const [pressed, setPressed] = useState<PanelKey | null>(null);
+
+  const [mode, setMode] = useState<PersonaMode>('hiring');
+  const [activeStep, setActiveStep] = useState(0);
+  // Switching persona resets to step 1 of that persona's flow — carrying
+  // "step 3 of hiring" over into "step 3 of candidate" would land on an
+  // unrelated step by coincidence of index, not intent.
+  const changeMode = (m: PersonaMode) => { setMode(m); setActiveStep(0); };
+  const steps = mode === 'hiring' ? HIRING_STEPS : CANDIDATE_STEPS;
 
   // Separate from `focus` (which drives the hover-expand) — a small press-down
   // scale so tapping a panel gives the same instant, physical feedback every
@@ -180,16 +221,144 @@ export default function WelcomeScreen() {
           </Animated.View>
         </View>
         </SwipeFadeContainer>
+
+        {/* ── How it works ── */}
+        <View style={st.howSection}>
+          <Text style={st.howEyebrow}>{mode === 'hiring' ? 'FOR EMPLOYERS' : 'FOR CANDIDATES'}</Text>
+          <Text style={st.howTitle}>How it works {mode === 'hiring' ? 'for employers' : 'for candidates'}</Text>
+          <Text style={st.howSubhead}>
+            {mode === 'hiring'
+              ? 'Find the best candidates for your role in three simple steps.'
+              : 'Get matched with real roles in three simple steps.'}
+          </Text>
+
+          <View style={[st.stepTabs, stacked && st.stepTabsStacked]}>
+            {steps.map((step, i) => (
+              <View key={step.tab} style={st.stepTabRow}>
+                <Pressable onPress={() => setActiveStep(i)} style={[st.stepTab, i === activeStep && st.stepTabActive]}>
+                  <Text style={[st.stepTabText, i === activeStep && st.stepTabTextActive]}>{step.tab}</Text>
+                </Pressable>
+                {i < steps.length - 1 && !stacked && <AppIcon name="arrow-forward" size={14} color="#536471" />}
+              </View>
+            ))}
+          </View>
+
+          <SwipeFadeContainer key={`${mode}-${activeStep}`} axis="y" offset={12} duration={260} delay={0} style={[st.stepContent, stacked && st.stepContentStacked]}>
+            <View style={st.stepTextCol}>
+              <View style={st.stepIconWrap}>
+                <AppIcon name={steps[activeStep].icon} size={22} color={CANDIDATE_COLOR} />
+              </View>
+              <Text style={st.stepNumber}>Step {activeStep + 1}</Text>
+              <Text style={st.stepTitle}>{steps[activeStep].title}</Text>
+              <Text style={st.stepBody}>{steps[activeStep].body}</Text>
+            </View>
+
+            <View style={st.stepMockCol}>
+              <StepMockCard mode={mode} step={activeStep} st={st} />
+            </View>
+          </SwipeFadeContainer>
+        </View>
+
+        <PublicFooter stacked={stacked} />
       </ScrollView>
       </ScreenFrame>
+      <PersonaSwitcher mode={mode} onChange={changeMode} />
     </SafeAreaView>
+  );
+}
+
+// Decorative previews of the real screens each step describes — not literal
+// screenshots, but built from the exact same mock-card visual language as
+// the hero panels above (same avatar/chip/badge treatment), so this doesn't
+// introduce a second unrelated visual style partway down the page.
+function StepMockCard({ mode, step, st }: { mode: PersonaMode; step: number; st: ReturnType<typeof makeStyles> }) {
+  if (mode === 'hiring') {
+    if (step === 0) {
+      return (
+        <View style={mockStyles.card}>
+          <View style={mockStyles.liveBadge}><Text style={mockStyles.liveBadgeText}>LIVE</Text></View>
+          <Text style={mockStyles.formTitle}>Senior Backend Engineer</Text>
+          <Text style={mockStyles.formMeta}>Corporate · Remote</Text>
+          <View style={st.mockChipRow}>
+            <View style={st.mockChip}><Text style={st.mockChipText}>Python</Text></View>
+            <View style={st.mockChip}><Text style={st.mockChipText}>FastAPI</Text></View>
+            <View style={st.mockChip}><Text style={st.mockChipText}>PostgreSQL</Text></View>
+          </View>
+        </View>
+      );
+    }
+    if (step === 1) {
+      return (
+        <View style={mockStyles.card}>
+          <View style={st.mockCardRow}>
+            <View style={st.mockAvatar}><Text style={st.mockAvatarText}>KA</Text></View>
+            <View style={{ flex: 1 }}>
+              <Text style={st.mockCardName}>Kemi A.</Text>
+              <Text style={st.mockCardMeta}>Senior Backend Engineer</Text>
+            </View>
+            <View style={st.mockScoreBadge}><Text style={st.mockScoreText}>92%</Text></View>
+          </View>
+          <View style={mockStyles.scoreBar}><View style={[mockStyles.scoreBarFill, { width: '92%' }]} /></View>
+        </View>
+      );
+    }
+    return (
+      <View style={mockStyles.card}>
+        {[{ n: 'Kemi A.', s: '92%' }, { n: 'Tunde O.', s: '87%' }, { n: 'Amaka N.', s: '81%' }].map((c) => (
+          <View key={c.n} style={mockStyles.listRow}>
+            <Text style={mockStyles.listName}>{c.n}</Text>
+            <View style={st.mockScoreBadge}><Text style={st.mockScoreText}>{c.s}</Text></View>
+          </View>
+        ))}
+      </View>
+    );
+  }
+  if (step === 0) {
+    return (
+      <View style={mockStyles.card}>
+        {['Profile Picture', 'Identity Check', 'Video Introduction'].map((label) => (
+          <View key={label} style={mockStyles.checkRow}>
+            <AppIcon name="checkmark-circle" size={16} color="#17A75B" />
+            <Text style={mockStyles.checkLabel}>{label}</Text>
+          </View>
+        ))}
+      </View>
+    );
+  }
+  if (step === 1) {
+    return (
+      <View style={mockStyles.card}>
+        <View style={st.mockMatchHead}>
+          <AppIcon name="sparkles" size={13} color="#17A75B" />
+          <Text style={st.mockMatchHeadText}>You've been matched</Text>
+        </View>
+        <Text style={st.mockCardName}>Data Analyst</Text>
+        <View style={st.mockChipRow}>
+          <View style={[st.mockChip, st.mockChipDark]}><Text style={st.mockChipTextDark}>Corporate</Text></View>
+        </View>
+      </View>
+    );
+  }
+  return (
+    <View style={mockStyles.card}>
+      <View style={st.mockCardRow}>
+        <View style={st.mockAvatar}><AppIcon name="business" size={16} color={COMPANY_COLOR} /></View>
+        <View style={{ flex: 1 }}>
+          <Text style={st.mockCardName}>New introduction</Text>
+          <Text style={st.mockCardMeta}>From a Corporate-tier company</Text>
+        </View>
+      </View>
+      <Text style={mockStyles.windowText}>48h to respond</Text>
+    </View>
   );
 }
 
 const makeStyles = (T: ThemePalette) => StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: PAGE_BG },
   frame: { paddingHorizontal: 20, paddingTop: 16 },
-  scrollContent: { flexGrow: 1, paddingBottom: 24 },
+  // Extra clearance at the very end for the fixed PersonaSwitcher pill,
+  // which would otherwise sit directly over the footer's last line.
+  scrollContent: { flexGrow: 1, paddingBottom: 88 },
 
   headlineBlock: { alignItems: 'center', marginBottom: 28, paddingHorizontal: 12 },
   headlineBlockStacked: { marginBottom: 16 },
@@ -241,4 +410,45 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   mockWindowText: { fontSize: 10, fontWeight: '600', color: '#E0870B' },
   mockMatchHead: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 8 },
   mockMatchHeadText: { fontSize: 11, fontWeight: '700', color: '#17A75B' },
+
+  // ── How it works ──
+  howSection: { marginTop: 64, paddingBottom: 80 },
+  howEyebrow: { fontSize: 12, fontWeight: '800', letterSpacing: 0.8, color: CANDIDATE_COLOR, marginBottom: 10 },
+  howTitle: { fontSize: 30, fontWeight: '800', color: COMPANY_COLOR, letterSpacing: -0.5, marginBottom: 8 },
+  howSubhead: { fontSize: 15.5, color: '#536471', fontWeight: '500', maxWidth: 480, marginBottom: 32 },
+
+  stepTabs: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 32, flexWrap: 'wrap' },
+  stepTabsStacked: { flexDirection: 'column', alignItems: 'flex-start' },
+  stepTabRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  stepTab: { paddingHorizontal: 16, paddingVertical: 9, borderRadius: 999, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E1E8ED' },
+  stepTabActive: { backgroundColor: COMPANY_COLOR, borderColor: COMPANY_COLOR },
+  stepTabText: { fontSize: 13, fontWeight: '700', color: '#536471' },
+  stepTabTextActive: { color: '#FFFFFF' },
+
+  stepContent: { flexDirection: 'row', gap: 40, alignItems: 'center' },
+  stepContentStacked: { flexDirection: 'column', alignItems: 'stretch', gap: 24 },
+  stepTextCol: { flex: 1, minWidth: 260 },
+  stepIconWrap: { width: 44, height: 44, borderRadius: 14, backgroundColor: '#DCEEFB', alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
+  stepNumber: { fontSize: 12, fontWeight: '800', color: CANDIDATE_COLOR, letterSpacing: 0.4, marginBottom: 6 },
+  stepTitle: { fontSize: 22, fontWeight: '800', color: COMPANY_COLOR, marginBottom: 10, letterSpacing: -0.3 },
+  stepBody: { fontSize: 15, color: '#536471', lineHeight: 23, fontWeight: '500', maxWidth: 420 },
+  stepMockCol: { flex: 1, minWidth: 240, alignItems: 'center' },
+});
+
+const mockStyles = StyleSheet.create({
+  card: {
+    width: '100%', maxWidth: 280, backgroundColor: '#FFFFFF', borderRadius: 20, padding: 18,
+    shadowColor: '#0B1220', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.1, shadowRadius: 24, elevation: 6,
+  },
+  liveBadge: { alignSelf: 'flex-start', backgroundColor: 'rgba(23,167,91,0.12)', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3, marginBottom: 10 },
+  liveBadgeText: { fontSize: 10, fontWeight: '800', color: '#17A75B', letterSpacing: 0.4 },
+  formTitle: { fontSize: 15, fontWeight: '800', color: COMPANY_COLOR },
+  formMeta: { fontSize: 12, color: '#8A97A4', marginTop: 2, marginBottom: 4, fontWeight: '600' },
+  scoreBar: { height: 6, borderRadius: 3, backgroundColor: '#EEF0F3', marginTop: 12, overflow: 'hidden' },
+  scoreBarFill: { height: '100%', backgroundColor: '#17A75B', borderRadius: 3 },
+  listRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 8, borderTopWidth: 1, borderTopColor: '#F1F5F9' },
+  listName: { fontSize: 13, fontWeight: '700', color: COMPANY_COLOR },
+  checkRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 7 },
+  checkLabel: { fontSize: 13, fontWeight: '600', color: COMPANY_COLOR },
+  windowText: { fontSize: 11, fontWeight: '700', color: '#E0870B', marginTop: 10 },
 });
