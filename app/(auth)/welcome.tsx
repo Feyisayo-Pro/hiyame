@@ -1,153 +1,256 @@
-import { useEffect, useRef, useMemo} from 'react';
-import { Animated, Pressable, StyleSheet, View } from 'react-native';
+import { useMemo, useRef, useState } from 'react';
+import { Animated, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { router } from 'expo-router';
 import { Text } from '@/components/Themed';
 import { Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, ThemePalette } from '@/lib/theme';
 import ScreenFrame from '@/components/ScreenFrame';
 
-// Fixed design width for this screen's decorative hero graphics — not the
-// live window width. On web this screen is capped + centred to a phone-like
-// column (see the ScreenFrame below) regardless of the actual browser width,
-// so the blobs need to be sized to that column, not to a 1920px monitor.
-const AUTH_COLUMN_WIDTH = 560;
-const width = AUTH_COLUMN_WIDTH;
+// The landing screen — folds the old two-step welcome-carousel → register
+// flow into one decisive screen (per the redesign brief: Viamatch's whole
+// landing is one full-viewport screen, not a carousel then a separate list).
+// register.tsx now just redirects here.
+//
+// Fixed hero identity colors, not theme tokens — same precedent this screen
+// already used before this pass (the old hero hardcoded '#1DA1F2' directly).
+// A marketing entry point keeping one deliberate look regardless of the
+// signed-in app's light/dark toggle is standard, not an oversight.
+const CANDIDATE_COLOR = '#1DA1F2'; // T.accent's light-mode value — Hiyame's one brand hue
+const CANDIDATE_COLOR_SOFT = '#DCEEFB'; // pastel tint of the same hue, for the recede state
+const COMPANY_COLOR = '#0F1419'; // T.textPrimary's light-mode value — near-black
+const COMPANY_COLOR_SOFT = '#E3E5E8'; // pastel tint of the same near-black
+const PAGE_BG = '#F5F8FC'; // pale, faintly blue-tinted near-white — not literal lavender
+
+const STACK_BREAKPOINT = 760;
+
+type PanelKey = 'company' | 'candidate';
 
 export default function WelcomeScreen() {
   const T = useTheme();
-  const styles = useMemo(() => makeStyles(T), [T]);
+  const st = useMemo(() => makeStyles(T), [T]);
+  const { width } = useWindowDimensions();
+  const stacked = width < STACK_BREAKPOINT;
 
-  const insets = useSafeAreaInsets();
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(40)).current;
-  const ctaSlide = useRef(new Animated.Value(60)).current;
-  const ctaFade = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(1)).current;
+  // -1 = candidate panel focused, 0 = resting (both full color), 1 = company
+  // focused. One shared value drives both panels' flex + color together, so
+  // they always move in lockstep — one expanding is always the other's
+  // recede, never independent.
+  const focus = useRef(new Animated.Value(0)).current;
+  const [pressed, setPressed] = useState<PanelKey | null>(null);
 
-  useEffect(() => {
-    Animated.sequence([
-      Animated.parallel([
-        Animated.timing(fadeAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
-        Animated.timing(slideAnim, { toValue: 0, duration: 600, useNativeDriver: true }),
-      ]),
-      Animated.parallel([
-        Animated.timing(ctaFade, { toValue: 1, duration: 400, useNativeDriver: true }),
-        Animated.timing(ctaSlide, { toValue: 0, duration: 400, useNativeDriver: true }),
-      ]),
-    ]).start();
-  }, []);
-
-  const onPressIn = () => {
-    Animated.spring(scaleAnim, { toValue: 0.96, useNativeDriver: true }).start();
+  const animateTo = (value: number) => {
+    Animated.spring(focus, { toValue: value, useNativeDriver: false, speed: 14, bounciness: 6 }).start();
   };
-  const onPressOut = () => {
-    Animated.spring(scaleAnim, { toValue: 1, friction: 3, useNativeDriver: true }).start();
-  };
+
+  const focusPanel = (key: PanelKey) => { setPressed(key); animateTo(key === 'company' ? 1 : -1); };
+  const resetFocus = () => { setPressed(null); animateTo(0); };
+
+  const goCompany = () => router.push('/(auth)/company-signup');
+  const goCandidate = () => router.push('/(auth)/candidate-signup');
+
+  const companyFlex = focus.interpolate({ inputRange: [-1, 0, 1], outputRange: [0.72, 1, stacked ? 1 : 1.45] });
+  const candidateFlex = focus.interpolate({ inputRange: [-1, 0, 1], outputRange: [stacked ? 1 : 1.45, 1, 0.72] });
+  const companyBg = focus.interpolate({ inputRange: [-1, 0, 1], outputRange: [COMPANY_COLOR_SOFT, COMPANY_COLOR, COMPANY_COLOR] });
+  const candidateBg = focus.interpolate({ inputRange: [-1, 0, 1], outputRange: [CANDIDATE_COLOR, CANDIDATE_COLOR, CANDIDATE_COLOR_SOFT] });
+  const companyTextOpacity = focus.interpolate({ inputRange: [-1, -0.3, 0], outputRange: [0.35, 1, 1], extrapolate: 'clamp' });
+  const candidateTextOpacity = focus.interpolate({ inputRange: [0, 0.3, 1], outputRange: [1, 1, 0.35], extrapolate: 'clamp' });
+  const companyCardTilt = focus.interpolate({ inputRange: [-1, 0, 1], outputRange: ['-2deg', '-4deg', '0deg'] });
+  const candidateCardTilt = focus.interpolate({ inputRange: [-1, 0, 1], outputRange: ['0deg', '3deg', '5deg'] });
 
   return (
-    <ScreenFrame maxWidth={AUTH_COLUMN_WIDTH}>
-    <View style={[styles.container, { paddingTop: insets.top + 12 }]}>
-
-      <View style={styles.topBar}>
-        <View style={styles.logoRow}>
-          <View style={styles.logoMark}>
-            <Ionicons name="leaf" size={16} color={T.textOnAccent} />
+    <SafeAreaView style={st.safeArea} edges={['top', 'left', 'right', 'bottom']}>
+      <ScreenFrame maxWidth={1120} style={st.frame}>
+      <ScrollView contentContainerStyle={st.scrollContent} showsVerticalScrollIndicator={false}>
+        {/* ── Nav ── */}
+        <View style={st.navPill}>
+          <View style={st.brandRow}>
+            <View style={st.brandDot}>
+              <Ionicons name="flash" size={16} color="#FFFFFF" />
+            </View>
+            <Text style={st.brandText}>Hiyame</Text>
           </View>
-          <Text style={styles.logoText}>hiyame</Text>
-        </View>
-        <Pressable onPress={() => router.push('/(auth)/register')}>
-          <Text style={styles.skipText}>Skip</Text>
-        </Pressable>
-      </View>
 
-      <Animated.View
-        style={[styles.heroCard, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}
-      >
-        <View style={styles.heroGradientTop} />
-        <View style={styles.heroGradientMid} />
-        <View style={styles.heroGradientBottom} />
-        <View style={[styles.floatingCircle, styles.circle1]} />
-        <View style={[styles.floatingCircle, styles.circle2]} />
-        <View style={[styles.floatingCircle, styles.circle3]} />
+          {!stacked && (
+            <View style={st.navLinks}>
+              <Pressable onPress={goCompany} style={st.navLink} onHoverIn={() => focusPanel('company')} onHoverOut={resetFocus}>
+                <Text style={st.navLinkText}>For Companies</Text>
+              </Pressable>
+              <Pressable onPress={goCandidate} style={st.navLink} onHoverIn={() => focusPanel('candidate')} onHoverOut={resetFocus}>
+                <Text style={st.navLinkText}>For Candidates</Text>
+              </Pressable>
+            </View>
+          )}
 
-        <View style={styles.centerIconWrap}>
-          <View style={styles.centerIcon}>
-            <Ionicons name="shield-checkmark" size={48} color={T.accent} />
+          <View style={st.navActions}>
+            <Pressable style={st.loginPill} onPress={() => router.push('/(auth)/login')}>
+              <Text style={st.loginPillText}>Login</Text>
+            </Pressable>
+            {/* Candidates are Hiyame's larger, lower-friction audience by far
+                (over a thousand vs. a couple dozen companies) — the sensible
+                default for a generic "Sign up" with no persona context yet. */}
+            <Pressable style={st.signUpPill} onPress={goCandidate}>
+              <Text style={st.signUpPillText}>Sign up</Text>
+            </Pressable>
           </View>
-          <View style={styles.centerIconRing} />
         </View>
 
-        <View style={styles.heroTextGroup}>
-          <Text style={styles.heroLine}>Opportunities</Text>
-          <Text style={styles.heroLineAccent}>Come to You</Text>
-          <View style={styles.divider} />
-          <Text style={styles.heroSub}>Get verified. Get matched. Get hired.</Text>
+        {/* ── Headline ── */}
+        <View style={st.headlineBlock}>
+          <Text style={st.headline}>Hiyame replaces job boards and agencies</Text>
+          <Text style={st.subhead}>Two sides, one platform. Pick yours.</Text>
         </View>
 
-        <View style={styles.dotsRow}>
-          <View style={[styles.dot, styles.dotActive]} />
-          <View style={styles.dot} />
-          <View style={styles.dot} />
+        {/* ── Two panels ── */}
+        <View style={[st.panelsRow, stacked && st.panelsColumn]}>
+          <Animated.View style={[st.panel, { flex: companyFlex, backgroundColor: companyBg }]}>
+            <Pressable
+              style={StyleSheet.absoluteFill}
+              onHoverIn={() => focusPanel('company')}
+              onHoverOut={resetFocus}
+              onPressIn={() => focusPanel('company')}
+              onPressOut={resetFocus}
+              onPress={goCompany}
+              accessibilityRole="button"
+              accessibilityLabel="For Companies — post a role"
+            >
+              <View style={st.panelInner}>
+                <Animated.View style={{ opacity: companyTextOpacity }}>
+                  <Text style={st.panelEyebrowLight}>FOR COMPANIES</Text>
+                  <Text style={st.panelHeadlineLight}>We're hiring</Text>
+                  <Text style={st.panelBodyLight}>
+                    Get a ranked shortlist of verified African professionals — no job board, no sifting through résumés.
+                  </Text>
+                  <View style={st.panelCta}>
+                    <Text style={st.panelCtaTextLight}>Post a role</Text>
+                    <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
+                  </View>
+                </Animated.View>
+
+                <Animated.View style={[st.mockCard, st.mockCardCompany, { transform: [{ rotate: companyCardTilt }] }]}>
+                  <View style={st.mockCardRow}>
+                    <View style={st.mockAvatar}><Text style={st.mockAvatarText}>KA</Text></View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={st.mockCardName}>Kemi A.</Text>
+                      <Text style={st.mockCardMeta}>Senior Backend Engineer</Text>
+                    </View>
+                    <View style={st.mockScoreBadge}><Text style={st.mockScoreText}>92%</Text></View>
+                  </View>
+                  <View style={st.mockChipRow}>
+                    <View style={st.mockChip}><Text style={st.mockChipText}>Python</Text></View>
+                    <View style={st.mockChip}><Text style={st.mockChipText}>FastAPI</Text></View>
+                  </View>
+                </Animated.View>
+              </View>
+            </Pressable>
+          </Animated.View>
+
+          <Animated.View style={[st.panel, { flex: candidateFlex, backgroundColor: candidateBg }]}>
+            <Pressable
+              style={StyleSheet.absoluteFill}
+              onHoverIn={() => focusPanel('candidate')}
+              onHoverOut={resetFocus}
+              onPressIn={() => focusPanel('candidate')}
+              onPressOut={resetFocus}
+              onPress={goCandidate}
+              accessibilityRole="button"
+              accessibilityLabel="For Candidates — get verified"
+            >
+              <View style={st.panelInner}>
+                <Animated.View style={{ opacity: candidateTextOpacity }}>
+                  <Text style={st.panelEyebrowLight}>FOR CANDIDATES</Text>
+                  <Text style={st.panelHeadlineLight}>I'm looking for work</Text>
+                  <Text style={st.panelBodyLight}>
+                    Get verified once, then let vetted companies come to you with real introductions.
+                  </Text>
+                  <View style={[st.panelCta, st.panelCtaOnBlue]}>
+                    <Text style={st.panelCtaTextDark}>Get verified</Text>
+                    <Ionicons name="arrow-forward" size={16} color={COMPANY_COLOR} />
+                  </View>
+                </Animated.View>
+
+                <Animated.View style={[st.mockCard, st.mockCardCandidate, { transform: [{ rotate: candidateCardTilt }] }]}>
+                  <View style={st.mockMatchHead}>
+                    <Ionicons name="sparkles" size={13} color="#17A75B" />
+                    <Text style={st.mockMatchHeadText}>You've been matched</Text>
+                  </View>
+                  <Text style={st.mockCardName}>Data Analyst</Text>
+                  <View style={st.mockChipRow}>
+                    <View style={[st.mockChip, st.mockChipDark]}><Text style={st.mockChipTextDark}>Corporate</Text></View>
+                    <Text style={st.mockWindowText}>48h to respond</Text>
+                  </View>
+                </Animated.View>
+              </View>
+            </Pressable>
+          </Animated.View>
         </View>
-      </Animated.View>
-
-      <Animated.View style={{ opacity: ctaFade, transform: [{ translateY: ctaSlide }, { scale: scaleAnim }] }}>
-        {/* Get Started = Sign Up / New Users */}
-        <Pressable
-          style={styles.ctaPill}
-          onPress={() => router.push('/(auth)/register')}
-          onPressIn={onPressIn}
-          onPressOut={onPressOut}
-        >
-          <Text style={styles.ctaText}>Get Started</Text>
-          <View style={styles.ctaIconCircle}>
-            <Ionicons name="arrow-forward" size={20} color={T.textOnAccent} />
-          </View>
-        </Pressable>
-
-        {/* Sign In = Existing Users → Dual-Persona Portal */}
-        <Pressable
-          style={styles.signInPill}
-          onPress={() => router.push('/(auth)/login')}
-        >
-          <Text style={styles.signInPillText}>Sign In</Text>
-        </Pressable>
-      </Animated.View>
-    </View>
-    </ScreenFrame>
+      </ScrollView>
+      </ScreenFrame>
+    </SafeAreaView>
   );
 }
 
 const makeStyles = (T: ThemePalette) => StyleSheet.create({
-  container: { flex: 1, backgroundColor: T.bg, paddingHorizontal: 20 },
-  topBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  logoRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  logoMark: { width: 28, height: 28, borderRadius: 8, backgroundColor: T.accent, alignItems: 'center', justifyContent: 'center' },
-  logoText: { fontSize: 18, fontWeight: '800', color: T.textPrimary, letterSpacing: -0.5 },
-  skipText: { color: T.textSecondary, fontSize: 14, fontWeight: '500' },
-  heroCard: { flex: 1, borderRadius: 28, overflow: 'hidden', backgroundColor: '#1DA1F2', justifyContent: 'flex-end' },
-  heroGradientTop: { ...StyleSheet.absoluteFill, backgroundColor: '#1A8CD8', opacity: 0.7 },
-  heroGradientMid: { position: 'absolute', top: '20%', left: -width * 0.2, width: width * 1.4, height: width * 1.4, borderRadius: width * 0.7, backgroundColor: 'rgba(255,255,255,0.08)' },
-  heroGradientBottom: { position: 'absolute', left: 0, right: 0, bottom: 0, height: '50%', backgroundColor: 'rgba(0,0,0,0.25)' },
-  floatingCircle: { position: 'absolute', borderRadius: 100, backgroundColor: 'rgba(255,255,255,0.06)' },
-  circle1: { width: 140, height: 140, top: 30, right: -30 },
-  circle2: { width: 100, height: 100, top: 140, left: 10 },
-  circle3: { width: 70, height: 70, top: 70, left: '42%' as any },
-  centerIconWrap: { position: 'absolute', top: '28%', alignSelf: 'center', alignItems: 'center', justifyContent: 'center' },
-  centerIcon: { width: 88, height: 88, borderRadius: 44, backgroundColor: 'rgba(255,255,255,0.95)', alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.2, shadowRadius: 24, elevation: 8 },
-  centerIconRing: { position: 'absolute', width: 108, height: 108, borderRadius: 54, borderWidth: 2, borderColor: 'rgba(255,255,255,0.2)' },
-  heroTextGroup: { padding: 28, zIndex: 1 },
-  heroLine: { fontSize: 32, fontWeight: '300', color: '#FFFFFF', marginBottom: 2 },
-  heroLineAccent: { fontSize: 34, fontWeight: '800', color: '#FFFFFF', lineHeight: 40, marginBottom: 12 },
-  divider: { width: 40, height: 3, borderRadius: 2, backgroundColor: '#FFFFFF', marginBottom: 12 },
-  heroSub: { fontSize: 14, color: 'rgba(255,255,255,0.8)', fontWeight: '500' },
-  dotsRow: { flexDirection: 'row', alignSelf: 'center', gap: 8, marginBottom: 20, zIndex: 1 },
-  dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.3)' },
-  dotActive: { backgroundColor: '#FFFFFF', width: 24, borderRadius: 4 },
-  ctaPill: { marginTop: 20, backgroundColor: T.textPrimary, borderRadius: 50, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 16, paddingLeft: 24, paddingRight: 6, shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.15, shadowRadius: 20, elevation: 6 },
-  ctaText: { color: T.mode === 'dark' ? '#0D0D0C' : '#FFFFFF', fontSize: 17, fontWeight: '700', letterSpacing: 0.3 },
-  ctaIconCircle: { width: 44, height: 44, borderRadius: 22, backgroundColor: T.accent, alignItems: 'center', justifyContent: 'center' },
-  signInPill: { marginTop: 12, borderRadius: 50, borderWidth: 2, borderColor: T.textPrimary, paddingVertical: 16, alignItems: 'center', justifyContent: 'center', marginBottom: 32 },
-  signInPillText: { fontSize: 17, fontWeight: '700', color: T.textPrimary, letterSpacing: 0.3 },
+  safeArea: { flex: 1, backgroundColor: PAGE_BG },
+  frame: { paddingHorizontal: 20, paddingTop: 16 },
+  scrollContent: { flexGrow: 1, paddingBottom: 24 },
+
+  navPill: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    backgroundColor: '#FFFFFF', borderRadius: 999,
+    paddingVertical: 8, paddingLeft: 14, paddingRight: 8,
+    marginBottom: 28,
+    shadowColor: '#0B1220', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2,
+  },
+  brandRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  brandDot: { width: 28, height: 28, borderRadius: 9, backgroundColor: CANDIDATE_COLOR, alignItems: 'center', justifyContent: 'center' },
+  brandText: { fontSize: 16, fontWeight: '800', color: COMPANY_COLOR, letterSpacing: -0.3 },
+  navLinks: { flexDirection: 'row', gap: 4, flex: 1, justifyContent: 'center' },
+  navLink: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999 },
+  navLinkText: { fontSize: 13, fontWeight: '600', color: '#536471' },
+  navActions: { flexDirection: 'row', alignItems: 'center', gap: 6, marginLeft: 'auto' },
+  loginPill: { paddingHorizontal: 16, paddingVertical: 9, borderRadius: 999, borderWidth: 1, borderColor: '#E1E8ED' },
+  loginPillText: { fontSize: 13, fontWeight: '700', color: COMPANY_COLOR },
+  signUpPill: { backgroundColor: CANDIDATE_COLOR, paddingHorizontal: 18, paddingVertical: 9, borderRadius: 999 },
+  signUpPillText: { fontSize: 13, fontWeight: '700', color: '#FFFFFF' },
+
+  headlineBlock: { alignItems: 'center', marginBottom: 28, paddingHorizontal: 12 },
+  headline: { fontSize: 34, lineHeight: 40, fontWeight: '800', color: COMPANY_COLOR, letterSpacing: -0.6, textAlign: 'center', maxWidth: 620 },
+  subhead: { fontSize: 16, color: '#536471', marginTop: 10, fontWeight: '500' },
+
+  panelsRow: { flexDirection: 'row', gap: 16, flex: 1, minHeight: 380 },
+  panelsColumn: { flexDirection: 'column' },
+  panel: { borderRadius: 28, overflow: 'hidden', minHeight: 340 },
+  panelInner: { flex: 1, padding: 28, justifyContent: 'space-between' },
+
+  panelEyebrowLight: { fontSize: 11, fontWeight: '700', letterSpacing: 0.6, color: 'rgba(255,255,255,0.7)', marginBottom: 10 },
+  panelHeadlineLight: { fontSize: 26, fontWeight: '800', color: '#FFFFFF', letterSpacing: -0.4, marginBottom: 10 },
+  panelBodyLight: { fontSize: 14, lineHeight: 21, color: 'rgba(255,255,255,0.85)', maxWidth: 320, marginBottom: 20 },
+  panelCta: { flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-start', backgroundColor: 'rgba(255,255,255,0.14)', paddingHorizontal: 18, paddingVertical: 12, borderRadius: 999 },
+  panelCtaOnBlue: { backgroundColor: '#FFFFFF' },
+  panelCtaTextLight: { fontSize: 14, fontWeight: '700', color: '#FFFFFF' },
+  panelCtaTextDark: { fontSize: 14, fontWeight: '700', color: COMPANY_COLOR },
+
+  mockCard: {
+    position: 'absolute', right: 8, bottom: 8, width: 200,
+    backgroundColor: '#FFFFFF', borderRadius: 18, padding: 14,
+    shadowColor: '#0B1220', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.18, shadowRadius: 22, elevation: 8,
+  },
+  mockCardCompany: {},
+  mockCardCandidate: {},
+  mockCardRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
+  mockAvatar: { width: 34, height: 34, borderRadius: 12, backgroundColor: '#EEF0F3', alignItems: 'center', justifyContent: 'center' },
+  mockAvatarText: { fontSize: 12, fontWeight: '700', color: COMPANY_COLOR },
+  mockCardName: { fontSize: 14, fontWeight: '700', color: COMPANY_COLOR },
+  mockCardMeta: { fontSize: 11, color: '#8A97A4', marginTop: 1 },
+  mockScoreBadge: { backgroundColor: 'rgba(23,167,91,0.12)', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
+  mockScoreText: { fontSize: 11, fontWeight: '800', color: '#17A75B' },
+  mockChipRow: { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginTop: 8 },
+  mockChip: { backgroundColor: '#EEF0F3', borderRadius: 7, paddingHorizontal: 8, paddingVertical: 4 },
+  mockChipText: { fontSize: 10, fontWeight: '600', color: '#5B6875' },
+  mockChipDark: { backgroundColor: 'rgba(15,20,25,0.06)' },
+  mockChipTextDark: { fontSize: 10, fontWeight: '700', color: COMPANY_COLOR },
+  mockWindowText: { fontSize: 10, fontWeight: '600', color: '#E0870B' },
+  mockMatchHead: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 8 },
+  mockMatchHeadText: { fontSize: 11, fontWeight: '700', color: '#17A75B' },
 });
