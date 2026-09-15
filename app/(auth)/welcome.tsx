@@ -63,7 +63,7 @@ export default function WelcomeScreen() {
       <ScreenFrame maxWidth={1120} style={st.frame}>
       <ScrollView contentContainerStyle={st.scrollContent} showsVerticalScrollIndicator={false}>
         {/* ── Nav ── */}
-        <View style={st.navPill}>
+        <View style={[st.navPill, stacked && st.navPillStacked]}>
           <View style={st.brandRow}>
             <View style={st.brandDot}>
               <Ionicons name="flash" size={16} color="#FFFFFF" />
@@ -96,14 +96,14 @@ export default function WelcomeScreen() {
         </View>
 
         {/* ── Headline ── */}
-        <View style={st.headlineBlock}>
-          <Text style={st.headline}>Hiyame replaces job boards and agencies</Text>
+        <View style={[st.headlineBlock, stacked && st.headlineBlockStacked]}>
+          <Text style={[st.headline, stacked && st.headlineStacked]}>Hiyame replaces job boards and agencies</Text>
           <Text style={st.subhead}>Two sides, one platform. Pick yours.</Text>
         </View>
 
         {/* ── Two panels ── */}
         <View style={[st.panelsRow, stacked && st.panelsColumn]}>
-          <Animated.View style={[st.panel, { flex: companyFlex, backgroundColor: companyBg }]}>
+          <Animated.View style={[st.panel, stacked && st.panelStacked, { flex: companyFlex, backgroundColor: companyBg }]}>
             <Pressable
               style={StyleSheet.absoluteFill}
               onHoverIn={() => focusPanel('company')}
@@ -114,7 +114,7 @@ export default function WelcomeScreen() {
               accessibilityRole="button"
               accessibilityLabel="For Companies — post a role"
             >
-              <View style={st.panelInner}>
+              <View style={[st.panelInner, stacked && st.panelInnerStacked]}>
                 <Animated.View style={{ opacity: companyTextOpacity }}>
                   <Text style={st.panelEyebrowLight}>FOR COMPANIES</Text>
                   <Text style={st.panelHeadlineLight}>We're hiring</Text>
@@ -127,25 +127,32 @@ export default function WelcomeScreen() {
                   </View>
                 </Animated.View>
 
-                <Animated.View style={[st.mockCard, st.mockCardCompany, { transform: [{ rotate: companyCardTilt }] }]}>
-                  <View style={st.mockCardRow}>
-                    <View style={st.mockAvatar}><Text style={st.mockAvatarText}>KA</Text></View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={st.mockCardName}>Kemi A.</Text>
-                      <Text style={st.mockCardMeta}>Senior Backend Engineer</Text>
+                {/* The mock card is decorative filler for the panel's empty
+                    lower half — on stacked (mobile) layout there's no empty
+                    half to fill, and its ~150px would push the two panels
+                    past the viewport, forcing the exact "scroll to see the
+                    rest of the hero" bug this was fixed for. */}
+                {!stacked && (
+                  <Animated.View style={[st.mockCard, st.mockCardCompany, { transform: [{ rotate: companyCardTilt }] }]}>
+                    <View style={st.mockCardRow}>
+                      <View style={st.mockAvatar}><Text style={st.mockAvatarText}>KA</Text></View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={st.mockCardName}>Kemi A.</Text>
+                        <Text style={st.mockCardMeta}>Senior Backend Engineer</Text>
+                      </View>
+                      <View style={st.mockScoreBadge}><Text style={st.mockScoreText}>92%</Text></View>
                     </View>
-                    <View style={st.mockScoreBadge}><Text style={st.mockScoreText}>92%</Text></View>
-                  </View>
-                  <View style={st.mockChipRow}>
-                    <View style={st.mockChip}><Text style={st.mockChipText}>Python</Text></View>
-                    <View style={st.mockChip}><Text style={st.mockChipText}>FastAPI</Text></View>
-                  </View>
-                </Animated.View>
+                    <View style={st.mockChipRow}>
+                      <View style={st.mockChip}><Text style={st.mockChipText}>Python</Text></View>
+                      <View style={st.mockChip}><Text style={st.mockChipText}>FastAPI</Text></View>
+                    </View>
+                  </Animated.View>
+                )}
               </View>
             </Pressable>
           </Animated.View>
 
-          <Animated.View style={[st.panel, { flex: candidateFlex, backgroundColor: candidateBg }]}>
+          <Animated.View style={[st.panel, stacked && st.panelStacked, { flex: candidateFlex, backgroundColor: candidateBg }]}>
             <Pressable
               style={StyleSheet.absoluteFill}
               onHoverIn={() => focusPanel('candidate')}
@@ -156,7 +163,7 @@ export default function WelcomeScreen() {
               accessibilityRole="button"
               accessibilityLabel="For Candidates — get verified"
             >
-              <View style={st.panelInner}>
+              <View style={[st.panelInner, stacked && st.panelInnerStacked]}>
                 <Animated.View style={{ opacity: candidateTextOpacity }}>
                   <Text style={st.panelEyebrowLight}>FOR CANDIDATES</Text>
                   <Text style={st.panelHeadlineLight}>I'm looking for work</Text>
@@ -169,17 +176,19 @@ export default function WelcomeScreen() {
                   </View>
                 </Animated.View>
 
-                <Animated.View style={[st.mockCard, st.mockCardCandidate, { transform: [{ rotate: candidateCardTilt }] }]}>
-                  <View style={st.mockMatchHead}>
-                    <Ionicons name="sparkles" size={13} color="#17A75B" />
-                    <Text style={st.mockMatchHeadText}>You've been matched</Text>
-                  </View>
-                  <Text style={st.mockCardName}>Data Analyst</Text>
-                  <View style={st.mockChipRow}>
-                    <View style={[st.mockChip, st.mockChipDark]}><Text style={st.mockChipTextDark}>Corporate</Text></View>
-                    <Text style={st.mockWindowText}>48h to respond</Text>
-                  </View>
-                </Animated.View>
+                {!stacked && (
+                  <Animated.View style={[st.mockCard, st.mockCardCandidate, { transform: [{ rotate: candidateCardTilt }] }]}>
+                    <View style={st.mockMatchHead}>
+                      <Ionicons name="sparkles" size={13} color="#17A75B" />
+                      <Text style={st.mockMatchHeadText}>You've been matched</Text>
+                    </View>
+                    <Text style={st.mockCardName}>Data Analyst</Text>
+                    <View style={st.mockChipRow}>
+                      <View style={[st.mockChip, st.mockChipDark]}><Text style={st.mockChipTextDark}>Corporate</Text></View>
+                      <Text style={st.mockWindowText}>48h to respond</Text>
+                    </View>
+                  </Animated.View>
+                )}
               </View>
             </Pressable>
           </Animated.View>
@@ -202,6 +211,11 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
     marginBottom: 28,
     shadowColor: '#0B1220', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2,
   },
+  // Mobile fold: the two stacked panels alone (2 × panelStacked) already
+  // approach a phone's real viewport height, so every other block on this
+  // screen gets trimmed too — this is what keeps the whole thing a single
+  // no-scroll hero on a real device instead of just on a 900px desktop tab.
+  navPillStacked: { marginBottom: 16 },
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   brandDot: { width: 28, height: 28, borderRadius: 9, backgroundColor: CANDIDATE_COLOR, alignItems: 'center', justifyContent: 'center' },
   brandText: { fontSize: 16, fontWeight: '800', color: COMPANY_COLOR, letterSpacing: -0.3 },
@@ -215,13 +229,20 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   signUpPillText: { fontSize: 13, fontWeight: '700', color: '#FFFFFF' },
 
   headlineBlock: { alignItems: 'center', marginBottom: 28, paddingHorizontal: 12 },
+  headlineBlockStacked: { marginBottom: 16 },
   headline: { fontSize: 34, lineHeight: 40, fontWeight: '800', color: COMPANY_COLOR, letterSpacing: -0.6, textAlign: 'center', maxWidth: 620 },
+  headlineStacked: { fontSize: 24, lineHeight: 29 },
   subhead: { fontSize: 16, color: '#536471', marginTop: 10, fontWeight: '500' },
 
   panelsRow: { flexDirection: 'row', gap: 16, flex: 1, minHeight: 380 },
-  panelsColumn: { flexDirection: 'column' },
+  panelsColumn: { flexDirection: 'column', minHeight: 0 },
   panel: { borderRadius: 28, overflow: 'hidden', minHeight: 340 },
+  // No mock card competing for room when stacked, so this only needs to fit
+  // eyebrow + headline + body + CTA — verified against real phone heights
+  // (390×844 and smaller) with Playwright before shipping.
+  panelStacked: { minHeight: 190 },
   panelInner: { flex: 1, padding: 28, justifyContent: 'space-between' },
+  panelInnerStacked: { padding: 20 },
 
   panelEyebrowLight: { fontSize: 11, fontWeight: '700', letterSpacing: 0.6, color: 'rgba(255,255,255,0.7)', marginBottom: 10 },
   panelHeadlineLight: { fontSize: 26, fontWeight: '800', color: '#FFFFFF', letterSpacing: -0.4, marginBottom: 10 },
