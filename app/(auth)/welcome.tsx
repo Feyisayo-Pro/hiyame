@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, ThemePalette } from '@/lib/theme';
 import ScreenFrame from '@/components/ScreenFrame';
 import PublicNav from '@/components/PublicNav';
+import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 
 // The landing screen — folds the old two-step welcome-carousel → register
 // flow into one decisive screen (per the redesign brief: Viamatch's whole
@@ -40,6 +41,15 @@ export default function WelcomeScreen() {
   const focus = useRef(new Animated.Value(0)).current;
   const [pressed, setPressed] = useState<PanelKey | null>(null);
 
+  // Separate from `focus` (which drives the hover-expand) — a small press-down
+  // scale so tapping a panel gives the same instant, physical feedback every
+  // other button in the app has, instead of the panel just silently
+  // navigating away mid-hover.
+  const companyPress = useRef(new Animated.Value(1)).current;
+  const candidatePress = useRef(new Animated.Value(1)).current;
+  const pressDown = (v: Animated.Value) => Animated.spring(v, { toValue: 0.985, useNativeDriver: false, speed: 50, bounciness: 6 }).start();
+  const pressUp = (v: Animated.Value) => Animated.spring(v, { toValue: 1, useNativeDriver: false, speed: 30, bounciness: 8 }).start();
+
   const animateTo = (value: number) => {
     Animated.spring(focus, { toValue: value, useNativeDriver: false, speed: 14, bounciness: 6 }).start();
   };
@@ -64,23 +74,28 @@ export default function WelcomeScreen() {
       <ScreenFrame maxWidth={1120} style={st.frame}>
       <ScrollView contentContainerStyle={st.scrollContent} showsVerticalScrollIndicator={false}>
         {/* ── Nav ── */}
-        <PublicNav stacked={stacked} />
+        <SwipeFadeContainer axis="y" offset={16} duration={420} delay={0}>
+          <PublicNav stacked={stacked} />
+        </SwipeFadeContainer>
 
         {/* ── Headline ── */}
-        <View style={[st.headlineBlock, stacked && st.headlineBlockStacked]}>
-          <Text style={[st.headline, stacked && st.headlineStacked]}>Hiyame replaces job boards and agencies</Text>
-          <Text style={st.subhead}>Two sides, one platform. Pick yours.</Text>
-        </View>
+        <SwipeFadeContainer axis="y" offset={16} duration={420} delay={90}>
+          <View style={[st.headlineBlock, stacked && st.headlineBlockStacked]}>
+            <Text style={[st.headline, stacked && st.headlineStacked]}>Hiyame replaces job boards and agencies</Text>
+            <Text style={st.subhead}>Two sides, one platform. Pick yours.</Text>
+          </View>
+        </SwipeFadeContainer>
 
         {/* ── Two panels ── */}
+        <SwipeFadeContainer axis="y" offset={20} duration={480} delay={180} style={st.panelsFadeWrap}>
         <View style={[st.panelsRow, stacked && st.panelsColumn]}>
-          <Animated.View style={[st.panel, stacked && st.panelStacked, { flex: companyFlex, backgroundColor: companyBg }]}>
+          <Animated.View style={[st.panel, stacked && st.panelStacked, { flex: companyFlex, backgroundColor: companyBg, transform: [{ scale: companyPress }] }]}>
             <Pressable
               style={StyleSheet.absoluteFill}
               onHoverIn={() => focusPanel('company')}
               onHoverOut={resetFocus}
-              onPressIn={() => focusPanel('company')}
-              onPressOut={resetFocus}
+              onPressIn={() => { focusPanel('company'); pressDown(companyPress); }}
+              onPressOut={() => { resetFocus(); pressUp(companyPress); }}
               onPress={goCompany}
               accessibilityRole="button"
               accessibilityLabel="For Companies — post a role"
@@ -123,13 +138,13 @@ export default function WelcomeScreen() {
             </Pressable>
           </Animated.View>
 
-          <Animated.View style={[st.panel, stacked && st.panelStacked, { flex: candidateFlex, backgroundColor: candidateBg }]}>
+          <Animated.View style={[st.panel, stacked && st.panelStacked, { flex: candidateFlex, backgroundColor: candidateBg, transform: [{ scale: candidatePress }] }]}>
             <Pressable
               style={StyleSheet.absoluteFill}
               onHoverIn={() => focusPanel('candidate')}
               onHoverOut={resetFocus}
-              onPressIn={() => focusPanel('candidate')}
-              onPressOut={resetFocus}
+              onPressIn={() => { focusPanel('candidate'); pressDown(candidatePress); }}
+              onPressOut={() => { resetFocus(); pressUp(candidatePress); }}
               onPress={goCandidate}
               accessibilityRole="button"
               accessibilityLabel="For Candidates — get verified"
@@ -164,6 +179,7 @@ export default function WelcomeScreen() {
             </Pressable>
           </Animated.View>
         </View>
+        </SwipeFadeContainer>
       </ScrollView>
       </ScreenFrame>
     </SafeAreaView>
@@ -181,6 +197,10 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   headlineStacked: { fontSize: 24, lineHeight: 29 },
   subhead: { fontSize: 16, color: '#536471', marginTop: 10, fontWeight: '500' },
 
+  // SwipeFadeContainer's own Animated.View needs flex:1 too, or the panels'
+  // own flex:1 (which makes them fill the remaining single-viewport height)
+  // has nothing to expand into and silently collapses to content size.
+  panelsFadeWrap: { flex: 1 },
   panelsRow: { flexDirection: 'row', gap: 16, flex: 1, minHeight: 380 },
   panelsColumn: { flexDirection: 'column', minHeight: 0 },
   panel: { borderRadius: 28, overflow: 'hidden', minHeight: 340 },

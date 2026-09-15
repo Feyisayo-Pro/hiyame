@@ -2,11 +2,15 @@ import { useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { Text } from '@/components/Themed';
 import AppIcon from '@/components/AppIcon';
+import AnimatedPressable from '@/components/AnimatedPressable';
+import AnimatedCounter from '@/components/AnimatedCounter';
+import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, ThemePalette } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
 import ScreenFrame from '@/components/ScreenFrame';
 import PublicNav from '@/components/PublicNav';
+import PublicFooter from '@/components/PublicFooter';
 
 // Public "About" page. Deliberately does NOT include named team bios or
 // photos — there's no real founder/team content anywhere in this codebase
@@ -57,79 +61,99 @@ export default function AboutScreen() {
         <ScrollView contentContainerStyle={st.scrollContent} showsVerticalScrollIndicator={false}>
           <PublicNav stacked={stacked} active="about" />
 
-          <View style={st.headlineBlock}>
-            <Text style={st.eyebrow}>ABOUT HIYAME</Text>
-            <Text style={st.headline}>Job boards make you apply and hope.{'\n'}We make you verified and found.</Text>
-            <Text style={st.subhead}>
-              Hiyame replaces job boards and recruitment agencies with a verified match between African
-              professionals and the companies hiring them — no résumé pile, no cold applications.
-            </Text>
-          </View>
+          <SwipeFadeContainer axis="y" offset={16} duration={420} delay={0}>
+            <View style={st.headlineBlock}>
+              <Text style={st.eyebrow}>ABOUT HIYAME</Text>
+              <Text style={st.headline}>Job boards make you apply and hope.{'\n'}We make you verified and found.</Text>
+              <Text style={st.subhead}>
+                Hiyame replaces job boards and recruitment agencies with a verified match between African
+                professionals and the companies hiring them — no résumé pile, no cold applications.
+              </Text>
+            </View>
+          </SwipeFadeContainer>
 
           {/* Real, live counts — not hardcoded copy. Renders nothing until
-              the numbers load rather than flashing a wrong placeholder. */}
+              the numbers load rather than flashing a wrong placeholder,
+              then counts up once they arrive (AnimatedCounter). */}
           {stats && (
-            <View style={[st.statsRow, stacked && st.statsRowStacked]}>
-              <StatTile value={`${Math.floor(stats.candidates / 100) * 100}+`} label="Professionals in the network" />
-              <StatTile value={String(stats.companies)} label="Companies hiring on Hiyame" />
-              <StatTile value={String(stats.roles)} label="Roles posted to date" />
-            </View>
+            <SwipeFadeContainer axis="y" offset={18} duration={420} delay={100}>
+              <View style={[st.statsRow, stacked && st.statsRowStacked]}>
+                <StatTile value={Math.floor(stats.candidates / 100) * 100} suffix="+" label="Professionals in the network" />
+                <StatTile value={stats.companies} label="Companies hiring on Hiyame" />
+                <StatTile value={stats.roles} label="Roles posted to date" />
+              </View>
+            </SwipeFadeContainer>
           )}
 
           <View style={st.section}>
             <Text style={st.sectionTitle}>How it works</Text>
             <View style={[st.stepsRow, stacked && st.stepsColumn]}>
-              <StepCard
-                icon="shield-checkmark-outline"
-                title="Verify once"
-                body="Candidates go through identity, video introduction, skills assessment, and employer reference checks — once, not for every application."
-              />
-              <StepCard
-                icon="compass-outline"
-                title="Get matched"
-                body="A scoring engine ranks verified candidates against each open role's real requirements — skill fit, experience, rate, and availability."
-              />
-              <StepCard
-                icon="paper-plane-outline"
-                title="Get introduced"
-                body="Companies receive a ranked shortlist and send a real introduction — no job board, no sifting through hundreds of résumés."
-              />
+              {STEPS.map((step, i) => (
+                <SwipeFadeContainer key={step.title} axis="y" offset={18} duration={420} delay={i * 90} style={stacked ? undefined : st.stepFlex}>
+                  <StepCard {...step} />
+                </SwipeFadeContainer>
+              ))}
             </View>
           </View>
 
-          <View style={st.section}>
-            <Text style={st.sectionTitle}>Built for Africa's job market</Text>
-            <Text style={st.bodyText}>
-              Hiring across African markets runs on referrals and trust because job boards weren't built for how
-              this market actually verifies people. Hiyame verifies candidates properly — once — and prices in
-              naira, so companies and professionals aren't translating a foreign platform's assumptions onto a
-              local hire.
-            </Text>
-          </View>
+          <SwipeFadeContainer axis="y" offset={18} duration={420} delay={0}>
+            <View style={st.section}>
+              <Text style={st.sectionTitle}>Built for Africa's job market</Text>
+              <Text style={st.bodyText}>
+                Hiring across African markets runs on referrals and trust because job boards weren't built for how
+                this market actually verifies people. Hiyame verifies candidates properly — once — and prices in
+                naira, so companies and professionals aren't translating a foreign platform's assumptions onto a
+                local hire.
+              </Text>
+            </View>
+          </SwipeFadeContainer>
+
+          <PublicFooter stacked={stacked} />
         </ScrollView>
       </ScreenFrame>
     </SafeAreaView>
   );
 }
 
-function StatTile({ value, label }: { value: string; label: string }) {
+const STEPS = [
+  {
+    icon: 'shield-checkmark-outline',
+    title: 'Verify once',
+    body: 'Candidates go through identity, video introduction, skills assessment, and employer reference checks — once, not for every application.',
+  },
+  {
+    icon: 'compass-outline',
+    title: 'Get matched',
+    body: "A scoring engine ranks verified candidates against each open role's real requirements — skill fit, experience, rate, and availability.",
+  },
+  {
+    icon: 'paper-plane-outline',
+    title: 'Get introduced',
+    body: 'Companies receive a ranked shortlist and send a real introduction — no job board, no sifting through hundreds of résumés.',
+  },
+] as const;
+
+function StatTile({ value, suffix, label }: { value: number; suffix?: string; label: string }) {
   return (
     <View style={tileStyles.tile}>
-      <Text style={tileStyles.value}>{value}</Text>
+      <AnimatedCounter value={value} suffix={suffix} style={tileStyles.value} />
       <Text style={tileStyles.label}>{label}</Text>
     </View>
   );
 }
 
 function StepCard({ icon, title, body }: { icon: string; title: string; body: string }) {
+  // Not a link — no onPress — but still wrapped in AnimatedPressable so it
+  // gets the same hover-lift feel as everything else on the page, matching
+  // how viamatch treats even non-interactive cards on hover.
   return (
-    <View style={stepStyles.card}>
+    <AnimatedPressable style={(state) => [stepStyles.card, state.hovered && stepStyles.cardHover]} scaleTo={1}>
       <View style={stepStyles.iconWrap}>
         <AppIcon name={icon} size={20} color={CANDIDATE_COLOR} />
       </View>
       <Text style={stepStyles.title}>{title}</Text>
       <Text style={stepStyles.body}>{body}</Text>
-    </View>
+    </AnimatedPressable>
   );
 }
 
@@ -143,7 +167,12 @@ const tileStyles = StyleSheet.create({
 });
 
 const stepStyles = StyleSheet.create({
-  card: { flex: 1, backgroundColor: '#FFFFFF', borderRadius: 20, padding: 22, borderWidth: 1, borderColor: '#E1E8ED' },
+  card: {
+    flex: 1, backgroundColor: '#FFFFFF', borderRadius: 20, padding: 22,
+    borderWidth: 1, borderColor: '#E1E8ED',
+    shadowColor: '#0B1220', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0, shadowRadius: 18,
+  },
+  cardHover: { borderColor: '#C9D6DE', shadowOpacity: 0.08 },
   iconWrap: {
     width: 40, height: 40, borderRadius: 12, backgroundColor: '#DCEEFB',
     alignItems: 'center', justifyContent: 'center', marginBottom: 14,
@@ -171,4 +200,5 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
 
   stepsRow: { flexDirection: 'row', gap: 14 },
   stepsColumn: { flexDirection: 'column' },
+  stepFlex: { flex: 1 },
 });

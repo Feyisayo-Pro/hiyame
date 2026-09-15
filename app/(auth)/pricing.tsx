@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { router } from 'expo-router';
 import { Text } from '@/components/Themed';
 import AppIcon from '@/components/AppIcon';
@@ -7,6 +7,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, ThemePalette } from '@/lib/theme';
 import ScreenFrame from '@/components/ScreenFrame';
 import PublicNav from '@/components/PublicNav';
+import PublicFooter from '@/components/PublicFooter';
+import AnimatedPressable from '@/components/AnimatedPressable';
+import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import { PLANS, PricingPlan } from '@/lib/subscriptionStore';
 
 // Public, logged-out pricing page — the highest-value, lowest-risk nav
@@ -15,6 +18,15 @@ import { PLANS, PricingPlan } from '@/lib/subscriptionStore';
 // live in the in-app subscriptions screen) instead of inventing new copy.
 // Same visual language as welcome.tsx (colors, nav, ScreenFrame) so the
 // three public pages read as one site, not three.
+//
+// Structure below (banner, comparison section) is modeled on a live look at
+// viamatch.ai/pricing — it's a long page with a highlighted free-tier
+// banner and a cost-comparison section, not just 4 bare cards. The banner
+// here is honest to Hiyame's own real pricing (Pilot/Starter really are
+// ₦0/mo already, this isn't a marketing-only "free trial" framing), and the
+// comparison is a feature comparison, not invented cost figures — viamatch's
+// version cites specific £ agency/LinkedIn costs that aren't something we
+// have real verified numbers for.
 const PAGE_BG = '#F5F8FC';
 const COMPANY_COLOR = '#0F1419';
 const CANDIDATE_COLOR = '#1DA1F2';
@@ -32,14 +44,35 @@ export default function PricingScreen() {
         <ScrollView contentContainerStyle={st.scrollContent} showsVerticalScrollIndicator={false}>
           <PublicNav stacked={stacked} active="pricing" />
 
-          <View style={st.headlineBlock}>
-            <Text style={st.headline}>Simple, transparent pricing</Text>
-            <Text style={st.subhead}>Naira pricing, no hidden fees. Start free, upgrade when you're ready to scale.</Text>
-          </View>
+          <SwipeFadeContainer axis="y" offset={16} duration={420} delay={0}>
+            <View style={st.headlineBlock}>
+              <Text style={st.headline}>Simple, transparent pricing</Text>
+              <Text style={st.subhead}>Naira pricing, no hidden fees. Start free, upgrade when you're ready to scale.</Text>
+            </View>
+          </SwipeFadeContainer>
+
+          <SwipeFadeContainer axis="y" offset={16} duration={420} delay={80}>
+            <View style={[st.freeBanner, stacked && st.freeBannerStacked]}>
+              <View style={st.freeBannerText}>
+                <Text style={st.freeBannerTitle}>Pilot and Starter cost ₦0/mo — for real</Text>
+                <Text style={st.freeBannerBody}>Try Hiyame before you spend anything. No card required, no trial countdown.</Text>
+              </View>
+              <AnimatedPressable
+                style={(state) => [st.freeBannerCta, state.hovered && st.freeBannerCtaHover]}
+                onPress={() => router.push('/(auth)/company-signup')}
+                scaleTo={0.96}
+              >
+                <Text style={st.freeBannerCtaText}>Start free</Text>
+                <AppIcon name="arrow-forward" size={14} color={COMPANY_COLOR} />
+              </AnimatedPressable>
+            </View>
+          </SwipeFadeContainer>
 
           <View style={[st.grid, stacked && st.gridStacked]}>
-            {PLANS.map((plan) => (
-              <PlanCard key={plan.id} plan={plan} T={T} st={st} stacked={stacked} />
+            {PLANS.map((plan, i) => (
+              <SwipeFadeContainer key={plan.id} axis="y" offset={20} duration={420} delay={150 + i * 70} style={stacked ? undefined : st.gridItem}>
+                <PlanCard plan={plan} st={st} stacked={stacked} />
+              </SwipeFadeContainer>
             ))}
           </View>
 
@@ -49,13 +82,19 @@ export default function PricingScreen() {
               All plans start on Pilot — pick or change your plan from inside your company workspace once you're signed up.
             </Text>
           </View>
+
+          <SwipeFadeContainer axis="y" offset={20} duration={420} delay={0}>
+            <ComparisonSection st={st} stacked={stacked} />
+          </SwipeFadeContainer>
+
+          <PublicFooter stacked={stacked} />
         </ScrollView>
       </ScreenFrame>
     </SafeAreaView>
   );
 }
 
-function PlanCard({ plan, T, st, stacked }: { plan: PricingPlan; T: ThemePalette; st: ReturnType<typeof makeStyles>; stacked: boolean }) {
+function PlanCard({ plan, st, stacked }: { plan: PricingPlan; st: ReturnType<typeof makeStyles>; stacked: boolean }) {
   return (
     <View style={[st.card, stacked && st.cardStacked, plan.highlight && st.cardHighlight]}>
       {plan.highlight && (
@@ -81,12 +120,68 @@ function PlanCard({ plan, T, st, stacked }: { plan: PricingPlan; T: ThemePalette
         ))}
       </View>
 
-      <Pressable
-        style={({ pressed }) => [st.ctaBtn, plan.highlight && st.ctaBtnHighlight, pressed && { opacity: 0.85 }]}
+      <AnimatedPressable
+        style={(state) => [
+          st.ctaBtn,
+          plan.highlight && st.ctaBtnHighlight,
+          state.hovered && (plan.highlight ? st.ctaBtnHighlightHover : st.ctaBtnHover),
+        ]}
         onPress={() => router.push('/(auth)/company-signup')}
+        scaleTo={0.96}
       >
         <Text style={[st.ctaBtnText, plan.highlight && st.ctaBtnTextHighlight]}>Get started</Text>
-      </Pressable>
+      </AnimatedPressable>
+    </View>
+  );
+}
+
+// Feature comparison, not a cost comparison — viamatch's own version cites
+// specific £ figures for agencies/LinkedIn Recruiter that we have no real,
+// verified numbers to back for the Nigerian market. This says the same
+// "why us" thing honestly: what each option actually gives you.
+const COMPARISON_ROWS: { label: string; jobBoard: boolean | string; agency: boolean | string; hiyame: boolean | string }[] = [
+  { label: 'Candidates are pre-verified', jobBoard: false, agency: 'Sometimes', hiyame: true },
+  { label: 'You review a ranked shortlist, not a résumé pile', jobBoard: false, agency: true, hiyame: true },
+  { label: 'No placement fee (% of first-year salary)', jobBoard: true, agency: false, hiyame: true },
+  { label: 'Priced in naira', jobBoard: true, agency: 'Sometimes', hiyame: true },
+  { label: 'Free to start', jobBoard: true, agency: false, hiyame: true },
+];
+
+function ComparisonSection({ st, stacked }: { st: ReturnType<typeof makeStyles>; stacked: boolean }) {
+  return (
+    <View style={st.compSection}>
+      <Text style={st.compTitle}>How it compares</Text>
+      <View style={st.compTable}>
+        <View style={[st.compRow, st.compHeaderRow]}>
+          <View style={st.compLabelColSpacer} />
+          <Text style={st.compHeaderCell}>Job boards</Text>
+          <Text style={st.compHeaderCell}>Agencies</Text>
+          <Text style={[st.compHeaderCell, st.compHeaderCellHiyame]}>Hiyame</Text>
+        </View>
+        {COMPARISON_ROWS.map((row, i) => (
+          <View key={row.label} style={[st.compRow, i % 2 === 1 && st.compRowAlt]}>
+            <Text style={st.compLabelText}>{row.label}</Text>
+            <CompCell value={row.jobBoard} st={st} />
+            <CompCell value={row.agency} st={st} />
+            <CompCell value={row.hiyame} st={st} highlight />
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+function CompCell({ value, st, highlight }: { value: boolean | string; st: ReturnType<typeof makeStyles>; highlight?: boolean }) {
+  if (typeof value === 'string') {
+    return <Text style={[st.compCellText, highlight && st.compCellTextHiyame]}>{value}</Text>;
+  }
+  return (
+    <View style={st.compCellIcon}>
+      <AppIcon
+        name={value ? 'checkmark-circle' : 'close-circle-outline'}
+        size={18}
+        color={value ? (highlight ? CANDIDATE_COLOR : '#17A75B') : '#C7CDD3'}
+      />
     </View>
   );
 }
@@ -96,12 +191,28 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   frame: { paddingHorizontal: 20, paddingTop: 16 },
   scrollContent: { flexGrow: 1, paddingBottom: 40 },
 
-  headlineBlock: { alignItems: 'center', marginBottom: 32, paddingHorizontal: 12 },
+  headlineBlock: { alignItems: 'center', marginBottom: 24, paddingHorizontal: 12 },
   headline: { fontSize: 34, lineHeight: 40, fontWeight: '800', color: COMPANY_COLOR, letterSpacing: -0.6, textAlign: 'center', maxWidth: 620 },
   subhead: { fontSize: 16, color: '#536471', marginTop: 10, fontWeight: '500', textAlign: 'center', maxWidth: 480 },
 
+  freeBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: 16, justifyContent: 'space-between',
+    backgroundColor: COMPANY_COLOR, borderRadius: 20, padding: 20, marginBottom: 28,
+  },
+  freeBannerStacked: { flexDirection: 'column', alignItems: 'flex-start' },
+  freeBannerText: { flex: 1 },
+  freeBannerTitle: { fontSize: 15.5, fontWeight: '800', color: '#FFFFFF', marginBottom: 4 },
+  freeBannerBody: { fontSize: 13, color: 'rgba(255,255,255,0.72)', fontWeight: '500', lineHeight: 18 },
+  freeBannerCta: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    backgroundColor: '#FFFFFF', paddingHorizontal: 18, paddingVertical: 12, borderRadius: 999,
+  },
+  freeBannerCtaHover: { backgroundColor: '#F1F5F9' },
+  freeBannerCtaText: { fontSize: 13.5, fontWeight: '700', color: COMPANY_COLOR },
+
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 16, justifyContent: 'center' },
   gridStacked: { flexDirection: 'column' },
+  gridItem: { width: 250 },
 
   card: {
     width: 250, backgroundColor: '#FFFFFF', borderRadius: 24, padding: 24,
@@ -130,7 +241,9 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
     borderRadius: 999, paddingVertical: 13, alignItems: 'center',
     backgroundColor: '#F1F5F9', borderWidth: 1, borderColor: '#E1E8ED',
   },
+  ctaBtnHover: { backgroundColor: '#E7ECF0' },
   ctaBtnHighlight: { backgroundColor: CANDIDATE_COLOR, borderColor: CANDIDATE_COLOR },
+  ctaBtnHighlightHover: { backgroundColor: '#0F8FDE' },
   ctaBtnText: { fontSize: 14, fontWeight: '700', color: COMPANY_COLOR },
   ctaBtnTextHighlight: { color: '#FFFFFF' },
 
@@ -139,4 +252,18 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
     maxWidth: 480, marginTop: 32, paddingHorizontal: 20,
   },
   footNoteText: { flex: 1, fontSize: 12.5, color: '#8A97A4', lineHeight: 18, fontWeight: '500' },
+
+  compSection: { marginTop: 56 },
+  compTitle: { fontSize: 22, fontWeight: '800', color: COMPANY_COLOR, marginBottom: 18, textAlign: 'center' },
+  compTable: { backgroundColor: '#FFFFFF', borderRadius: 20, borderWidth: 1, borderColor: '#E1E8ED', overflow: 'hidden' },
+  compRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 16 },
+  compHeaderRow: { backgroundColor: '#F5F8FC', borderBottomWidth: 1, borderBottomColor: '#E1E8ED' },
+  compRowAlt: { backgroundColor: '#FBFCFD' },
+  compLabelColSpacer: { flex: 2, paddingRight: 8 },
+  compLabelText: { flex: 2, fontSize: 13, fontWeight: '600', color: COMPANY_COLOR, paddingRight: 8 },
+  compHeaderCell: { flex: 1, textAlign: 'center', fontSize: 11.5, fontWeight: '800', color: '#8A97A4', letterSpacing: 0.3 },
+  compHeaderCellHiyame: { color: CANDIDATE_COLOR },
+  compCellText: { flex: 1, textAlign: 'center', fontSize: 12, fontWeight: '600', color: '#8A97A4' },
+  compCellTextHiyame: { color: CANDIDATE_COLOR },
+  compCellIcon: { flex: 1, alignItems: 'center' },
 });

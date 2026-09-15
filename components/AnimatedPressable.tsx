@@ -1,8 +1,12 @@
 import { useRef } from 'react';
-import { Animated, Pressable, PressableProps, GestureResponderEvent } from 'react-native';
+import { Animated, Pressable, PressableProps, PressableStateCallbackType, GestureResponderEvent, StyleProp, ViewStyle } from 'react-native';
 
 interface Props extends Omit<PressableProps, 'style'> {
-  style?: any;
+  // Typed like RN's own Pressable style prop (a value or a function of
+  // {pressed, hovered, focused}) instead of `any` — `any` erased the
+  // callback-form parameter's type, forcing every caller using
+  // `style={(state) => ...}` to annotate `state` by hand or hit a TS7006.
+  style?: StyleProp<ViewStyle> | ((state: PressableStateCallbackType) => StyleProp<ViewStyle>);
   /** How far it scales down on press (default 0.96 — subtle, not bouncy) */
   scaleTo?: number;
 }
