@@ -5,17 +5,15 @@ import AppIcon from '@/components/AppIcon';
 import AnimatedPressable from '@/components/AnimatedPressable';
 
 // "Company / Candidate" tabs at the top of Pricing and About — both were
-// persona-agnostic pages with no link into the home page's persona-specific
-// How It Works content. Tapping either takes the visitor straight to that
-// section, already on the right persona and auto-scrolled there (see
-// app/(auth)/welcome.tsx's ?mode=&focus=how handling), instead of leaving
-// "how does this actually work for me" as a dead end on these two pages.
+// persona-agnostic pages with no link into the dedicated How It Works page
+// (app/(auth)/how-it-works.tsx). Tapping either takes the visitor straight
+// there, already on the right persona.
 const COMPANY_COLOR = '#0F1419';
 const CANDIDATE_COLOR = '#1DA1F2';
 
 export default function PersonaTabs() {
   const go = (mode: 'hiring' | 'candidate') => {
-    router.push({ pathname: '/(auth)/welcome', params: { mode, focus: 'how' } });
+    router.push({ pathname: '/(auth)/how-it-works', params: { mode } });
   };
 
   return (
