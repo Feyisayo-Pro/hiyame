@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { useEffect, useMemo, useRef } from 'react';
+import { Animated, Easing, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { router } from 'expo-router';
 import { Text } from '@/components/Themed';
 import AppIcon from '@/components/AppIcon';
@@ -85,9 +85,7 @@ export default function PricingScreen() {
             </Text>
           </View>
 
-          <SwipeFadeContainer axis="y" offset={20} duration={420} delay={0}>
-            <ComparisonSection st={st} stacked={stacked} />
-          </SwipeFadeContainer>
+          <ComparisonSection st={st} stacked={stacked} />
 
           <PublicFooter stacked={stacked} />
         </ScrollView>
@@ -97,12 +95,35 @@ export default function PricingScreen() {
 }
 
 function PlanCard({ plan, st, stacked }: { plan: PricingPlan; st: ReturnType<typeof makeStyles>; stacked: boolean }) {
+  // Subtle continuous glow pulse on the "MOST POPULAR" badge — decorative,
+  // doesn't gate anything on itself (unlike a scroll-triggered reveal).
+  const pulse = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (!plan.highlight) return;
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, { toValue: 1, duration: 1400, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 0, duration: 1400, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [plan.highlight]);
+  const pulseScale = pulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.06] });
+  const pulseOpacity = pulse.interpolate({ inputRange: [0, 1], outputRange: [0.55, 1] });
+
   return (
-    <View style={[st.card, stacked && st.cardStacked, plan.highlight && st.cardHighlight]}>
+    <AnimatedPressable
+      style={(state) => [
+        st.card, stacked && st.cardStacked, plan.highlight && st.cardHighlight,
+        state.hovered && st.cardHover,
+      ]}
+      scaleTo={1}
+    >
       {plan.highlight && (
-        <View style={st.popularBadge}>
+        <Animated.View style={[st.popularBadge, { transform: [{ scale: pulseScale }], opacity: pulseOpacity }]}>
           <Text style={st.popularBadgeText}>MOST POPULAR</Text>
-        </View>
+        </Animated.View>
       )}
 
       <Text style={st.planName}>{plan.name}</Text>
@@ -114,11 +135,8 @@ function PlanCard({ plan, st, stacked }: { plan: PricingPlan; st: ReturnType<typ
       </View>
 
       <View style={st.featuresList}>
-        {plan.features.map((f) => (
-          <View key={f} style={st.featureRow}>
-            <AppIcon name="checkmark-circle" size={16} color={CANDIDATE_COLOR} />
-            <Text style={st.featureText}>{f}</Text>
-          </View>
+        {plan.features.map((f, i) => (
+          <FeatureRow key={f} label={f} index={i} st={st} />
         ))}
       </View>
 
@@ -133,6 +151,26 @@ function PlanCard({ plan, st, stacked }: { plan: PricingPlan; st: ReturnType<typ
       >
         <Text style={[st.ctaBtnText, plan.highlight && st.ctaBtnTextHighlight]}>Get started</Text>
       </AnimatedPressable>
+    </AnimatedPressable>
+  );
+}
+
+// Bounce-in on mount: 1 -> 1.25 -> 1, staggered per row so the checklist
+// reads as revealing itself rather than all popping in at once.
+function FeatureRow({ label, index, st }: { label: string; index: number; st: ReturnType<typeof makeStyles> }) {
+  const scale = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.sequence([
+      Animated.delay(index * 60),
+      Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 14, bounciness: 12 }),
+    ]).start();
+  }, []);
+  return (
+    <View style={st.featureRow}>
+      <Animated.View style={{ transform: [{ scale }] }}>
+        <AppIcon name="checkmark-circle" size={16} color={CANDIDATE_COLOR} />
+      </Animated.View>
+      <Text style={st.featureText}>{label}</Text>
     </View>
   );
 }
@@ -151,25 +189,29 @@ const COMPARISON_ROWS: { label: string; jobBoard: boolean | string; agency: bool
 
 function ComparisonSection({ st, stacked }: { st: ReturnType<typeof makeStyles>; stacked: boolean }) {
   return (
-    <View style={st.compSection}>
-      <Text style={st.compTitle}>How it compares</Text>
-      <View style={st.compTable}>
-        <View style={[st.compRow, st.compHeaderRow]}>
-          <View style={st.compLabelColSpacer} />
-          <Text style={st.compHeaderCell}>Job boards</Text>
-          <Text style={st.compHeaderCell}>Agencies</Text>
-          <Text style={[st.compHeaderCell, st.compHeaderCellHiyame]}>Hiyame</Text>
-        </View>
-        {COMPARISON_ROWS.map((row, i) => (
-          <View key={row.label} style={[st.compRow, i % 2 === 1 && st.compRowAlt]}>
-            <Text style={st.compLabelText}>{row.label}</Text>
-            <CompCell value={row.jobBoard} st={st} />
-            <CompCell value={row.agency} st={st} />
-            <CompCell value={row.hiyame} st={st} highlight />
+    <SwipeFadeContainer axis="y" offset={20} duration={420} delay={0}>
+      <View style={st.compSection}>
+        <Text style={st.compTitle}>How it compares</Text>
+        <View style={st.compTable}>
+          <View style={[st.compRow, st.compHeaderRow]}>
+            <View style={st.compLabelColSpacer} />
+            <Text style={st.compHeaderCell}>Job boards</Text>
+            <Text style={st.compHeaderCell}>Agencies</Text>
+            <Text style={[st.compHeaderCell, st.compHeaderCellHiyame]}>Hiyame</Text>
           </View>
-        ))}
+          {COMPARISON_ROWS.map((row, i) => (
+            <SwipeFadeContainer key={row.label} axis="y" offset={10} duration={320} delay={80 + i * 60}>
+              <View style={[st.compRow, i % 2 === 1 && st.compRowAlt]}>
+                <Text style={st.compLabelText}>{row.label}</Text>
+                <CompCell value={row.jobBoard} st={st} />
+                <CompCell value={row.agency} st={st} />
+                <CompCell value={row.hiyame} st={st} highlight />
+              </View>
+            </SwipeFadeContainer>
+          ))}
+        </View>
       </View>
-    </View>
+    </SwipeFadeContainer>
   );
 }
 
@@ -219,9 +261,11 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   card: {
     width: 250, backgroundColor: '#FFFFFF', borderRadius: 24, padding: 24,
     borderWidth: 1.5, borderColor: '#E1E8ED',
+    shadowColor: '#0B1220', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0, shadowRadius: 20,
   },
   cardStacked: { width: '100%' },
   cardHighlight: { borderColor: CANDIDATE_COLOR, borderWidth: 2 },
+  cardHover: { shadowOpacity: 0.12, transform: [{ translateY: -6 }] },
   popularBadge: {
     position: 'absolute', top: -12, alignSelf: 'center',
     backgroundColor: CANDIDATE_COLOR, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 5,

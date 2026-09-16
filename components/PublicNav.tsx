@@ -28,10 +28,14 @@ export default function PublicNav({ stacked, active }: Props) {
       {!stacked && (
         <View style={st.navLinks}>
           <AnimatedPressable onPress={() => router.push('/(auth)/pricing')} style={st.navLink} scaleTo={0.94}>
-            <Text style={[st.navLinkText, active === 'pricing' && st.navLinkTextActive]}>Pricing</Text>
+            {(state) => (
+              <Text style={[st.navLinkText, (active === 'pricing' || state.hovered) && st.navLinkTextActive]}>Pricing</Text>
+            )}
           </AnimatedPressable>
           <AnimatedPressable onPress={() => router.push('/(auth)/about')} style={st.navLink} scaleTo={0.94}>
-            <Text style={[st.navLinkText, active === 'about' && st.navLinkTextActive]}>About</Text>
+            {(state) => (
+              <Text style={[st.navLinkText, (active === 'about' || state.hovered) && st.navLinkTextActive]}>About</Text>
+            )}
           </AnimatedPressable>
         </View>
       )}
@@ -88,9 +92,6 @@ const st = StyleSheet.create({
     backgroundColor: CANDIDATE_COLOR, paddingHorizontal: 18, paddingVertical: 9, borderRadius: 999,
     shadowColor: CANDIDATE_COLOR, shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 10,
   },
-  // No translateY here: AnimatedPressable's own press-scale transform fully
-  // overwrites (doesn't merge with) any transform in this style, since RN
-  // style arrays replace whole keys rather than combining array entries.
-  signUpPillHover: { shadowOpacity: 0.35 },
+  signUpPillHover: { shadowOpacity: 0.35, transform: [{ translateY: -2 }] },
   signUpPillText: { fontSize: 13, fontWeight: '700', color: '#FFFFFF' },
 });

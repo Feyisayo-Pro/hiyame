@@ -6,6 +6,7 @@ import AppIcon, { AppIconName } from '@/components/AppIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, ThemePalette, DISPLAY_FONT_FAMILY } from '@/lib/theme';
 import ScreenFrame from '@/components/ScreenFrame';
+import AnimatedPressable from '@/components/AnimatedPressable';
 
 interface SignInOption {
   key: string;
@@ -61,9 +62,9 @@ export default function LoginScreen() {
     <SafeAreaView style={st.container} edges={['top', 'left', 'right', 'bottom']}>
       <ScreenFrame maxWidth={560}>
       {/* Back Button */}
-      <Pressable style={st.backButton} onPress={() => router.back()}>
+      <AnimatedPressable style={st.backButton} onPress={() => router.back()} scaleTo={0.9}>
         <AppIcon name="arrow-back" size={20} color={T.textPrimary} />
-      </Pressable>
+      </AnimatedPressable>
 
       <ScrollView
         contentContainerStyle={st.scrollContent}
@@ -82,10 +83,11 @@ export default function LoginScreen() {
         {/* Option Cards */}
         <Animated.View style={[st.cardsWrap, { opacity: cardFade, transform: [{ translateY: cardSlide }] }]}>
           {OPTIONS.map((opt, index) => (
-            <Pressable
+            <AnimatedPressable
               key={opt.key}
-              style={({ pressed }) => [st.optionCard, pressed && st.optionCardPressed]}
+              style={(state) => [st.optionCard, state.hovered && st.optionCardHover]}
               onPress={() => router.push(opt.route as any)}
+              scaleTo={0.98}
             >
               <View style={st.optionTop}>
                 <View style={st.optionIconWrap}>
@@ -101,7 +103,7 @@ export default function LoginScreen() {
                 <AppIcon name="sparkles-outline" size={12} color={T.accent} />
                 <Text style={st.microText}>{opt.micro}</Text>
               </View>
-            </Pressable>
+            </AnimatedPressable>
           ))}
         </Animated.View>
 
@@ -112,13 +114,14 @@ export default function LoginScreen() {
             <Text style={st.dividerText}>New to hiyame?</Text>
             <View style={st.dividerLine} />
           </View>
-          <Pressable
-            style={st.registerButton}
+          <AnimatedPressable
+            style={(state) => [st.registerButton, state.hovered && st.registerButtonHover]}
             onPress={() => router.push('/(auth)/register')}
+            scaleTo={0.96}
           >
             <AppIcon name="add-circle-outline" size={18} color={T.accent} />
             <Text style={st.registerText}>Create an Account</Text>
-          </Pressable>
+          </AnimatedPressable>
         </View>
       </ScrollView>
       </ScreenFrame>
@@ -161,7 +164,10 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2, shadowRadius: 12, elevation: 2,
   },
-  optionCardPressed: { borderColor: T.accent, backgroundColor: T.cardElevated },
+  optionCardHover: {
+    borderColor: T.accent, backgroundColor: T.cardElevated,
+    shadowOpacity: 0.32, shadowRadius: 18, transform: [{ translateY: -6 }],
+  },
 
   optionTop: {
     flexDirection: 'row', justifyContent: 'space-between',
@@ -195,5 +201,6 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
     gap: 8, paddingVertical: 16, borderRadius: 50,
     backgroundColor: T.surface, borderWidth: 1, borderColor: T.border,
   },
+  registerButtonHover: { borderColor: T.accent, backgroundColor: T.accentBg },
   registerText: { fontSize: 15, fontWeight: '700', color: T.accent },
 });

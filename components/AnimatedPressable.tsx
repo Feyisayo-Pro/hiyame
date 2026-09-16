@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { Animated, Pressable, PressableProps, PressableStateCallbackType, GestureResponderEvent, StyleProp, ViewStyle } from 'react-native';
+import { Animated, Pressable, PressableProps, PressableStateCallbackType, GestureResponderEvent, StyleProp, StyleSheet, ViewStyle } from 'react-native';
 
 interface Props extends Omit<PressableProps, 'style'> {
   // Typed like RN's own Pressable style prop (a value or a function of
@@ -29,11 +29,22 @@ export default function AnimatedPressable({ style, scaleTo = 0.96, onPressIn, on
 
   return (
     <Pressable onPressIn={pressIn} onPressOut={pressOut} {...rest}>
-      {(state) => (
-        <Animated.View style={[typeof style === 'function' ? style(state) : style, { transform: [{ scale }] }]}>
-          {typeof children === 'function' ? children(state) : children}
-        </Animated.View>
-      )}
+      {(state) => {
+        // RN style arrays replace a whole key rather than merging array
+        // entries, so a caller's own `transform` (e.g. a hover-lift
+        // translateY) would otherwise be silently overwritten by the
+        // press-scale below instead of both applying together. Flatten and
+        // merge them into one transform array so callers can freely add
+        // their own transforms without knowing about this internal.
+        const resolved = (StyleSheet.flatten(typeof style === 'function' ? style(state) : style) || {}) as ViewStyle;
+        const { transform: callerTransform, ...restStyle } = resolved;
+        const transform = [...(Array.isArray(callerTransform) ? callerTransform : []), { scale }];
+        return (
+          <Animated.View style={[restStyle, { transform }]}>
+            {typeof children === 'function' ? children(state) : children}
+          </Animated.View>
+        );
+      }}
     </Pressable>
   );
 }
