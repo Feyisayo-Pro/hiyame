@@ -11,6 +11,7 @@ import { supabase } from '@/lib/supabase';
 import ScreenFrame from '@/components/ScreenFrame';
 import PublicNav from '@/components/PublicNav';
 import PublicFooter from '@/components/PublicFooter';
+import PersonaTabs from '@/components/PersonaTabs';
 
 // Public "About" page. Deliberately does NOT include named team bios or
 // photos — there's no real founder/team content anywhere in this codebase
@@ -60,6 +61,7 @@ export default function AboutScreen() {
       <ScreenFrame maxWidth={1120} style={st.frame}>
         <ScrollView contentContainerStyle={st.scrollContent} showsVerticalScrollIndicator={false}>
           <PublicNav stacked={stacked} active="about" />
+          <PersonaTabs />
 
           <SwipeFadeContainer axis="y" offset={16} duration={420} delay={0}>
             <View style={st.headlineBlock}>

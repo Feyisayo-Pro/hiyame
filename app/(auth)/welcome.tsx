@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Text } from '@/components/Themed';
 import AppIcon from '@/components/AppIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -9,6 +9,7 @@ import ScreenFrame from '@/components/ScreenFrame';
 import PublicNav from '@/components/PublicNav';
 import PublicFooter from '@/components/PublicFooter';
 import PersonaSwitcher, { PersonaMode } from '@/components/PersonaSwitcher';
+import GradientBlobBackground from '@/components/GradientBlobBackground';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 
 // The landing screen — folds the old two-step welcome-carousel → register
@@ -67,6 +68,12 @@ export default function WelcomeScreen() {
   const { width } = useWindowDimensions();
   const stacked = width < STACK_BREAKPOINT;
 
+  // Deep-link from Pricing/About's persona tabs: /(auth)/welcome?mode=
+  // hiring|candidate&focus=how lands here already on the right persona and
+  // auto-scrolled to How It Works, instead of dumping the visitor back at
+  // the plain top-of-page hero with no sense they landed anywhere specific.
+  const params = useLocalSearchParams<{ mode?: string; focus?: string }>();
+
   // -1 = candidate panel focused, 0 = resting (both full color), 1 = company
   // focused. One shared value drives both panels' flex + color together, so
   // they always move in lockstep — one expanding is always the other's
@@ -74,13 +81,69 @@ export default function WelcomeScreen() {
   const focus = useRef(new Animated.Value(0)).current;
   const [pressed, setPressed] = useState<PanelKey | null>(null);
 
-  const [mode, setMode] = useState<PersonaMode>('hiring');
+  const [mode, setMode] = useState<PersonaMode>(params.mode === 'candidate' ? 'candidate' : 'hiring');
   const [activeStep, setActiveStep] = useState(0);
+
+  // Scrolling to the How It Works section on persona-switch is what makes
+  // "click the pill → the section above changes" actually visible — the
+  // pill sits fixed at the bottom of the viewport, often nowhere near the
+  // section it controls, so without this the change happens off-screen and
+  // looks like nothing happened at all.
+  const scrollRef = useRef<ScrollView>(null);
+  const howSectionY = useRef(0);
+  const scrollToHow = () => {
+    requestAnimationFrame(() => scrollRef.current?.scrollTo({ y: Math.max(0, howSectionY.current - 24), animated: true }));
+  };
+
+  // A brief colored glow around the section header on every switch — the
+  // second half of making the change unmistakable even for a visitor who's
+  // already scrolled to the section and doesn't need the scroll-to.
+  const highlight = useRef(new Animated.Value(0)).current;
+  const pulseHighlight = () => {
+    highlight.setValue(1);
+    Animated.timing(highlight, { toValue: 0, duration: 900, easing: Easing.out(Easing.cubic), useNativeDriver: false }).start();
+  };
+
   // Switching persona resets to step 1 of that persona's flow — carrying
   // "step 3 of hiring" over into "step 3 of candidate" would land on an
   // unrelated step by coincidence of index, not intent.
-  const changeMode = (m: PersonaMode) => { setMode(m); setActiveStep(0); };
+  const changeMode = (m: PersonaMode) => {
+    setMode(m);
+    setActiveStep(0);
+    scrollToHow();
+    pulseHighlight();
+  };
   const steps = mode === 'hiring' ? HIRING_STEPS : CANDIDATE_STEPS;
+
+  // Sliding pill behind the step tabs (segmented-control style) instead of
+  // each tab just swapping its own flat background — measured per-tab via
+  // onLayout since the three labels differ in width per persona ("Post a
+  // role" vs. "Verify"). Non-stacked layout only: stacked mode's tabs stack
+  // in a column, where a horizontally-sliding pill doesn't make sense.
+  const [tabLayouts, setTabLayouts] = useState<Record<number, { x: number; width: number }>>({});
+  const pillX = useRef(new Animated.Value(0)).current;
+  const pillWidth = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const l = tabLayouts[activeStep];
+    if (!l) return;
+    Animated.spring(pillX, { toValue: l.x, useNativeDriver: false, speed: 18, bounciness: 7 }).start();
+    Animated.spring(pillWidth, { toValue: l.width, useNativeDriver: false, speed: 18, bounciness: 7 }).start();
+  }, [activeStep, tabLayouts]);
+
+  // Arriving via ?focus=how (from Pricing/About's persona tabs) scrolls
+  // straight to the section as soon as its position is known. A ref
+  // mutation (howSectionY.current) doesn't re-render anything, so this has
+  // to fire from the section's own onLayout — the first moment a real y is
+  // available — rather than a useEffect watching that ref.
+  const didAutoScrollForFocus = useRef(false);
+  const onHowSectionLayout = (y: number) => {
+    howSectionY.current = y;
+    if (params.focus === 'how' && !didAutoScrollForFocus.current) {
+      didAutoScrollForFocus.current = true;
+      scrollToHow();
+      pulseHighlight();
+    }
+  };
 
   // Separate from `focus` (which drives the hover-expand) — a small press-down
   // scale so tapping a panel gives the same instant, physical feedback every
@@ -142,11 +205,18 @@ export default function WelcomeScreen() {
   return (
     <SafeAreaView style={st.safeArea} edges={['top', 'left', 'right', 'bottom']}>
       <ScreenFrame maxWidth={1120} style={st.frame}>
-      <ScrollView contentContainerStyle={st.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView ref={scrollRef} contentContainerStyle={st.scrollContent} showsVerticalScrollIndicator={false}>
         {/* ── Nav ── */}
         <SwipeFadeContainer axis="y" offset={16} duration={420} delay={0}>
           <PublicNav stacked={stacked} />
         </SwipeFadeContainer>
+
+        {/* Blob field spans headline → end of How It Works — the region
+            that used to read as visually flat/"blank". Rendered first so it
+            paints behind every sibling below it (default DOM stacking,
+            no z-index needed). */}
+        <View style={st.blobZone}>
+        <GradientBlobBackground />
 
         {/* ── Headline ── */}
         <SwipeFadeContainer axis="y" offset={16} duration={420} delay={90}>
@@ -252,7 +322,23 @@ export default function WelcomeScreen() {
         </SwipeFadeContainer>
 
         {/* ── How it works ── */}
-        <View style={st.howSection}>
+        <View
+          style={st.howSection}
+          onLayout={(e) => onHowSectionLayout(e.nativeEvent.layout.y)}
+        >
+          {/* Glow ring that flashes on every persona switch — visible even
+              to someone already scrolled here who doesn't need the
+              scroll-to, so the section changing is unmistakable either way. */}
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              st.howHighlightRing,
+              {
+                opacity: highlight,
+                transform: [{ scale: highlight.interpolate({ inputRange: [0, 1], outputRange: [1, 1.01] }) }],
+              },
+            ]}
+          />
           <Text style={st.howEyebrow}>{mode === 'hiring' ? 'FOR EMPLOYERS' : 'FOR CANDIDATES'}</Text>
           <Text style={st.howTitle}>How it works {mode === 'hiring' ? 'for employers' : 'for candidates'}</Text>
           <Text style={st.howSubhead}>
@@ -262,13 +348,42 @@ export default function WelcomeScreen() {
           </Text>
 
           <View style={[st.stepTabs, stacked && st.stepTabsStacked]}>
+            {!stacked && (
+              <Animated.View style={[st.stepTabPill, { left: pillX, width: pillWidth }]} />
+            )}
             {steps.map((step, i) => (
-              <View key={step.tab} style={st.stepTabRow}>
-                <Pressable onPress={() => setActiveStep(i)} style={[st.stepTab, i === activeStep && st.stepTabActive]}>
+              // Deliberately NOT wrapped in a per-tab container View — the
+              // sliding pill is positioned absolutely against `stepTabs`
+              // directly, and RN's onLayout reports x/y relative to the
+              // IMMEDIATE parent. A wrapper here would make every tab
+              // measure x≈0 relative to its own wrapper instead of its real
+              // offset within stepTabs, which is exactly the bug that had
+              // the pill freeze at the wrong position once tab 3 (behind an
+              // extra wrapper) became active. Fragment groups [tab, arrow]
+              // without introducing that extra coordinate frame.
+              <Fragment key={step.tab}>
+                <Pressable
+                  onPress={() => setActiveStep(i)}
+                  onLayout={(e) => {
+                    const { x, width } = e.nativeEvent.layout;
+                    setTabLayouts((prev) => (prev[i]?.x === x && prev[i]?.width === width ? prev : { ...prev, [i]: { x, width } }));
+                  }}
+                  style={[
+                    st.stepTab,
+                    // Non-stacked: the active tab's own background is left
+                    // OFF so the animated sliding pill underneath (which
+                    // exactly matches its measured bounds) is what shows
+                    // through — an opaque background here would just hide
+                    // the pill completely. Stacked mode has no pill at all,
+                    // so it keeps the instant white/dark swap.
+                    (stacked || i !== activeStep) && st.stepTabInactiveLook,
+                    stacked && i === activeStep && st.stepTabActive,
+                  ]}
+                >
                   <Text style={[st.stepTabText, i === activeStep && st.stepTabTextActive]}>{step.tab}</Text>
                 </Pressable>
                 {i < steps.length - 1 && !stacked && <AppIcon name="arrow-forward" size={14} color="#536471" />}
-              </View>
+              </Fragment>
             ))}
           </View>
 
@@ -283,9 +398,12 @@ export default function WelcomeScreen() {
             </View>
 
             <View style={st.stepMockCol}>
-              <StepMockCard mode={mode} step={activeStep} st={st} />
+              <View style={mockStyles.frame}>
+                <StepMockCard mode={mode} step={activeStep} st={st} />
+              </View>
             </View>
           </SwipeFadeContainer>
+        </View>
         </View>
 
         <PublicFooter stacked={stacked} />
@@ -389,6 +507,10 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   // which would otherwise sit directly over the footer's last line.
   scrollContent: { flexGrow: 1, paddingBottom: 88 },
 
+  // Wraps headline → end of How It Works so GradientBlobBackground's
+  // absoluteFill covers exactly that region (not the nav, not the footer).
+  blobZone: { position: 'relative' },
+
   headlineBlock: { alignItems: 'center', marginBottom: 28, paddingHorizontal: 12 },
   headlineBlockStacked: { marginBottom: 16 },
   headline: { fontSize: 34, lineHeight: 40, fontWeight: '800', color: COMPANY_COLOR, letterSpacing: -0.6, textAlign: 'center', maxWidth: 620, fontFamily: DISPLAY_FONT_FAMILY },
@@ -441,16 +563,28 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   mockMatchHeadText: { fontSize: 11, fontWeight: '700', color: '#17A75B' },
 
   // ── How it works ──
-  howSection: { marginTop: 64, paddingBottom: 80 },
+  // position:relative so howHighlightRing (an absolute overlay) hugs
+  // exactly this block; paddingBottom cut from 80 to 32 — combined with
+  // PublicFooter's own marginTop:56 that was ~136px of pure dead air
+  // between the step content and the footer, the single biggest
+  // contributor to the section reading as "blank".
+  howSection: { marginTop: 56, paddingBottom: 32, position: 'relative' },
+  howHighlightRing: {
+    position: 'absolute', top: -20, left: -20, right: -20, bottom: -20,
+    borderRadius: 32, borderWidth: 2, borderColor: CANDIDATE_COLOR, backgroundColor: 'rgba(29,161,242,0.05)',
+  },
   howEyebrow: { fontSize: 12, fontWeight: '800', letterSpacing: 0.8, color: CANDIDATE_COLOR, marginBottom: 10 },
   howTitle: { fontSize: 30, fontWeight: '800', color: COMPANY_COLOR, letterSpacing: -0.5, marginBottom: 8, fontFamily: DISPLAY_FONT_FAMILY },
   howSubhead: { fontSize: 15.5, color: '#536471', fontWeight: '500', maxWidth: 480, marginBottom: 32 },
 
   stepTabs: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 32, flexWrap: 'wrap' },
   stepTabsStacked: { flexDirection: 'column', alignItems: 'flex-start' },
-  stepTabRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  stepTab: { paddingHorizontal: 16, paddingVertical: 9, borderRadius: 999, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E1E8ED' },
+  // No background here anymore — see the onLayout-measured usage above for
+  // why (the sliding stepTabPill needs to show through the active tab).
+  stepTab: { paddingHorizontal: 16, paddingVertical: 9, borderRadius: 999 },
+  stepTabInactiveLook: { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E1E8ED' },
   stepTabActive: { backgroundColor: COMPANY_COLOR, borderColor: COMPANY_COLOR },
+  stepTabPill: { position: 'absolute', top: 0, bottom: 0, borderRadius: 999, backgroundColor: COMPANY_COLOR },
   stepTabText: { fontSize: 13, fontWeight: '700', color: '#536471' },
   stepTabTextActive: { color: '#FFFFFF' },
 
@@ -461,10 +595,24 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   stepNumber: { fontSize: 12, fontWeight: '800', color: CANDIDATE_COLOR, letterSpacing: 0.4, marginBottom: 6 },
   stepTitle: { fontSize: 22, fontWeight: '800', color: COMPANY_COLOR, marginBottom: 10, letterSpacing: -0.3, fontFamily: DISPLAY_FONT_FAMILY },
   stepBody: { fontSize: 15, color: '#536471', lineHeight: 23, fontWeight: '500', maxWidth: 420 },
-  stepMockCol: { flex: 1, minWidth: 240, alignItems: 'center' },
+  // minHeight + the translucent frame around StepMockCard (mockStyles.frame,
+  // below) is what fills what used to be a mostly-empty column — a small
+  // 280px-wide card floating alone in a ~500px flex column read as broken,
+  // not minimal.
+  stepMockCol: { flex: 1, minWidth: 240, alignItems: 'center', justifyContent: 'center', minHeight: 220 },
 });
 
 const mockStyles = StyleSheet.create({
+  // Translucent "glass" frame the actual mock card sits inside — without
+  // this, a 280px card centered in a ~500px flex column at desktop widths
+  // just floated in empty space with nothing explaining why. Frosted-glass
+  // treatment (semi-transparent white + soft border) reads as a deliberate
+  // stage for the card rather than another opaque box competing with it.
+  frame: {
+    width: '100%', maxWidth: 340, minHeight: 220, borderRadius: 28, padding: 24,
+    alignItems: 'center', justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.55)', borderWidth: 1, borderColor: 'rgba(225,232,237,0.7)',
+  },
   card: {
     width: '100%', maxWidth: 280, backgroundColor: '#FFFFFF', borderRadius: 20, padding: 18,
     shadowColor: '#0B1220', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.1, shadowRadius: 24, elevation: 6,

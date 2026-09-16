@@ -8,6 +8,7 @@ import { useTheme, ThemePalette, DISPLAY_FONT_FAMILY } from '@/lib/theme';
 import ScreenFrame from '@/components/ScreenFrame';
 import PublicNav from '@/components/PublicNav';
 import PublicFooter from '@/components/PublicFooter';
+import PersonaTabs from '@/components/PersonaTabs';
 import AnimatedPressable from '@/components/AnimatedPressable';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import { PLANS, PricingPlan } from '@/lib/subscriptionStore';
@@ -43,6 +44,7 @@ export default function PricingScreen() {
       <ScreenFrame maxWidth={1120} style={st.frame}>
         <ScrollView contentContainerStyle={st.scrollContent} showsVerticalScrollIndicator={false}>
           <PublicNav stacked={stacked} active="pricing" />
+          <PersonaTabs />
 
           <SwipeFadeContainer axis="y" offset={16} duration={420} delay={0}>
             <View style={st.headlineBlock}>
