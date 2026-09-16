@@ -4,7 +4,7 @@ import { router } from 'expo-router';
 import { Text } from '@/components/Themed';
 import AppIcon from '@/components/AppIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTheme, ThemePalette } from '@/lib/theme';
+import { useTheme, ThemePalette, DISPLAY_FONT_FAMILY } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
 import AnimatedPressable from '@/components/AnimatedPressable';
 import ScreenFrame from '@/components/ScreenFrame';
@@ -213,7 +213,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
     backgroundColor: T.accentBg, borderWidth: 1, borderColor: T.accentBg20,
     alignItems: 'center', justifyContent: 'center',
   },
-  title: { fontSize: 24, fontWeight: '800', color: T.textPrimary, letterSpacing: -0.3, marginBottom: 4 },
+  title: { fontSize: 24, fontWeight: '800', color: T.textPrimary, letterSpacing: -0.3, marginBottom: 4, fontFamily: DISPLAY_FONT_FAMILY },
   subtitle: { fontSize: 14, color: T.textSecondary, marginBottom: 32 },
 
   /* Form Fields */

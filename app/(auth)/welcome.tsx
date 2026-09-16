@@ -1,10 +1,10 @@
-import { useMemo, useRef, useState } from 'react';
-import { Animated, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Animated, Easing, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { router } from 'expo-router';
 import { Text } from '@/components/Themed';
 import AppIcon from '@/components/AppIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTheme, ThemePalette } from '@/lib/theme';
+import { useTheme, ThemePalette, DISPLAY_FONT_FAMILY } from '@/lib/theme';
 import ScreenFrame from '@/components/ScreenFrame';
 import PublicNav from '@/components/PublicNav';
 import PublicFooter from '@/components/PublicFooter';
@@ -95,6 +95,35 @@ export default function WelcomeScreen() {
     Animated.spring(focus, { toValue: value, useNativeDriver: false, speed: 14, bounciness: 6 }).start();
   };
 
+  // Ambient float on the two mock cards — decorative motion layered on top
+  // of content that's already fully visible (not gating anything on this
+  // running, unlike a scroll-triggered reveal, which MASTER.md explicitly
+  // bans). Two independent loops, out of phase, so the cards never move in
+  // lockstep like the hover-driven panel motion above.
+  const floatA = useRef(new Animated.Value(0)).current;
+  const floatB = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    // useNativeDriver: false to match `focus` above (which also drives a
+    // `rotate` in this same transform array via flex/backgroundColor
+    // interpolation, incompatible with the native driver) — mixing native-
+    // and JS-driven animations on the same view's `transform` array is
+    // rejected by RN at runtime, not just slower.
+    const loop = (v: Animated.Value, delay: number) =>
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(v, { toValue: 1, duration: 2600, delay, easing: Easing.inOut(Easing.sin), useNativeDriver: false }),
+          Animated.timing(v, { toValue: 0, duration: 2600, easing: Easing.inOut(Easing.sin), useNativeDriver: false }),
+        ])
+      );
+    const a = loop(floatA, 0);
+    const b = loop(floatB, 400);
+    a.start();
+    b.start();
+    return () => { a.stop(); b.stop(); };
+  }, []);
+  const floatATranslate = floatA.interpolate({ inputRange: [0, 1], outputRange: [0, -7] });
+  const floatBTranslate = floatB.interpolate({ inputRange: [0, 1], outputRange: [0, -9] });
+
   const focusPanel = (key: PanelKey) => { setPressed(key); animateTo(key === 'company' ? 1 : -1); };
   const resetFocus = () => { setPressed(null); animateTo(0); };
 
@@ -160,7 +189,7 @@ export default function WelcomeScreen() {
                     past the viewport, forcing the exact "scroll to see the
                     rest of the hero" bug this was fixed for. */}
                 {!stacked && (
-                  <Animated.View style={[st.mockCard, st.mockCardCompany, { transform: [{ rotate: companyCardTilt }] }]}>
+                  <Animated.View style={[st.mockCard, st.mockCardCompany, { transform: [{ rotate: companyCardTilt }, { translateY: floatATranslate }] }]}>
                     <View style={st.mockCardRow}>
                       <View style={st.mockAvatar}><Text style={st.mockAvatarText}>KA</Text></View>
                       <View style={{ flex: 1 }}>
@@ -204,7 +233,7 @@ export default function WelcomeScreen() {
                 </Animated.View>
 
                 {!stacked && (
-                  <Animated.View style={[st.mockCard, st.mockCardCandidate, { transform: [{ rotate: candidateCardTilt }] }]}>
+                  <Animated.View style={[st.mockCard, st.mockCardCandidate, { transform: [{ rotate: candidateCardTilt }, { translateY: floatBTranslate }] }]}>
                     <View style={st.mockMatchHead}>
                       <AppIcon name="sparkles" size={13} color="#17A75B" />
                       <Text style={st.mockMatchHeadText}>You've been matched</Text>
@@ -362,7 +391,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
 
   headlineBlock: { alignItems: 'center', marginBottom: 28, paddingHorizontal: 12 },
   headlineBlockStacked: { marginBottom: 16 },
-  headline: { fontSize: 34, lineHeight: 40, fontWeight: '800', color: COMPANY_COLOR, letterSpacing: -0.6, textAlign: 'center', maxWidth: 620 },
+  headline: { fontSize: 34, lineHeight: 40, fontWeight: '800', color: COMPANY_COLOR, letterSpacing: -0.6, textAlign: 'center', maxWidth: 620, fontFamily: DISPLAY_FONT_FAMILY },
   headlineStacked: { fontSize: 24, lineHeight: 29 },
   subhead: { fontSize: 16, color: '#536471', marginTop: 10, fontWeight: '500' },
 
@@ -381,7 +410,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   panelInnerStacked: { padding: 20 },
 
   panelEyebrowLight: { fontSize: 11, fontWeight: '700', letterSpacing: 0.6, color: 'rgba(255,255,255,0.7)', marginBottom: 10 },
-  panelHeadlineLight: { fontSize: 26, fontWeight: '800', color: '#FFFFFF', letterSpacing: -0.4, marginBottom: 10 },
+  panelHeadlineLight: { fontSize: 26, fontWeight: '800', color: '#FFFFFF', letterSpacing: -0.4, marginBottom: 10, fontFamily: DISPLAY_FONT_FAMILY },
   panelBodyLight: { fontSize: 14, lineHeight: 21, color: 'rgba(255,255,255,0.85)', maxWidth: 320, marginBottom: 20 },
   panelCta: { flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-start', backgroundColor: 'rgba(255,255,255,0.14)', paddingHorizontal: 18, paddingVertical: 12, borderRadius: 999 },
   panelCtaOnBlue: { backgroundColor: '#FFFFFF' },
@@ -414,7 +443,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   // ── How it works ──
   howSection: { marginTop: 64, paddingBottom: 80 },
   howEyebrow: { fontSize: 12, fontWeight: '800', letterSpacing: 0.8, color: CANDIDATE_COLOR, marginBottom: 10 },
-  howTitle: { fontSize: 30, fontWeight: '800', color: COMPANY_COLOR, letterSpacing: -0.5, marginBottom: 8 },
+  howTitle: { fontSize: 30, fontWeight: '800', color: COMPANY_COLOR, letterSpacing: -0.5, marginBottom: 8, fontFamily: DISPLAY_FONT_FAMILY },
   howSubhead: { fontSize: 15.5, color: '#536471', fontWeight: '500', maxWidth: 480, marginBottom: 32 },
 
   stepTabs: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 32, flexWrap: 'wrap' },
@@ -430,7 +459,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   stepTextCol: { flex: 1, minWidth: 260 },
   stepIconWrap: { width: 44, height: 44, borderRadius: 14, backgroundColor: '#DCEEFB', alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
   stepNumber: { fontSize: 12, fontWeight: '800', color: CANDIDATE_COLOR, letterSpacing: 0.4, marginBottom: 6 },
-  stepTitle: { fontSize: 22, fontWeight: '800', color: COMPANY_COLOR, marginBottom: 10, letterSpacing: -0.3 },
+  stepTitle: { fontSize: 22, fontWeight: '800', color: COMPANY_COLOR, marginBottom: 10, letterSpacing: -0.3, fontFamily: DISPLAY_FONT_FAMILY },
   stepBody: { fontSize: 15, color: '#536471', lineHeight: 23, fontWeight: '500', maxWidth: 420 },
   stepMockCol: { flex: 1, minWidth: 240, alignItems: 'center' },
 });

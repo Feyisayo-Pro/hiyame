@@ -2,7 +2,7 @@ import { ReactNode } from 'react';
 import { Tabs } from 'expo-router';
 import AppIcon from '@/components/AppIcon';
 import { Text, View, Platform, OpaqueColorValue } from 'react-native';
-import { useTheme } from '@/lib/theme';
+import { useTheme, fontFamilyForWeight } from '@/lib/theme';
 import TopNav, { useIsDesktopWeb } from '@/components/TopNav';
 
 function ProfileAvatar({ color, focused }: { color: string | OpaqueColorValue; focused: boolean }) {
@@ -23,7 +23,7 @@ function TabIcon({ icon, label, color }: { icon: ReactNode; label: string; color
   return (
     <View style={{ alignItems: 'center', justifyContent: 'center', gap: 2 }}>
       {icon}
-      <Text style={{ fontSize: 11, fontWeight: '700', letterSpacing: 0.2, color }} numberOfLines={1}>
+      <Text style={{ fontSize: 11, fontWeight: '700', letterSpacing: 0.2, color, fontFamily: fontFamilyForWeight('700') }} numberOfLines={1}>
         {label}
       </Text>
     </View>

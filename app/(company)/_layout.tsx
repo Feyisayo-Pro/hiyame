@@ -1,7 +1,7 @@
 import { Tabs } from 'expo-router';
 import AppIcon, { AppIconName } from '@/components/AppIcon';
 import { Text, View, Platform, OpaqueColorValue } from 'react-native';
-import { useTheme } from '@/lib/theme';
+import { useTheme, fontFamilyForWeight } from '@/lib/theme';
 import TopNav, { useIsDesktopWeb } from '@/components/TopNav';
 
 // React Navigation's bottom-tabs wraps ITS OWN label slot (tabBarLabel / the string
@@ -13,7 +13,7 @@ function TabIcon({ name, label, color }: { name: AppIconName; label: string; col
   return (
     <View style={{ alignItems: 'center', justifyContent: 'center', gap: 2 }}>
       <AppIcon name={name} size={22} color={color} />
-      <Text style={{ fontSize: 11, fontWeight: '700', letterSpacing: 0.2, color }} numberOfLines={1}>
+      <Text style={{ fontSize: 11, fontWeight: '700', letterSpacing: 0.2, color, fontFamily: fontFamilyForWeight('700') }} numberOfLines={1}>
         {label}
       </Text>
     </View>

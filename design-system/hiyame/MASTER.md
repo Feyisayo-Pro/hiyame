@@ -24,10 +24,17 @@ mirrored in code in `lib/theme.ts` — change both together.
 - **Accent:** X / Twitter blue — `#1DA1F2`. Already the app accent in both themes.
   It is the *only* brand hue; semantic colors (success / warning / danger) are
   separate and never stand in for it.
-- **Typography:** Instagram-style — the platform **system font** (what
-  instagram.com uses on web), with a tight, modern hierarchy. No custom
-  typeface is loaded. Register one in `app/_layout.tsx` `useFonts()` and set
-  `FONT_FAMILY` in `lib/theme.ts` only if a branded face is later required.
+- **Typography:** Instagram-style tight, modern hierarchy — no longer the
+  platform system font. **Plus Jakarta Sans** (body, every weight in `TYPE`)
+  + **Bricolage Grotesque** (display, `TYPE.display`/`TYPE.title` only) are
+  loaded via `@expo-google-fonts/*` in `app/_layout.tsx`'s `useFonts()`.
+  `components/Themed.tsx`'s shared `<Text>` maps any `fontWeight` a style
+  already sets to the matching loaded body-font weight automatically
+  (`fontFamilyForWeight()` in `lib/theme.ts`) — screens didn't need
+  individual edits for this. The display face is opt-in only (via
+  `TYPE.display`/`title` or an explicit `fontFamily`), never auto-applied by
+  weight, so it stays reserved for genuine hero/headline moments instead of
+  showing up on small bold badges.
 - **Feel:** clean, content-first, minimal chrome. Not everything is a card —
   spend border / fill / radius / shadow by role, to lift the one thing that
   needs lifting.
@@ -64,7 +71,8 @@ button fill with white text, **not** for accent-colored body text on white; use
 
 ## Typography scale  (`TYPE` in `lib/theme.ts`)
 
-System font. `fontWeight` values are strings (RN requirement).
+Plus Jakarta Sans (body) / Bricolage Grotesque (display, `display` + `title`
+rows only). `fontWeight` values are strings (RN requirement).
 
 | Token | Size / line-height | Weight | Tracking | Use |
 |---|---|---|---|---|

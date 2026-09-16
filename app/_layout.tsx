@@ -1,4 +1,16 @@
 import { useFonts } from 'expo-font';
+import {
+  PlusJakartaSans_400Regular,
+  PlusJakartaSans_500Medium,
+  PlusJakartaSans_600SemiBold,
+  PlusJakartaSans_700Bold,
+  PlusJakartaSans_800ExtraBold,
+} from '@expo-google-fonts/plus-jakarta-sans';
+import {
+  BricolageGrotesque_600SemiBold,
+  BricolageGrotesque_700Bold,
+  BricolageGrotesque_800ExtraBold,
+} from '@expo-google-fonts/bricolage-grotesque';
 import { DefaultTheme, Stack, ThemeProvider, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useMemo, ReactNode } from 'react';
@@ -9,7 +21,7 @@ import { StatusBar } from 'expo-status-bar';
 import { CandidateProfileProvider } from '@/lib/candidateProfile';
 import { VerificationProvider } from '@/lib/useVerification';
 import { SubscriptionProvider } from '@/lib/subscriptionStore';
-import { HiyameThemeProvider, useTheme, ThemePalette } from '@/lib/theme';
+import { HiyameThemeProvider, useTheme, ThemePalette, DISPLAY_FONT_FAMILY } from '@/lib/theme';
 import { AuthProvider, useAuth } from '@/lib/useAuth';
 import { useGlobalFocusRing } from '@/lib/focusRing';
 import { initSentry, Sentry } from '@/lib/sentry';
@@ -77,7 +89,7 @@ const makeErrorStyles = (T: ThemePalette) => StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
     marginBottom: 20,
   },
-  title: { fontSize: 22, fontWeight: '800', color: T.textPrimary, marginBottom: 8, textAlign: 'center' },
+  title: { fontSize: 22, fontWeight: '800', color: T.textPrimary, marginBottom: 8, textAlign: 'center', fontFamily: DISPLAY_FONT_FAMILY },
   subtitle: { fontSize: 14, color: T.textSecondary, textAlign: 'center', lineHeight: 20, marginBottom: 28 },
   retryButton: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
@@ -95,7 +107,19 @@ SplashScreen.preventAutoHideAsync();
 
 function RootLayout() {
   const [loaded, error] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
+    // Body face — matches every weight lib/theme.ts's fontFamilyForWeight()
+    // maps to, so every screen's existing `fontWeight` styling resolves to
+    // one of these instead of silently falling through to the system font.
+    PlusJakartaSans_400Regular,
+    PlusJakartaSans_500Medium,
+    PlusJakartaSans_600SemiBold,
+    PlusJakartaSans_700Bold,
+    PlusJakartaSans_800ExtraBold,
+    // Display face — only used explicitly (TYPE.display/title, and the
+    // public pages' big headlines), never picked automatically by weight.
+    BricolageGrotesque_600SemiBold,
+    BricolageGrotesque_700Bold,
+    BricolageGrotesque_800ExtraBold,
   });
 
   useGlobalFocusRing();

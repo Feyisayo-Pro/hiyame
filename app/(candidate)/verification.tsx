@@ -10,7 +10,7 @@ import { supabase } from '@/lib/supabase';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import ScreenFrame from '@/components/ScreenFrame';
 import SmileIdVerificationModal from '@/components/SmileIdVerificationModal';
-import { useTheme, ThemePalette } from '@/lib/theme';
+import { useTheme, ThemePalette, DISPLAY_FONT_FAMILY } from '@/lib/theme';
 import { FULL_VERIFICATION_THRESHOLD, TOTAL_VERIFICATION_COMPONENTS } from '@/lib/verification';
 
 // Real component keys in verification_records — the same table
@@ -320,7 +320,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   /* Header */
   header: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8 },
   headerGreeting: { fontSize: 14, fontWeight: '600', color: T.accent, marginBottom: 2 },
-  headerTitle: { fontSize: 24, fontWeight: '800', color: T.textPrimary, letterSpacing: -0.3 },
+  headerTitle: { fontSize: 24, fontWeight: '800', color: T.textPrimary, letterSpacing: -0.3, fontFamily: DISPLAY_FONT_FAMILY },
   headerRole: { fontSize: 13, fontWeight: '600', color: T.textSecondary, marginTop: 2 },
   headerSub: { fontSize: 13, color: T.textMuted, marginTop: 4 },
 

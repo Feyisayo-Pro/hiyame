@@ -4,7 +4,7 @@ import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AppIcon, { AppIconName } from '@/components/AppIcon';
 import { Text } from '@/components/Themed';
-import { useTheme, ThemePalette } from '@/lib/theme';
+import { useTheme, ThemePalette, DISPLAY_FONT_FAMILY } from '@/lib/theme';
 import { useAuth } from '@/lib/useAuth';
 import { supabase } from '@/lib/supabase';
 
@@ -129,7 +129,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   skip: { fontSize: 14, fontWeight: '600', color: T.textSecondary },
   body: { alignItems: 'center', gap: 14, paddingVertical: 18, minHeight: 220, justifyContent: 'center' },
   iconWrap: { width: 60, height: 60, borderRadius: 18, backgroundColor: T.accentBg, alignItems: 'center', justifyContent: 'center', marginBottom: 2 },
-  title: { fontSize: 22, fontWeight: '800', color: T.textPrimary, textAlign: 'center', letterSpacing: -0.3 },
+  title: { fontSize: 22, fontWeight: '800', color: T.textPrimary, textAlign: 'center', letterSpacing: -0.3, fontFamily: DISPLAY_FONT_FAMILY },
   text: { fontSize: 14.5, lineHeight: 22, color: T.textSecondary, textAlign: 'center' },
   nav: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 },
   backBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 10, paddingHorizontal: 6 },

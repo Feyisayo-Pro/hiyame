@@ -7,7 +7,7 @@ import { router } from 'expo-router';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import ScreenFrame from '@/components/ScreenFrame';
 import EditCompanyProfileModal, { CompanyEditable } from '@/components/EditCompanyProfileModal';
-import { useTheme, useThemeToggle, ThemePalette } from '@/lib/theme';
+import { useTheme, useThemeToggle, ThemePalette, DISPLAY_FONT_FAMILY } from '@/lib/theme';
 import { useAuth } from '@/lib/useAuth';
 import { useSubscription } from '@/lib/subscriptionStore';
 import { supabase } from '@/lib/supabase';
@@ -314,7 +314,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
 
   /* Header */
   header: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12 },
-  headerTitle: { fontSize: 24, fontWeight: '800', color: T.textPrimary },
+  headerTitle: { fontSize: 24, fontWeight: '800', color: T.textPrimary, fontFamily: DISPLAY_FONT_FAMILY },
 
   /* Workspace Card */
   workspaceCard: {

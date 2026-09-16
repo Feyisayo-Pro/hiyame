@@ -14,7 +14,7 @@ import { Text } from '@/components/Themed';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import AppIcon from '@/components/AppIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTheme, ThemePalette } from '@/lib/theme';
+import { useTheme, ThemePalette, DISPLAY_FONT_FAMILY } from '@/lib/theme';
 import ScreenFrame from '@/components/ScreenFrame';
 import { SubscriptionTier } from '@/lib/subscriptionStore';
 import { supabase } from '@/lib/supabase';
@@ -699,7 +699,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
     backgroundColor: T.card, borderWidth: 1, borderColor: T.border,
     alignItems: 'center', justifyContent: 'center',
   },
-  stepTitle: { fontSize: 24, fontWeight: '800', color: T.textPrimary, letterSpacing: -0.3, marginBottom: 6 },
+  stepTitle: { fontSize: 24, fontWeight: '800', color: T.textPrimary, letterSpacing: -0.3, marginBottom: 6, fontFamily: DISPLAY_FONT_FAMILY },
   stepSubtitle: { fontSize: 14, color: T.textSecondary, lineHeight: 20, marginBottom: 24 },
   fieldWrap: { marginBottom: 22 },
   label: { fontSize: 13, fontWeight: '700', color: T.textSecondary, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.3 },

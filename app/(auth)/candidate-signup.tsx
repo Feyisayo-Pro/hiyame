@@ -15,7 +15,7 @@ import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import AppIcon from '@/components/AppIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useCandidateProfile } from '@/lib/candidateProfile';
-import { useTheme, ThemePalette } from '@/lib/theme';
+import { useTheme, ThemePalette, DISPLAY_FONT_FAMILY } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
 import ScreenFrame from '@/components/ScreenFrame';
 import VerifyEmailModal from '@/components/VerifyEmailModal';
@@ -383,7 +383,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   stepDotActive: { width: 10, height: 10, borderRadius: 5, backgroundColor: T.accent },
   stepLine: { width: 40, height: 2, backgroundColor: T.border },
   stepDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: T.border },
-  title: { fontSize: 24, fontWeight: '800', color: T.textPrimary, letterSpacing: -0.3, marginBottom: 6 },
+  title: { fontSize: 24, fontWeight: '800', color: T.textPrimary, letterSpacing: -0.3, marginBottom: 6, fontFamily: DISPLAY_FONT_FAMILY },
   subtitle: { fontSize: 14, color: T.textSecondary, lineHeight: 20 },
   fieldWrap: { marginBottom: 22 },
   label: { fontSize: 13, fontWeight: '700', color: T.textSecondary, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.3 },

@@ -3,7 +3,7 @@ import { Pressable, RefreshControl, ScrollView, StyleSheet, View, ActivityIndica
 import { Text } from '@/components/Themed';
 import AppIcon from '@/components/AppIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTheme, ThemePalette, ELEVATION } from '@/lib/theme';
+import { useTheme, ThemePalette, ELEVATION, DISPLAY_FONT_FAMILY } from '@/lib/theme';
 import { useAuth } from '@/lib/useAuth';
 import { supabase } from '@/lib/supabase';
 import { TIER_CONFIG, Tier } from '@/lib/mock-data';
@@ -267,7 +267,7 @@ export default function OpportunitiesScreen() {
 const makeStyles = (T: ThemePalette) => StyleSheet.create({
   container: { flex: 1, backgroundColor: T.bg },
   header: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 16 },
-  headerTitle: { fontSize: 24, fontWeight: '800', color: T.textPrimary, letterSpacing: -0.3 },
+  headerTitle: { fontSize: 24, fontWeight: '800', color: T.textPrimary, letterSpacing: -0.3, fontFamily: DISPLAY_FONT_FAMILY },
   headerSub: { fontSize: 14, color: T.textSecondary, marginTop: 4 },
   centerFill: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   scroll: { paddingHorizontal: 20, paddingBottom: 32 },

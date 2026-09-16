@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/Themed';
 import AppIcon from '@/components/AppIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTheme, ThemePalette } from '@/lib/theme';
+import { useTheme, ThemePalette, DISPLAY_FONT_FAMILY } from '@/lib/theme';
 import { useMemo } from 'react';
 
 export default function NotFoundScreen() {
@@ -42,7 +42,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
     marginBottom: 20,
   },
-  title: { fontSize: 22, fontWeight: '800', color: T.textPrimary, marginBottom: 8, textAlign: 'center' },
+  title: { fontSize: 22, fontWeight: '800', color: T.textPrimary, marginBottom: 8, textAlign: 'center', fontFamily: DISPLAY_FONT_FAMILY },
   subtitle: { fontSize: 14, color: T.textSecondary, textAlign: 'center', lineHeight: 20, marginBottom: 28 },
   homeButton: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',

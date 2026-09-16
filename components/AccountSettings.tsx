@@ -8,7 +8,7 @@ import { Text } from '@/components/Themed';
 import AppIcon from '@/components/AppIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { useTheme, useThemeToggle, ThemePalette } from '@/lib/theme';
+import { useTheme, useThemeToggle, ThemePalette, DISPLAY_FONT_FAMILY } from '@/lib/theme';
 import { useSubscription } from '@/lib/subscriptionStore';
 import { useAuth } from '@/lib/useAuth';
 import { supabase } from '@/lib/supabase';
@@ -145,7 +145,7 @@ export default function AccountSettings({ persona = 'company' }: { persona?: Per
         <SwipeFadeContainer>
           {/* Header */}
           <View style={{ paddingHorizontal: 20, paddingVertical: 16 }}>
-            <Text style={{ fontSize: 22, fontWeight: '800', color: T.textPrimary }}>Settings</Text>
+            <Text style={{ fontSize: 22, fontWeight: '800', color: T.textPrimary, fontFamily: DISPLAY_FONT_FAMILY }}>Settings</Text>
             <Text style={{ fontSize: 13, color: T.textSecondary, marginTop: 2 }}>Manage your account and subscription</Text>
           </View>
 

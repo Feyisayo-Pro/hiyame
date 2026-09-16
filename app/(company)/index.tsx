@@ -13,7 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import AppIcon from '@/components/AppIcon';
 
-import { useTheme, useThemeToggle, ThemePalette, ELEVATION } from '@/lib/theme';
+import { useTheme, useThemeToggle, ThemePalette, ELEVATION, DISPLAY_FONT_FAMILY } from '@/lib/theme';
 import { useSubscription } from '@/lib/subscriptionStore';
 import { useAuth } from '@/lib/useAuth';
 import { supabase } from '@/lib/supabase';
@@ -408,7 +408,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 },
   headerTextBlock: { flex: 1 },
   greeting: { fontSize: 15, color: T.textPrimary, fontWeight: '600' },
-  companyName: { fontSize: 22, color: T.textPrimary, fontWeight: '800', marginTop: 2 },
+  companyName: { fontSize: 22, color: T.textPrimary, fontWeight: '800', marginTop: 2, fontFamily: DISPLAY_FONT_FAMILY },
   planBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: T.accentBg, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 7, borderWidth: 1, borderColor: T.accent + '30' },
   planBadgeText: { fontSize: 12, fontWeight: '700', color: T.accent },
   planBanner: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: T.accentBg, borderRadius: 16, borderWidth: 1, borderColor: T.accent + '30', padding: 14, marginBottom: 16 },

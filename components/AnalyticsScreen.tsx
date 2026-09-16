@@ -11,7 +11,7 @@ import { ActivityIndicator, ScrollView, View } from 'react-native';
 import { Text } from '@/components/Themed';
 import AppIcon, { AppIconName } from '@/components/AppIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTheme, ThemePalette } from '@/lib/theme';
+import { useTheme, ThemePalette, DISPLAY_FONT_FAMILY } from '@/lib/theme';
 import { useAuth } from '@/lib/useAuth';
 import { getCompanyStats, getCandidateStats, CompanyStats, CandidateStats } from '@/lib/dashboardStats';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
@@ -183,7 +183,7 @@ export default function AnalyticsScreen({ persona = 'company' }: { persona?: Per
     <SafeAreaView style={{ flex: 1, backgroundColor: T.bg }} edges={['top', 'left', 'right']}>
       <ScreenFrame>
       <View style={{ paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: T.border }}>
-        <Text style={{ fontSize: 22, fontWeight: '800', color: T.textPrimary }}>Insights</Text>
+        <Text style={{ fontSize: 22, fontWeight: '800', color: T.textPrimary, fontFamily: DISPLAY_FONT_FAMILY }}>Insights</Text>
         <Text style={{ fontSize: 12, color: T.textSecondary }}>
           {persona === 'company' ? 'Your hiring pipeline' : 'Your introductions & profile'}
         </Text>

@@ -11,7 +11,7 @@ import { TIER_CONFIG } from '@/lib/mock-data';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import ScreenFrame from '@/components/ScreenFrame';
 import { useIsDesktopWeb } from '@/components/TopNav';
-import { useTheme, useThemeToggle, ThemePalette, ELEVATION } from '@/lib/theme';
+import { useTheme, useThemeToggle, ThemePalette, ELEVATION, DISPLAY_FONT_FAMILY } from '@/lib/theme';
 import { FULL_VERIFICATION_THRESHOLD, TOTAL_VERIFICATION_COMPONENTS } from '@/lib/verification';
 import { SkeletonRow } from '@/components/Skeleton';
 
@@ -267,7 +267,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   profileRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: T.accentBg, alignItems: 'center', justifyContent: 'center' },
   greeting: { fontSize: 15, color: T.textPrimary, fontWeight: '600' },
-  userName: { fontSize: 22, fontWeight: '800', color: T.textPrimary },
+  userName: { fontSize: 22, fontWeight: '800', color: T.textPrimary, fontFamily: DISPLAY_FONT_FAMILY },
   headerActions: { flexDirection: 'row', gap: 8 },
   iconBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: T.surface, borderWidth: 1, borderColor: T.border, alignItems: 'center', justifyContent: 'center' },
 

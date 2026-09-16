@@ -2,9 +2,10 @@
  * Learn more about Light and Dark modes:
  * https://docs.expo.io/guides/color-schemes/
  */
-import { Text as DefaultText, View as DefaultView } from 'react-native';
+import { StyleSheet, Text as DefaultText, View as DefaultView } from 'react-native';
 
 import { useColorScheme } from './useColorScheme';
+import { fontFamilyForWeight } from '@/lib/theme';
 
 import Colors from '@/constants/Colors';
 
@@ -34,7 +35,16 @@ export function Text(props: TextProps) {
   const { style, lightColor, darkColor, ...otherProps } = props;
   const color = useThemeColor({ light: lightColor, dark: darkColor }, 'text');
 
-  return <DefaultText style={[{ color }, style]} {...otherProps} />;
+  // App-wide typeface switch lives here, not in each of the ~40 screens:
+  // every existing `fontWeight: '700'` (etc.) a component already sets
+  // gets mapped to the matching loaded Plus Jakarta Sans weight file
+  // automatically. `style`'s own explicit fontFamily (used for the
+  // Bricolage Grotesque display face) still wins — it's spread after this
+  // computed default in the array below.
+  const flat = StyleSheet.flatten(style) as { fontWeight?: string | number } | undefined;
+  const fontFamily = fontFamilyForWeight(flat?.fontWeight);
+
+  return <DefaultText style={[{ color, fontFamily }, style]} {...otherProps} />;
 }
 
 export function View(props: ViewProps) {

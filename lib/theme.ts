@@ -121,21 +121,60 @@ export const DARK: ThemePalette = {
 export const THEME = LIGHT;
 
 // ══════════════════════════════════════════════════════════════════════
-// TYPOGRAPHY — Instagram-style scale
+// TYPOGRAPHY — Plus Jakarta Sans (body) + Bricolage Grotesque (display)
 // ──────────────────────────────────────────────────────────────────────
-// Direction (see design-system/hiyame/MASTER.md): the platform system font
-// — which is exactly what instagram.com uses on web — with a tight, modern
-// hierarchy. No custom typeface is loaded; if a branded face is ever wanted,
-// register it in app/_layout.tsx's useFonts() and set FONT_FAMILY here.
+// Was the platform system font with nothing loaded — genuinely no custom
+// typeface anywhere in the app. That's a real, app-wide "generic/dated"
+// signal, not just a marketing-page problem, so the fix lives here at the
+// token level rather than as 40 individual file edits: components/
+// Themed.tsx's shared <Text> now maps whatever `fontWeight` a style already
+// carries to the matching loaded Plus Jakarta Sans weight automatically —
+// every existing screen picks this up with zero changes to that screen.
 //
+// Bricolage Grotesque is the second, more characterful face for genuine
+// hero/headline moments (TYPE.display / TYPE.title below, and the public
+// pages' big headlines) — deliberately NOT applied by weight alone (that
+// would put a display face on small bold badges/labels too), only where a
+// screen explicitly opts in via TYPE.display/title or a direct fontFamily.
+//
+// Both loaded in app/_layout.tsx's useFonts() from @expo-google-fonts/*.
+export const FONT_FAMILY = 'PlusJakartaSans_400Regular';
+export const DISPLAY_FONT_FAMILY = 'BricolageGrotesque_800ExtraBold';
+
+// Weight string (as RN wants it, e.g. '600') -> the matching loaded Plus
+// Jakarta Sans font file. A single loaded "regular" file can't be faked
+// bold reliably across platforms, so each weight actually used by TYPE
+// below is its own named font.
+export const BODY_FONT_BY_WEIGHT: Record<string, string> = {
+  '400': 'PlusJakartaSans_400Regular',
+  'normal': 'PlusJakartaSans_400Regular',
+  '500': 'PlusJakartaSans_500Medium',
+  '600': 'PlusJakartaSans_600SemiBold',
+  '700': 'PlusJakartaSans_700Bold',
+  'bold': 'PlusJakartaSans_700Bold',
+  '800': 'PlusJakartaSans_800ExtraBold',
+};
+
+// Nearest-neighbor fallback for any fontWeight not in the table above
+// (e.g. '300' from a component this pass didn't touch) — never leaves a
+// weight silently unmapped back to the system font.
+export function fontFamilyForWeight(weight: string | number | undefined): string {
+  const key = String(weight ?? '400');
+  if (BODY_FONT_BY_WEIGHT[key]) return BODY_FONT_BY_WEIGHT[key];
+  const n = parseInt(key, 10);
+  if (Number.isNaN(n)) return BODY_FONT_BY_WEIGHT['400'];
+  if (n <= 450) return BODY_FONT_BY_WEIGHT['400'];
+  if (n <= 550) return BODY_FONT_BY_WEIGHT['500'];
+  if (n <= 650) return BODY_FONT_BY_WEIGHT['600'];
+  return BODY_FONT_BY_WEIGHT['700'];
+}
+
 // Use these tokens instead of hardcoding fontSize / fontWeight in a
 // StyleSheet. Weights are strings because React Native wants '600', not 600.
-export const FONT_FAMILY: string | undefined = undefined; // system default
-
 export const TYPE = {
   // size + the line height that pairs with it
-  display: { fontSize: 28, lineHeight: 32, fontWeight: '800' as const, letterSpacing: -0.4 },
-  title:   { fontSize: 22, lineHeight: 27, fontWeight: '800' as const, letterSpacing: -0.3 },
+  display: { fontSize: 28, lineHeight: 32, fontWeight: '800' as const, letterSpacing: -0.4, fontFamily: DISPLAY_FONT_FAMILY },
+  title:   { fontSize: 22, lineHeight: 27, fontWeight: '800' as const, letterSpacing: -0.3, fontFamily: DISPLAY_FONT_FAMILY },
   heading: { fontSize: 17, lineHeight: 22, fontWeight: '700' as const, letterSpacing: -0.2 },
   body:    { fontSize: 15, lineHeight: 22, fontWeight: '400' as const, letterSpacing: 0 },
   bodyStrong: { fontSize: 15, lineHeight: 22, fontWeight: '600' as const, letterSpacing: 0 },

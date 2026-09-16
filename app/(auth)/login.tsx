@@ -4,7 +4,7 @@ import { router } from 'expo-router';
 import { Text } from '@/components/Themed';
 import AppIcon, { AppIconName } from '@/components/AppIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTheme, ThemePalette } from '@/lib/theme';
+import { useTheme, ThemePalette, DISPLAY_FONT_FAMILY } from '@/lib/theme';
 import ScreenFrame from '@/components/ScreenFrame';
 
 interface SignInOption {
@@ -149,7 +149,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
     marginBottom: 20,
   },
-  title: { fontSize: 28, fontWeight: '800', color: T.textPrimary, letterSpacing: -0.5, marginBottom: 6 },
+  title: { fontSize: 28, fontWeight: '800', color: T.textPrimary, letterSpacing: -0.5, marginBottom: 6, fontFamily: DISPLAY_FONT_FAMILY },
   subtitle: { fontSize: 15, color: T.textSecondary, fontWeight: '500' },
 
   /* Cards */

@@ -13,7 +13,7 @@ import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import ScreenFrame from '@/components/ScreenFrame';
 import EditCandidateProfileModal from '@/components/EditCandidateProfileModal';
 import PortfolioSection from '@/components/PortfolioSection';
-import { useTheme, useThemeToggle, ThemePalette } from '@/lib/theme';
+import { useTheme, useThemeToggle, ThemePalette, DISPLAY_FONT_FAMILY } from '@/lib/theme';
 import { notify } from '@/lib/notify';
 import { formatNaira } from '@/lib/currency';
 import { FULL_VERIFICATION_THRESHOLD } from '@/lib/verification';
@@ -359,7 +359,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
 
   /* Header */
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12 },
-  headerTitle: { fontSize: 24, fontWeight: '800', color: T.textPrimary },
+  headerTitle: { fontSize: 24, fontWeight: '800', color: T.textPrimary, fontFamily: DISPLAY_FONT_FAMILY },
   settingsBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: T.surface, borderWidth: 1, borderColor: T.border, alignItems: 'center', justifyContent: 'center' },
 
   /* Personal Card */

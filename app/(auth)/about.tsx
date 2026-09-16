@@ -6,7 +6,7 @@ import AnimatedPressable from '@/components/AnimatedPressable';
 import AnimatedCounter from '@/components/AnimatedCounter';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTheme, ThemePalette } from '@/lib/theme';
+import { useTheme, ThemePalette, DISPLAY_FONT_FAMILY } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
 import ScreenFrame from '@/components/ScreenFrame';
 import PublicNav from '@/components/PublicNav';
@@ -162,7 +162,7 @@ const tileStyles = StyleSheet.create({
     flex: 1, backgroundColor: '#FFFFFF', borderRadius: 20, padding: 20,
     alignItems: 'center', borderWidth: 1, borderColor: '#E1E8ED',
   },
-  value: { fontSize: 30, fontWeight: '800', color: COMPANY_COLOR, letterSpacing: -0.5 },
+  value: { fontSize: 30, fontWeight: '800', color: COMPANY_COLOR, letterSpacing: -0.5, fontFamily: DISPLAY_FONT_FAMILY },
   label: { fontSize: 12.5, color: '#536471', fontWeight: '600', marginTop: 6, textAlign: 'center' },
 });
 
@@ -188,14 +188,14 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
 
   headlineBlock: { alignItems: 'center', marginBottom: 32, paddingHorizontal: 12 },
   eyebrow: { fontSize: 12, fontWeight: '800', letterSpacing: 0.8, color: CANDIDATE_COLOR, marginBottom: 12 },
-  headline: { fontSize: 30, lineHeight: 37, fontWeight: '800', color: COMPANY_COLOR, letterSpacing: -0.5, textAlign: 'center', maxWidth: 640 },
+  headline: { fontSize: 30, lineHeight: 37, fontWeight: '800', color: COMPANY_COLOR, letterSpacing: -0.5, textAlign: 'center', maxWidth: 640, fontFamily: DISPLAY_FONT_FAMILY },
   subhead: { fontSize: 15.5, color: '#536471', marginTop: 14, fontWeight: '500', textAlign: 'center', maxWidth: 560, lineHeight: 23 },
 
   statsRow: { flexDirection: 'row', gap: 14, marginBottom: 40 },
   statsRowStacked: { flexDirection: 'column' },
 
   section: { marginBottom: 40 },
-  sectionTitle: { fontSize: 22, fontWeight: '800', color: COMPANY_COLOR, marginBottom: 18, letterSpacing: -0.3 },
+  sectionTitle: { fontSize: 22, fontWeight: '800', color: COMPANY_COLOR, marginBottom: 18, letterSpacing: -0.3, fontFamily: DISPLAY_FONT_FAMILY },
   bodyText: { fontSize: 15, color: '#3C4750', lineHeight: 24, fontWeight: '500', maxWidth: 720 },
 
   stepsRow: { flexDirection: 'row', gap: 14 },

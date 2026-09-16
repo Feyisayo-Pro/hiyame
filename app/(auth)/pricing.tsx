@@ -4,7 +4,7 @@ import { router } from 'expo-router';
 import { Text } from '@/components/Themed';
 import AppIcon from '@/components/AppIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTheme, ThemePalette } from '@/lib/theme';
+import { useTheme, ThemePalette, DISPLAY_FONT_FAMILY } from '@/lib/theme';
 import ScreenFrame from '@/components/ScreenFrame';
 import PublicNav from '@/components/PublicNav';
 import PublicFooter from '@/components/PublicFooter';
@@ -192,7 +192,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   scrollContent: { flexGrow: 1, paddingBottom: 40 },
 
   headlineBlock: { alignItems: 'center', marginBottom: 24, paddingHorizontal: 12 },
-  headline: { fontSize: 34, lineHeight: 40, fontWeight: '800', color: COMPANY_COLOR, letterSpacing: -0.6, textAlign: 'center', maxWidth: 620 },
+  headline: { fontSize: 34, lineHeight: 40, fontWeight: '800', color: COMPANY_COLOR, letterSpacing: -0.6, textAlign: 'center', maxWidth: 620, fontFamily: DISPLAY_FONT_FAMILY },
   subhead: { fontSize: 16, color: '#536471', marginTop: 10, fontWeight: '500', textAlign: 'center', maxWidth: 480 },
 
   freeBanner: {
@@ -254,7 +254,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   footNoteText: { flex: 1, fontSize: 12.5, color: '#8A97A4', lineHeight: 18, fontWeight: '500' },
 
   compSection: { marginTop: 56 },
-  compTitle: { fontSize: 22, fontWeight: '800', color: COMPANY_COLOR, marginBottom: 18, textAlign: 'center' },
+  compTitle: { fontSize: 22, fontWeight: '800', color: COMPANY_COLOR, marginBottom: 18, textAlign: 'center', fontFamily: DISPLAY_FONT_FAMILY },
   compTable: { backgroundColor: '#FFFFFF', borderRadius: 20, borderWidth: 1, borderColor: '#E1E8ED', overflow: 'hidden' },
   compRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 16 },
   compHeaderRow: { backgroundColor: '#F5F8FC', borderBottomWidth: 1, borderBottomColor: '#E1E8ED' },

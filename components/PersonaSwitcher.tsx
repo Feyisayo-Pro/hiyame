@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Animated, Platform, Pressable, StyleSheet, View } from 'react-native';
-import { Text } from '@/components/Themed';
+import AppIcon from '@/components/AppIcon';
+import { fontFamilyForWeight } from '@/lib/theme';
 
 // Floating bottom pill toggle — the "I'm hiring / Looking for a job" switcher
 // from viamatch.ai's /for-employers page (confirmed live: a real
@@ -37,7 +38,7 @@ export default function PersonaSwitcher({ mode, onChange }: Props) {
         </Pressable>
         <Pressable onPress={() => onChange('candidate')} hitSlop={4}>
           <Animated.View style={[st.segment, { backgroundColor: candidateBg }]}>
-            <Text style={st.segmentIcon}>👤</Text>
+            <AppIcon name="person-outline" size={12} color={mode === 'candidate' ? '#FFFFFF' : '#8A97A4'} />
             <Animated.Text style={[st.segmentText, { color: candidateText }]}>Looking for a job</Animated.Text>
           </Animated.View>
         </Pressable>
@@ -63,8 +64,7 @@ const st = StyleSheet.create({
     shadowColor: '#0B1220', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.16, shadowRadius: 24, elevation: 10,
   },
   segment: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 18, paddingVertical: 11, borderRadius: 999 },
-  segmentText: { fontSize: 13.5, fontWeight: '700' },
-  segmentIcon: { fontSize: 12 },
+  segmentText: { fontSize: 13.5, fontWeight: '700', fontFamily: fontFamilyForWeight('700') },
   dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#536471' },
   dotActive: { backgroundColor: '#17A75B' },
 });
