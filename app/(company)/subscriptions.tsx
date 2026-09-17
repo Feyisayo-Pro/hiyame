@@ -13,6 +13,17 @@ import { notify } from '@/lib/notify';
 
 // Plan copy (id/name/price/features) now lives in lib/subscriptionStore.ts,
 // shared with the logged-out marketing pricing page — see PLANS there.
+// PLANS merged the Pilot and Starter rows into one "Pilot / Starter" card
+// (id: 'pilot') — the underlying tiers are still distinct in the database
+// (companies.plan_tier really does store 'pilot' or 'starter' separately,
+// TIER_CONFIGS still has both with different real entitlements), only the
+// pricing display collapsed them. Without this, a company whose real tier
+// is 'starter' would match no card's id at all and every card would show
+// as selectable instead of one showing "Current Plan".
+function isCurrentPlan(planId: SubscriptionTier, realTier: SubscriptionTier): boolean {
+  if (planId === 'pilot') return realTier === 'pilot' || realTier === 'starter';
+  return realTier === planId;
+}
 
 // ── Paystack checkout placeholder ──
 // Logs the selected tier's payload and mocks the gateway round-trip. When the
@@ -138,7 +149,7 @@ export default function SubscriptionsScreen() {
             <PricingCard
               key={plan.id}
               plan={plan}
-              isCurrent={tier === plan.id}
+              isCurrent={isCurrentPlan(plan.id, tier)}
               onSelect={() => initiatePaystackCheckout(plan.id)}
               T={T}
             />

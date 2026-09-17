@@ -97,20 +97,7 @@ export interface PricingPlan {
 export const PLANS: PricingPlan[] = [
   {
     id: 'pilot',
-    name: 'Pilot',
-    subtitle: 'Try it out',
-    price: '₦0',
-    period: '/mo',
-    features: [
-      '1 candidate match / month',
-      'Basic search & filtering',
-      'Standard email support',
-      '1 team seat',
-    ],
-  },
-  {
-    id: 'starter',
-    name: 'Starter',
+    name: 'Pilot / Starter',
     subtitle: 'Free',
     price: '₦0',
     period: '/mo',

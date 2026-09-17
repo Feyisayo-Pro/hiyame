@@ -56,7 +56,7 @@ export default function PricingScreen() {
           <SwipeFadeContainer axis="y" offset={16} duration={420} delay={80}>
             <View style={[st.freeBanner, stacked && st.freeBannerStacked]}>
               <View style={st.freeBannerText}>
-                <Text style={st.freeBannerTitle}>Pilot and Starter cost ₦0/mo — for real</Text>
+                <Text style={st.freeBannerTitle}>Pilot & Starter combined — ₦0/mo</Text>
                 <Text style={st.freeBannerBody}>Try Hiyame before you spend anything. No card required, no trial countdown.</Text>
               </View>
               <AnimatedPressable

@@ -52,19 +52,15 @@ interface PlanCard {
 const PLANS: PlanCard[] = [
   {
     key: 'pilot',
-    name: 'Pilot',
+    name: 'Pilot / Starter',
     price: '₦0',
     period: '/month',
-    tagline: 'Try Hiyame with one active role',
+    // Matches TIER_CONFIGS.pilot's real numbers (lib/subscriptionStore.ts)
+    // — selecting this card sets selectedTier to 'pilot' below, so
+    // advertising starter's actual higher numbers here (10/day, 3 matches)
+    // would promise more than a new signup actually gets.
+    tagline: 'Free — get started with up to 3 candidate reviews/day',
     features: ['3 candidate reviews/day', 'Basic filters', '1 active match', 'Email support'],
-  },
-  {
-    key: 'starter',
-    name: 'Starter',
-    price: '₦0',
-    period: '/month',
-    tagline: 'Get started for free',
-    features: ['10 candidate reviews/day', 'Basic filters', '3 active matches', 'Email support'],
   },
   {
     key: 'growth',
@@ -165,7 +161,7 @@ export default function CompanySignupScreen() {
   const [logoUploaded, setLogoUploaded] = useState(false);
 
   // Step 4 — Tier Selection
-  const [selectedTier, setSelectedTier] = useState<SubscriptionTier>('starter');
+  const [selectedTier, setSelectedTier] = useState<SubscriptionTier>('pilot');
 
   const clearError = useCallback((key: string) => {
     setErrors((e) => {

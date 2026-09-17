@@ -26,11 +26,11 @@ import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 // already used before this pass (the old hero hardcoded '#1DA1F2' directly).
 // A marketing entry point keeping one deliberate look regardless of the
 // signed-in app's light/dark toggle is standard, not an oversight.
-const CANDIDATE_COLOR = '#1DA1F2'; // T.accent's light-mode value — Hiyame's one brand hue
-const CANDIDATE_COLOR_SOFT = '#DCEEFB'; // pastel tint of the same hue, for the recede state
-const COMPANY_COLOR = '#0F1419'; // T.textPrimary's light-mode value — near-black
-const COMPANY_COLOR_SOFT = '#E3E5E8'; // pastel tint of the same near-black
-const PAGE_BG = '#F5F8FC'; // pale, faintly blue-tinted near-white — not literal lavender
+const CANDIDATE_COLOR = 'rgba(29,161,242,0.98)'; // slightly transparent brand hue
+const CANDIDATE_COLOR_SOFT = 'rgba(29,161,242,0.12)'; // pastel tint of the same hue
+const COMPANY_COLOR = 'rgba(15,20,25,0.96)'; // near-black, slightly transparent
+const COMPANY_COLOR_SOFT = 'rgba(15,20,25,0.08)'; // soft tint of the near-black
+const PAGE_BG = '#F3F6FA'; // slightly richer near-white for contrast
 
 const STACK_BREAKPOINT = 760;
 
@@ -120,7 +120,7 @@ export default function WelcomeScreen() {
 
         {/* ── Headline ── */}
         <SwipeFadeContainer axis="y" offset={16} duration={420} delay={90}>
-          <View style={[st.headlineBlock, stacked && st.headlineBlockStacked]}>
+            <View style={[st.headlineBlock, stacked && st.headlineBlockStacked]}>
             <Text style={[st.headline, stacked && st.headlineStacked]}>Hiyame replaces job boards and agencies</Text>
             <Text style={st.subhead}>Two sides, one platform. Pick yours.</Text>
           </View>
@@ -229,6 +229,26 @@ export default function WelcomeScreen() {
             <AppIcon name="arrow-forward" size={14} color={CANDIDATE_COLOR} />
           </Pressable>
         </SwipeFadeContainer>
+        
+        <SwipeFadeContainer axis="y" offset={12} duration={420} delay={320}>
+          <View style={st.featuresSection}>
+            <Text style={st.featuresTitle}>What you'll get</Text>
+            <View style={st.featuresGrid}>
+              <View style={st.featureCard}>
+                <AppIcon name="sparkles" size={18} color={CANDIDATE_COLOR} />
+                <Text style={st.featureText}>Ranked, verified shortlists</Text>
+              </View>
+              <View style={st.featureCard}>
+                <AppIcon name="checkmark-circle" size={18} color={COMPANY_COLOR} />
+                <Text style={st.featureText}>Focus on interviews, not screening</Text>
+              </View>
+              <View style={st.featureCard}>
+                <AppIcon name="time" size={18} color={CANDIDATE_COLOR} />
+                <Text style={st.featureText}>Timed introductions and reminders</Text>
+              </View>
+            </View>
+          </View>
+        </SwipeFadeContainer>
         </View>
       </ScrollView>
       </ScreenFrame>
@@ -247,35 +267,39 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
 
   headlineBlock: { alignItems: 'center', marginBottom: 28, paddingHorizontal: 12 },
   headlineBlockStacked: { marginBottom: 16 },
-  headline: { fontSize: 34, lineHeight: 40, fontWeight: '800', color: COMPANY_COLOR, letterSpacing: -0.6, textAlign: 'center', maxWidth: 620, fontFamily: DISPLAY_FONT_FAMILY },
-  headlineStacked: { fontSize: 24, lineHeight: 29 },
-  subhead: { fontSize: 16, color: '#536471', marginTop: 10, fontWeight: '500' },
+  headline: { fontSize: 40, lineHeight: 46, fontWeight: '800', color: COMPANY_COLOR, letterSpacing: -0.6, textAlign: 'center', maxWidth: 720, fontFamily: DISPLAY_FONT_FAMILY },
+  headlineStacked: { fontSize: 28, lineHeight: 34 },
+  subhead: { fontSize: 17, color: '#475A6B', marginTop: 12, fontWeight: '600', maxWidth: 640, textAlign: 'center' },
 
   // SwipeFadeContainer's own Animated.View needs flex:1 too, or the panels'
   // own flex:1 (which makes them fill the remaining single-viewport height)
   // has nothing to expand into and silently collapses to content size.
   panelsFadeWrap: { flex: 1 },
-  panelsRow: { flexDirection: 'row', gap: 16, flex: 1, minHeight: 380 },
+  panelsRow: { flexDirection: 'row', gap: 16, flex: 1, minHeight: 420 },
   panelsColumn: { flexDirection: 'column', minHeight: 0 },
-  panel: { borderRadius: 28, overflow: 'hidden', minHeight: 340 },
+  panel: { borderRadius: 28, overflow: 'hidden', minHeight: 340, backgroundColor: 'transparent' },
   // No mock card competing for room when stacked, so this only needs to fit
   // eyebrow + headline + body + CTA — verified against real phone heights
-  // (390×844 and smaller) with Playwright before shipping.
-  panelStacked: { minHeight: 190 },
+  // (390×844 and smaller) with Playwright before shipping. Bumped from 190
+  // to 300 after the panel text sizes grew (headline 26->28, body 14->15/
+  // lineHeight 22) without this being raised to match — the CTA button
+  // ("Post a role" / "Get verified") was getting clipped off entirely on
+  // mobile since `panel` has overflow:'hidden'.
+  panelStacked: { minHeight: 300 },
   panelInner: { flex: 1, padding: 28, justifyContent: 'space-between' },
   panelInnerStacked: { padding: 20 },
 
   panelEyebrowLight: { fontSize: 11, fontWeight: '700', letterSpacing: 0.6, color: 'rgba(255,255,255,0.7)', marginBottom: 10 },
-  panelHeadlineLight: { fontSize: 26, fontWeight: '800', color: '#FFFFFF', letterSpacing: -0.4, marginBottom: 10, fontFamily: DISPLAY_FONT_FAMILY },
-  panelBodyLight: { fontSize: 14, lineHeight: 21, color: 'rgba(255,255,255,0.85)', maxWidth: 320, marginBottom: 20 },
+  panelHeadlineLight: { fontSize: 28, fontWeight: '800', color: '#FFFFFF', letterSpacing: -0.4, marginBottom: 10, fontFamily: DISPLAY_FONT_FAMILY },
+  panelBodyLight: { fontSize: 15, lineHeight: 22, color: 'rgba(255,255,255,0.9)', maxWidth: 360, marginBottom: 20 },
   panelCta: { flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-start', backgroundColor: 'rgba(255,255,255,0.14)', paddingHorizontal: 18, paddingVertical: 12, borderRadius: 999 },
   panelCtaOnBlue: { backgroundColor: '#FFFFFF' },
   panelCtaTextLight: { fontSize: 14, fontWeight: '700', color: '#FFFFFF' },
   panelCtaTextDark: { fontSize: 14, fontWeight: '700', color: COMPANY_COLOR },
 
   mockCard: {
-    position: 'absolute', right: 8, bottom: 8, width: 200,
-    backgroundColor: '#FFFFFF', borderRadius: 18, padding: 14,
+    position: 'absolute', right: 8, bottom: 8, width: 220,
+    backgroundColor: '#FFFFFF', borderRadius: 18, padding: 16,
     shadowColor: '#0B1220', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.18, shadowRadius: 22, elevation: 8,
   },
   mockCardCompany: {},
@@ -298,4 +322,14 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
 
   howLink: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 20, paddingVertical: 4 },
   howLinkText: { fontSize: 13.5, fontWeight: '700', color: CANDIDATE_COLOR },
+
+  // Features section added to provide more landing-page content
+  featuresSection: { marginTop: 22, paddingHorizontal: 12, alignItems: 'center' },
+  featuresTitle: { fontSize: 20, fontWeight: '800', color: COMPANY_COLOR, marginBottom: 12, fontFamily: DISPLAY_FONT_FAMILY },
+  // flexWrap added — 3 fixed-content cards in one unwrapped row overflowed
+  // the viewport horizontally on mobile (the 3rd card was cut off at the
+  // edge), which is also a banned anti-pattern (no horizontal page scroll).
+  featuresGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'center' },
+  featureCard: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(255,255,255,0.9)', paddingHorizontal: 12, paddingVertical: 10, borderRadius: 12, marginHorizontal: 6 },
+  featureText: { fontSize: 14, color: '#2E3B44', fontWeight: '600' },
 });
