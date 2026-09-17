@@ -1,0 +1,73 @@
+name: EAS Build & Submit
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-submit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install EAS CLI
+        run: npm install -g eas-cli@>=3.0.0
+
+      - name: Verify EAS token
+        env:
+          EAS_TOKEN: ${{ secrets.EAS_TOKEN }}
+        run: |
+          if [ -z "$EAS_TOKEN" ]; then
+            echo "EAS_TOKEN is not set — set the secret before running builds.";
+            exit 1;
+          fi
+          eas whoami || true
+
+      - name: Build Android (production)
+        env:
+          EAS_TOKEN: ${{ secrets.EAS_TOKEN }}
+        run: eas build --platform android --profile production --non-interactive
+
+      - name: Build iOS (production)
+        env:
+          EAS_TOKEN: ${{ secrets.EAS_TOKEN }}
+        run: eas build --platform ios --profile production --non-interactive
+
+      - name: Optional: Submit Android to Play Store
+        if: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+        env:
+          EAS_TOKEN: ${{ secrets.EAS_TOKEN }}
+          GOOGLE_PLAY_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+        run: |
+          echo "$GOOGLE_PLAY_JSON" | base64 --decode > /tmp/google-play.json
+          eas submit --platform android --latest --non-interactive --service-account /tmp/google-play.json
+
+      - name: Optional: Submit iOS to App Store Connect
+        if: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        env:
+          EAS_TOKEN: ${{ secrets.EAS_TOKEN }}
+          APP_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+        run: |
+          echo "$APP_PRIVATE_KEY" | base64 --decode > /tmp/appkey.p8
+          eas submit --platform ios --latest --non-interactive --apple-id ${{ secrets.APPLE_APP_ID }} --asc-provider "${{ secrets.APP_STORE_CONNECT_TEAM_ID }}"
+
+      - name: Done
+        run: echo "EAS build (and optional submit) finished. Check EAS build logs for artifact URLs."
+
+# Secrets required (set in repository Settings > Secrets):
+# - EAS_TOKEN: account-level EAS token (required)
+# Optional (for automatic submits):
+# - GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: base64-encoded Google Play service account JSON
+# - APP_STORE_CONNECT_ISSUER_ID, APP_STORE_CONNECT_KEY_ID, APP_STORE_CONNECT_PRIVATE_KEY (base64), APPLE_APP_ID, APP_STORE_CONNECT_TEAM_ID
