@@ -21,7 +21,7 @@ jobs:
         run: npm ci
 
       - name: Install EAS CLI
-        run: npm install -g eas-cli@>=3.0.0
+        run: npm install -g "eas-cli@>=3.0.0"
 
       - name: Verify EAS token
         env:
@@ -43,7 +43,7 @@ jobs:
           EAS_TOKEN: ${{ secrets.EAS_TOKEN }}
         run: eas build --platform ios --profile production --non-interactive
 
-      - name: Optional: Submit Android to Play Store
+      - name: "Optional: Submit Android to Play Store"
         if: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
         env:
           EAS_TOKEN: ${{ secrets.EAS_TOKEN }}
@@ -52,7 +52,7 @@ jobs:
           echo "$GOOGLE_PLAY_JSON" | base64 --decode > /tmp/google-play.json
           eas submit --platform android --latest --non-interactive --service-account /tmp/google-play.json
 
-      - name: Optional: Submit iOS to App Store Connect
+      - name: "Optional: Submit iOS to App Store Connect"
         if: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
         env:
           EAS_TOKEN: ${{ secrets.EAS_TOKEN }}
