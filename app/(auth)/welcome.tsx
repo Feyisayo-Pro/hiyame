@@ -3,8 +3,10 @@ import { Animated, Easing, Pressable, ScrollView, StyleSheet, View, useWindowDim
 import { router } from 'expo-router';
 import { Text } from '@/components/Themed';
 import AppIcon from '@/components/AppIcon';
+import AnimatedCounter from '@/components/AnimatedCounter';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, ThemePalette, DISPLAY_FONT_FAMILY } from '@/lib/theme';
+import { supabase } from '@/lib/supabase';
 import ScreenFrame from '@/components/ScreenFrame';
 import PublicNav from '@/components/PublicNav';
 import GradientBlobBackground from '@/components/GradientBlobBackground';
@@ -26,15 +28,29 @@ import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 // already used before this pass (the old hero hardcoded '#1DA1F2' directly).
 // A marketing entry point keeping one deliberate look regardless of the
 // signed-in app's light/dark toggle is standard, not an oversight.
-const CANDIDATE_COLOR = 'rgba(29,161,242,0.98)'; // slightly transparent brand hue
-const CANDIDATE_COLOR_SOFT = 'rgba(29,161,242,0.12)'; // pastel tint of the same hue
-const COMPANY_COLOR = 'rgba(15,20,25,0.96)'; // near-black, slightly transparent
-const COMPANY_COLOR_SOFT = 'rgba(15,20,25,0.08)'; // soft tint of the near-black
-const PAGE_BG = '#F3F6FA'; // slightly richer near-white for contrast
+//
+// Dark hero (deliberate, this page only — Pricing/About/How-it-works stay on
+// their existing light background). '#0B1220' rather than a fresh color:
+// it's already this app's real shadowColor everywhere else, so this is a
+// dark *ground* built from a value the palette already commits to, not a
+// bespoke new hue introduced just for this screen.
+const CANDIDATE_COLOR = '#1DA1F2'; // brand accent, solid — reads brighter against the dark ground than the old near-opaque version
+const CANDIDATE_COLOR_SOFT = 'rgba(29,161,242,0.16)'; // receded-state tint
+const COMPANY_COLOR = 'rgba(30,41,59,0.94)'; // slate-800 glass card — distinct from the page ground, unlike solid near-black which merged into it
+const COMPANY_COLOR_SOFT = 'rgba(30,41,59,0.4)'; // receded-state tint
+const COMPANY_BORDER = 'rgba(59,130,246,0.28)'; // faint blue glow ring, the one thing that keeps the company panel reading as its own object on a dark ground
+const PAGE_BG = '#0B1220'; // near-black slate
+const TEXT_MUTED = '#94A3B8'; // slate-400 — secondary text on the dark ground, ~7:1 against PAGE_BG
 
 const STACK_BREAKPOINT = 760;
 
 type PanelKey = 'company' | 'candidate';
+
+interface Stats {
+  candidates: number;
+  companies: number;
+  roles: number;
+}
 
 export default function WelcomeScreen() {
   const T = useTheme();
@@ -48,6 +64,25 @@ export default function WelcomeScreen() {
   // recede, never independent.
   const focus = useRef(new Animated.Value(0)).current;
   const [pressed, setPressed] = useState<PanelKey | null>(null);
+  const [stats, setStats] = useState<Stats | null>(null);
+
+  // Same RPC About already uses — live counts, not hardcoded numbers that
+  // go stale the day the network grows. RLS hides real rows from anon
+  // visitors, so this is a SECURITY DEFINER function returning only the 3
+  // aggregates, never actual candidate/company/role data.
+  useEffect(() => {
+    let alive = true;
+    supabase.rpc('get_public_landing_stats').then(({ data, error }) => {
+      if (!alive || error || !data?.[0]) return;
+      const row = data[0];
+      setStats({
+        candidates: Number(row.candidates_count),
+        companies: Number(row.companies_count),
+        roles: Number(row.roles_count),
+      });
+    });
+    return () => { alive = false; };
+  }, []);
 
   // Separate from `focus` (which drives the hover-expand) — a small press-down
   // scale so tapping a panel gives the same instant, physical feedback every
@@ -116,7 +151,7 @@ export default function WelcomeScreen() {
         </SwipeFadeContainer>
 
         <View style={st.blobZone}>
-        <GradientBlobBackground />
+        <GradientBlobBackground dark />
 
         {/* ── Headline ── */}
         <SwipeFadeContainer axis="y" offset={16} duration={420} delay={90}>
@@ -126,10 +161,31 @@ export default function WelcomeScreen() {
           </View>
         </SwipeFadeContainer>
 
+        {/* ── Live stats — same get_public_landing_stats RPC About already
+            uses, not hardcoded numbers that'd go stale. */}
+        <SwipeFadeContainer axis="y" offset={14} duration={420} delay={140}>
+          <View style={st.statsRow}>
+            <View style={st.statItem}>
+              <AnimatedCounter value={stats ? Math.floor(stats.candidates / 100) * 100 : 0} suffix="+" style={st.statValue} />
+              <Text style={st.statLabel}>Professionals</Text>
+            </View>
+            {!stacked && <View style={st.statDivider} />}
+            <View style={st.statItem}>
+              <AnimatedCounter value={stats?.companies ?? 0} suffix="+" style={st.statValue} />
+              <Text style={st.statLabel}>Companies hiring</Text>
+            </View>
+            {!stacked && <View style={st.statDivider} />}
+            <View style={st.statItem}>
+              <AnimatedCounter value={stats?.roles ?? 0} style={st.statValue} />
+              <Text style={st.statLabel}>Roles posted</Text>
+            </View>
+          </View>
+        </SwipeFadeContainer>
+
         {/* ── Two panels ── */}
         <SwipeFadeContainer axis="y" offset={20} duration={480} delay={180} style={st.panelsFadeWrap}>
         <View style={[st.panelsRow, stacked && st.panelsColumn]}>
-          <Animated.View style={[st.panel, stacked && st.panelStacked, { flex: companyFlex, backgroundColor: companyBg, transform: [{ scale: companyPress }] }]}>
+          <Animated.View style={[st.panel, st.panelCompany, stacked && st.panelStacked, { flex: companyFlex, backgroundColor: companyBg, transform: [{ scale: companyPress }] }]}>
             <Pressable
               style={StyleSheet.absoluteFill}
               onHoverIn={() => focusPanel('company')}
@@ -239,7 +295,7 @@ export default function WelcomeScreen() {
                 <Text style={st.featureText}>Ranked, verified shortlists</Text>
               </View>
               <View style={st.featureCard}>
-                <AppIcon name="checkmark-circle" size={18} color={COMPANY_COLOR} />
+                <AppIcon name="checkmark-circle" size={18} color="#17A75B" />
                 <Text style={st.featureText}>Focus on interviews, not screening</Text>
               </View>
               <View style={st.featureCard}>
@@ -265,11 +321,17 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   // absoluteFill covers exactly that region (not the nav).
   blobZone: { position: 'relative' },
 
-  headlineBlock: { alignItems: 'center', marginBottom: 28, paddingHorizontal: 12 },
-  headlineBlockStacked: { marginBottom: 16 },
-  headline: { fontSize: 40, lineHeight: 46, fontWeight: '800', color: COMPANY_COLOR, letterSpacing: -0.6, textAlign: 'center', maxWidth: 720, fontFamily: DISPLAY_FONT_FAMILY },
+  headlineBlock: { alignItems: 'center', marginBottom: 20, paddingHorizontal: 12 },
+  headlineBlockStacked: { marginBottom: 14 },
+  headline: { fontSize: 40, lineHeight: 46, fontWeight: '800', color: '#F8FAFC', letterSpacing: -0.6, textAlign: 'center', maxWidth: 720, fontFamily: DISPLAY_FONT_FAMILY },
   headlineStacked: { fontSize: 28, lineHeight: 34 },
-  subhead: { fontSize: 17, color: '#475A6B', marginTop: 12, fontWeight: '600', maxWidth: 640, textAlign: 'center' },
+  subhead: { fontSize: 17, color: TEXT_MUTED, marginTop: 12, fontWeight: '600', maxWidth: 640, textAlign: 'center' },
+
+  statsRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: 20, marginBottom: 24 },
+  statItem: { alignItems: 'center', minWidth: 96 },
+  statValue: { fontSize: 22, fontWeight: '800', color: '#F8FAFC', fontFamily: DISPLAY_FONT_FAMILY },
+  statLabel: { fontSize: 12, color: TEXT_MUTED, fontWeight: '600', marginTop: 2 },
+  statDivider: { width: 1, height: 28, backgroundColor: 'rgba(148,163,184,0.25)' },
 
   // SwipeFadeContainer's own Animated.View needs flex:1 too, or the panels'
   // own flex:1 (which makes them fill the remaining single-viewport height)
@@ -278,6 +340,10 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   panelsRow: { flexDirection: 'row', gap: 16, flex: 1, minHeight: 420 },
   panelsColumn: { flexDirection: 'column', minHeight: 0 },
   panel: { borderRadius: 28, overflow: 'hidden', minHeight: 340, backgroundColor: 'transparent' },
+  // Static border, not animated with the rest of the panel — a constant
+  // blue-glow ring is what keeps this panel reading as its own object
+  // against the dark page ground at every focus state, not just at rest.
+  panelCompany: { borderWidth: 1, borderColor: COMPANY_BORDER },
   // No mock card competing for room when stacked, so this only needs to fit
   // eyebrow + headline + body + CTA — verified against real phone heights
   // (390×844 and smaller) with Playwright before shipping. Bumped from 190
@@ -325,11 +391,14 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
 
   // Features section added to provide more landing-page content
   featuresSection: { marginTop: 22, paddingHorizontal: 12, alignItems: 'center' },
-  featuresTitle: { fontSize: 20, fontWeight: '800', color: COMPANY_COLOR, marginBottom: 12, fontFamily: DISPLAY_FONT_FAMILY },
+  featuresTitle: { fontSize: 20, fontWeight: '800', color: '#F8FAFC', marginBottom: 12, fontFamily: DISPLAY_FONT_FAMILY },
   // flexWrap added — 3 fixed-content cards in one unwrapped row overflowed
   // the viewport horizontally on mobile (the 3rd card was cut off at the
   // edge), which is also a banned anti-pattern (no horizontal page scroll).
+  // Glass-card treatment (translucent white fill + hairline border) instead
+  // of the old opaque white card, which read as its own light patch on the
+  // new dark ground rather than part of the same hero.
   featuresGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'center' },
-  featureCard: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(255,255,255,0.9)', paddingHorizontal: 12, paddingVertical: 10, borderRadius: 12, marginHorizontal: 6 },
-  featureText: { fontSize: 14, color: '#2E3B44', fontWeight: '600' },
+  featureCard: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)', paddingHorizontal: 12, paddingVertical: 10, borderRadius: 12, marginHorizontal: 6 },
+  featureText: { fontSize: 14, color: '#E2E8F0', fontWeight: '600' },
 });

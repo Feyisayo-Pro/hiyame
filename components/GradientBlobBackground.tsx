@@ -29,10 +29,20 @@ interface Blob {
   driftY: number;
 }
 
-const BLOBS: Blob[] = [
+const BLOBS_LIGHT: Blob[] = [
   { size: 480, color: 'rgba(29,161,242,0.22)', top: -120, left: -100, duration: 11000, delay: 0, driftX: 40, driftY: 30 },
   { size: 380, color: 'rgba(15,20,25,0.10)', top: 60, right: -120, duration: 13000, delay: 800, driftX: -35, driftY: 45 },
   { size: 340, color: 'rgba(29,161,242,0.16)', bottom: -140, left: '30%', duration: 15000, delay: 1600, driftX: 30, driftY: -35 },
+];
+
+// On a dark ground the light set's near-black blob would be almost
+// invisible (it's meant to read as a faint shadow tint against a pale
+// background) — swapped for a cyan tint so all 3 blobs actually read as an
+// ambient glow instead of one of them doing nothing.
+const BLOBS_DARK: Blob[] = [
+  { size: 480, color: 'rgba(29,161,242,0.30)', top: -120, left: -100, duration: 11000, delay: 0, driftX: 40, driftY: 30 },
+  { size: 380, color: 'rgba(6,182,212,0.20)', top: 60, right: -120, duration: 13000, delay: 800, driftX: -35, driftY: 45 },
+  { size: 340, color: 'rgba(29,161,242,0.22)', bottom: -140, left: '30%', duration: 15000, delay: 1600, driftX: 30, driftY: -35 },
 ];
 
 function BlobShape({ blob }: { blob: Blob }) {
@@ -68,10 +78,11 @@ function BlobShape({ blob }: { blob: Blob }) {
   );
 }
 
-export default function GradientBlobBackground() {
+export default function GradientBlobBackground({ dark = false }: { dark?: boolean }) {
+  const blobs = dark ? BLOBS_DARK : BLOBS_LIGHT;
   return (
     <View style={st.wrap} pointerEvents="none">
-      {BLOBS.map((b, i) => <BlobShape key={i} blob={b} />)}
+      {blobs.map((b, i) => <BlobShape key={i} blob={b} />)}
     </View>
   );
 }
