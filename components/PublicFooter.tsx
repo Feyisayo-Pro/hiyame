@@ -15,8 +15,16 @@ import AnimatedPressable from '@/components/AnimatedPressable';
 // backend exist, so an icon linking nowhere or a "Subscribe" button that
 // silently does nothing would be worse than not having them — this file's
 // standing "no fabricated content" rule, unchanged.
-const COMPANY_COLOR = '#0F1419';
+//
+// Dark palette (matches welcome.tsx's hero, now that Pricing/About/How-it-
+// works all commit to the same dark ground instead of one dark page and
+// three light ones — the light/dark split that used to exist between them
+// was never a deliberate choice, just an artifact of the hero redesign
+// landing on this one page first).
 const CANDIDATE_COLOR = '#1DA1F2';
+const TEXT_PRIMARY = '#F8FAFC';
+const TEXT_MUTED = '#94A3B8';
+const BORDER = 'rgba(148,163,184,0.16)';
 
 interface LinkItem { label: string; onPress: () => void }
 
@@ -77,7 +85,7 @@ export default function PublicFooter({ stacked }: { stacked: boolean }) {
 const st = StyleSheet.create({
   wrap: {
     marginTop: 56, paddingTop: 40, paddingBottom: 8,
-    borderTopWidth: 1, borderTopColor: '#E1E8ED',
+    borderTopWidth: 1, borderTopColor: BORDER,
   },
   wrapStacked: { marginTop: 40, paddingTop: 32 },
 
@@ -90,17 +98,17 @@ const st = StyleSheet.create({
     width: 32, height: 32, borderRadius: 10, backgroundColor: CANDIDATE_COLOR,
     alignItems: 'center', justifyContent: 'center',
   },
-  brandText: { fontSize: 17, fontWeight: '800', color: COMPANY_COLOR, letterSpacing: -0.3 },
-  tagline: { fontSize: 13.5, color: '#8A97A4', fontWeight: '500', lineHeight: 20, maxWidth: 280 },
+  brandText: { fontSize: 17, fontWeight: '800', color: TEXT_PRIMARY, letterSpacing: -0.3 },
+  tagline: { fontSize: 13.5, color: TEXT_MUTED, fontWeight: '500', lineHeight: 20, maxWidth: 280 },
 
   linkCols: { flexDirection: 'row', flex: 2, gap: 32, flexWrap: 'wrap' },
   linkColsStacked: { flexDirection: 'row', gap: 28 },
   col: { minWidth: 120, gap: 4 },
-  colTitle: { fontSize: 12, fontWeight: '800', letterSpacing: 0.5, color: '#8A97A4', marginBottom: 10, textTransform: 'uppercase' },
+  colTitle: { fontSize: 12, fontWeight: '800', letterSpacing: 0.5, color: TEXT_MUTED, marginBottom: 10, textTransform: 'uppercase' },
   linkRow: { paddingVertical: 6 },
-  linkText: { fontSize: 14, fontWeight: '600', color: '#536471' },
+  linkText: { fontSize: 14, fontWeight: '600', color: '#CBD5E1' },
   linkTextHover: { color: CANDIDATE_COLOR },
 
-  bottomBar: { borderTopWidth: 1, borderTopColor: '#EDF1F4', paddingTop: 20, alignItems: 'center' },
-  copyright: { fontSize: 13, color: '#8A97A4', fontWeight: '500', marginBottom: 8 },
+  bottomBar: { borderTopWidth: 1, borderTopColor: BORDER, paddingTop: 20, alignItems: 'center' },
+  copyright: { fontSize: 13, color: TEXT_MUTED, fontWeight: '500', marginBottom: 8 },
 });

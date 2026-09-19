@@ -9,6 +9,7 @@ import ScreenFrame from '@/components/ScreenFrame';
 import PublicNav from '@/components/PublicNav';
 import PublicFooter from '@/components/PublicFooter';
 import PersonaTabs from '@/components/PersonaTabs';
+import GradientBlobBackground from '@/components/GradientBlobBackground';
 import AnimatedPressable from '@/components/AnimatedPressable';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import { PLANS, PricingPlan } from '@/lib/subscriptionStore';
@@ -28,9 +29,16 @@ import { PLANS, PricingPlan } from '@/lib/subscriptionStore';
 // comparison is a feature comparison, not invented cost figures — viamatch's
 // version cites specific £ agency/LinkedIn costs that aren't something we
 // have real verified numbers for.
-const PAGE_BG = '#F5F8FC';
-const COMPANY_COLOR = '#0F1419';
+// Dark ground, matching welcome.tsx/how-it-works.tsx/about.tsx now — was
+// the odd light page out while the other three went dark, an artifact of
+// the redesign landing on welcome first rather than a deliberate choice.
+const PAGE_BG = '#0B1220';
+const COMPANY_COLOR = '#0F1419'; // dark text on the still-white/still-solid-blue button surfaces below
 const CANDIDATE_COLOR = '#1DA1F2';
+const TEXT_PRIMARY = '#F8FAFC';
+const TEXT_MUTED = '#94A3B8';
+const GLASS_BG = 'rgba(255,255,255,0.04)';
+const GLASS_BORDER = 'rgba(148,163,184,0.14)';
 const STACK_BREAKPOINT = 760;
 
 export default function PricingScreen() {
@@ -46,43 +54,47 @@ export default function PricingScreen() {
           <PublicNav stacked={stacked} active="pricing" />
           <PersonaTabs />
 
-          <SwipeFadeContainer axis="y" offset={16} duration={420} delay={0}>
-            <View style={st.headlineBlock}>
-              <Text style={st.headline}>Simple, transparent pricing</Text>
-              <Text style={st.subhead}>Naira pricing, no hidden fees. Start free, upgrade when you're ready to scale.</Text>
-            </View>
-          </SwipeFadeContainer>
+          <View style={st.blobZone}>
+            <GradientBlobBackground dark />
 
-          <SwipeFadeContainer axis="y" offset={16} duration={420} delay={80}>
-            <View style={[st.freeBanner, stacked && st.freeBannerStacked]}>
-              <View style={st.freeBannerText}>
-                <Text style={st.freeBannerTitle}>Pilot & Starter combined: ₦0/mo</Text>
-                <Text style={st.freeBannerBody}>Try Hiyame before you spend anything. No card required, no trial countdown.</Text>
+            <SwipeFadeContainer axis="y" offset={16} duration={420} delay={0}>
+              <View style={st.headlineBlock}>
+                <Text style={st.headline}>Simple, transparent pricing</Text>
+                <Text style={st.subhead}>Naira pricing, no hidden fees. Start free, upgrade when you're ready to scale.</Text>
               </View>
-              <AnimatedPressable
-                style={(state) => [st.freeBannerCta, state.hovered && st.freeBannerCtaHover]}
-                onPress={() => router.push('/(auth)/company-signup')}
-                scaleTo={0.96}
-              >
-                <Text style={st.freeBannerCtaText}>Start free</Text>
-                <AppIcon name="arrow-forward" size={14} color={COMPANY_COLOR} />
-              </AnimatedPressable>
+            </SwipeFadeContainer>
+
+            <SwipeFadeContainer axis="y" offset={16} duration={420} delay={80}>
+              <View style={[st.freeBanner, stacked && st.freeBannerStacked]}>
+                <View style={st.freeBannerText}>
+                  <Text style={st.freeBannerTitle}>Pilot & Starter combined: ₦0/mo</Text>
+                  <Text style={st.freeBannerBody}>Try Hiyame before you spend anything. No card required, no trial countdown.</Text>
+                </View>
+                <AnimatedPressable
+                  style={(state) => [st.freeBannerCta, state.hovered && st.freeBannerCtaHover]}
+                  onPress={() => router.push('/(auth)/company-signup')}
+                  scaleTo={0.96}
+                >
+                  <Text style={st.freeBannerCtaText}>Start free</Text>
+                  <AppIcon name="arrow-forward" size={14} color={COMPANY_COLOR} />
+                </AnimatedPressable>
+              </View>
+            </SwipeFadeContainer>
+
+            <View style={[st.grid, stacked && st.gridStacked]}>
+              {PLANS.map((plan, i) => (
+                <SwipeFadeContainer key={plan.id} axis="y" offset={20} duration={420} delay={150 + i * 70} style={stacked ? undefined : st.gridItem}>
+                  <PlanCard plan={plan} st={st} stacked={stacked} />
+                </SwipeFadeContainer>
+              ))}
             </View>
-          </SwipeFadeContainer>
 
-          <View style={[st.grid, stacked && st.gridStacked]}>
-            {PLANS.map((plan, i) => (
-              <SwipeFadeContainer key={plan.id} axis="y" offset={20} duration={420} delay={150 + i * 70} style={stacked ? undefined : st.gridItem}>
-                <PlanCard plan={plan} st={st} stacked={stacked} />
-              </SwipeFadeContainer>
-            ))}
-          </View>
-
-          <View style={st.footNote}>
-            <AppIcon name="information-circle-outline" size={16} color="#8A97A4" />
-            <Text style={st.footNoteText}>
-              All plans start on Pilot. Pick or change your plan from inside your company workspace once you're signed up.
-            </Text>
+            <View style={st.footNote}>
+              <AppIcon name="information-circle-outline" size={16} color={TEXT_MUTED} />
+              <Text style={st.footNoteText}>
+                All plans start on Pilot. Pick or change your plan from inside your company workspace once you're signed up.
+              </Text>
+            </View>
           </View>
 
           <ComparisonSection st={st} stacked={stacked} />
@@ -224,7 +236,7 @@ function CompCell({ value, st, highlight }: { value: boolean | string; st: Retur
       <AppIcon
         name={value ? 'checkmark-circle' : 'close-circle-outline'}
         size={18}
-        color={value ? (highlight ? CANDIDATE_COLOR : '#17A75B') : '#C7CDD3'}
+        color={value ? (highlight ? CANDIDATE_COLOR : '#17A75B') : 'rgba(148,163,184,0.4)'}
       />
     </View>
   );
@@ -235,18 +247,23 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   frame: { paddingHorizontal: 20, paddingTop: 16 },
   scrollContent: { flexGrow: 1, paddingBottom: 40 },
 
-  headlineBlock: { alignItems: 'center', marginBottom: 24, paddingHorizontal: 12 },
-  headline: { fontSize: 34, lineHeight: 40, fontWeight: '800', color: COMPANY_COLOR, letterSpacing: -0.6, textAlign: 'center', maxWidth: 620, fontFamily: DISPLAY_FONT_FAMILY },
-  subhead: { fontSize: 16, color: '#536471', marginTop: 10, fontWeight: '500', textAlign: 'center', maxWidth: 480 },
+  blobZone: { position: 'relative' },
 
+  headlineBlock: { alignItems: 'center', marginBottom: 24, paddingHorizontal: 12 },
+  headline: { fontSize: 34, lineHeight: 40, fontWeight: '800', color: TEXT_PRIMARY, letterSpacing: -0.6, textAlign: 'center', maxWidth: 620, fontFamily: DISPLAY_FONT_FAMILY },
+  subhead: { fontSize: 16, color: TEXT_MUTED, marginTop: 10, fontWeight: '500', textAlign: 'center', maxWidth: 480 },
+
+  // Blue, not near-black — a dark banner would nearly disappear against
+  // this page's own dark ground (the panel-merging bug already fixed once
+  // on welcome.tsx), and blue is this page's one real "pop" color anyway.
   freeBanner: {
     flexDirection: 'row', alignItems: 'center', gap: 16, justifyContent: 'space-between',
-    backgroundColor: COMPANY_COLOR, borderRadius: 20, padding: 20, marginBottom: 28,
+    backgroundColor: CANDIDATE_COLOR, borderRadius: 20, padding: 20, marginBottom: 28,
   },
   freeBannerStacked: { flexDirection: 'column', alignItems: 'flex-start' },
   freeBannerText: { flex: 1 },
   freeBannerTitle: { fontSize: 15.5, fontWeight: '800', color: '#FFFFFF', marginBottom: 4 },
-  freeBannerBody: { fontSize: 13, color: 'rgba(255,255,255,0.72)', fontWeight: '500', lineHeight: 18 },
+  freeBannerBody: { fontSize: 13, color: 'rgba(255,255,255,0.78)', fontWeight: '500', lineHeight: 18 },
   freeBannerCta: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     backgroundColor: '#FFFFFF', paddingHorizontal: 18, paddingVertical: 12, borderRadius: 999,
@@ -259,57 +276,57 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   gridItem: { width: 250 },
 
   card: {
-    width: 250, backgroundColor: '#FFFFFF', borderRadius: 24, padding: 24,
-    borderWidth: 1.5, borderColor: '#E1E8ED',
-    shadowColor: '#0B1220', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0, shadowRadius: 20,
+    width: 250, backgroundColor: GLASS_BG, borderRadius: 24, padding: 24,
+    borderWidth: 1.5, borderColor: GLASS_BORDER,
+    shadowColor: '#000000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0, shadowRadius: 20,
   },
   cardStacked: { width: '100%' },
   cardHighlight: { borderColor: CANDIDATE_COLOR, borderWidth: 2 },
-  cardHover: { shadowOpacity: 0.12, transform: [{ translateY: -6 }] },
+  cardHover: { shadowOpacity: 0.3, transform: [{ translateY: -6 }] },
   popularBadge: {
     position: 'absolute', top: -12, alignSelf: 'center',
     backgroundColor: CANDIDATE_COLOR, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 5,
   },
   popularBadgeText: { fontSize: 10, fontWeight: '800', color: '#FFFFFF', letterSpacing: 0.4 },
 
-  planName: { fontSize: 18, fontWeight: '800', color: COMPANY_COLOR, marginTop: 6 },
-  planSubtitle: { fontSize: 13, color: '#8A97A4', fontWeight: '600', marginTop: 2 },
+  planName: { fontSize: 18, fontWeight: '800', color: TEXT_PRIMARY, marginTop: 6 },
+  planSubtitle: { fontSize: 13, color: TEXT_MUTED, fontWeight: '600', marginTop: 2 },
 
   priceRow: { flexDirection: 'row', alignItems: 'baseline', gap: 4, marginTop: 18, marginBottom: 20 },
-  price: { fontSize: 28, fontWeight: '800', color: COMPANY_COLOR },
-  period: { fontSize: 14, color: '#8A97A4', fontWeight: '600' },
+  price: { fontSize: 28, fontWeight: '800', color: TEXT_PRIMARY },
+  period: { fontSize: 14, color: TEXT_MUTED, fontWeight: '600' },
 
   featuresList: { gap: 12, marginBottom: 24, minHeight: 128 },
   featureRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
-  featureText: { flex: 1, fontSize: 13, color: '#3C4750', lineHeight: 19, fontWeight: '500' },
+  featureText: { flex: 1, fontSize: 13, color: TEXT_MUTED, lineHeight: 19, fontWeight: '500' },
 
   ctaBtn: {
     borderRadius: 999, paddingVertical: 13, alignItems: 'center',
-    backgroundColor: '#F1F5F9', borderWidth: 1, borderColor: '#E1E8ED',
+    backgroundColor: GLASS_BG, borderWidth: 1, borderColor: GLASS_BORDER,
   },
-  ctaBtnHover: { backgroundColor: '#E7ECF0' },
+  ctaBtnHover: { backgroundColor: 'rgba(255,255,255,0.08)' },
   ctaBtnHighlight: { backgroundColor: CANDIDATE_COLOR, borderColor: CANDIDATE_COLOR },
   ctaBtnHighlightHover: { backgroundColor: '#0F8FDE' },
-  ctaBtnText: { fontSize: 14, fontWeight: '700', color: COMPANY_COLOR },
+  ctaBtnText: { fontSize: 14, fontWeight: '700', color: TEXT_PRIMARY },
   ctaBtnTextHighlight: { color: '#FFFFFF' },
 
   footNote: {
     flexDirection: 'row', alignItems: 'flex-start', gap: 8, alignSelf: 'center',
     maxWidth: 480, marginTop: 32, paddingHorizontal: 20,
   },
-  footNoteText: { flex: 1, fontSize: 12.5, color: '#8A97A4', lineHeight: 18, fontWeight: '500' },
+  footNoteText: { flex: 1, fontSize: 12.5, color: TEXT_MUTED, lineHeight: 18, fontWeight: '500' },
 
   compSection: { marginTop: 56 },
-  compTitle: { fontSize: 22, fontWeight: '800', color: COMPANY_COLOR, marginBottom: 18, textAlign: 'center', fontFamily: DISPLAY_FONT_FAMILY },
-  compTable: { backgroundColor: '#FFFFFF', borderRadius: 20, borderWidth: 1, borderColor: '#E1E8ED', overflow: 'hidden' },
+  compTitle: { fontSize: 22, fontWeight: '800', color: TEXT_PRIMARY, marginBottom: 18, textAlign: 'center', fontFamily: DISPLAY_FONT_FAMILY },
+  compTable: { backgroundColor: GLASS_BG, borderRadius: 20, borderWidth: 1, borderColor: GLASS_BORDER, overflow: 'hidden' },
   compRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 16 },
-  compHeaderRow: { backgroundColor: '#F5F8FC', borderBottomWidth: 1, borderBottomColor: '#E1E8ED' },
-  compRowAlt: { backgroundColor: '#FBFCFD' },
+  compHeaderRow: { backgroundColor: 'rgba(255,255,255,0.03)', borderBottomWidth: 1, borderBottomColor: GLASS_BORDER },
+  compRowAlt: { backgroundColor: 'rgba(255,255,255,0.02)' },
   compLabelColSpacer: { flex: 2, paddingRight: 8 },
-  compLabelText: { flex: 2, fontSize: 13, fontWeight: '600', color: COMPANY_COLOR, paddingRight: 8 },
-  compHeaderCell: { flex: 1, textAlign: 'center', fontSize: 11.5, fontWeight: '800', color: '#8A97A4', letterSpacing: 0.3 },
+  compLabelText: { flex: 2, fontSize: 13, fontWeight: '600', color: TEXT_PRIMARY, paddingRight: 8 },
+  compHeaderCell: { flex: 1, textAlign: 'center', fontSize: 11.5, fontWeight: '800', color: TEXT_MUTED, letterSpacing: 0.3 },
   compHeaderCellHiyame: { color: CANDIDATE_COLOR },
-  compCellText: { flex: 1, textAlign: 'center', fontSize: 12, fontWeight: '600', color: '#8A97A4' },
+  compCellText: { flex: 1, textAlign: 'center', fontSize: 12, fontWeight: '600', color: TEXT_MUTED },
   compCellTextHiyame: { color: CANDIDATE_COLOR },
   compCellIcon: { flex: 1, alignItems: 'center' },
 });

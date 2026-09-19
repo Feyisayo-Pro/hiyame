@@ -12,6 +12,7 @@ import ScreenFrame from '@/components/ScreenFrame';
 import PublicNav from '@/components/PublicNav';
 import PublicFooter from '@/components/PublicFooter';
 import PersonaTabs from '@/components/PersonaTabs';
+import GradientBlobBackground from '@/components/GradientBlobBackground';
 
 // Public "About" page. Deliberately does NOT include named team bios or
 // photos — there's no real founder/team content anywhere in this codebase
@@ -20,9 +21,16 @@ import PersonaTabs from '@/components/PersonaTabs';
 // all). The stats below are the one part of "bios and stats" that's fully
 // real: pulled live from the database, not hardcoded, so they stay honest
 // as the network grows instead of going stale the day after launch.
-const PAGE_BG = '#F5F8FC';
-const COMPANY_COLOR = '#0F1419';
+//
+// Dark ground, matching welcome.tsx/how-it-works.tsx now — this page used
+// to be the odd one out (light while the hero was dark), not a deliberate
+// choice, just an artifact of the redesign landing on welcome first.
+const PAGE_BG = '#0B1220';
 const CANDIDATE_COLOR = '#1DA1F2';
+const TEXT_PRIMARY = '#F8FAFC';
+const TEXT_MUTED = '#94A3B8';
+const GLASS_BG = 'rgba(255,255,255,0.04)';
+const GLASS_BORDER = 'rgba(148,163,184,0.14)';
 const STACK_BREAKPOINT = 760;
 
 interface Stats {
@@ -63,29 +71,33 @@ export default function AboutScreen() {
           <PublicNav stacked={stacked} active="about" />
           <PersonaTabs />
 
-          <SwipeFadeContainer axis="y" offset={16} duration={420} delay={0}>
-            <View style={st.headlineBlock}>
-              <Text style={st.eyebrow}>ABOUT HIYAME</Text>
-              <Text style={st.headline}>Job boards make you apply and hope.{'\n'}We make you verified and found.</Text>
-              <Text style={st.subhead}>
-                Hiyame replaces job boards and recruitment agencies with a verified match between African
-                professionals and the companies hiring them, no résumé pile, no cold applications.
-              </Text>
-            </View>
-          </SwipeFadeContainer>
+          <View style={st.blobZone}>
+            <GradientBlobBackground dark />
 
-          {/* Real, live counts — not hardcoded copy. Renders nothing until
-              the numbers load rather than flashing a wrong placeholder,
-              then counts up once they arrive (AnimatedCounter). */}
-          {stats && (
-            <SwipeFadeContainer axis="y" offset={18} duration={420} delay={100}>
-              <View style={[st.statsRow, stacked && st.statsRowStacked]}>
-                <StatTile value={Math.floor(stats.candidates / 100) * 100} suffix="+" label="Professionals in the network" />
-                <StatTile value={stats.companies} label="Companies hiring on Hiyame" />
-                <StatTile value={stats.roles} label="Roles posted to date" />
+            <SwipeFadeContainer axis="y" offset={16} duration={420} delay={0}>
+              <View style={st.headlineBlock}>
+                <Text style={st.eyebrow}>ABOUT HIYAME</Text>
+                <Text style={st.headline}>Job boards make you apply and hope.{'\n'}We make you verified and found.</Text>
+                <Text style={st.subhead}>
+                  Hiyame replaces job boards and recruitment agencies with a verified match between African
+                  professionals and the companies hiring them, no résumé pile, no cold applications.
+                </Text>
               </View>
             </SwipeFadeContainer>
-          )}
+
+            {/* Real, live counts — not hardcoded copy. Renders nothing until
+                the numbers load rather than flashing a wrong placeholder,
+                then counts up once they arrive (AnimatedCounter). */}
+            {stats && (
+              <SwipeFadeContainer axis="y" offset={18} duration={420} delay={100}>
+                <View style={[st.statsRow, stacked && st.statsRowStacked]}>
+                  <StatTile value={Math.floor(stats.candidates / 100) * 100} suffix="+" label="Professionals in the network" />
+                  <StatTile value={stats.companies} label="Companies hiring on Hiyame" />
+                  <StatTile value={stats.roles} label="Roles posted to date" />
+                </View>
+              </SwipeFadeContainer>
+            )}
+          </View>
 
           <View style={st.section}>
             <Text style={st.sectionTitle}>How it works</Text>
@@ -161,26 +173,26 @@ function StepCard({ icon, title, body }: { icon: string; title: string; body: st
 
 const tileStyles = StyleSheet.create({
   tile: {
-    flex: 1, backgroundColor: '#FFFFFF', borderRadius: 20, padding: 20,
-    alignItems: 'center', borderWidth: 1, borderColor: '#E1E8ED',
+    flex: 1, backgroundColor: GLASS_BG, borderRadius: 20, padding: 20,
+    alignItems: 'center', borderWidth: 1, borderColor: GLASS_BORDER,
   },
-  value: { fontSize: 30, fontWeight: '800', color: COMPANY_COLOR, letterSpacing: -0.5, fontFamily: DISPLAY_FONT_FAMILY },
-  label: { fontSize: 12.5, color: '#536471', fontWeight: '600', marginTop: 6, textAlign: 'center' },
+  value: { fontSize: 30, fontWeight: '800', color: TEXT_PRIMARY, letterSpacing: -0.5, fontFamily: DISPLAY_FONT_FAMILY },
+  label: { fontSize: 12.5, color: TEXT_MUTED, fontWeight: '600', marginTop: 6, textAlign: 'center' },
 });
 
 const stepStyles = StyleSheet.create({
   card: {
-    flex: 1, backgroundColor: '#FFFFFF', borderRadius: 20, padding: 22,
-    borderWidth: 1, borderColor: '#E1E8ED',
-    shadowColor: '#0B1220', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0, shadowRadius: 18,
+    flex: 1, backgroundColor: GLASS_BG, borderRadius: 20, padding: 22,
+    borderWidth: 1, borderColor: GLASS_BORDER,
+    shadowColor: '#000000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0, shadowRadius: 18,
   },
-  cardHover: { borderColor: '#C9D6DE', shadowOpacity: 0.08 },
+  cardHover: { borderColor: 'rgba(148,163,184,0.28)', shadowOpacity: 0.24 },
   iconWrap: {
-    width: 40, height: 40, borderRadius: 12, backgroundColor: '#DCEEFB',
+    width: 40, height: 40, borderRadius: 12, backgroundColor: 'rgba(29,161,242,0.14)',
     alignItems: 'center', justifyContent: 'center', marginBottom: 14,
   },
-  title: { fontSize: 16, fontWeight: '800', color: COMPANY_COLOR, marginBottom: 8 },
-  body: { fontSize: 13.5, color: '#536471', lineHeight: 20, fontWeight: '500' },
+  title: { fontSize: 16, fontWeight: '800', color: TEXT_PRIMARY, marginBottom: 8 },
+  body: { fontSize: 13.5, color: TEXT_MUTED, lineHeight: 20, fontWeight: '500' },
 });
 
 const makeStyles = (T: ThemePalette) => StyleSheet.create({
@@ -188,17 +200,19 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   frame: { paddingHorizontal: 20, paddingTop: 16 },
   scrollContent: { flexGrow: 1, paddingBottom: 40 },
 
+  blobZone: { position: 'relative' },
+
   headlineBlock: { alignItems: 'center', marginBottom: 32, paddingHorizontal: 12 },
   eyebrow: { fontSize: 12, fontWeight: '800', letterSpacing: 0.8, color: CANDIDATE_COLOR, marginBottom: 12 },
-  headline: { fontSize: 30, lineHeight: 37, fontWeight: '800', color: COMPANY_COLOR, letterSpacing: -0.5, textAlign: 'center', maxWidth: 640, fontFamily: DISPLAY_FONT_FAMILY },
-  subhead: { fontSize: 15.5, color: '#536471', marginTop: 14, fontWeight: '500', textAlign: 'center', maxWidth: 560, lineHeight: 23 },
+  headline: { fontSize: 30, lineHeight: 37, fontWeight: '800', color: TEXT_PRIMARY, letterSpacing: -0.5, textAlign: 'center', maxWidth: 640, fontFamily: DISPLAY_FONT_FAMILY },
+  subhead: { fontSize: 15.5, color: TEXT_MUTED, marginTop: 14, fontWeight: '500', textAlign: 'center', maxWidth: 560, lineHeight: 23 },
 
   statsRow: { flexDirection: 'row', gap: 14, marginBottom: 40 },
   statsRowStacked: { flexDirection: 'column' },
 
   section: { marginBottom: 40 },
-  sectionTitle: { fontSize: 22, fontWeight: '800', color: COMPANY_COLOR, marginBottom: 18, letterSpacing: -0.3, fontFamily: DISPLAY_FONT_FAMILY },
-  bodyText: { fontSize: 15, color: '#3C4750', lineHeight: 24, fontWeight: '500', maxWidth: 720 },
+  sectionTitle: { fontSize: 22, fontWeight: '800', color: TEXT_PRIMARY, marginBottom: 18, letterSpacing: -0.3, fontFamily: DISPLAY_FONT_FAMILY },
+  bodyText: { fontSize: 15, color: TEXT_MUTED, lineHeight: 24, fontWeight: '500', maxWidth: 720 },
 
   stepsRow: { flexDirection: 'row', gap: 14 },
   stepsColumn: { flexDirection: 'column' },

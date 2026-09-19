@@ -28,8 +28,19 @@ import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 // pointing at what's next) so you can just watch it — clicking a step still
 // jumps straight to it and restarts the timer, but nothing requires a click.
 const CANDIDATE_COLOR = '#1DA1F2';
+// Still used for text/icons inside the white mock cards further down (they
+// deliberately stay light — they're previews of the real, light-themed
+// in-app screens, same as welcome.tsx's own mock cards) — not for the page
+// chrome around them, which is now dark to match welcome.tsx's hero
+// (previously this page was light while welcome was dark, a split that was
+// never a deliberate choice, just an artifact of the hero redesign landing
+// on welcome first).
 const COMPANY_COLOR = '#0F1419';
-const PAGE_BG = '#F5F8FC';
+const PAGE_BG = '#0B1220';
+const TEXT_PRIMARY = '#F8FAFC';
+const TEXT_MUTED = '#94A3B8';
+const GLASS_BG = 'rgba(255,255,255,0.04)';
+const GLASS_BORDER = 'rgba(148,163,184,0.14)';
 const STACK_BREAKPOINT = 900;
 const STEP_DURATION = 3400; // ms each step stays active before auto-advancing
 
@@ -86,7 +97,7 @@ export default function HowItWorksScreen() {
           </SwipeFadeContainer>
 
           <View style={st.blobZone}>
-            <GradientBlobBackground />
+            <GradientBlobBackground dark />
 
             <SwipeFadeContainer axis="y" offset={14} duration={420} delay={80}>
               <View style={st.howIntro}>
@@ -154,7 +165,7 @@ function AutoStepFlow({ mode, eyebrow, title, subhead, steps, st }: {
                 {i === activeStep && <Animated.View style={[st.timerFill, { width: progressWidth }]} />}
               </View>
             </Pressable>
-            {i < steps.length - 1 && <AppIcon name="arrow-forward" size={14} color="#8A97A4" />}
+            {i < steps.length - 1 && <AppIcon name="arrow-forward" size={14} color={TEXT_MUTED} />}
           </Fragment>
         ))}
       </View>
@@ -286,8 +297,8 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
 
   howIntro: { alignItems: 'center', marginTop: 16, marginBottom: 32, paddingHorizontal: 12 },
   howMainEyebrow: { fontSize: 12, fontWeight: '800', letterSpacing: 0.8, color: CANDIDATE_COLOR, marginBottom: 10 },
-  howMainTitle: { fontSize: 32, fontWeight: '800', color: COMPANY_COLOR, letterSpacing: -0.6, marginBottom: 8, fontFamily: DISPLAY_FONT_FAMILY, textAlign: 'center' },
-  howMainSubhead: { fontSize: 15.5, color: '#536471', fontWeight: '500', maxWidth: 480, textAlign: 'center' },
+  howMainTitle: { fontSize: 32, fontWeight: '800', color: TEXT_PRIMARY, letterSpacing: -0.6, marginBottom: 8, fontFamily: DISPLAY_FONT_FAMILY, textAlign: 'center' },
+  howMainSubhead: { fontSize: 15.5, color: TEXT_MUTED, fontWeight: '500', maxWidth: 480, textAlign: 'center' },
 
   // Two persona flows side by side on desktop/tablet, stacked on phone —
   // both always visible, no toggle to click through first.
@@ -295,31 +306,34 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   flowsColumn: { flexDirection: 'column', gap: 40 },
   flowFadeWrap: { flex: 1, minWidth: 0 },
   flowCol: {
-    backgroundColor: '#FFFFFF', borderRadius: 24, padding: 24, borderWidth: 1, borderColor: '#E1E8ED',
-    shadowColor: '#0B1220', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.06, shadowRadius: 24, elevation: 3,
+    backgroundColor: GLASS_BG, borderRadius: 24, padding: 24, borderWidth: 1, borderColor: GLASS_BORDER,
+    shadowColor: '#000000', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.3, shadowRadius: 28, elevation: 3,
   },
 
   howEyebrow: { fontSize: 11.5, fontWeight: '800', letterSpacing: 0.7, color: CANDIDATE_COLOR, marginBottom: 8 },
-  howTitle: { fontSize: 22, fontWeight: '800', color: COMPANY_COLOR, letterSpacing: -0.4, marginBottom: 6, fontFamily: DISPLAY_FONT_FAMILY },
-  howSubhead: { fontSize: 14, color: '#536471', fontWeight: '500', marginBottom: 22 },
+  howTitle: { fontSize: 22, fontWeight: '800', color: TEXT_PRIMARY, letterSpacing: -0.4, marginBottom: 6, fontFamily: DISPLAY_FONT_FAMILY },
+  howSubhead: { fontSize: 14, color: TEXT_MUTED, fontWeight: '500', marginBottom: 22 },
 
   // Step tabs + the timer bar living under each one — the concrete "arrow
   // and a timer, I don't have to keep clicking" ask. The arrow between tabs
   // points at what's coming next; the fill bar under the active tab is the
   // timer itself, restarting from empty every time the step changes.
   stepTabsAuto: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 24, flexWrap: 'wrap' },
-  stepTabAuto: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999, backgroundColor: '#F5F8FC', borderWidth: 1, borderColor: '#E1E8ED', gap: 6, minWidth: 96 },
-  stepTabAutoActive: { backgroundColor: COMPANY_COLOR, borderColor: COMPANY_COLOR },
-  stepTabText: { fontSize: 12.5, fontWeight: '700', color: '#536471', textAlign: 'center' },
+  stepTabAuto: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999, backgroundColor: GLASS_BG, borderWidth: 1, borderColor: GLASS_BORDER, gap: 6, minWidth: 96 },
+  // Active pill uses the accent blue, not near-black — a dark pill would
+  // nearly vanish against the page's own dark ground (the exact bug already
+  // fixed once on welcome.tsx's company panel).
+  stepTabAutoActive: { backgroundColor: CANDIDATE_COLOR, borderColor: CANDIDATE_COLOR },
+  stepTabText: { fontSize: 12.5, fontWeight: '700', color: TEXT_MUTED, textAlign: 'center' },
   stepTabTextActive: { color: '#FFFFFF' },
-  timerTrack: { height: 3, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.22)', marginTop: 6, overflow: 'hidden' },
-  timerFill: { height: '100%', borderRadius: 2, backgroundColor: CANDIDATE_COLOR },
+  timerTrack: { height: 3, borderRadius: 2, backgroundColor: 'rgba(0,0,0,0.2)', marginTop: 6, overflow: 'hidden' },
+  timerFill: { height: '100%', borderRadius: 2, backgroundColor: '#FFFFFF' },
 
   stepContentAuto: { alignItems: 'flex-start' },
-  stepIconWrap: { width: 40, height: 40, borderRadius: 13, backgroundColor: '#DCEEFB', alignItems: 'center', justifyContent: 'center', marginBottom: 14 },
+  stepIconWrap: { width: 40, height: 40, borderRadius: 13, backgroundColor: 'rgba(29,161,242,0.14)', alignItems: 'center', justifyContent: 'center', marginBottom: 14 },
   stepNumber: { fontSize: 11, fontWeight: '800', color: CANDIDATE_COLOR, letterSpacing: 0.4, marginBottom: 6 },
-  stepTitle: { fontSize: 19, fontWeight: '800', color: COMPANY_COLOR, marginBottom: 8, letterSpacing: -0.2, fontFamily: DISPLAY_FONT_FAMILY },
-  stepBody: { fontSize: 14, color: '#536471', lineHeight: 21, fontWeight: '500' },
+  stepTitle: { fontSize: 19, fontWeight: '800', color: TEXT_PRIMARY, marginBottom: 8, letterSpacing: -0.2, fontFamily: DISPLAY_FONT_FAMILY },
+  stepBody: { fontSize: 14, color: TEXT_MUTED, lineHeight: 21, fontWeight: '500' },
   stepMockColAuto: { width: '100%', alignItems: 'center', justifyContent: 'center', marginTop: 20 },
 });
 
@@ -327,7 +341,7 @@ const mockStyles = StyleSheet.create({
   frame: {
     width: '100%', maxWidth: 320, minHeight: 180, borderRadius: 24, padding: 20,
     alignItems: 'center', justifyContent: 'center',
-    backgroundColor: '#F5F8FC', borderWidth: 1, borderColor: '#E1E8ED',
+    backgroundColor: GLASS_BG, borderWidth: 1, borderColor: GLASS_BORDER,
   },
   card: {
     width: '100%', maxWidth: 260, backgroundColor: '#FFFFFF', borderRadius: 18, padding: 16,
