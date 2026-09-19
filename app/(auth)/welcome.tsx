@@ -147,7 +147,7 @@ export default function WelcomeScreen() {
       <ScrollView contentContainerStyle={st.scrollContent} showsVerticalScrollIndicator={false}>
         {/* ── Nav ── */}
         <SwipeFadeContainer axis="y" offset={16} duration={420} delay={0}>
-          <PublicNav stacked={stacked} />
+          <PublicNav stacked={stacked} active="home" />
         </SwipeFadeContainer>
 
         <View style={st.blobZone}>
@@ -291,15 +291,21 @@ export default function WelcomeScreen() {
             <Text style={st.featuresTitle}>What you'll get</Text>
             <View style={st.featuresGrid}>
               <View style={st.featureCard}>
-                <AppIcon name="sparkles" size={18} color={CANDIDATE_COLOR} />
+                <View style={st.featureIconBadge}>
+                  <AppIcon name="sparkles" size={18} color={CANDIDATE_COLOR} />
+                </View>
                 <Text style={st.featureText}>Ranked, verified shortlists</Text>
               </View>
               <View style={st.featureCard}>
-                <AppIcon name="checkmark-circle" size={18} color="#17A75B" />
+                <View style={st.featureIconBadge}>
+                  <AppIcon name="checkmark-circle" size={18} color={CANDIDATE_COLOR} />
+                </View>
                 <Text style={st.featureText}>Focus on interviews, not screening</Text>
               </View>
               <View style={st.featureCard}>
-                <AppIcon name="time" size={18} color={CANDIDATE_COLOR} />
+                <View style={st.featureIconBadge}>
+                  <AppIcon name="time" size={18} color={CANDIDATE_COLOR} />
+                </View>
                 <Text style={st.featureText}>Timed introductions and reminders</Text>
               </View>
             </View>
@@ -339,7 +345,12 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   panelsFadeWrap: { flex: 1 },
   panelsRow: { flexDirection: 'row', gap: 16, flex: 1, minHeight: 420 },
   panelsColumn: { flexDirection: 'column', minHeight: 0 },
-  panel: { borderRadius: 28, overflow: 'hidden', minHeight: 340, backgroundColor: 'transparent' },
+  panel: {
+    borderRadius: 28, overflow: 'hidden', minHeight: 340, backgroundColor: 'transparent',
+    // Depth against the dark ground — without a real shadow both panels read
+    // as flat pasted-on rectangles rather than raised, distinct objects.
+    shadowColor: '#000000', shadowOffset: { width: 0, height: 16 }, shadowOpacity: 0.35, shadowRadius: 32, elevation: 12,
+  },
   // Static border, not animated with the rest of the panel — a constant
   // blue-glow ring is what keeps this panel reading as its own object
   // against the dark page ground at every focus state, not just at rest.
@@ -390,15 +401,23 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   howLinkText: { fontSize: 13.5, fontWeight: '700', color: CANDIDATE_COLOR },
 
   // Features section added to provide more landing-page content
-  featuresSection: { marginTop: 22, paddingHorizontal: 12, alignItems: 'center' },
-  featuresTitle: { fontSize: 20, fontWeight: '800', color: '#F8FAFC', marginBottom: 12, fontFamily: DISPLAY_FONT_FAMILY },
+  featuresSection: { marginTop: 24, paddingHorizontal: 12, alignItems: 'center' },
+  featuresTitle: { fontSize: 20, fontWeight: '800', color: '#F8FAFC', marginBottom: 16, fontFamily: DISPLAY_FONT_FAMILY },
   // flexWrap added — 3 fixed-content cards in one unwrapped row overflowed
   // the viewport horizontally on mobile (the 3rd card was cut off at the
   // edge), which is also a banned anti-pattern (no horizontal page scroll).
-  // Glass-card treatment (translucent white fill + hairline border) instead
-  // of the old opaque white card, which read as its own light patch on the
-  // new dark ground rather than part of the same hero.
-  featuresGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'center' },
-  featureCard: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(255,255,255,0.06)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)', paddingHorizontal: 12, paddingVertical: 10, borderRadius: 12, marginHorizontal: 6 },
-  featureText: { fontSize: 14, color: '#E2E8F0', fontWeight: '600' },
+  // Equal-width column cards (not content-hugging pills) — a stacked
+  // icon-badge + label reads as one deliberate 3-up grid instead of 3
+  // differently-sized chips of varying width sitting in a row.
+  featuresGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 14, justifyContent: 'center', width: '100%', maxWidth: 640 },
+  featureCard: {
+    flexBasis: 160, flexGrow: 1, alignItems: 'center', gap: 10,
+    backgroundColor: 'rgba(255,255,255,0.05)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
+    paddingHorizontal: 16, paddingVertical: 20, borderRadius: 18,
+  },
+  featureIconBadge: {
+    width: 36, height: 36, borderRadius: 12, backgroundColor: 'rgba(29,161,242,0.14)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  featureText: { fontSize: 14, color: '#E2E8F0', fontWeight: '600', textAlign: 'center' },
 });

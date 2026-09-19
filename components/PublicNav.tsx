@@ -12,7 +12,7 @@ const COMPANY_COLOR = '#0F1419';
 
 interface Props {
   stacked: boolean;
-  active?: 'pricing' | 'about' | 'how-it-works';
+  active?: 'home' | 'pricing' | 'about' | 'how-it-works';
 }
 
 export default function PublicNav({ stacked, active }: Props) {
@@ -27,6 +27,11 @@ export default function PublicNav({ stacked, active }: Props) {
 
       {!stacked && (
         <View style={st.navLinks}>
+          <AnimatedPressable onPress={() => router.push('/(auth)/welcome')} style={st.navLink} scaleTo={0.94}>
+            {(state) => (
+              <Text style={[st.navLinkText, (active === 'home' || state.hovered) && st.navLinkTextActive]}>Home</Text>
+            )}
+          </AnimatedPressable>
           <AnimatedPressable onPress={() => router.push('/(auth)/how-it-works')} style={st.navLink} scaleTo={0.94}>
             {(state) => (
               <Text style={[st.navLinkText, (active === 'how-it-works' || state.hovered) && st.navLinkTextActive]}>How it works</Text>
