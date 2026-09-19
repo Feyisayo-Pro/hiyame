@@ -18,6 +18,7 @@ import { useTheme, ThemePalette, DISPLAY_FONT_FAMILY } from '@/lib/theme';
 import ScreenFrame from '@/components/ScreenFrame';
 import { SubscriptionTier } from '@/lib/subscriptionStore';
 import { supabase } from '@/lib/supabase';
+import { friendlyAuthError, isAlreadyRegistered } from '@/lib/authErrors';
 import VerifyEmailModal from '@/components/VerifyEmailModal';
 import { useShake } from '@/lib/useShake';
 
@@ -247,7 +248,7 @@ export default function CompanySignupScreen() {
 
     if (error) {
       setLoading(false);
-      setErrors((e) => ({ ...e, general: error.message }));
+      setErrors((e) => ({ ...e, general: friendlyAuthError(error.message) }));
       shake();
       return;
     }
@@ -641,6 +642,11 @@ export default function CompanySignupScreen() {
                 <View style={st.generalErrorBanner}>
                   <AppIcon name="alert-circle" size={16} color={T.danger} />
                   <Text style={st.generalErrorText}>{errors.general}</Text>
+                  {isAlreadyRegistered(errors.general) && (
+                    <Pressable onPress={() => router.push('/(auth)/company-signin')}>
+                      <Text style={st.generalErrorLink}>Sign in →</Text>
+                    </Pressable>
+                  )}
                 </View>
               ) : null}
 
@@ -728,6 +734,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
     paddingHorizontal: 14, paddingVertical: 12, marginBottom: 16,
   },
   generalErrorText: { flex: 1, fontSize: 13, fontWeight: '600', color: T.danger, lineHeight: 18 },
+  generalErrorLink: { fontSize: 13, fontWeight: '800', color: T.danger, textDecorationLine: 'underline' },
   continueButton: {
     backgroundColor: T.accent, borderRadius: 50,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',

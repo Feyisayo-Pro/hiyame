@@ -16,6 +16,19 @@ import { Animated, Easing, StyleSheet, View } from 'react-native';
 // for this app yet anyway).
 const BLUR_STYLE = { filter: 'blur(70px)' } as any;
 
+// The wrapper clips each blob's blur at its own rectangular bounding box
+// (needed so the blobs can't cause horizontal/vertical page overflow) — but
+// a blob's color is still fairly saturated right up to that clip line, so
+// without this the whole field reads as a flat gradient box with a visible
+// straight edge, not an ambient glow (confirmed live: exactly this artifact
+// on how-it-works.tsx's intro section). A radial mask fades the entire
+// wrapper to transparent well before its own edge, so wherever the hard
+// clip actually falls, the content there is already invisible.
+const FADE_MASK_STYLE = {
+  WebkitMaskImage: 'radial-gradient(ellipse 55% 50% at 50% 30%, #000 15%, transparent 60%)',
+  maskImage: 'radial-gradient(ellipse 55% 50% at 50% 30%, #000 15%, transparent 60%)',
+} as any;
+
 interface Blob {
   size: number;
   color: string;
@@ -81,7 +94,7 @@ function BlobShape({ blob }: { blob: Blob }) {
 export default function GradientBlobBackground({ dark = false }: { dark?: boolean }) {
   const blobs = dark ? BLOBS_DARK : BLOBS_LIGHT;
   return (
-    <View style={st.wrap} pointerEvents="none">
+    <View style={[st.wrap, FADE_MASK_STYLE]} pointerEvents="none">
       {blobs.map((b, i) => <BlobShape key={i} blob={b} />)}
     </View>
   );
