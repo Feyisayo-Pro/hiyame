@@ -89,7 +89,7 @@ export function introductionSentEmail(p: {
 }): { subject: string; html: string } {
   const band = [p.companyIndustry, p.companySizeRange].filter(Boolean).join(' · ') || 'a company on Hiyame';
   return {
-    subject: `A company wants to connect — ${p.roleTitle}`,
+    subject: `A company wants to connect: ${p.roleTitle}`,
     html: shell(
       'A company wants to connect',
       `<p style="margin:0 0 12px">You've been matched to <b>${esc(p.roleTitle)}</b>${p.roleFunction ? ` (${esc(p.roleFunction)})` : ''} at ${esc(band)}.</p>
@@ -111,7 +111,7 @@ export function introductionAcceptedCompanyEmail(p: {
     p.candidatePhone ? `Phone: ${esc(p.candidatePhone)}` : null,
   ].filter(Boolean);
   return {
-    subject: `${p.candidateName} accepted your introduction — ${p.roleTitle}`,
+    subject: `${p.candidateName} accepted your introduction: ${p.roleTitle}`,
     html: shell(
       `${esc(p.candidateName)} accepted`,
       `<p style="margin:0 0 12px"><b>${esc(p.candidateName)}</b> accepted your introduction for <b>${esc(p.roleTitle)}</b>. You can reach out directly:</p>
@@ -130,7 +130,7 @@ export function introductionReminderEmail(p: {
 }): { subject: string; html: string } {
   const band = [p.companyIndustry, p.companySizeRange].filter(Boolean).join(' · ') || 'a company on Hiyame';
   return {
-    subject: `Reminder: respond to your introduction — ${p.roleTitle}`,
+    subject: `Reminder: respond to your introduction for ${p.roleTitle}`,
     html: shell(
       'Your introduction is still waiting',
       `<p style="margin:0 0 12px">You have <b>${p.hoursLeft} hour${p.hoursLeft === 1 ? '' : 's'}</b> left to respond to the introduction for <b>${esc(p.roleTitle)}</b> at ${esc(band)}.</p>
@@ -146,11 +146,11 @@ export function introductionExpiredEmail(p: {
   candidateName: string;
 }): { subject: string; html: string } {
   return {
-    subject: `Introduction expired — ${p.roleTitle}`,
+    subject: `Introduction expired: ${p.roleTitle}`,
     html: shell(
       'An introduction expired',
       `<p style="margin:0 0 12px"><b>${esc(p.candidateName)}</b> didn't respond to your introduction for <b>${esc(p.roleTitle)}</b> within the response window, so it has expired.</p>
-       <p style="margin:0">Their seat on the shortlist is free again — you can send another introduction from the role's shortlist.</p>`,
+       <p style="margin:0">Their seat on the shortlist is free again. You can send another introduction from the role's shortlist.</p>`,
       { label: 'View the shortlist', href: `${APP_URL}/roles` },
     ),
   };
@@ -168,7 +168,7 @@ export function introductionAcceptedCandidateEmail(p: {
     p.hiringContactEmail ? `Email: <a href="mailto:${esc(p.hiringContactEmail)}" style="color:${ACCENT}">${esc(p.hiringContactEmail)}</a>` : null,
   ].filter(Boolean);
   return {
-    subject: `You're connected with ${p.companyName} — ${p.roleTitle}`,
+    subject: `You're connected with ${p.companyName}: ${p.roleTitle}`,
     html: shell(
       `You're connected with ${esc(p.companyName)}`,
       `<p style="margin:0 0 12px">Your introduction for <b>${esc(p.roleTitle)}</b> at <b>${esc(p.companyName)}</b> is confirmed. Here's how to reach them:</p>

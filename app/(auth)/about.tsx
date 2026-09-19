@@ -69,7 +69,7 @@ export default function AboutScreen() {
               <Text style={st.headline}>Job boards make you apply and hope.{'\n'}We make you verified and found.</Text>
               <Text style={st.subhead}>
                 Hiyame replaces job boards and recruitment agencies with a verified match between African
-                professionals and the companies hiring them — no résumé pile, no cold applications.
+                professionals and the companies hiring them, no résumé pile, no cold applications.
               </Text>
             </View>
           </SwipeFadeContainer>
@@ -103,7 +103,7 @@ export default function AboutScreen() {
               <Text style={st.sectionTitle}>Built for Africa's job market</Text>
               <Text style={st.bodyText}>
                 Hiring across African markets runs on referrals and trust because job boards weren't built for how
-                this market actually verifies people. Hiyame verifies candidates properly — once — and prices in
+                this market actually verifies people. Hiyame verifies candidates properly, once, and prices in
                 naira, so companies and professionals aren't translating a foreign platform's assumptions onto a
                 local hire.
               </Text>
@@ -121,17 +121,17 @@ const STEPS = [
   {
     icon: 'shield-checkmark-outline',
     title: 'Verify once',
-    body: 'Candidates go through identity, video introduction, skills assessment, and employer reference checks — once, not for every application.',
+    body: 'Candidates go through identity, video introduction, skills assessment, and employer reference checks, once, not for every application.',
   },
   {
     icon: 'compass-outline',
     title: 'Get matched',
-    body: "A scoring engine ranks verified candidates against each open role's real requirements — skill fit, experience, rate, and availability.",
+    body: "A scoring engine ranks verified candidates against each open role's real requirements: skill fit, experience, rate, and availability.",
   },
   {
     icon: 'paper-plane-outline',
     title: 'Get introduced',
-    body: 'Companies receive a ranked shortlist and send a real introduction — no job board, no sifting through hundreds of résumés.',
+    body: 'Companies receive a ranked shortlist and send a real introduction, no job board, no sifting through hundreds of résumés.',
   },
 ] as const;
 

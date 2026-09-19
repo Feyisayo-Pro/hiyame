@@ -26,7 +26,7 @@ export default function ContactReveal({
     <View style={st.card}>
       <View style={st.headRow}>
         <AppIcon name="checkmark-circle" size={14} color={T.emerald} />
-        <Text style={st.headText}>Introduction accepted — you can now reach out directly</Text>
+        <Text style={st.headText}>Introduction accepted. You can now reach out directly</Text>
       </View>
 
       {viewer === 'candidate' ? (

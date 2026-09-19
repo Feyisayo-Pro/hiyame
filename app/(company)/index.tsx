@@ -288,7 +288,7 @@ export default function CompanyDashboardScreen() {
             ) : stats.recentIntros.length === 0 ? (
               <View style={styles.emptyState}>
                 <AppIcon name="paper-plane-outline" size={28} color={T.textMuted} />
-                <Text style={styles.emptyStateText}>No introductions yet — post a role and review its shortlist</Text>
+                <Text style={styles.emptyStateText}>No introductions yet. Post a role and review its shortlist</Text>
               </View>
             ) : (
               stats.recentIntros.map((intro) => {

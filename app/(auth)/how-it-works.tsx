@@ -47,15 +47,15 @@ interface HowItWorksStep {
 // shortlist.tsx's ranked list; candidate side mirrors app/(auth)/about.tsx's
 // 3 steps so the two pages never describe the flow differently).
 const HIRING_STEPS: HowItWorksStep[] = [
-  { tab: 'Post a role', icon: 'create-outline', title: 'Post a role', body: "Tell us the title, tier, must-have skills, and rate. It goes live and starts matching right away — no job board listing to write." },
-  { tab: 'We match', icon: 'compass-outline', title: 'We match', body: "A scoring engine ranks every verified candidate against your role's real requirements — skill fit, experience, rate, and availability." },
-  { tab: 'Review shortlist', icon: 'people-outline', title: 'Review your shortlist', body: "Get a ranked shortlist of verified candidates. Send a real introduction to the ones you like — no résumé pile to sift through." },
+  { tab: 'Post a role', icon: 'create-outline', title: 'Post a role', body: "Tell us the title, tier, must-have skills, and rate. It goes live and starts matching right away, no job board listing to write." },
+  { tab: 'We match', icon: 'compass-outline', title: 'We match', body: "A scoring engine ranks every verified candidate against your role's real requirements: skill fit, experience, rate, and availability." },
+  { tab: 'Review shortlist', icon: 'people-outline', title: 'Review your shortlist', body: "Get a ranked shortlist of verified candidates. Send a real introduction to the ones you like, no résumé pile to sift through." },
 ];
 
 const CANDIDATE_STEPS: HowItWorksStep[] = [
-  { tab: 'Verify', icon: 'shield-checkmark-outline', title: 'Verify once', body: 'Identity, video introduction, skills assessment, and employer reference checks — once, not for every application you make.' },
-  { tab: 'Get matched', icon: 'compass-outline', title: 'Get matched', body: 'The same scoring engine ranks you against real open roles — skill fit, experience, rate, and availability, not keyword luck.' },
-  { tab: 'Get introduced', icon: 'paper-plane-outline', title: 'Get introduced', body: "Companies send you a real introduction and you respond — no cold applications, no job board to keep refreshing." },
+  { tab: 'Verify', icon: 'shield-checkmark-outline', title: 'Verify once', body: 'Identity, video introduction, skills assessment, and employer reference checks, once, not for every application you make.' },
+  { tab: 'Get matched', icon: 'compass-outline', title: 'Get matched', body: 'The same scoring engine ranks you against real open roles: skill fit, experience, rate, and availability, not keyword luck.' },
+  { tab: 'Get introduced', icon: 'paper-plane-outline', title: 'Get introduced', body: "Companies send you a real introduction and you respond, no cold applications, no job board to keep refreshing." },
 ];
 
 export default function HowItWorksScreen() {
@@ -92,7 +92,7 @@ export default function HowItWorksScreen() {
               <View style={st.howIntro}>
                 <Text style={st.howMainEyebrow}>HOW IT WORKS</Text>
                 <Text style={st.howMainTitle}>Two sides, one platform</Text>
-                <Text style={st.howMainSubhead}>Both flows below play on their own — click any step to jump straight to it.</Text>
+                <Text style={st.howMainSubhead}>Both flows below play on their own. Click any step to jump straight to it.</Text>
               </View>
             </SwipeFadeContainer>
 

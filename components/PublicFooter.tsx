@@ -57,7 +57,7 @@ export default function PublicFooter({ stacked }: { stacked: boolean }) {
             </View>
             <Text style={st.brandText}>Hiyame</Text>
           </AnimatedPressable>
-          <Text style={st.tagline}>Verified African professionals, matched directly — no job boards, no agencies.</Text>
+          <Text style={st.tagline}>Verified professionals, matched directly, no job boards, no agencies.</Text>
         </View>
 
         <View style={[st.linkCols, stacked && st.linkColsStacked]}>

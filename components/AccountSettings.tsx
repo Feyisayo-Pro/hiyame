@@ -104,7 +104,7 @@ export default function AccountSettings({ persona = 'company' }: { persona?: Per
     // sends, this is what makes the *browser* able to receive at all.
     if (v) {
       subscribeToPush().then((ok) => {
-        if (!ok) notify('Enable notifications in your browser', 'Push notifications need permission — check your browser\'s site settings if this didn\'t prompt you.');
+        if (!ok) notify('Enable notifications in your browser', 'Push notifications need permission. Check your browser\'s site settings if this didn\'t prompt you.');
       });
     } else {
       void unsubscribeFromPush();
@@ -171,7 +171,7 @@ export default function AccountSettings({ persona = 'company' }: { persona?: Per
             <Text style={{ fontSize: 14, fontWeight: '700', color: T.textMuted, paddingHorizontal: 20, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.3 }}>Account</Text>
             <View style={{ backgroundColor: T.card, borderTopWidth: 1, borderBottomWidth: 1, borderColor: T.border }}>
               <SettingsRow icon="person-outline" label="Edit Profile" onPress={() => router.push(profileRoute as any)} T={T} />
-              <SettingsRow icon="mail-outline" label="Email" value={session?.user?.email ?? '—'} T={T} />
+              <SettingsRow icon="mail-outline" label="Email" value={session?.user?.email ?? 'Not set'} T={T} />
               <SettingsRow icon="lock-closed-outline" label="Password" onPress={() => setShowPasswordModal(true)} T={T} />
               <SettingsRow icon="globe-outline" label="Language" value="English" T={T} />
             </View>

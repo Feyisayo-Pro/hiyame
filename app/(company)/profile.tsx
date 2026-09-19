@@ -167,7 +167,7 @@ export default function CompanyProfileScreen() {
               </View>
               <View style={st.fieldContent}>
                 <Text style={st.fieldLabel}>Signed-in Email</Text>
-                <Text style={st.fieldValue}>{session?.user?.email ?? '—'}</Text>
+                <Text style={st.fieldValue}>{session?.user?.email ?? 'Not set'}</Text>
               </View>
             </View>
 

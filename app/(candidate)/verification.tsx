@@ -163,7 +163,7 @@ export default function VerificationScreen() {
                   {isFullyVerified
                     ? (completedCount === TOTAL_VERIFICATION_COMPONENTS
                       ? 'You are eligible for all tier matches'
-                      : 'Eligible for Short-Term matches — identity check is paused for now')
+                      : 'Eligible for Short-Term matches, identity check is paused for now')
                     : `${TOTAL_VERIFICATION_COMPONENTS - completedCount} step${TOTAL_VERIFICATION_COMPONENTS - completedCount !== 1 ? 's' : ''} remaining`}
                 </Text>
               </View>

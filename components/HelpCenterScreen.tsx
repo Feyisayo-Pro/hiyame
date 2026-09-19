@@ -18,8 +18,8 @@ const CANDIDATE_SECTIONS: FaqSection[] = [
     title: 'Getting started',
     icon: 'rocket-outline',
     items: [
-      { q: 'How does Hiyame work?', a: "You build a profile, complete verification, and companies come to you. When a company likes your profile for a role, they send an introduction — you see the industry and company size first, and the full company name and contact details once you accept. There's no browsing or applying to a feed of jobs." },
-      { q: 'Why can\'t I see the company name right away?', a: 'Identities stay masked until both sides opt in. You accept or decline based on the role, tier and company profile alone; the company\'s name and contact only reveal once you accept — this keeps both sides honest and avoids you being contacted by companies you\'d rather not hear from.' },
+      { q: 'How does Hiyame work?', a: "You build a profile, complete verification, and companies come to you. When a company likes your profile for a role, they send an introduction: you see the industry and company size first, and the full company name and contact details once you accept. There's no browsing or applying to a feed of jobs." },
+      { q: 'Why can\'t I see the company name right away?', a: 'Identities stay masked until both sides opt in. You accept or decline based on the role, tier and company profile alone; the company\'s name and contact only reveal once you accept. This keeps both sides honest and avoids you being contacted by companies you\'d rather not hear from.' },
       { q: 'What do the tiers (Corporate / Short-Term / Gig) mean?', a: 'They describe the kind of work a role is: Corporate is a full-time hire, Short-Term is contract work with a defined length, and Gig is short, task-based work. Each tier can have different verification requirements.' },
     ],
   },
@@ -27,7 +27,7 @@ const CANDIDATE_SECTIONS: FaqSection[] = [
     title: 'Verification',
     icon: 'shield-checkmark-outline',
     items: [
-      { q: 'Why do I need to verify my profile?', a: 'Unverified profiles are not included in matching — companies only ever see candidates who\'ve completed verification. It exists to make every introduction you receive a serious one.' },
+      { q: 'Why do I need to verify my profile?', a: 'Unverified profiles are not included in matching; companies only ever see candidates who\'ve completed verification. It exists to make every introduction you receive a serious one.' },
       { q: 'What are the 4 verification components?', a: 'Identity Check (confirming you are who you say you are), Video Introduction, Skills Assessment, and Employer Review. Your Profile screen shows exactly which ones are done and which remain.' },
       { q: 'I finished a step but it still shows Pending', a: 'Some checks are reviewed before they\'re marked passed. If a step has been pending for more than a couple of days, contact support with your account email and the step in question.' },
     ],
@@ -38,7 +38,7 @@ const CANDIDATE_SECTIONS: FaqSection[] = [
     items: [
       { q: 'How long do I have to respond to an introduction?', a: 'Each introduction shows a countdown ("Xh left to respond"). The window depends on the role\'s tier. If it lapses without a response, the introduction expires automatically and the company\'s shortlist seat frees up.' },
       { q: 'What happens when I accept?', a: 'The company\'s name, industry detail and hiring contact become visible to you immediately, and the company can see your full contact details. From there, next steps happen directly between you and the company by email.' },
-      { q: 'Can I undo a decline?', a: 'Not currently — decline only when you\'re sure. If it was a mistake, contact support with the role name and we can look into reopening it.' },
+      { q: 'Can I undo a decline?', a: 'Not currently. Decline only when you\'re sure. If it was a mistake, contact support with the role name and we can look into reopening it.' },
     ],
   },
 ];
@@ -50,24 +50,24 @@ const COMPANY_SECTIONS: FaqSection[] = [
     items: [
       { q: 'How do I find candidates?', a: 'Post a role from "My Roles" → "Post a Role". Once posted, the matching engine scores every eligible, verified candidate against it and builds a ranked shortlist you can work through with Accept, Skip or Save.' },
       { q: 'Why is my new role\'s shortlist empty?', a: 'Matching runs automatically right after you post a role, but on a busy candidate pool it can take a short while to finish scoring. If a shortlist is still empty after several minutes, use the refresh button on the shortlist screen.' },
-      { q: 'What does the score % on a candidate mean?', a: "It's the matching engine's fit score for that candidate against this specific role — weighing skills, experience, pay expectations, availability, location and reliability. It's a ranking signal, not a guarantee." },
+      { q: 'What does the score % on a candidate mean?', a: "It's the matching engine's fit score for that candidate against this specific role, weighing skills, experience, pay expectations, availability, location and reliability. It's a ranking signal, not a guarantee." },
     ],
   },
   {
     title: 'Introductions & contact',
     icon: 'paper-plane-outline',
     items: [
-      { q: 'What happens when I Accept a candidate?', a: 'An introduction is created and the candidate is notified. They see your industry and company size, but not your company name yet — that reveals once they accept too, along with your hiring contact\'s details.' },
-      { q: 'The candidate hasn\'t responded — what now?', a: 'Every introduction has a response window shown on the shortlist. If it lapses, it expires automatically and that seat on your shortlist frees up for another candidate.' },
+      { q: 'What happens when I Accept a candidate?', a: 'An introduction is created and the candidate is notified. They see your industry and company size, but not your company name yet. That reveals once they accept too, along with your hiring contact\'s details.' },
+      { q: 'The candidate hasn\'t responded, what now?', a: 'Every introduction has a response window shown on the shortlist. If it lapses, it expires automatically and that seat on your shortlist frees up for another candidate.' },
     ],
   },
   {
     title: 'Team & billing',
     icon: 'people-outline',
     items: [
-      { q: 'How do I add a teammate?', a: 'Go to Team Members and enter their email. This reserves a seat and records the invite, up to your plan\'s seat limit. There is no invite email sent yet — this is on our roadmap.' },
+      { q: 'How do I add a teammate?', a: 'Go to Team Members and enter their email. This reserves a seat and records the invite, up to your plan\'s seat limit. There is no invite email sent yet; this is on our roadmap.' },
       { q: 'How do I change my plan?', a: 'Settings → Subscription & Billing, or Profile → Manage Subscription. Note: real payment processing isn\'t connected yet, so plan changes don\'t charge you anything at this stage.' },
-      { q: 'What are Team Seats?', a: 'The number of people who can be part of your company account at once. It\'s capped by your plan tier — see the Team Seats bar on your Company Profile.' },
+      { q: 'What are Team Seats?', a: 'The number of people who can be part of your company account at once. It\'s capped by your plan tier, see the Team Seats bar on your Company Profile.' },
     ],
   },
 ];

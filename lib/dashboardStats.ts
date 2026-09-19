@@ -218,7 +218,7 @@ export async function getCandidateFeed(candidateId: string): Promise<FeedItem[]>
 
   for (const i of stats.recentIntros) {
     if (i.status === 'accepted') {
-      items.push({ id: i.id + ':acc', kind: 'intro_accepted', title: `You're connected with ${i.counterpartyName}`, body: `Your introduction for ${i.roleTitle} is confirmed — contact details are in Connections.`, at: i.at, href: '/(candidate)/messages' });
+      items.push({ id: i.id + ':acc', kind: 'intro_accepted', title: `You're connected with ${i.counterpartyName}`, body: `Your introduction for ${i.roleTitle} is confirmed. Contact details are in Connections.`, at: i.at, href: '/(candidate)/messages' });
     } else if (i.status === 'declined') {
       items.push({ id: i.id + ':dec', kind: 'intro_declined', title: `You declined an introduction`, body: `For ${i.roleTitle}.`, at: i.at });
     } else if (i.status === 'expired') {

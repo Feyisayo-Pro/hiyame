@@ -282,7 +282,7 @@ export default function TeamMembersScreen() {
               <Text style={s.inviteBtnText}>{inviting ? 'Inviting…' : 'Invite Member'}</Text>
             </Pressable>
             <Text style={s.inviteHint}>
-              Adds a pending seat now. No email is sent yet — teammate sign-in is coming later.
+              Adds a pending seat now. No email is sent yet; teammate sign-in is coming later.
             </Text>
           </View>
 

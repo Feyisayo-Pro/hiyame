@@ -93,7 +93,7 @@ function CompanyAnalytics({ T, stats }: { T: ThemePalette; stats: CompanyStats }
           <MetricCard
             icon="checkmark-done-circle"
             label="Acceptance"
-            value={stats.acceptanceRate === null ? '—' : `${stats.acceptanceRate}%`}
+            value={stats.acceptanceRate === null ? 'N/A' : `${stats.acceptanceRate}%`}
             subtitle={stats.acceptanceRate === null ? 'No responses yet' : `${stats.introsAccepted} accepted`}
             color={T.emerald} bg={T.emeraldBg} T={T}
           />

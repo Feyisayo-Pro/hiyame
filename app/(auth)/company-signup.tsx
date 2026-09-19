@@ -61,7 +61,7 @@ const PLANS: PlanCard[] = [
     // — selecting this card sets selectedTier to 'pilot' below, so
     // advertising starter's actual higher numbers here (10/day, 3 matches)
     // would promise more than a new signup actually gets.
-    tagline: 'Free — get started with up to 3 candidate reviews/day',
+    tagline: 'Free, get started with up to 3 candidate reviews/day',
     features: ['3 candidate reviews/day', 'Basic filters', '1 active match', 'Email support'],
   },
   {
@@ -370,7 +370,7 @@ export default function CompanySignupScreen() {
             <AppIcon name="document-text-outline" size={18} color={focused ? T.accent : T.textMuted} />
             <TextInput
               style={[st.input, NO_NATIVE_OUTLINE]}
-              placeholder="Optional — e.g. RC12345678"
+              placeholder="Optional, e.g. RC12345678"
               placeholderTextColor={T.textMuted}
               value={taxId}
               onChangeText={setTaxId}

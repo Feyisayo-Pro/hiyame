@@ -126,8 +126,8 @@ export default function CandidateHomeScreen() {
                   <Text style={st.scoreSub}>
                     {isFullyVerified
                       ? (verifiedCount === TOTAL_VERIFICATION_COMPONENTS
-                        ? 'All components complete — you are match-ready'
-                        : 'You are match-ready — identity check is paused for now')
+                        ? 'All components complete, you are match-ready'
+                        : 'You are match-ready, identity check is paused for now')
                       : `${TOTAL_VERIFICATION_COMPONENTS - verifiedCount} component${TOTAL_VERIFICATION_COMPONENTS - verifiedCount !== 1 ? 's' : ''} remaining · unverified profiles aren't matched`}
                   </Text>
                 </View>

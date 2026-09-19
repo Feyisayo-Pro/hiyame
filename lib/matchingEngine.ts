@@ -33,7 +33,7 @@ export function evaluateEligibility(
   switch (roleType) {
     case 'corporate':
       if (completedCount === 4) {
-        return { eligible: true, message: 'Fully verified — eligible for Corporate roles' };
+        return { eligible: true, message: 'Fully verified, eligible for Corporate roles' };
       }
       return {
         eligible: false,

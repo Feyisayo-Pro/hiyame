@@ -16,9 +16,9 @@ interface Step {
 
 const STEPS: Step[] = [
   {
-    icon: 'sparkles-outline',
+    icon: 'paper-plane-outline',
     title: 'Companies come to you',
-    body: "You don't send applications on Hiyame. When a company wants to work with you, you receive an introduction — you choose whether to accept or decline it.",
+    body: "You don't send applications on Hiyame. When a company wants to work with you, you receive an introduction, and you choose whether to accept or decline it.",
   },
   {
     icon: 'shield-checkmark-outline',
@@ -28,17 +28,17 @@ const STEPS: Step[] = [
   {
     icon: 'home-outline',
     title: 'Home',
-    body: 'Your verification progress and your latest introductions at a glance — plus a checklist of what still needs doing.',
+    body: 'Your verification progress and your latest introductions at a glance, plus a checklist of what still needs doing.',
   },
   {
     icon: 'briefcase-outline',
     title: 'Jobs',
-    body: 'Every introduction lands here. The company stays anonymous — you only see the industry and size — until you accept. Then the full role and their contact details are revealed.',
+    body: 'Every introduction lands here. The company stays anonymous (you only see the industry and size) until you accept. Then the full role and their contact details are revealed.',
   },
   {
     icon: 'people-outline',
     title: 'Connections & Profile',
-    body: 'Accepted introductions live in Connections with the company’s contact details, so you can reach out directly. Keep your Profile current — skills, rate and availability all feed your match score.',
+    body: 'Accepted introductions live in Connections with the company’s contact details, so you can reach out directly. Keep your Profile current: skills, rate and availability all feed your match score.',
   },
 ];
 

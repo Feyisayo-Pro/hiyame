@@ -23,7 +23,7 @@ export function initializeSmileId(): Promise<void> {
 
   const config = readConfig();
   if (!config) {
-    return Promise.reject(new Error('Smile ID is not configured — missing EXPO_PUBLIC_SMILE_* env vars.'));
+    return Promise.reject(new Error('Smile ID is not configured: missing EXPO_PUBLIC_SMILE_* env vars.'));
   }
 
   const useSandbox = process.env.EXPO_PUBLIC_SMILE_ENV !== 'production';
