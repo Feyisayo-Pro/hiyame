@@ -52,6 +52,22 @@ interface Stats {
   roles: number;
 }
 
+// Real capabilities only — every line here maps to something this app
+// actually does today. Deliberately excludes claims a pasted redesign kept
+// bringing back that aren't true yet: no "AI" (it's a deterministic scoring
+// engine, same wording how-it-works.tsx already uses), no fee-free claim
+// (Hiyame_Mobile_Architecture.md documents a real 8-10% success fee for
+// Starter+ tiers), no fabricated SLA ("72 hours", "48-hour guarantee" —
+// the real thing is a response window, not a guarantee), no country count.
+const FEATURES: { icon: import('@/components/AppIcon').AppIconName; title: string; desc: string }[] = [
+  { icon: 'sparkles', title: 'Ranked, verified shortlists', desc: "A scoring engine ranks every verified candidate against your role's real requirements." },
+  { icon: 'checkmark-circle', title: 'Focus on interviews, not screening', desc: 'Every candidate you meet has already passed identity, video, and reference checks.' },
+  { icon: 'time', title: 'Timed introductions', desc: 'Real introductions with a response window — no job board to keep refreshing.' },
+  { icon: 'chatbubble-outline', title: 'Direct messaging', desc: 'Message verified candidates or companies directly inside the platform.' },
+  { icon: 'cash-outline', title: 'Transparent Naira pricing', desc: 'Simple plans in Naira, starting free — see Pricing for the full breakdown.' },
+  { icon: 'shield-checkmark-outline', title: 'Verified African professionals', desc: 'Identity, video introduction, skills, and reference checks — done once, not per application.' },
+];
+
 export default function WelcomeScreen() {
   const T = useTheme();
   const st = useMemo(() => makeStyles(T), [T]);
@@ -290,24 +306,39 @@ export default function WelcomeScreen() {
           <View style={st.featuresSection}>
             <Text style={st.featuresTitle}>What you'll get</Text>
             <View style={st.featuresGrid}>
-              <View style={st.featureCard}>
-                <View style={st.featureIconBadge}>
-                  <AppIcon name="sparkles" size={18} color={CANDIDATE_COLOR} />
+              {FEATURES.map((f) => (
+                <View key={f.title} style={st.featureCard}>
+                  <View style={st.featureIconBadge}>
+                    <AppIcon name={f.icon} size={18} color={CANDIDATE_COLOR} />
+                  </View>
+                  <Text style={st.featureCardTitle}>{f.title}</Text>
+                  <Text style={st.featureCardDesc}>{f.desc}</Text>
                 </View>
-                <Text style={st.featureText}>Ranked, verified shortlists</Text>
-              </View>
-              <View style={st.featureCard}>
-                <View style={st.featureIconBadge}>
-                  <AppIcon name="checkmark-circle" size={18} color={CANDIDATE_COLOR} />
-                </View>
-                <Text style={st.featureText}>Focus on interviews, not screening</Text>
-              </View>
-              <View style={st.featureCard}>
-                <View style={st.featureIconBadge}>
-                  <AppIcon name="time" size={18} color={CANDIDATE_COLOR} />
-                </View>
-                <Text style={st.featureText}>Timed introductions and reminders</Text>
-              </View>
+              ))}
+            </View>
+          </View>
+        </SwipeFadeContainer>
+
+        {/* Closing CTA — persona-specific like the rest of this page (the
+            hero panels, the nav's own signup flow) rather than one generic
+            "Get Started" button with no persona context, which is the exact
+            "guesswork" problem already fixed on the signup flow itself. */}
+        <SwipeFadeContainer axis="y" offset={14} duration={420} delay={380}>
+          <View style={st.closingCta}>
+            <Text style={st.closingCtaTitle}>Ready when you are</Text>
+            <Text style={st.closingCtaSubhead}>
+              {stats
+                ? `Join ${stats.companies}+ companies and ${(Math.floor(stats.candidates / 100) * 100).toLocaleString()}+ professionals already on Hiyame.`
+                : 'Join the companies and professionals already on Hiyame.'}
+            </Text>
+            <View style={st.closingCtaButtons}>
+              <Pressable style={st.closingCtaPrimary} onPress={goCompany}>
+                <Text style={st.closingCtaPrimaryText}>Post a role</Text>
+                <AppIcon name="arrow-forward" size={15} color="#FFFFFF" />
+              </Pressable>
+              <Pressable style={st.closingCtaSecondary} onPress={goCandidate}>
+                <Text style={st.closingCtaSecondaryText}>Get verified</Text>
+              </Pressable>
             </View>
           </View>
         </SwipeFadeContainer>
@@ -409,15 +440,36 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   // Equal-width column cards (not content-hugging pills) — a stacked
   // icon-badge + label reads as one deliberate 3-up grid instead of 3
   // differently-sized chips of varying width sitting in a row.
-  featuresGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 14, justifyContent: 'center', width: '100%', maxWidth: 640 },
+  featuresGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 14, justifyContent: 'center', width: '100%', maxWidth: 920 },
+  // 6 cards now (was 3) — flexBasis tuned so 3 fit per row at desktop widths
+  // and it degrades to 2-then-1 per row as the viewport narrows, still
+  // wrapping cleanly (no horizontal scroll) at phone widths.
   featureCard: {
-    flexBasis: 160, flexGrow: 1, alignItems: 'center', gap: 10,
+    flexBasis: 240, flexGrow: 1, alignItems: 'flex-start', gap: 10,
     backgroundColor: 'rgba(255,255,255,0.05)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
-    paddingHorizontal: 16, paddingVertical: 20, borderRadius: 18,
+    paddingHorizontal: 18, paddingVertical: 20, borderRadius: 18,
   },
   featureIconBadge: {
     width: 36, height: 36, borderRadius: 12, backgroundColor: 'rgba(29,161,242,0.14)',
     alignItems: 'center', justifyContent: 'center',
   },
-  featureText: { fontSize: 14, color: '#E2E8F0', fontWeight: '600', textAlign: 'center' },
+  featureCardTitle: { fontSize: 14.5, color: '#F8FAFC', fontWeight: '700' },
+  featureCardDesc: { fontSize: 13, color: TEXT_MUTED, fontWeight: '500', lineHeight: 19 },
+
+  // Closing CTA — persona-specific buttons (Post a role / Get verified),
+  // same real live stats already fetched for the hero's own stats row.
+  closingCta: { marginTop: 40, paddingHorizontal: 12, alignItems: 'center', paddingBottom: 8 },
+  closingCtaTitle: { fontSize: 26, fontWeight: '800', color: '#F8FAFC', marginBottom: 10, fontFamily: DISPLAY_FONT_FAMILY, textAlign: 'center' },
+  closingCtaSubhead: { fontSize: 15, color: TEXT_MUTED, fontWeight: '500', textAlign: 'center', maxWidth: 460, marginBottom: 24 },
+  closingCtaButtons: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'center' },
+  closingCtaPrimary: {
+    flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: CANDIDATE_COLOR,
+    paddingHorizontal: 22, paddingVertical: 14, borderRadius: 999,
+  },
+  closingCtaPrimaryText: { fontSize: 14.5, fontWeight: '700', color: '#FFFFFF' },
+  closingCtaSecondary: {
+    paddingHorizontal: 22, paddingVertical: 14, borderRadius: 999,
+    borderWidth: 1, borderColor: 'rgba(148,163,184,0.35)', backgroundColor: 'rgba(255,255,255,0.04)',
+  },
+  closingCtaSecondaryText: { fontSize: 14.5, fontWeight: '700', color: '#F8FAFC' },
 });
