@@ -59,11 +59,18 @@ interface Stats {
 // (Hiyame_Mobile_Architecture.md documents a real 8-10% success fee for
 // Starter+ tiers), no fabricated SLA ("72 hours", "48-hour guarantee" —
 // the real thing is a response window, not a guarantee), no country count.
+//
+// "Direct messaging" was wrong and shipped anyway — caught by the user, not
+// by me: components/ConnectionsScreen.tsx (the real "Connections" tab both
+// personas actually have) is explicit that there's no in-app chat at all —
+// "the doc's communication model is direct email after an introduction, not
+// in-app messaging." Replaced with what that screen actually does: reveal
+// real contact details once an introduction is accepted (ContactReveal).
 const FEATURES: { icon: import('@/components/AppIcon').AppIconName; title: string; desc: string }[] = [
   { icon: 'sparkles', title: 'Ranked, verified shortlists', desc: "A scoring engine ranks every verified candidate against your role's real requirements." },
   { icon: 'checkmark-circle', title: 'Focus on interviews, not screening', desc: 'Every candidate you meet has already passed identity, video, and reference checks.' },
-  { icon: 'time', title: 'Timed introductions', desc: 'Real introductions with a response window — no job board to keep refreshing.' },
-  { icon: 'chatbubble-outline', title: 'Direct messaging', desc: 'Message verified candidates or companies directly inside the platform.' },
+  { icon: 'time', title: 'Timed introductions', desc: 'A real response window on every introduction — it expires automatically if it lapses, no job board to keep refreshing.' },
+  { icon: 'mail-outline', title: 'Direct contact on acceptance', desc: 'Accept an introduction and real contact details are revealed — no in-app inbox, no games.' },
   { icon: 'cash-outline', title: 'Transparent Naira pricing', desc: 'Simple plans in Naira, starting free — see Pricing for the full breakdown.' },
   { icon: 'shield-checkmark-outline', title: 'Verified African professionals', desc: 'Identity, video introduction, skills, and reference checks — done once, not per application.' },
 ];

@@ -213,7 +213,7 @@ export default function CandidateSignupScreen() {
                 <AppIcon name="person-outline" size={18} color={errors.fullName ? T.danger : T.textMuted} />
                 <TextInput
                   style={st.input}
-                  placeholder="Amara Osei"
+                  placeholder="e.g. Amara Osei"
                   placeholderTextColor={T.textMuted}
                   autoCapitalize="words"
                   value={fullName}
@@ -229,7 +229,7 @@ export default function CandidateSignupScreen() {
                 <AppIcon name="briefcase-outline" size={18} color={errors.title ? T.danger : T.textMuted} />
                 <TextInput
                   style={st.input}
-                  placeholder="Senior Backend Engineer"
+                  placeholder="e.g. Senior Backend Engineer"
                   placeholderTextColor={T.textMuted}
                   autoCapitalize="words"
                   value={professionalTitle}

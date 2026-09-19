@@ -284,7 +284,7 @@ export default function CompanySignupScreen() {
           <AppIcon name="person-outline" size={18} color={errors.contactName ? T.danger : T.textMuted} />
           <TextInput
             style={st.input}
-            placeholder="Amara Osei"
+            placeholder="e.g. Amara Osei"
             placeholderTextColor={T.textMuted}
             autoCapitalize="words"
             value={contactName}
@@ -345,7 +345,7 @@ export default function CompanySignupScreen() {
           <AppIcon name="business-outline" size={18} color={errors.companyName ? T.danger : T.textMuted} />
           <TextInput
             style={st.input}
-            placeholder="Acme Corp"
+            placeholder="e.g. Acme Corp"
             placeholderTextColor={T.textMuted}
             value={companyName}
             onChangeText={(t) => { setCompanyName(t); clearError('companyName'); }}
@@ -361,7 +361,7 @@ export default function CompanySignupScreen() {
           <AppIcon name="document-text-outline" size={18} color={T.textMuted} />
           <TextInput
             style={st.input}
-            placeholder="Optional - RC12345678"
+            placeholder="Optional — e.g. RC12345678"
             placeholderTextColor={T.textMuted}
             value={taxId}
             onChangeText={setTaxId}
@@ -377,7 +377,7 @@ export default function CompanySignupScreen() {
           <AppIcon name="globe-outline" size={18} color={T.textMuted} />
           <TextInput
             style={st.input}
-            placeholder="https://acmecorp.com"
+            placeholder="e.g. https://acmecorp.com"
             placeholderTextColor={T.textMuted}
             value={website}
             onChangeText={setWebsite}
@@ -462,7 +462,7 @@ export default function CompanySignupScreen() {
           <AppIcon name="location-outline" size={18} color={T.textMuted} />
           <TextInput
             style={st.input}
-            placeholder="Lagos, Nigeria"
+            placeholder="e.g. Lagos, Nigeria"
             placeholderTextColor={T.textMuted}
             value={hqLocation}
             onChangeText={setHqLocation}
