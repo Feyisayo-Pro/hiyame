@@ -238,7 +238,7 @@ function StepMockCard({ mode, step, st }: { mode: PersonaMode; step: number; st:
     return (
       <View style={mockStyles.card}>
         <View style={st.mockMatchHead}>
-          <AppIcon name="sparkles" size={13} color="#17A75B" />
+          <AppIcon name="compass-outline" size={13} color="#17A75B" />
           <Text style={st.mockMatchHeadText}>You've been matched</Text>
         </View>
         <Text style={st.mockCardName}>Data Analyst</Text>

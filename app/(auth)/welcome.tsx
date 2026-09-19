@@ -67,7 +67,7 @@ interface Stats {
 // in-app messaging." Replaced with what that screen actually does: reveal
 // real contact details once an introduction is accepted (ContactReveal).
 const FEATURES: { icon: import('@/components/AppIcon').AppIconName; title: string; desc: string }[] = [
-  { icon: 'sparkles', title: 'Ranked, verified shortlists', desc: "A scoring engine ranks every verified candidate against your role's real requirements." },
+  { icon: 'bar-chart', title: 'Ranked, verified shortlists', desc: "A scoring engine ranks every verified candidate against your role's real requirements." },
   { icon: 'checkmark-circle', title: 'Focus on interviews, not screening', desc: 'Every candidate you meet has already passed identity, video, and reference checks.' },
   { icon: 'time', title: 'Timed introductions', desc: 'A real response window on every introduction — it expires automatically if it lapses, no job board to keep refreshing.' },
   { icon: 'mail-outline', title: 'Direct contact on acceptance', desc: 'Accept an introduction and real contact details are revealed — no in-app inbox, no games.' },
@@ -284,7 +284,7 @@ export default function WelcomeScreen() {
                 {!stacked && (
                   <Animated.View style={[st.mockCard, st.mockCardCandidate, { transform: [{ rotate: candidateCardTilt }, { translateY: floatBTranslate }] }]}>
                     <View style={st.mockMatchHead}>
-                      <AppIcon name="sparkles" size={13} color="#17A75B" />
+                      <AppIcon name="compass-outline" size={13} color="#17A75B" />
                       <Text style={st.mockMatchHeadText}>You've been matched</Text>
                     </View>
                     <Text style={st.mockCardName}>Data Analyst</Text>

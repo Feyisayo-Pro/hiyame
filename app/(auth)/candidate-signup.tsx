@@ -18,6 +18,7 @@ import { useCandidateProfile } from '@/lib/candidateProfile';
 import { useTheme, ThemePalette, DISPLAY_FONT_FAMILY } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
 import { friendlyAuthError, isAlreadyRegistered } from '@/lib/authErrors';
+import FormField, { NO_NATIVE_OUTLINE } from '@/components/FormField';
 import ScreenFrame from '@/components/ScreenFrame';
 import VerifyEmailModal from '@/components/VerifyEmailModal';
 import { INDUSTRIES, SKILLS_BY_INDUSTRY, DEFAULT_SKILL_SUGGESTIONS } from '@/lib/industrySkills';
@@ -169,75 +170,83 @@ export default function CandidateSignupScreen() {
               </Text>
             </View>
 
-            <View style={st.fieldWrap}>
-              <Text style={st.label}>Email Address</Text>
-              <View style={[st.inputWrap, errors.email ? st.inputError : null]}>
-                <AppIcon name="mail-outline" size={18} color={errors.email ? T.danger : T.textMuted} />
-                <TextInput
-                  style={st.input}
-                  placeholder="you@example.com"
-                  placeholderTextColor={T.textMuted}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoComplete="email"
-                  value={email}
-                  onChangeText={(t) => { setEmail(t); setErrors((e) => ({ ...e, email: '' })); }}
-                />
-              </View>
-              {errors.email ? <Text style={st.errorText}>{errors.email}</Text> : null}
-            </View>
+            <FormField label="Email Address" error={errors.email}>
+              {({ onFocus, onBlur, focused }) => (
+                <>
+                  <AppIcon name="mail-outline" size={18} color={errors.email ? T.danger : focused ? T.accent : T.textMuted} />
+                  <TextInput
+                    style={[st.input, NO_NATIVE_OUTLINE]}
+                    placeholder="you@example.com"
+                    placeholderTextColor={T.textMuted}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoComplete="email"
+                    value={email}
+                    onChangeText={(t) => { setEmail(t); setErrors((e) => ({ ...e, email: '' })); }}
+                    onFocus={onFocus}
+                    onBlur={onBlur}
+                  />
+                </>
+              )}
+            </FormField>
 
-            <View style={st.fieldWrap}>
-              <Text style={st.label}>Password</Text>
-              <View style={[st.inputWrap, errors.password ? st.inputError : null]}>
-                <AppIcon name="lock-closed-outline" size={18} color={errors.password ? T.danger : T.textMuted} />
-                <TextInput
-                  style={st.input}
-                  placeholder="At least 6 characters"
-                  placeholderTextColor={T.textMuted}
-                  secureTextEntry={!showPassword}
-                  autoCapitalize="none"
-                  value={password}
-                  onChangeText={(t) => { setPassword(t); setErrors((e) => ({ ...e, password: '' })); }}
-                />
-                <Pressable onPress={() => setShowPassword(!showPassword)} hitSlop={8}>
-                  <AppIcon name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color={T.textMuted} />
-                </Pressable>
-              </View>
-              {errors.password ? <Text style={st.errorText}>{errors.password}</Text> : null}
-            </View>
+            <FormField label="Password" error={errors.password}>
+              {({ onFocus, onBlur, focused }) => (
+                <>
+                  <AppIcon name="lock-closed-outline" size={18} color={errors.password ? T.danger : focused ? T.accent : T.textMuted} />
+                  <TextInput
+                    style={[st.input, NO_NATIVE_OUTLINE]}
+                    placeholder="At least 6 characters"
+                    placeholderTextColor={T.textMuted}
+                    secureTextEntry={!showPassword}
+                    autoCapitalize="none"
+                    value={password}
+                    onChangeText={(t) => { setPassword(t); setErrors((e) => ({ ...e, password: '' })); }}
+                    onFocus={onFocus}
+                    onBlur={onBlur}
+                  />
+                  <Pressable onPress={() => setShowPassword(!showPassword)} hitSlop={8}>
+                    <AppIcon name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color={T.textMuted} />
+                  </Pressable>
+                </>
+              )}
+            </FormField>
 
-            <View style={st.fieldWrap}>
-              <Text style={st.label}>Full Name</Text>
-              <View style={[st.inputWrap, errors.fullName ? st.inputError : null]}>
-                <AppIcon name="person-outline" size={18} color={errors.fullName ? T.danger : T.textMuted} />
-                <TextInput
-                  style={st.input}
-                  placeholder="e.g. Amara Osei"
-                  placeholderTextColor={T.textMuted}
-                  autoCapitalize="words"
-                  value={fullName}
-                  onChangeText={(t) => { setFullName(t); setErrors((e) => ({ ...e, fullName: '' })); }}
-                />
-              </View>
-              {errors.fullName ? <Text style={st.errorText}>{errors.fullName}</Text> : null}
-            </View>
+            <FormField label="Full Name" error={errors.fullName}>
+              {({ onFocus, onBlur, focused }) => (
+                <>
+                  <AppIcon name="person-outline" size={18} color={errors.fullName ? T.danger : focused ? T.accent : T.textMuted} />
+                  <TextInput
+                    style={[st.input, NO_NATIVE_OUTLINE]}
+                    placeholder="e.g. Amara Osei"
+                    placeholderTextColor={T.textMuted}
+                    autoCapitalize="words"
+                    value={fullName}
+                    onChangeText={(t) => { setFullName(t); setErrors((e) => ({ ...e, fullName: '' })); }}
+                    onFocus={onFocus}
+                    onBlur={onBlur}
+                  />
+                </>
+              )}
+            </FormField>
 
-            <View style={st.fieldWrap}>
-              <Text style={st.label}>Professional Title</Text>
-              <View style={[st.inputWrap, errors.title ? st.inputError : null]}>
-                <AppIcon name="briefcase-outline" size={18} color={errors.title ? T.danger : T.textMuted} />
-                <TextInput
-                  style={st.input}
-                  placeholder="e.g. Senior Backend Engineer"
-                  placeholderTextColor={T.textMuted}
-                  autoCapitalize="words"
-                  value={professionalTitle}
-                  onChangeText={(t) => { setProfessionalTitle(t); setErrors((e) => ({ ...e, title: '' })); }}
-                />
-              </View>
-              {errors.title ? <Text style={st.errorText}>{errors.title}</Text> : null}
-            </View>
+            <FormField label="Professional Title" error={errors.title}>
+              {({ onFocus, onBlur, focused }) => (
+                <>
+                  <AppIcon name="briefcase-outline" size={18} color={errors.title ? T.danger : focused ? T.accent : T.textMuted} />
+                  <TextInput
+                    style={[st.input, NO_NATIVE_OUTLINE]}
+                    placeholder="e.g. Senior Backend Engineer"
+                    placeholderTextColor={T.textMuted}
+                    autoCapitalize="words"
+                    value={professionalTitle}
+                    onChangeText={(t) => { setProfessionalTitle(t); setErrors((e) => ({ ...e, title: '' })); }}
+                    onFocus={onFocus}
+                    onBlur={onBlur}
+                  />
+                </>
+              )}
+            </FormField>
 
             <View style={st.fieldWrap}>
               <Text style={st.label}>Industry</Text>
@@ -258,24 +267,29 @@ export default function CandidateSignupScreen() {
 
             <View style={st.fieldWrap}>
               <Text style={st.label}>Core Skills</Text>
-              <View style={[st.inputWrap, errors.skills ? st.inputError : null]}>
-                <AppIcon name="code-slash-outline" size={18} color={errors.skills ? T.danger : T.textMuted} />
-                <TextInput
-                  style={st.input}
-                  placeholder="Type a skill and press add"
-                  placeholderTextColor={T.textMuted}
-                  value={skillInput}
-                  onChangeText={setSkillInput}
-                  onSubmitEditing={() => addSkill(skillInput)}
-                  returnKeyType="done"
-                />
-                {skillInput.trim().length > 0 && (
-                  <Pressable style={st.addSkillBtn} onPress={() => addSkill(skillInput)} hitSlop={8}>
-                    <AppIcon name="add" size={18} color={T.textOnAccent} />
-                  </Pressable>
+              <FormField error={errors.skills} style={st.fieldWrapNoMargin}>
+                {({ onFocus, onBlur, focused }) => (
+                  <>
+                    <AppIcon name="code-slash-outline" size={18} color={errors.skills ? T.danger : focused ? T.accent : T.textMuted} />
+                    <TextInput
+                      style={[st.input, NO_NATIVE_OUTLINE]}
+                      placeholder="Type a skill and press add"
+                      placeholderTextColor={T.textMuted}
+                      value={skillInput}
+                      onChangeText={setSkillInput}
+                      onSubmitEditing={() => addSkill(skillInput)}
+                      returnKeyType="done"
+                      onFocus={onFocus}
+                      onBlur={onBlur}
+                    />
+                    {skillInput.trim().length > 0 && (
+                      <Pressable style={st.addSkillBtn} onPress={() => addSkill(skillInput)} hitSlop={8}>
+                        <AppIcon name="add" size={18} color={T.textOnAccent} />
+                      </Pressable>
+                    )}
+                  </>
                 )}
-              </View>
-              {errors.skills ? <Text style={st.errorText}>{errors.skills}</Text> : null}
+              </FormField>
 
               {coreSkills.length > 0 && (
                 <View style={st.skillsRow}>
@@ -307,22 +321,24 @@ export default function CandidateSignupScreen() {
               )}
             </View>
 
-            <View style={st.fieldWrap}>
-              <Text style={st.label}>Target Minimum Rate (₦/month)</Text>
-              <View style={[st.inputWrap, errors.rate ? st.inputError : null]}>
-                <Text style={[st.currencyPrefix, errors.rate ? { color: T.danger } : null]}>₦</Text>
-                <TextInput
-                  style={st.input}
-                  placeholder="500000"
-                  placeholderTextColor={T.textMuted}
-                  keyboardType="numeric"
-                  value={rateInput}
-                  onChangeText={(t) => { setRateInput(t.replace(/[^0-9]/g, '')); setErrors((e) => ({ ...e, rate: '' })); }}
-                />
-                <Text style={st.rateSuffix}>/mo</Text>
-              </View>
-              {errors.rate ? <Text style={st.errorText}>{errors.rate}</Text> : null}
-            </View>
+            <FormField label="Target Minimum Rate (₦/month)" error={errors.rate}>
+              {({ onFocus, onBlur }) => (
+                <>
+                  <Text style={[st.currencyPrefix, errors.rate ? { color: T.danger } : null]}>₦</Text>
+                  <TextInput
+                    style={[st.input, NO_NATIVE_OUTLINE]}
+                    placeholder="e.g. 500000"
+                    placeholderTextColor={T.textMuted}
+                    keyboardType="numeric"
+                    value={rateInput}
+                    onChangeText={(t) => { setRateInput(t.replace(/[^0-9]/g, '')); setErrors((e) => ({ ...e, rate: '' })); }}
+                    onFocus={onFocus}
+                    onBlur={onBlur}
+                  />
+                  <Text style={st.rateSuffix}>/mo</Text>
+                </>
+              )}
+            </FormField>
 
             <View style={st.infoCard}>
               <AppIcon name="shield-checkmark-outline" size={18} color={T.accent} />
@@ -392,6 +408,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   title: { fontSize: 24, fontWeight: '800', color: T.textPrimary, letterSpacing: -0.3, marginBottom: 6, fontFamily: DISPLAY_FONT_FAMILY },
   subtitle: { fontSize: 14, color: T.textSecondary, lineHeight: 20 },
   fieldWrap: { marginBottom: 22 },
+  fieldWrapNoMargin: { marginBottom: 0 },
   label: { fontSize: 13, fontWeight: '700', color: T.textSecondary, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.3 },
   inputWrap: {
     flexDirection: 'row', alignItems: 'center', gap: 10,

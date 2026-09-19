@@ -103,7 +103,7 @@ export default function RegisterScreen() {
               <Text style={st.optionSubtitle}>{opt.subtitle}</Text>
 
               <View style={st.microRow}>
-                <AppIcon name="sparkles-outline" size={12} color={T.accent} />
+                <AppIcon name="checkmark-circle-outline" size={12} color={T.accent} />
                 <Text style={st.microText}>{opt.micro}</Text>
               </View>
             </AnimatedPressable>

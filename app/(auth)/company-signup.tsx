@@ -19,6 +19,7 @@ import ScreenFrame from '@/components/ScreenFrame';
 import { SubscriptionTier } from '@/lib/subscriptionStore';
 import { supabase } from '@/lib/supabase';
 import { friendlyAuthError, isAlreadyRegistered } from '@/lib/authErrors';
+import FormField, { NO_NATIVE_OUTLINE } from '@/components/FormField';
 import VerifyEmailModal from '@/components/VerifyEmailModal';
 import { useShake } from '@/lib/useShake';
 
@@ -278,59 +279,65 @@ export default function CompanySignupScreen() {
       <Text style={st.stepTitle}>Create Your Account</Text>
       <Text style={st.stepSubtitle}>You'll use this to sign in to your hiring workspace</Text>
 
-      <View style={st.fieldWrap}>
-        <Text style={st.label}>Your Full Name *</Text>
-        <View style={[st.inputWrap, errors.contactName ? st.inputError : null]}>
-          <AppIcon name="person-outline" size={18} color={errors.contactName ? T.danger : T.textMuted} />
-          <TextInput
-            style={st.input}
-            placeholder="e.g. Amara Osei"
-            placeholderTextColor={T.textMuted}
-            autoCapitalize="words"
-            value={contactName}
-            onChangeText={(t) => { setContactName(t); clearError('contactName'); }}
-          />
-        </View>
-        {errors.contactName ? <Text style={st.errorText}>{errors.contactName}</Text> : null}
-      </View>
+      <FormField label="Your Full Name *" error={errors.contactName}>
+        {({ onFocus, onBlur, focused }) => (
+          <>
+            <AppIcon name="person-outline" size={18} color={errors.contactName ? T.danger : focused ? T.accent : T.textMuted} />
+            <TextInput
+              style={[st.input, NO_NATIVE_OUTLINE]}
+              placeholder="e.g. Amara Osei"
+              placeholderTextColor={T.textMuted}
+              autoCapitalize="words"
+              value={contactName}
+              onChangeText={(t) => { setContactName(t); clearError('contactName'); }}
+              onFocus={onFocus}
+              onBlur={onBlur}
+            />
+          </>
+        )}
+      </FormField>
 
-      <View style={st.fieldWrap}>
-        <Text style={st.label}>Work Email *</Text>
-        <View style={[st.inputWrap, errors.email ? st.inputError : null]}>
-          <AppIcon name="mail-outline" size={18} color={errors.email ? T.danger : T.textMuted} />
-          <TextInput
-            style={st.input}
-            placeholder="hiring@company.com"
-            placeholderTextColor={T.textMuted}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoComplete="email"
-            value={email}
-            onChangeText={(t) => { setEmail(t); clearError('email'); }}
-          />
-        </View>
-        {errors.email ? <Text style={st.errorText}>{errors.email}</Text> : null}
-      </View>
+      <FormField label="Work Email *" error={errors.email}>
+        {({ onFocus, onBlur, focused }) => (
+          <>
+            <AppIcon name="mail-outline" size={18} color={errors.email ? T.danger : focused ? T.accent : T.textMuted} />
+            <TextInput
+              style={[st.input, NO_NATIVE_OUTLINE]}
+              placeholder="hiring@company.com"
+              placeholderTextColor={T.textMuted}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoComplete="email"
+              value={email}
+              onChangeText={(t) => { setEmail(t); clearError('email'); }}
+              onFocus={onFocus}
+              onBlur={onBlur}
+            />
+          </>
+        )}
+      </FormField>
 
-      <View style={st.fieldWrap}>
-        <Text style={st.label}>Password *</Text>
-        <View style={[st.inputWrap, errors.password ? st.inputError : null]}>
-          <AppIcon name="lock-closed-outline" size={18} color={errors.password ? T.danger : T.textMuted} />
-          <TextInput
-            style={st.input}
-            placeholder="At least 6 characters"
-            placeholderTextColor={T.textMuted}
-            secureTextEntry={!showPassword}
-            autoCapitalize="none"
-            value={password}
-            onChangeText={(t) => { setPassword(t); clearError('password'); }}
-          />
-          <Pressable onPress={() => setShowPassword(!showPassword)} hitSlop={8}>
-            <AppIcon name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color={T.textMuted} />
-          </Pressable>
-        </View>
-        {errors.password ? <Text style={st.errorText}>{errors.password}</Text> : null}
-      </View>
+      <FormField label="Password *" error={errors.password}>
+        {({ onFocus, onBlur, focused }) => (
+          <>
+            <AppIcon name="lock-closed-outline" size={18} color={errors.password ? T.danger : focused ? T.accent : T.textMuted} />
+            <TextInput
+              style={[st.input, NO_NATIVE_OUTLINE]}
+              placeholder="At least 6 characters"
+              placeholderTextColor={T.textMuted}
+              secureTextEntry={!showPassword}
+              autoCapitalize="none"
+              value={password}
+              onChangeText={(t) => { setPassword(t); clearError('password'); }}
+              onFocus={onFocus}
+              onBlur={onBlur}
+            />
+            <Pressable onPress={() => setShowPassword(!showPassword)} hitSlop={8}>
+              <AppIcon name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color={T.textMuted} />
+            </Pressable>
+          </>
+        )}
+      </FormField>
     </>
   );
 
@@ -339,53 +346,60 @@ export default function CompanySignupScreen() {
       <Text style={st.stepTitle}>Corporate Identity</Text>
       <Text style={st.stepSubtitle}>Basic information about your organization</Text>
 
-      <View style={st.fieldWrap}>
-        <Text style={st.label}>Company Name *</Text>
-        <View style={[st.inputWrap, errors.companyName ? st.inputError : null]}>
-          <AppIcon name="business-outline" size={18} color={errors.companyName ? T.danger : T.textMuted} />
-          <TextInput
-            style={st.input}
-            placeholder="e.g. Acme Corp"
-            placeholderTextColor={T.textMuted}
-            value={companyName}
-            onChangeText={(t) => { setCompanyName(t); clearError('companyName'); }}
-            autoCapitalize="words"
-          />
-        </View>
-        {errors.companyName ? <Text style={st.errorText}>{errors.companyName}</Text> : null}
-      </View>
+      <FormField label="Company Name *" error={errors.companyName}>
+        {({ onFocus, onBlur, focused }) => (
+          <>
+            <AppIcon name="business-outline" size={18} color={errors.companyName ? T.danger : focused ? T.accent : T.textMuted} />
+            <TextInput
+              style={[st.input, NO_NATIVE_OUTLINE]}
+              placeholder="e.g. Acme Corp"
+              placeholderTextColor={T.textMuted}
+              value={companyName}
+              onChangeText={(t) => { setCompanyName(t); clearError('companyName'); }}
+              autoCapitalize="words"
+              onFocus={onFocus}
+              onBlur={onBlur}
+            />
+          </>
+        )}
+      </FormField>
 
-      <View style={st.fieldWrap}>
-        <Text style={st.label}>Registration / Tax ID</Text>
-        <View style={st.inputWrap}>
-          <AppIcon name="document-text-outline" size={18} color={T.textMuted} />
-          <TextInput
-            style={st.input}
-            placeholder="Optional — e.g. RC12345678"
-            placeholderTextColor={T.textMuted}
-            value={taxId}
-            onChangeText={setTaxId}
-            autoCapitalize="characters"
-          />
-        </View>
-        <Text style={st.hintText}>Used for employer verification. Can be added later.</Text>
-      </View>
+      <FormField label="Registration / Tax ID" hint="Used for employer verification. Can be added later.">
+        {({ onFocus, onBlur, focused }) => (
+          <>
+            <AppIcon name="document-text-outline" size={18} color={focused ? T.accent : T.textMuted} />
+            <TextInput
+              style={[st.input, NO_NATIVE_OUTLINE]}
+              placeholder="Optional — e.g. RC12345678"
+              placeholderTextColor={T.textMuted}
+              value={taxId}
+              onChangeText={setTaxId}
+              autoCapitalize="characters"
+              onFocus={onFocus}
+              onBlur={onBlur}
+            />
+          </>
+        )}
+      </FormField>
 
-      <View style={st.fieldWrap}>
-        <Text style={st.label}>Corporate Website</Text>
-        <View style={st.inputWrap}>
-          <AppIcon name="globe-outline" size={18} color={T.textMuted} />
-          <TextInput
-            style={st.input}
-            placeholder="e.g. https://acmecorp.com"
-            placeholderTextColor={T.textMuted}
-            value={website}
-            onChangeText={setWebsite}
-            autoCapitalize="none"
-            keyboardType="url"
-          />
-        </View>
-      </View>
+      <FormField label="Corporate Website">
+        {({ onFocus, onBlur, focused }) => (
+          <>
+            <AppIcon name="globe-outline" size={18} color={focused ? T.accent : T.textMuted} />
+            <TextInput
+              style={[st.input, NO_NATIVE_OUTLINE]}
+              placeholder="e.g. https://acmecorp.com"
+              placeholderTextColor={T.textMuted}
+              value={website}
+              onChangeText={setWebsite}
+              autoCapitalize="none"
+              keyboardType="url"
+              onFocus={onFocus}
+              onBlur={onBlur}
+            />
+          </>
+        )}
+      </FormField>
     </>
   );
 
@@ -409,17 +423,20 @@ export default function CompanySignupScreen() {
           ))}
         </View>
         {industry === 'Other' ? (
-          <View style={[st.inputWrap, errors.industryOther ? st.inputError : null, { marginTop: 8 }]}>
-            <TextInput
-              style={st.input}
-              placeholder="Tell us your industry"
-              placeholderTextColor={T.textMuted}
-              value={industryOther}
-              onChangeText={(t) => { setIndustryOther(t); clearError('industryOther'); }}
-            />
-          </View>
+          <FormField style={st.fieldWrapMarginTop} error={errors.industryOther}>
+            {({ onFocus, onBlur }) => (
+              <TextInput
+                style={[st.input, NO_NATIVE_OUTLINE]}
+                placeholder="Tell us your industry"
+                placeholderTextColor={T.textMuted}
+                value={industryOther}
+                onChangeText={(t) => { setIndustryOther(t); clearError('industryOther'); }}
+                onFocus={onFocus}
+                onBlur={onBlur}
+              />
+            )}
+          </FormField>
         ) : null}
-        {errors.industryOther ? <Text style={st.errorText}>{errors.industryOther}</Text> : null}
       </View>
 
       <View style={st.fieldWrap}>
@@ -456,20 +473,23 @@ export default function CompanySignupScreen() {
         </View>
       </View>
 
-      <View style={st.fieldWrap}>
-        <Text style={st.label}>Headquarters Location</Text>
-        <View style={st.inputWrap}>
-          <AppIcon name="location-outline" size={18} color={T.textMuted} />
-          <TextInput
-            style={st.input}
-            placeholder="e.g. Lagos, Nigeria"
-            placeholderTextColor={T.textMuted}
-            value={hqLocation}
-            onChangeText={setHqLocation}
-            autoCapitalize="words"
-          />
-        </View>
-      </View>
+      <FormField label="Headquarters Location">
+        {({ onFocus, onBlur, focused }) => (
+          <>
+            <AppIcon name="location-outline" size={18} color={focused ? T.accent : T.textMuted} />
+            <TextInput
+              style={[st.input, NO_NATIVE_OUTLINE]}
+              placeholder="e.g. Lagos, Nigeria"
+              placeholderTextColor={T.textMuted}
+              value={hqLocation}
+              onChangeText={setHqLocation}
+              autoCapitalize="words"
+              onFocus={onFocus}
+              onBlur={onBlur}
+            />
+          </>
+        )}
+      </FormField>
     </>
   );
 
@@ -480,18 +500,22 @@ export default function CompanySignupScreen() {
 
       <View style={st.fieldWrap}>
         <Text style={st.label}>Company Description *</Text>
-        <View style={[st.textAreaWrap, errors.bio ? st.inputError : null]}>
-          <TextInput
-            style={st.textArea}
-            placeholder="Tell candidates what makes your company a great place to work..."
-            placeholderTextColor={T.textMuted}
-            value={bio}
-            onChangeText={(t) => { setBio(t); clearError('bio'); }}
-            multiline
-            numberOfLines={4}
-            textAlignVertical="top"
-          />
-        </View>
+        <FormField style={st.fieldWrapNoMargin} innerStyle={st.textAreaInner} error={errors.bio} hideErrorText>
+          {({ onFocus, onBlur }) => (
+            <TextInput
+              style={[st.textArea, NO_NATIVE_OUTLINE]}
+              placeholder="Tell candidates what makes your company a great place to work..."
+              placeholderTextColor={T.textMuted}
+              value={bio}
+              onChangeText={(t) => { setBio(t); clearError('bio'); }}
+              multiline
+              numberOfLines={4}
+              textAlignVertical="top"
+              onFocus={onFocus}
+              onBlur={onBlur}
+            />
+          )}
+        </FormField>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
           {errors.bio ? <Text style={st.errorText}>{errors.bio}</Text> : <View />}
           <Text style={st.hintText}>{bio.length}/300</Text>
@@ -704,21 +728,12 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   stepTitle: { fontSize: 24, fontWeight: '800', color: T.textPrimary, letterSpacing: -0.3, marginBottom: 6, fontFamily: DISPLAY_FONT_FAMILY },
   stepSubtitle: { fontSize: 14, color: T.textSecondary, lineHeight: 20, marginBottom: 24 },
   fieldWrap: { marginBottom: 22 },
+  fieldWrapNoMargin: { marginBottom: 0 },
+  fieldWrapMarginTop: { marginTop: 8, marginBottom: 0 },
   label: { fontSize: 13, fontWeight: '700', color: T.textSecondary, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.3 },
-  inputWrap: {
-    flexDirection: 'row', alignItems: 'center', gap: 10,
-    backgroundColor: T.surface, borderRadius: 14,
-    borderWidth: 1.5, borderColor: T.border,
-    paddingHorizontal: 16, height: 52,
-  },
-  inputError: { borderColor: T.danger, backgroundColor: T.dangerBg },
   input: { flex: 1, fontSize: 15, color: T.textPrimary, fontWeight: '500' },
-  textAreaWrap: {
-    backgroundColor: T.surface, borderRadius: 14,
-    borderWidth: 1.5, borderColor: T.border,
-    paddingHorizontal: 16, paddingVertical: 12,
-  },
-  textArea: { fontSize: 15, color: T.textPrimary, fontWeight: '500', minHeight: 100 },
+  textAreaInner: { height: undefined, minHeight: 112, alignItems: 'flex-start', paddingVertical: 12 },
+  textArea: { flex: 1, fontSize: 15, color: T.textPrimary, fontWeight: '500', minHeight: 88 },
   errorText: { fontSize: 12, color: T.danger, fontWeight: '500', marginTop: 4, marginLeft: 4 },
   hintText: { fontSize: 11, color: T.textMuted, marginTop: 4, marginLeft: 4 },
   infoCard: {

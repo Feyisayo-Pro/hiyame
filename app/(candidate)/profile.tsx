@@ -190,7 +190,7 @@ export default function CandidateProfileScreen() {
             </View>
           ) : (
             <View style={st.emptySkills}>
-              <AppIcon name="sparkles-outline" size={20} color={T.textMuted} />
+              <AppIcon name="code-slash-outline" size={20} color={T.textMuted} />
               <Text style={st.emptySkillsText}>Complete your profile to add skills</Text>
             </View>
           )}

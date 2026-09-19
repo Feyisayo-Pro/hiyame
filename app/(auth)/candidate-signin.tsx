@@ -10,6 +10,7 @@ import AnimatedPressable from '@/components/AnimatedPressable';
 import ScreenFrame from '@/components/ScreenFrame';
 import ForgotPasswordModal from '@/components/ForgotPasswordModal';
 import { useShake } from '@/lib/useShake';
+import FormField, { NO_NATIVE_OUTLINE } from '@/components/FormField';
 
 export default function CandidateSignInScreen() {
   const T = useTheme();
@@ -101,44 +102,48 @@ export default function CandidateSignInScreen() {
             <Text style={st.subtitle}>Sign in to access your matched opportunities</Text>
 
             {/* Email */}
-            <View style={st.fieldWrap}>
-              <Text style={st.label}>Email Address</Text>
-              <View style={[st.inputWrap, errors.email ? st.inputError : null]}>
-                <AppIcon name="mail-outline" size={18} color={errors.email ? T.danger : T.textMuted} />
-                <TextInput
-                  style={st.input}
-                  placeholder="you@example.com"
-                  placeholderTextColor={T.textMuted}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoComplete="email"
-                  value={email}
-                  onChangeText={(t) => { setEmail(t); setErrors((e) => ({ ...e, email: undefined })); }}
-                />
-              </View>
-              {errors.email && <Text style={st.errorText}>{errors.email}</Text>}
-            </View>
+            <FormField label="Email Address" error={errors.email}>
+              {({ onFocus, onBlur, focused }) => (
+                <>
+                  <AppIcon name="mail-outline" size={18} color={errors.email ? T.danger : focused ? T.accent : T.textMuted} />
+                  <TextInput
+                    style={[st.input, NO_NATIVE_OUTLINE]}
+                    placeholder="you@example.com"
+                    placeholderTextColor={T.textMuted}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoComplete="email"
+                    value={email}
+                    onChangeText={(t) => { setEmail(t); setErrors((e) => ({ ...e, email: undefined })); }}
+                    onFocus={onFocus}
+                    onBlur={onBlur}
+                  />
+                </>
+              )}
+            </FormField>
 
             {/* Password */}
-            <View style={st.fieldWrap}>
-              <Text style={st.label}>Password</Text>
-              <View style={[st.inputWrap, errors.password ? st.inputError : null]}>
-                <AppIcon name="lock-closed-outline" size={18} color={errors.password ? T.danger : T.textMuted} />
-                <TextInput
-                  style={st.input}
-                  placeholder="Enter your password"
-                  placeholderTextColor={T.textMuted}
-                  secureTextEntry={!showPassword}
-                  autoCapitalize="none"
-                  value={password}
-                  onChangeText={(t) => { setPassword(t); setErrors((e) => ({ ...e, password: undefined })); }}
-                />
-                <Pressable onPress={() => setShowPassword(!showPassword)} hitSlop={8}>
-                  <AppIcon name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color={T.textMuted} />
-                </Pressable>
-              </View>
-              {errors.password && <Text style={st.errorText}>{errors.password}</Text>}
-            </View>
+            <FormField label="Password" error={errors.password}>
+              {({ onFocus, onBlur, focused }) => (
+                <>
+                  <AppIcon name="lock-closed-outline" size={18} color={errors.password ? T.danger : focused ? T.accent : T.textMuted} />
+                  <TextInput
+                    style={[st.input, NO_NATIVE_OUTLINE]}
+                    placeholder="Enter your password"
+                    placeholderTextColor={T.textMuted}
+                    secureTextEntry={!showPassword}
+                    autoCapitalize="none"
+                    value={password}
+                    onChangeText={(t) => { setPassword(t); setErrors((e) => ({ ...e, password: undefined })); }}
+                    onFocus={onFocus}
+                    onBlur={onBlur}
+                  />
+                  <Pressable onPress={() => setShowPassword(!showPassword)} hitSlop={8}>
+                    <AppIcon name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color={T.textMuted} />
+                  </Pressable>
+                </>
+              )}
+            </FormField>
 
             {/* Forgot Password */}
             <Pressable style={st.forgotRow} onPress={() => setShowForgotPassword(true)}>
