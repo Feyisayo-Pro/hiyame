@@ -13,6 +13,7 @@ import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import ScreenFrame from '@/components/ScreenFrame';
 import { notify } from '@/lib/notify';
 import { initials } from '@/lib/format';
+import { SkeletonRow } from '@/components/Skeleton';
 
 // The team roster is real: it reads and writes the company_users table
 // (scoped to the signed-in user's company via RLS). An "invite" is a
@@ -201,8 +202,9 @@ export default function TeamMembersScreen() {
           {/* Member list */}
           <Text style={s.sectionLabel}>MEMBERS</Text>
           {members === null ? (
-            <View style={s.loadingBox}>
-              <ActivityIndicator color={T.accent} />
+            <View style={s.memberList}>
+              <SkeletonRow />
+              <SkeletonRow />
             </View>
           ) : members.length === 0 ? (
             <View style={s.emptyBox}>

@@ -7,7 +7,7 @@
  * none of those are tracked anywhere.
  */
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, ScrollView, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { Text } from '@/components/Themed';
 import AppIcon, { AppIconName } from '@/components/AppIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -16,6 +16,7 @@ import { useAuth } from '@/lib/useAuth';
 import { getCompanyStats, getCandidateStats, CompanyStats, CandidateStats } from '@/lib/dashboardStats';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import ScreenFrame from '@/components/ScreenFrame';
+import { SkeletonBlock, SkeletonCard } from '@/components/Skeleton';
 import { FULL_VERIFICATION_THRESHOLD } from '@/lib/verification';
 
 type Persona = 'company' | 'candidate';
@@ -164,6 +165,27 @@ function CandidateAnalytics({ T, stats }: { T: ThemePalette; stats: CandidateSta
   );
 }
 
+// Previews this screen's real shape (2 rows of metric cards + 2 content
+// cards) instead of a bare centered spinner — same reasoning as the
+// Skeleton component's own doc comment: the loading state should preview
+// the layout, not just say "wait".
+function AnalyticsSkeleton() {
+  return (
+    <View style={{ paddingHorizontal: 20, paddingTop: 14 }}>
+      <View style={{ flexDirection: 'row', gap: 10, marginBottom: 10 }}>
+        <SkeletonCard style={{ flex: 1, height: 96 }} />
+        <SkeletonCard style={{ flex: 1, height: 96 }} />
+      </View>
+      <View style={{ flexDirection: 'row', gap: 10, marginBottom: 24 }}>
+        <SkeletonCard style={{ flex: 1, height: 96 }} />
+        <SkeletonCard style={{ flex: 1, height: 96 }} />
+      </View>
+      <SkeletonBlock width="100%" height={140} radius={16} style={{ marginBottom: 16 }} />
+      <SkeletonBlock width="100%" height={160} radius={16} />
+    </View>
+  );
+}
+
 export default function AnalyticsScreen({ persona = 'company' }: { persona?: Persona }) {
   const T = useTheme();
   const { companyId, candidateId } = useAuth();
@@ -190,9 +212,7 @@ export default function AnalyticsScreen({ persona = 'company' }: { persona?: Per
       </View>
 
       {!ready ? (
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator color={T.accent} />
-        </View>
+        <AnalyticsSkeleton />
       ) : persona === 'company' ? (
         <CompanyAnalytics T={T} stats={company as CompanyStats} />
       ) : (

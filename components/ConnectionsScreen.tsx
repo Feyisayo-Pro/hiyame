@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, View, ActivityIndicator } from 'react-native';
+import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { SkeletonCard } from '@/components/Skeleton';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AppIcon from '@/components/AppIcon';
 import { Text } from '@/components/Themed';
@@ -98,8 +99,10 @@ export default function ConnectionsScreen({ persona }: { persona: 'candidate' | 
       </View>
 
       {connections === null ? (
-        <View style={st.centerFill}>
-          <ActivityIndicator color={T.accent} />
+        <View style={st.scroll}>
+          <SkeletonCard style={{ marginBottom: 18, minHeight: 140 }} />
+          <SkeletonCard style={{ marginBottom: 18, minHeight: 140 }} />
+          <SkeletonCard style={{ minHeight: 140 }} />
         </View>
       ) : (
         <ScrollView

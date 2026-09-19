@@ -12,6 +12,7 @@ import { useAuth } from '@/lib/useAuth';
 import { useSubscription } from '@/lib/subscriptionStore';
 import { supabase } from '@/lib/supabase';
 import { pickAndUploadCompanyLogo } from '@/lib/uploadCompanyLogo';
+import { SkeletonBlock } from '@/components/Skeleton';
 import { notify } from '@/lib/notify';
 
 interface RealCompany extends CompanyEditable {
@@ -101,29 +102,42 @@ export default function CompanyProfileScreen() {
 
         {/* ── Workspace Card ── */}
         <View style={st.workspaceCard}>
-          <View style={st.wsTop}>
-            <Pressable style={st.wsAvatarWrap} onPress={handleLogoPress} disabled={uploadingLogo} accessibilityRole="button" accessibilityLabel="Change company logo">
-              <View style={st.wsAvatar}>
-                {real?.logoUrl ? (
-                  <Image source={{ uri: real.logoUrl }} style={st.wsAvatarImage} resizeMode="cover" />
-                ) : (
-                  <AppIcon name="business" size={28} color={T.accent} />
-                )}
-                {uploadingLogo && (
-                  <View style={st.wsAvatarUploadingOverlay}>
-                    <AppIcon name="cloud-upload-outline" size={18} color={T.white} />
-                  </View>
-                )}
+          {real === null ? (
+            // Was showing "Your Company" for the brief window before the
+            // real companies row loads — a fake-looking placeholder name is
+            // worse than an honest loading skeleton.
+            <View style={st.wsTop}>
+              <SkeletonBlock width={56} height={56} radius={16} />
+              <View style={st.wsInfo}>
+                <SkeletonBlock width={150} height={18} radius={6} style={{ marginBottom: 8 }} />
+                <SkeletonBlock width={110} height={13} radius={6} />
               </View>
-              <View style={st.wsCameraOverlay}>
-                <AppIcon name="camera" size={12} color={T.white} />
-              </View>
-            </Pressable>
-            <View style={st.wsInfo}>
-              <Text style={st.wsName}>{displayName}</Text>
-              <Text style={st.wsIndustry}>{[real?.industry, real?.sizeRange].filter(Boolean).join(' · ') || 'Add your industry and size'}</Text>
             </View>
-          </View>
+          ) : (
+            <View style={st.wsTop}>
+              <Pressable style={st.wsAvatarWrap} onPress={handleLogoPress} disabled={uploadingLogo} accessibilityRole="button" accessibilityLabel="Change company logo">
+                <View style={st.wsAvatar}>
+                  {real?.logoUrl ? (
+                    <Image source={{ uri: real.logoUrl }} style={st.wsAvatarImage} resizeMode="cover" />
+                  ) : (
+                    <AppIcon name="business" size={28} color={T.accent} />
+                  )}
+                  {uploadingLogo && (
+                    <View style={st.wsAvatarUploadingOverlay}>
+                      <AppIcon name="cloud-upload-outline" size={18} color={T.white} />
+                    </View>
+                  )}
+                </View>
+                <View style={st.wsCameraOverlay}>
+                  <AppIcon name="camera" size={12} color={T.white} />
+                </View>
+              </Pressable>
+              <View style={st.wsInfo}>
+                <Text style={st.wsName}>{displayName}</Text>
+                <Text style={st.wsIndustry}>{[real?.industry, real?.sizeRange].filter(Boolean).join(' · ') || 'Add your industry and size'}</Text>
+              </View>
+            </View>
+          )}
 
           <View style={st.wsBadgeRow}>
             <View style={st.tierBadge}>

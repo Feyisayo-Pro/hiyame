@@ -14,6 +14,7 @@ import ScreenFrame from '@/components/ScreenFrame';
 import EditCandidateProfileModal from '@/components/EditCandidateProfileModal';
 import PortfolioSection from '@/components/PortfolioSection';
 import { useTheme, useThemeToggle, ThemePalette, DISPLAY_FONT_FAMILY } from '@/lib/theme';
+import { SkeletonBlock } from '@/components/Skeleton';
 import { notify } from '@/lib/notify';
 import { formatNaira } from '@/lib/currency';
 import { FULL_VERIFICATION_THRESHOLD } from '@/lib/verification';
@@ -121,55 +122,66 @@ export default function CandidateProfileScreen() {
         </View>
 
         {/* ── Personal Card ── */}
-        <View style={st.personalCard}>
-          <Pressable style={st.avatarWrap} onPress={handlePhotoPress} disabled={uploading} accessibilityRole="button" accessibilityLabel="Change profile photo">
-            <View style={[st.avatar, isFullyVerified && st.avatarVerified]}>
-              {photoUrl ? (
-                <Image source={{ uri: photoUrl }} style={st.avatarImage} resizeMode="cover" />
-              ) : (
-                <AppIcon name="person" size={28} color={T.accent} />
-              )}
-              {uploading && (
-                <View style={st.avatarUploadingOverlay}>
-                  <AppIcon name="cloud-upload-outline" size={20} color={T.white} />
+        {real === null ? (
+          // Was showing "Anonymous Professional" for the brief window before
+          // the real candidates row loads — a fake-looking name flash is
+          // worse than an honest loading skeleton.
+          <View style={st.personalCard}>
+            <SkeletonBlock width={96} height={96} radius={48} style={{ marginBottom: 14 }} />
+            <SkeletonBlock width={170} height={20} radius={6} style={{ marginBottom: 8 }} />
+            <SkeletonBlock width={120} height={14} radius={6} />
+          </View>
+        ) : (
+          <View style={st.personalCard}>
+            <Pressable style={st.avatarWrap} onPress={handlePhotoPress} disabled={uploading} accessibilityRole="button" accessibilityLabel="Change profile photo">
+              <View style={[st.avatar, isFullyVerified && st.avatarVerified]}>
+                {photoUrl ? (
+                  <Image source={{ uri: photoUrl }} style={st.avatarImage} resizeMode="cover" />
+                ) : (
+                  <AppIcon name="person" size={28} color={T.accent} />
+                )}
+                {uploading && (
+                  <View style={st.avatarUploadingOverlay}>
+                    <AppIcon name="cloud-upload-outline" size={20} color={T.white} />
+                  </View>
+                )}
+              </View>
+              {/* Camera overlay */}
+              <View style={st.cameraOverlay}>
+                <AppIcon name="camera" size={14} color={T.white} />
+              </View>
+              {isFullyVerified && (
+                <View style={st.verifiedCheck}>
+                  <AppIcon name="decagram" size={22} color={T.emerald} />
                 </View>
               )}
+            </Pressable>
+
+            <Text style={st.name}>{displayName}</Text>
+            <Text style={st.title}>{displayTitle}</Text>
+
+            {/* Verification badge */}
+            <View style={[st.verBadge, isFullyVerified ? st.verBadgeFull : st.verBadgePartial]}>
+              <AppIcon
+                name="shield-checkmark"
+                size={13}
+                color={isFullyVerified ? T.emerald : T.accent}
+              />
+              <Text style={[st.verBadgeText, { color: isFullyVerified ? T.emerald : T.accent }]}>
+                {isFullyVerified ? 'Fully Verified' : `${completedCount}/${totalCount} Verified`}
+              </Text>
             </View>
-            {/* Camera overlay */}
-            <View style={st.cameraOverlay}>
-              <AppIcon name="camera" size={14} color={T.white} />
-            </View>
-            {isFullyVerified && (
-              <View style={st.verifiedCheck}>
-                <AppIcon name="decagram" size={22} color={T.emerald} />
+
+            {/* Target Rate */}
+            {targetMinRate > 0 && (
+              <View style={st.rateRow}>
+                <AppIcon name="cash-outline" size={16} color={T.accent} />
+                <Text style={st.rateLabel}>Target Min Rate</Text>
+                <Text style={st.rateValue}>{formatNaira(targetMinRate)}/mo</Text>
               </View>
             )}
-          </Pressable>
-
-          <Text style={st.name}>{displayName}</Text>
-          <Text style={st.title}>{displayTitle}</Text>
-
-          {/* Verification badge */}
-          <View style={[st.verBadge, isFullyVerified ? st.verBadgeFull : st.verBadgePartial]}>
-            <AppIcon
-              name="shield-checkmark"
-              size={13}
-              color={isFullyVerified ? T.emerald : T.accent}
-            />
-            <Text style={[st.verBadgeText, { color: isFullyVerified ? T.emerald : T.accent }]}>
-              {isFullyVerified ? 'Fully Verified' : `${completedCount}/${totalCount} Verified`}
-            </Text>
           </View>
-
-          {/* Target Rate */}
-          {targetMinRate > 0 && (
-            <View style={st.rateRow}>
-              <AppIcon name="cash-outline" size={16} color={T.accent} />
-              <Text style={st.rateLabel}>Target Min Rate</Text>
-              <Text style={st.rateValue}>{formatNaira(targetMinRate)}/mo</Text>
-            </View>
-          )}
-        </View>
+        )}
 
         {/* ── Core Skills ── */}
         <View style={st.section}>
