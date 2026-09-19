@@ -16,6 +16,8 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useMemo, ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View, StatusBar as RNStatusBar, Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import Toast from 'react-native-toast-message';
+import { toastConfig } from '@/lib/toastConfig';
 import AppIcon from '@/components/AppIcon';
 import { StatusBar } from 'expo-status-bar';
 import { CandidateProfileProvider } from '@/lib/candidateProfile';
@@ -141,6 +143,10 @@ function RootLayout() {
       <HiyameThemeProvider>
         <RootLayoutNav />
       </HiyameThemeProvider>
+      {/* Mounted once at the root, above every screen — lib/notify.ts calls
+          Toast.show() from anywhere in the app without needing its own
+          provider per screen. */}
+      <Toast config={toastConfig} />
     </GestureHandlerRootView>
   );
 }

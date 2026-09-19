@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Animated, Platform, Pressable, StyleSheet, View } from 'react-native';
 import AppIcon from '@/components/AppIcon';
+import LiveDot from '@/components/LiveDot';
 import { fontFamilyForWeight } from '@/lib/theme';
 
 // Floating bottom pill toggle — the "I'm hiring / Looking for a job" switcher
@@ -32,7 +33,7 @@ export default function PersonaSwitcher({ mode, onChange }: Props) {
       <View style={st.pill}>
         <Pressable onPress={() => onChange('hiring')} hitSlop={4}>
           <Animated.View style={[st.segment, { backgroundColor: hiringBg }]}>
-            <View style={[st.dot, mode === 'hiring' && st.dotActive]} />
+            {mode === 'hiring' ? <LiveDot color="#17A75B" /> : <View style={st.dot} />}
             <Animated.Text style={[st.segmentText, { color: hiringText }]}>I'm hiring</Animated.Text>
           </Animated.View>
         </Pressable>
@@ -66,5 +67,4 @@ const st = StyleSheet.create({
   segment: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 18, paddingVertical: 11, borderRadius: 999 },
   segmentText: { fontSize: 13.5, fontWeight: '700', fontFamily: fontFamilyForWeight('700') },
   dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#536471' },
-  dotActive: { backgroundColor: '#17A75B' },
 });
