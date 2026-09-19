@@ -63,12 +63,12 @@ export default function PublicNav({ stacked, active }: Props) {
         >
           <Text style={st.loginPillText}>Login</Text>
         </AnimatedPressable>
-        {/* Candidates are Hiyame's larger, lower-friction audience by far
-            (over a thousand vs. a couple dozen companies) — the sensible
-            default for a generic "Sign up" with no persona context yet. */}
+        {/* Used to guess candidate here with no persona context — real
+            feedback was "there should be candidate or company, not just
+            guesswork". Routes to a real choice screen instead. */}
         <AnimatedPressable
           style={(state) => [st.signUpPill, state.hovered && st.signUpPillHover]}
-          onPress={() => router.push('/(auth)/candidate-signup')}
+          onPress={() => router.push('/(auth)/register')}
           scaleTo={0.95}
         >
           <Text style={st.signUpPillText}>Sign up</Text>

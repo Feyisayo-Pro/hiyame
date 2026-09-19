@@ -7,7 +7,7 @@ import {
   EnvelopeSimple, EnvelopeSimpleOpen, Eye, EyeSlash, FileText, Gear, Globe, House, IdentificationCard,
   Info, Key, Leaf, Lifebuoy, Lightning, Lock, MagnifyingGlass, MapPin, Money, Moon, PaperPlaneTilt,
   PencilSimple, Plus, PlusCircle, Question, Rocket, RocketLaunch, SealCheck, Shield, ShieldCheck,
-  SignOut, Sparkle, Star, Sun, Trash, User, UserCircle, UserPlus, Users, UsersThree, VideoCamera,
+  SignIn, SignOut, Sparkle, Star, Sun, Trash, User, UserCircle, UserPlus, Users, UsersThree, VideoCamera,
   Warning, WarningCircle, X, XCircle,
 } from 'phosphor-react-native';
 
@@ -75,6 +75,7 @@ const MAP: Record<string, { Icon: typeof House; weight: PhosphorWeight }> = {
   'lock-closed': { Icon: Lock, weight: 'fill' },
   'lock-closed-outline': { Icon: Lock, weight: 'regular' },
   'log-out-outline': { Icon: SignOut, weight: 'regular' },
+  'log-in-outline': { Icon: SignIn, weight: 'regular' },
   'mail-outline': { Icon: EnvelopeSimple, weight: 'regular' },
   'mail-unread': { Icon: EnvelopeSimpleOpen, weight: 'fill' },
   'moon-outline': { Icon: Moon, weight: 'regular' },
