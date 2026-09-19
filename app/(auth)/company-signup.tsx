@@ -20,6 +20,7 @@ import { SubscriptionTier } from '@/lib/subscriptionStore';
 import { supabase } from '@/lib/supabase';
 import { friendlyAuthError, isAlreadyRegistered } from '@/lib/authErrors';
 import FormField, { NO_NATIVE_OUTLINE } from '@/components/FormField';
+import PasswordStrengthMeter from '@/components/PasswordStrengthMeter';
 import VerifyEmailModal from '@/components/VerifyEmailModal';
 import { useShake } from '@/lib/useShake';
 
@@ -173,6 +174,28 @@ export default function CompanySignupScreen() {
     });
   }, []);
 
+  // Real-time (on-blur) validation for step 0's account fields — Continue
+  // already blocks advancing past a bad field, but that's still only
+  // feedback on submit-of-the-step; this surfaces it the moment you leave
+  // the field instead.
+  const validateAccountField = useCallback((field: 'contactName' | 'email' | 'password') => {
+    setErrors((e) => {
+      const next = { ...e };
+      if (field === 'contactName') {
+        next.contactName = contactName.trim() ? '' : 'Your name is required';
+      } else if (field === 'email') {
+        if (!email.trim()) next.email = 'Email is required';
+        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) next.email = 'Enter a valid email address';
+        else next.email = '';
+      } else if (field === 'password') {
+        if (!password) next.password = 'Password is required';
+        else if (password.length < 6) next.password = 'Password must be at least 6 characters';
+        else next.password = '';
+      }
+      return next;
+    });
+  }, [contactName, email, password]);
+
   const validateStep = useCallback((): boolean => {
     const newErrors: Record<string, string> = {};
 
@@ -291,7 +314,7 @@ export default function CompanySignupScreen() {
               value={contactName}
               onChangeText={(t) => { setContactName(t); clearError('contactName'); }}
               onFocus={onFocus}
-              onBlur={onBlur}
+              onBlur={() => { onBlur(); validateAccountField('contactName'); }}
             />
           </>
         )}
@@ -311,7 +334,7 @@ export default function CompanySignupScreen() {
               value={email}
               onChangeText={(t) => { setEmail(t); clearError('email'); }}
               onFocus={onFocus}
-              onBlur={onBlur}
+              onBlur={() => { onBlur(); validateAccountField('email'); }}
             />
           </>
         )}
@@ -330,7 +353,7 @@ export default function CompanySignupScreen() {
               value={password}
               onChangeText={(t) => { setPassword(t); clearError('password'); }}
               onFocus={onFocus}
-              onBlur={onBlur}
+              onBlur={() => { onBlur(); validateAccountField('password'); }}
             />
             <Pressable onPress={() => setShowPassword(!showPassword)} hitSlop={8}>
               <AppIcon name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color={T.textMuted} />
@@ -338,6 +361,7 @@ export default function CompanySignupScreen() {
           </>
         )}
       </FormField>
+      <PasswordStrengthMeter password={password} />
     </>
   );
 

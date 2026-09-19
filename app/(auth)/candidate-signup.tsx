@@ -19,6 +19,7 @@ import { useTheme, ThemePalette, DISPLAY_FONT_FAMILY } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
 import { friendlyAuthError, isAlreadyRegistered } from '@/lib/authErrors';
 import FormField, { NO_NATIVE_OUTLINE } from '@/components/FormField';
+import PasswordStrengthMeter from '@/components/PasswordStrengthMeter';
 import ScreenFrame from '@/components/ScreenFrame';
 import VerifyEmailModal from '@/components/VerifyEmailModal';
 import { INDUSTRIES, SKILLS_BY_INDUSTRY, DEFAULT_SKILL_SUGGESTIONS } from '@/lib/industrySkills';
@@ -55,6 +56,41 @@ export default function CandidateSignupScreen() {
 
   const removeSkill = (skill: string) => {
     setCoreSkills(coreSkills.filter((s) => s !== skill));
+  };
+
+  // Real-time (on-blur) validation — before this, every field stayed
+  // silent until the final submit, so a typo in the very first field could
+  // go unnoticed through the entire rest of a long single-page form. Same
+  // rules as validate() below, just run per-field the moment you leave it
+  // instead of only in a lump on submit.
+  const validateField = (field: string) => {
+    setErrors((e) => {
+      const next = { ...e };
+      switch (field) {
+        case 'email':
+          if (!email.trim()) next.email = 'Email is required';
+          else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) next.email = 'Enter a valid email address';
+          else next.email = '';
+          break;
+        case 'password':
+          if (!password) next.password = 'Password is required';
+          else if (password.length < 6) next.password = 'Password must be at least 6 characters';
+          else next.password = '';
+          break;
+        case 'fullName':
+          next.fullName = fullName.trim() ? '' : 'Full name is required';
+          break;
+        case 'title':
+          next.title = professionalTitle.trim() ? '' : 'Professional title is required';
+          break;
+        case 'rate':
+          if (!rateInput.trim()) next.rate = 'Target rate is required';
+          else if (isNaN(Number(rateInput)) || Number(rateInput) <= 0) next.rate = 'Enter a valid rate amount';
+          else next.rate = '';
+          break;
+      }
+      return next;
+    });
   };
 
   const validate = (): boolean => {
@@ -184,7 +220,7 @@ export default function CandidateSignupScreen() {
                     value={email}
                     onChangeText={(t) => { setEmail(t); setErrors((e) => ({ ...e, email: '' })); }}
                     onFocus={onFocus}
-                    onBlur={onBlur}
+                    onBlur={() => { onBlur(); validateField('email'); }}
                   />
                 </>
               )}
@@ -203,7 +239,7 @@ export default function CandidateSignupScreen() {
                     value={password}
                     onChangeText={(t) => { setPassword(t); setErrors((e) => ({ ...e, password: '' })); }}
                     onFocus={onFocus}
-                    onBlur={onBlur}
+                    onBlur={() => { onBlur(); validateField('password'); }}
                   />
                   <Pressable onPress={() => setShowPassword(!showPassword)} hitSlop={8}>
                     <AppIcon name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color={T.textMuted} />
@@ -211,6 +247,7 @@ export default function CandidateSignupScreen() {
                 </>
               )}
             </FormField>
+            <PasswordStrengthMeter password={password} />
 
             <FormField label="Full Name" error={errors.fullName}>
               {({ onFocus, onBlur, focused }) => (
@@ -224,7 +261,7 @@ export default function CandidateSignupScreen() {
                     value={fullName}
                     onChangeText={(t) => { setFullName(t); setErrors((e) => ({ ...e, fullName: '' })); }}
                     onFocus={onFocus}
-                    onBlur={onBlur}
+                    onBlur={() => { onBlur(); validateField('fullName'); }}
                   />
                 </>
               )}
@@ -242,7 +279,7 @@ export default function CandidateSignupScreen() {
                     value={professionalTitle}
                     onChangeText={(t) => { setProfessionalTitle(t); setErrors((e) => ({ ...e, title: '' })); }}
                     onFocus={onFocus}
-                    onBlur={onBlur}
+                    onBlur={() => { onBlur(); validateField('title'); }}
                   />
                 </>
               )}
@@ -333,7 +370,7 @@ export default function CandidateSignupScreen() {
                     value={rateInput}
                     onChangeText={(t) => { setRateInput(t.replace(/[^0-9]/g, '')); setErrors((e) => ({ ...e, rate: '' })); }}
                     onFocus={onFocus}
-                    onBlur={onBlur}
+                    onBlur={() => { onBlur(); validateField('rate'); }}
                   />
                   <Text style={st.rateSuffix}>/mo</Text>
                 </>
