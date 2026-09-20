@@ -1,5 +1,6 @@
 import { useEffect, useRef, ReactNode } from 'react';
-import { Animated, Easing, ViewStyle, StyleProp } from 'react-native';
+import { Animated, ViewStyle, StyleProp } from 'react-native';
+import { DURATION, EASE } from '@/lib/motion';
 
 interface SwipeFadeContainerProps {
   children: ReactNode;
@@ -24,7 +25,7 @@ export default function SwipeFadeContainer({
   direction = 'left',
   axis = 'x',
   offset = 60,
-  duration = 300,
+  duration = DURATION.entrance,
   delay = 150,
   style,
   triggerKey,
@@ -42,14 +43,14 @@ export default function SwipeFadeContainer({
         toValue: 1,
         duration,
         delay,
-        easing: Easing.out(Easing.cubic),
+        easing: EASE.enter,
         useNativeDriver: true,
       }),
       Animated.timing(translate, {
         toValue: 0,
         duration,
         delay,
-        easing: Easing.out(Easing.cubic),
+        easing: EASE.enter,
         useNativeDriver: true,
       }),
     ]).start();

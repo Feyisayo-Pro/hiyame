@@ -1,5 +1,6 @@
 import { View } from 'react-native';
 import { MotiView } from 'moti';
+import { DURATION } from '@/lib/motion';
 
 // First real usage of Moti in the app — a declarative layer over Reanimated
 // (already installed, previously unused entirely: this session had hand-
@@ -19,7 +20,7 @@ export default function LiveDot({ color, size = 7 }: Props) {
       <MotiView
         from={{ opacity: 0.6, scale: 1 }}
         animate={{ opacity: 1, scale: 1.35 }}
-        transition={{ type: 'timing', duration: 900, loop: true, repeatReverse: true }}
+        transition={{ type: 'timing', duration: DURATION.ambient, loop: true, repeatReverse: true }}
         style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: color, position: 'absolute' }}
       />
     </View>

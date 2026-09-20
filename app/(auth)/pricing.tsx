@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react';
-import { Animated, Easing, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Animated, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { router } from 'expo-router';
 import { Text } from '@/components/Themed';
 import AppIcon from '@/components/AppIcon';
@@ -13,6 +13,7 @@ import GradientBlobBackground from '@/components/GradientBlobBackground';
 import AnimatedPressable from '@/components/AnimatedPressable';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import { PLANS, PricingPlan } from '@/lib/subscriptionStore';
+import { DURATION, EASE, SPRING } from '@/lib/motion';
 
 // Public, logged-out pricing page — the highest-value, lowest-risk nav
 // addition flagged from the Viamatch research pass: it surfaces the real
@@ -114,8 +115,8 @@ function PlanCard({ plan, st, stacked }: { plan: PricingPlan; st: ReturnType<typ
     if (!plan.highlight) return;
     const loop = Animated.loop(
       Animated.sequence([
-        Animated.timing(pulse, { toValue: 1, duration: 1400, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-        Animated.timing(pulse, { toValue: 0, duration: 1400, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 1, duration: 1400, easing: EASE.pulse, useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 0, duration: 1400, easing: EASE.pulse, useNativeDriver: true }),
       ])
     );
     loop.start();
@@ -174,7 +175,7 @@ function FeatureRow({ label, index, st }: { label: string; index: number; st: Re
   useEffect(() => {
     Animated.sequence([
       Animated.delay(index * 60),
-      Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 14, bounciness: 12 }),
+      Animated.spring(scale, { toValue: 1, useNativeDriver: true, ...SPRING.bounceIn }),
     ]).start();
   }, []);
   return (
@@ -212,7 +213,7 @@ function ComparisonSection({ st, stacked }: { st: ReturnType<typeof makeStyles>;
             <Text style={[st.compHeaderCell, st.compHeaderCellHiyame]}>Hiyame</Text>
           </View>
           {COMPARISON_ROWS.map((row, i) => (
-            <SwipeFadeContainer key={row.label} axis="y" offset={10} duration={320} delay={80 + i * 60}>
+            <SwipeFadeContainer key={row.label} axis="y" offset={10} duration={DURATION.stagger} delay={80 + i * 60}>
               <View style={[st.compRow, i % 2 === 1 && st.compRowAlt]}>
                 <Text style={st.compLabelText}>{row.label}</Text>
                 <CompCell value={row.jobBoard} st={st} />

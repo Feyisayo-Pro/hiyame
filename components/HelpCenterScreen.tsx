@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
-import { Animated, Easing, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Animated, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import AppIcon, { AppIconName } from '@/components/AppIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -7,6 +7,7 @@ import { Text } from '@/components/Themed';
 import { useTheme, ThemePalette } from '@/lib/theme';
 import ScreenFrame from '@/components/ScreenFrame';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
+import { DURATION, EASE } from '@/lib/motion';
 
 type Persona = 'candidate' | 'company';
 
@@ -81,8 +82,8 @@ function AccordionItem({ item, T }: { item: Faq; T: ThemePalette }) {
     const next = !open;
     setOpen(next);
     Animated.parallel([
-      Animated.timing(rotate, { toValue: next ? 1 : 0, duration: 220, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
-      Animated.timing(fade, { toValue: next ? 1 : 0, duration: next ? 260 : 140, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+      Animated.timing(rotate, { toValue: next ? 1 : 0, duration: DURATION.stagger, easing: EASE.enter, useNativeDriver: true }),
+      Animated.timing(fade, { toValue: next ? 1 : 0, duration: next ? DURATION.stagger : DURATION.fast, easing: EASE.enter, useNativeDriver: true }),
     ]).start();
   };
 

@@ -23,6 +23,7 @@ import FormField, { NO_NATIVE_OUTLINE } from '@/components/FormField';
 import PasswordStrengthMeter from '@/components/PasswordStrengthMeter';
 import VerifyEmailModal from '@/components/VerifyEmailModal';
 import { useShake } from '@/lib/useShake';
+import { DURATION } from '@/lib/motion';
 
 /* ── Constants ── */
 
@@ -669,7 +670,7 @@ export default function CompanySignupScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <SwipeFadeContainer triggerKey={step} duration={220} offset={40}>
+          <SwipeFadeContainer triggerKey={step} duration={DURATION.stagger} offset={40}>
             <Animated.View style={[{ paddingHorizontal: 20 }, shakeStyle]}>
               <StepProgress current={step} total={TOTAL_STEPS} T={T} />
 

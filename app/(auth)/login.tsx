@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, ThemePalette, DISPLAY_FONT_FAMILY } from '@/lib/theme';
 import ScreenFrame from '@/components/ScreenFrame';
 import AnimatedPressable from '@/components/AnimatedPressable';
+import { DURATION, EASE } from '@/lib/motion';
 
 interface SignInOption {
   key: string;
@@ -48,12 +49,12 @@ export default function LoginScreen() {
   useEffect(() => {
     Animated.sequence([
       Animated.parallel([
-        Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
-        Animated.timing(slideAnim, { toValue: 0, duration: 500, useNativeDriver: true }),
+        Animated.timing(fadeAnim, { toValue: 1, duration: DURATION.entrance, easing: EASE.enter, useNativeDriver: true }),
+        Animated.timing(slideAnim, { toValue: 0, duration: DURATION.entrance, easing: EASE.enter, useNativeDriver: true }),
       ]),
       Animated.parallel([
-        Animated.timing(cardFade, { toValue: 1, duration: 400, useNativeDriver: true }),
-        Animated.timing(cardSlide, { toValue: 0, duration: 400, useNativeDriver: true }),
+        Animated.timing(cardFade, { toValue: 1, duration: DURATION.stagger, easing: EASE.enter, useNativeDriver: true }),
+        Animated.timing(cardSlide, { toValue: 0, duration: DURATION.stagger, easing: EASE.enter, useNativeDriver: true }),
       ]),
     ]).start();
   }, []);

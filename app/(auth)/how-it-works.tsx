@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Easing, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Animated, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { Text } from '@/components/Themed';
 import AppIcon from '@/components/AppIcon';
@@ -10,6 +10,7 @@ import PublicNav from '@/components/PublicNav';
 import PublicFooter from '@/components/PublicFooter';
 import GradientBlobBackground from '@/components/GradientBlobBackground';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
+import { DURATION, EASE } from '@/lib/motion';
 
 // Was a section embedded in app/(auth)/welcome.tsx (the home page), reached
 // only by scrolling down or via Pricing/About's persona tabs auto-scrolling
@@ -109,7 +110,7 @@ export default function HowItWorksScreen() {
 
             <View style={[st.flowsRow, stacked && st.flowsColumn]}>
               {flows.map((f, i) => (
-                <SwipeFadeContainer key={f.mode} axis="y" offset={18} duration={460} delay={140 + i * 100} style={st.flowFadeWrap}>
+                <SwipeFadeContainer key={f.mode} axis="y" offset={18} duration={DURATION.entrance} delay={140 + i * 100} style={st.flowFadeWrap}>
                   <AutoStepFlow {...f} st={st} />
                 </SwipeFadeContainer>
               ))}
@@ -135,7 +136,7 @@ function AutoStepFlow({ mode, eyebrow, title, subhead, steps, st }: {
 
   useEffect(() => {
     progress.setValue(0);
-    const anim = Animated.timing(progress, { toValue: 1, duration: STEP_DURATION, easing: Easing.linear, useNativeDriver: false });
+    const anim = Animated.timing(progress, { toValue: 1, duration: STEP_DURATION, easing: EASE.linear, useNativeDriver: false });
     anim.start(({ finished }) => {
       if (finished) setActiveStep((s) => (s + 1) % steps.length);
     });
@@ -170,7 +171,7 @@ function AutoStepFlow({ mode, eyebrow, title, subhead, steps, st }: {
         ))}
       </View>
 
-      <SwipeFadeContainer key={`${mode}-${activeStep}`} axis="y" offset={10} duration={240} delay={0} style={st.stepContentAuto}>
+      <SwipeFadeContainer key={`${mode}-${activeStep}`} axis="y" offset={10} duration={DURATION.stagger} delay={0} style={st.stepContentAuto}>
         <View style={st.stepIconWrap}>
           <AppIcon name={steps[activeStep].icon} size={20} color={CANDIDATE_COLOR} />
         </View>

@@ -12,6 +12,7 @@ import { getIntroductionContact, IntroductionContact } from '@/lib/introductionC
 import ContactReveal from '@/components/ContactReveal';
 import ScreenFrame from '@/components/ScreenFrame';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
+import { DURATION } from '@/lib/motion';
 import AnimatedPressable from '@/components/AnimatedPressable';
 import { notifyIntroduction } from '@/lib/requestNotify';
 import { useIsDesktopWeb, useIsWideDesktopWeb } from '@/components/TopNav';
@@ -195,7 +196,7 @@ export default function OpportunitiesScreen() {
               const hoursLeft = (new Date(intro.sentAt).getTime() + intro.responseWindowHours * 60 * 60 * 1000 - Date.now()) / (60 * 60 * 1000);
               const deadlineText = hoursLeft < 1 ? 'Less than 1 hour left' : `${Math.round(hoursLeft)}h left to respond`;
               return (
-                <SwipeFadeContainer key={intro.introductionId} axis="y" offset={16} duration={250} delay={Math.min(i, 8) * 40} style={[st.gridItem, gridItemStyle]}>
+                <SwipeFadeContainer key={intro.introductionId} axis="y" offset={16} duration={DURATION.stagger} delay={Math.min(i, 8) * 40} style={[st.gridItem, gridItemStyle]}>
                   <View style={st.card}>
                     <View style={st.lockedRow}>
                       <View style={st.lockIcon}>

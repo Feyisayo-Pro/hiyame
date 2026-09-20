@@ -11,6 +11,7 @@ import ScreenFrame from '@/components/ScreenFrame';
 import ForgotPasswordModal from '@/components/ForgotPasswordModal';
 import { useShake } from '@/lib/useShake';
 import FormField, { NO_NATIVE_OUTLINE } from '@/components/FormField';
+import { DURATION, EASE } from '@/lib/motion';
 
 export default function CandidateSignInScreen() {
   const T = useTheme();
@@ -29,8 +30,8 @@ export default function CandidateSignInScreen() {
 
   useEffect(() => {
     Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
-      Animated.timing(slideAnim, { toValue: 0, duration: 500, useNativeDriver: true }),
+      Animated.timing(fadeAnim, { toValue: 1, duration: DURATION.entrance, easing: EASE.enter, useNativeDriver: true }),
+      Animated.timing(slideAnim, { toValue: 0, duration: DURATION.entrance, easing: EASE.enter, useNativeDriver: true }),
     ]).start();
   }, []);
 

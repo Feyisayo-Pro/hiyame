@@ -7,6 +7,7 @@ import { Text } from '@/components/Themed';
 import { useTheme, ThemePalette } from '@/lib/theme';
 import ScreenFrame from '@/components/ScreenFrame';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
+import { DURATION } from '@/lib/motion';
 
 const LAST_UPDATED = '11 September 2026';
 
@@ -73,7 +74,7 @@ export default function LegalScreen() {
         </View>
 
         <ScrollView contentContainerStyle={st.scroll} showsVerticalScrollIndicator={false}>
-          <SwipeFadeContainer triggerKey={tab} duration={220} offset={16}>
+          <SwipeFadeContainer triggerKey={tab} duration={DURATION.stagger} offset={16}>
             {sections.map((s) => (
               <View key={s.title} style={st.block}>
                 <Text style={st.blockTitle}>{s.title}</Text>

@@ -1,5 +1,6 @@
 import { useRef } from 'react';
 import { Animated, Pressable, PressableProps, PressableStateCallbackType, GestureResponderEvent, StyleProp, StyleSheet, ViewStyle } from 'react-native';
+import { SPRING } from '@/lib/motion';
 
 interface Props extends Omit<PressableProps, 'style'> {
   // Typed like RN's own Pressable style prop (a value or a function of
@@ -19,11 +20,11 @@ export default function AnimatedPressable({ style, scaleTo = 0.96, onPressIn, on
   const scale = useRef(new Animated.Value(1)).current;
 
   const pressIn = (e: GestureResponderEvent) => {
-    Animated.spring(scale, { toValue: scaleTo, useNativeDriver: true, speed: 50, bounciness: 6 }).start();
+    Animated.spring(scale, { toValue: scaleTo, useNativeDriver: true, ...SPRING.press }).start();
     onPressIn?.(e);
   };
   const pressOut = (e: GestureResponderEvent) => {
-    Animated.spring(scale, { toValue: 1, useNativeDriver: true, speed: 30, bounciness: 8 }).start();
+    Animated.spring(scale, { toValue: 1, useNativeDriver: true, ...SPRING.release }).start();
     onPressOut?.(e);
   };
 

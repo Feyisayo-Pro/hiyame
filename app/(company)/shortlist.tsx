@@ -14,6 +14,7 @@ import { getIntroductionContact, IntroductionContact } from '@/lib/introductionC
 import ContactReveal from '@/components/ContactReveal';
 import ScreenFrame from '@/components/ScreenFrame';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
+import { DURATION } from '@/lib/motion';
 import AnimatedPressable from '@/components/AnimatedPressable';
 import { notifyIntroduction } from '@/lib/requestNotify';
 import { useIsDesktopWeb, useIsWideDesktopWeb } from '@/components/TopNav';
@@ -273,7 +274,7 @@ export default function ShortlistScreen() {
               <View style={st.grid}>
                 {active.map((c, i) => (
                   <View key={c.matchScoreId} style={[st.gridItem, gridItemStyle]}>
-                    <SwipeFadeContainer axis="y" offset={18} duration={260} delay={Math.min(i, 8) * 45}>
+                    <SwipeFadeContainer axis="y" offset={18} duration={DURATION.stagger} delay={Math.min(i, 8) * 45}>
                       <CandidateCardView T={T} st={st} card={c} busy={busyId === c.matchScoreId}
                         onAccept={() => handleAccept(c)} onSkip={() => handleAction(c, 'skipped')} onSave={() => handleAction(c, 'saved')} />
                     </SwipeFadeContainer>
@@ -289,7 +290,7 @@ export default function ShortlistScreen() {
               <View style={st.grid}>
                 {alternates.map((c, i) => (
                   <View key={c.matchScoreId} style={[st.gridItem, gridItemStyle]}>
-                    <SwipeFadeContainer axis="y" offset={18} duration={260} delay={Math.min(i, 8) * 45}>
+                    <SwipeFadeContainer axis="y" offset={18} duration={DURATION.stagger} delay={Math.min(i, 8) * 45}>
                       <CandidateCardView T={T} st={st} card={c} busy={busyId === c.matchScoreId}
                         onAccept={() => handleAccept(c)} onSkip={() => handleAction(c, 'skipped')} onSave={() => handleAction(c, 'saved')} />
                     </SwipeFadeContainer>

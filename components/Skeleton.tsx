@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
-import { Animated, Easing, View, ViewStyle } from 'react-native';
+import { Animated, View, ViewStyle } from 'react-native';
 import { useTheme } from '@/lib/theme';
+import { DURATION, EASE } from '@/lib/motion';
 
 // A single pulsing placeholder block. Screens compose these into shapes that
 // match their real content (a card outline, a row of stat tiles, etc.) so the
@@ -19,8 +20,8 @@ export function SkeletonBlock({ width, height, radius = 8, style }: {
   useEffect(() => {
     const loop = Animated.loop(
       Animated.sequence([
-        Animated.timing(opacity, { toValue: 1, duration: 700, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
-        Animated.timing(opacity, { toValue: 0.4, duration: 700, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+        Animated.timing(opacity, { toValue: 1, duration: DURATION.shimmer, easing: EASE.swap, useNativeDriver: true }),
+        Animated.timing(opacity, { toValue: 0.4, duration: DURATION.shimmer, easing: EASE.swap, useNativeDriver: true }),
       ]),
     );
     loop.start();

@@ -2,6 +2,7 @@ import { useMemo, useRef, useState, ReactNode } from 'react';
 import { Animated, StyleSheet, View, ViewStyle } from 'react-native';
 import { Text } from '@/components/Themed';
 import { useTheme, ThemePalette } from '@/lib/theme';
+import { DURATION } from '@/lib/motion';
 
 // Every auth form (candidate/company signup + signin) hand-rolled the same
 // `fieldWrap`/`label`/`inputWrap` trio with a static, unstyled border — so
@@ -46,11 +47,11 @@ export default function FormField({ label, error, hint, style, innerStyle, hideE
 
   const onFocus = () => {
     setFocused(true);
-    Animated.timing(anim, { toValue: 1, duration: 160, useNativeDriver: false }).start();
+    Animated.timing(anim, { toValue: 1, duration: DURATION.fast, useNativeDriver: false }).start();
   };
   const onBlur = () => {
     setFocused(false);
-    Animated.timing(anim, { toValue: 0, duration: 160, useNativeDriver: false }).start();
+    Animated.timing(anim, { toValue: 0, duration: DURATION.fast, useNativeDriver: false }).start();
   };
 
   const borderColor = error ? T.danger : anim.interpolate({ inputRange: [0, 1], outputRange: [T.border, T.accent] });

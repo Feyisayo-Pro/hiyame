@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
-import { Animated, Easing, StyleSheet, View } from 'react-native';
+import { Animated, StyleSheet, View } from 'react-native';
+import { EASE } from '@/lib/motion';
 
 // Ambient, continuously-drifting blurred color field behind the hero + how-
 // it-works content — the single highest-impact "premium SaaS site" visual
@@ -64,8 +65,8 @@ function BlobShape({ blob }: { blob: Blob }) {
   useEffect(() => {
     const loop = Animated.loop(
       Animated.sequence([
-        Animated.timing(anim, { toValue: 1, duration: blob.duration, delay: blob.delay, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-        Animated.timing(anim, { toValue: 0, duration: blob.duration, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+        Animated.timing(anim, { toValue: 1, duration: blob.duration, delay: blob.delay, easing: EASE.pulse, useNativeDriver: true }),
+        Animated.timing(anim, { toValue: 0, duration: blob.duration, easing: EASE.pulse, useNativeDriver: true }),
       ])
     );
     loop.start();

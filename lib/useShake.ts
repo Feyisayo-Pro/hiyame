@@ -1,5 +1,6 @@
 import { useRef } from 'react';
 import { Animated } from 'react-native';
+import { DURATION } from '@/lib/motion';
 
 // A small horizontal-shake for form-level error feedback — the general-error
 // banner on sign-in/sign-up currently just pops into existence silently.
@@ -11,11 +12,11 @@ export function useShake() {
   const shake = () => {
     value.setValue(0);
     Animated.sequence([
-      Animated.timing(value, { toValue: 1, duration: 60, useNativeDriver: true }),
-      Animated.timing(value, { toValue: -1, duration: 60, useNativeDriver: true }),
-      Animated.timing(value, { toValue: 1, duration: 60, useNativeDriver: true }),
-      Animated.timing(value, { toValue: -1, duration: 60, useNativeDriver: true }),
-      Animated.timing(value, { toValue: 0, duration: 60, useNativeDriver: true }),
+      Animated.timing(value, { toValue: 1, duration: DURATION.instant, useNativeDriver: true }),
+      Animated.timing(value, { toValue: -1, duration: DURATION.instant, useNativeDriver: true }),
+      Animated.timing(value, { toValue: 1, duration: DURATION.instant, useNativeDriver: true }),
+      Animated.timing(value, { toValue: -1, duration: DURATION.instant, useNativeDriver: true }),
+      Animated.timing(value, { toValue: 0, duration: DURATION.instant, useNativeDriver: true }),
     ]).start();
   };
 

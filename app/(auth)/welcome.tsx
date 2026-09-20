@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Easing, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Animated, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { router } from 'expo-router';
 import { Text } from '@/components/Themed';
 import AppIcon from '@/components/AppIcon';
@@ -11,6 +11,7 @@ import ScreenFrame from '@/components/ScreenFrame';
 import PublicNav from '@/components/PublicNav';
 import GradientBlobBackground from '@/components/GradientBlobBackground';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
+import { DURATION, EASE, SPRING } from '@/lib/motion';
 
 // The landing screen — folds the old two-step welcome-carousel → register
 // flow into one decisive screen (per the redesign brief: Viamatch's whole
@@ -113,11 +114,11 @@ export default function WelcomeScreen() {
   // navigating away mid-hover.
   const companyPress = useRef(new Animated.Value(1)).current;
   const candidatePress = useRef(new Animated.Value(1)).current;
-  const pressDown = (v: Animated.Value) => Animated.spring(v, { toValue: 0.985, useNativeDriver: false, speed: 50, bounciness: 6 }).start();
-  const pressUp = (v: Animated.Value) => Animated.spring(v, { toValue: 1, useNativeDriver: false, speed: 30, bounciness: 8 }).start();
+  const pressDown = (v: Animated.Value) => Animated.spring(v, { toValue: 0.985, useNativeDriver: false, ...SPRING.press }).start();
+  const pressUp = (v: Animated.Value) => Animated.spring(v, { toValue: 1, useNativeDriver: false, ...SPRING.release }).start();
 
   const animateTo = (value: number) => {
-    Animated.spring(focus, { toValue: value, useNativeDriver: false, speed: 14, bounciness: 6 }).start();
+    Animated.spring(focus, { toValue: value, useNativeDriver: false, ...SPRING.panelFocus }).start();
   };
 
   // Ambient float on the two mock cards — decorative motion layered on top
@@ -136,8 +137,8 @@ export default function WelcomeScreen() {
     const loop = (v: Animated.Value, delay: number) =>
       Animated.loop(
         Animated.sequence([
-          Animated.timing(v, { toValue: 1, duration: 2600, delay, easing: Easing.inOut(Easing.sin), useNativeDriver: false }),
-          Animated.timing(v, { toValue: 0, duration: 2600, easing: Easing.inOut(Easing.sin), useNativeDriver: false }),
+          Animated.timing(v, { toValue: 1, duration: 2600, delay, easing: EASE.pulse, useNativeDriver: false }),
+          Animated.timing(v, { toValue: 0, duration: 2600, easing: EASE.pulse, useNativeDriver: false }),
         ])
       );
     const a = loop(floatA, 0);
@@ -206,7 +207,7 @@ export default function WelcomeScreen() {
         </SwipeFadeContainer>
 
         {/* ── Two panels ── */}
-        <SwipeFadeContainer axis="y" offset={20} duration={480} delay={180} style={st.panelsFadeWrap}>
+        <SwipeFadeContainer axis="y" offset={20} duration={DURATION.entrance} delay={180} style={st.panelsFadeWrap}>
         <View style={[st.panelsRow, stacked && st.panelsColumn]}>
           <Animated.View style={[st.panel, st.panelCompany, stacked && st.panelStacked, { flex: companyFlex, backgroundColor: companyBg, transform: [{ scale: companyPress }] }]}>
             <Pressable
@@ -302,7 +303,7 @@ export default function WelcomeScreen() {
 
         {/* "How it works" link — the discoverable path to its own page now
             that it's no longer a section on this one. */}
-        <SwipeFadeContainer axis="y" offset={12} duration={400} delay={260}>
+        <SwipeFadeContainer axis="y" offset={12} duration={DURATION.entrance} delay={260}>
           <Pressable style={st.howLink} onPress={() => router.push('/(auth)/how-it-works')}>
             <Text style={st.howLinkText}>See exactly how it works</Text>
             <AppIcon name="arrow-forward" size={14} color={CANDIDATE_COLOR} />

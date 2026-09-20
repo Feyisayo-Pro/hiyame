@@ -10,6 +10,7 @@ import { supabase } from '@/lib/supabase';
 import { TIER_CONFIG, Tier } from '@/lib/mock-data';
 import ScreenFrame from '@/components/ScreenFrame';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
+import { DURATION } from '@/lib/motion';
 import AnimatedPressable from '@/components/AnimatedPressable';
 import { useIsDesktopWeb, useIsWideDesktopWeb } from '@/components/TopNav';
 import { SkeletonCard } from '@/components/Skeleton';
@@ -146,7 +147,7 @@ export default function CompanyRolesScreen() {
             {roles.map((role, i) => {
               const cfg = TIER_CONFIG[role.tier];
               return (
-                <SwipeFadeContainer key={role.id} axis="y" offset={16} duration={250} delay={Math.min(i, 8) * 40} style={[st.gridItem, gridItemStyle]}>
+                <SwipeFadeContainer key={role.id} axis="y" offset={16} duration={DURATION.stagger} delay={Math.min(i, 8) * 40} style={[st.gridItem, gridItemStyle]}>
                   <AnimatedPressable
                     style={st.card}
                     onPress={() => router.push({ pathname: '/(company)/shortlist', params: { roleId: role.id } })}
