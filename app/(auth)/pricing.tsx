@@ -195,7 +195,12 @@ function FeatureRow({ label, index, st }: { label: string; index: number; st: Re
 const COMPARISON_ROWS: { label: string; jobBoard: boolean | string; agency: boolean | string; hiyame: boolean | string }[] = [
   { label: 'Candidates are pre-verified', jobBoard: false, agency: 'Sometimes', hiyame: true },
   { label: 'You review a ranked shortlist, not a résumé pile', jobBoard: false, agency: true, hiyame: true },
-  { label: 'No placement fee (% of first-year salary)', jobBoard: true, agency: false, hiyame: true },
+  // Was "No placement fee" with a checkmark for Hiyame — false. Hiyame_
+  // Mobile_Architecture.md §7.6 documents a real 8-10% success fee,
+  // opt-in on Starter and above (PRD §9). Still a real selling point
+  // honestly stated: well under a typical agency's 15-25%+, and it's
+  // opt-in rather than mandatory — just not "no fee".
+  { label: 'Placement fee if you hire', jobBoard: 'None (pay to list)', agency: '15-25%+', hiyame: '8-10%, opt-in' },
   { label: 'Priced in naira', jobBoard: true, agency: 'Sometimes', hiyame: true },
   { label: 'Free to start', jobBoard: true, agency: false, hiyame: true },
 ];
