@@ -47,21 +47,33 @@ export default function CandidateHomeScreen() {
   const [stats, setStats] = useState<CandidateStats | null>(null);
   const [passedComponents, setPassedComponents] = useState<Set<string>>(new Set());
   const [refreshing, setRefreshing] = useState(false);
+  // Deliberately not a useQuery migration like AnalyticsScreen/company Home:
+  // the tour-redirect side effect below is tangled into this same fetch, and
+  // untangling it just to gain caching isn't worth the risk of breaking that
+  // redirect. This still closes the real gap — a network failure used to
+  // leave `stats` at `null` forever (an infinite skeleton, no way out) — with
+  // a minimal try/catch + a retry action, same UX outcome, none of the risk.
+  const [loadError, setLoadError] = useState(false);
 
   const load = useCallback(async () => {
     if (!candidateId) { setStats(null); return; }
-    const [s, { data: vrecs }, { data: me }] = await Promise.all([
-      getCandidateStats(candidateId),
-      supabase.from('verification_records').select('component, status').eq('candidate_id', candidateId),
-      supabase.from('candidates').select('tour_seen_at').eq('id', candidateId).maybeSingle(),
-    ]);
-    // First run: send new candidates through the welcome walkthrough once.
-    if (me && !me.tour_seen_at) {
-      router.replace('/(candidate)/welcome-tour' as any);
-      return;
+    try {
+      const [s, { data: vrecs }, { data: me }] = await Promise.all([
+        getCandidateStats(candidateId),
+        supabase.from('verification_records').select('component, status').eq('candidate_id', candidateId),
+        supabase.from('candidates').select('tour_seen_at').eq('id', candidateId).maybeSingle(),
+      ]);
+      // First run: send new candidates through the welcome walkthrough once.
+      if (me && !me.tour_seen_at) {
+        router.replace('/(candidate)/welcome-tour' as any);
+        return;
+      }
+      setStats(s);
+      setPassedComponents(new Set((vrecs ?? []).filter((v) => v.status === 'passed').map((v) => v.component)));
+      setLoadError(false);
+    } catch {
+      setLoadError(true);
     }
-    setStats(s);
-    setPassedComponents(new Set((vrecs ?? []).filter((v) => v.status === 'passed').map((v) => v.component)));
   }, [candidateId]);
 
   useEffect(() => { load(); }, [load]);
@@ -113,6 +125,19 @@ export default function CandidateHomeScreen() {
               )}
             </View>
           </View>
+
+          {/* Stats fetch failed — the rest of the dashboard still renders
+              fine via the `stats?.x ?? 0` fallbacks below, so this stays a
+              small inline notice rather than blocking the whole screen. */}
+          {loadError && (
+            <View style={st.errorBanner}>
+              <AppIcon name="cloud-offline-outline" size={16} color={T.danger} />
+              <Text style={st.errorBannerText}>Couldn't load your latest stats</Text>
+              <Pressable onPress={load} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <Text style={st.errorBannerRetry}>Retry</Text>
+              </Pressable>
+            </View>
+          )}
 
           {/* Verification score card */}
           <View style={st.scoreCard}>
@@ -270,6 +295,10 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   userName: { fontSize: 22, fontWeight: '800', color: T.textPrimary, fontFamily: DISPLAY_FONT_FAMILY },
   headerActions: { flexDirection: 'row', gap: 8 },
   iconBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: T.surface, borderWidth: 1, borderColor: T.border, alignItems: 'center', justifyContent: 'center' },
+
+  errorBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: 20, marginBottom: 20, backgroundColor: T.dangerBg, borderRadius: 14, borderWidth: 1, borderColor: T.danger + '30', paddingHorizontal: 16, paddingVertical: 12 },
+  errorBannerText: { flex: 1, fontSize: 13, color: T.textPrimary, fontWeight: '600' },
+  errorBannerRetry: { fontSize: 13, color: T.danger, fontWeight: '700' },
 
   scoreCard: { marginHorizontal: 20, marginBottom: 20, padding: 20, borderRadius: 16, backgroundColor: T.card, borderWidth: 1, borderColor: T.border, ...ELEVATION.card },
   scoreHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
