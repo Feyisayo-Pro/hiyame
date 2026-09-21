@@ -60,9 +60,9 @@ hand or let the next run's setup add another one.
 - `accessibility.spec.ts` — axe-core sweep (wcag2a/wcag2aa/best-practice)
   across every public page, both signed-in Homes, and dark mode. `region`
   is deliberately disabled — see the comment at the top of that file.
+- `photo-upload.spec.ts` — candidate photo + company logo, via a real
+  `filechooser` event on the same `<input type="file">` a real browser
+  dialog would drive. Confirms the avatar switches from initials to a real
+  `<img>`, not just that the toast appeared.
 
-## Not yet covered
-
-Photo/logo upload (candidate photo, company logo) — QA'd manually earlier
-this session via Playwright's `filechooser` event, but not converted into a
-committed spec yet.
+Coverage is now complete for every flow this session's manual QA touched.
