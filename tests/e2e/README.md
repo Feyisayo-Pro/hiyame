@@ -54,9 +54,15 @@ hand or let the next run's setup add another one.
   its shortlist. Doesn't assert the shortlist gets populated — self-serve
   matching only runs via the operator-invoked `scripts/run-matching.ts`,
   a real, documented limitation, not a bug.
+- `candidate-profile-edit.spec.ts` — edits name + adds a skill, confirms
+  the toast, the on-screen update, and (after a reload) that it actually
+  reached the `candidates` row rather than just local state.
+- `accessibility.spec.ts` — axe-core sweep (wcag2a/wcag2aa/best-practice)
+  across every public page, both signed-in Homes, and dark mode. `region`
+  is deliberately disabled — see the comment at the top of that file.
 
 ## Not yet covered
 
-Candidate profile editing (photo upload, field edits) — the ad-hoc
-Playwright scripts used earlier to QA this manually weren't converted into
-committed specs yet. Worth adding next.
+Photo/logo upload (candidate photo, company logo) — QA'd manually earlier
+this session via Playwright's `filechooser` event, but not converted into a
+committed spec yet.
