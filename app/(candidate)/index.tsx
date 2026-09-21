@@ -14,6 +14,7 @@ import { useIsDesktopWeb } from '@/components/TopNav';
 import { useTheme, useThemeToggle, ThemePalette, ELEVATION, DISPLAY_FONT_FAMILY } from '@/lib/theme';
 import { FULL_VERIFICATION_THRESHOLD, TOTAL_VERIFICATION_COMPONENTS } from '@/lib/verification';
 import { SkeletonRow } from '@/components/Skeleton';
+import PageHead from '@/components/PageHead';
 
 const VERIFY_COMPONENTS: { key: string; label: string; icon: AppIconName }[] = [
   { key: 'identity', label: 'Identity Check', icon: 'id-card-outline' },
@@ -94,6 +95,7 @@ export default function CandidateHomeScreen() {
 
   return (
     <SafeAreaView style={st.container} edges={['top', 'left', 'right']}>
+      <PageHead title="Home" />
       <ScreenFrame>
       <ScrollView
         contentContainerStyle={st.scroll}
@@ -305,14 +307,14 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   scoreLeft: { flexDirection: 'row', alignItems: 'center', gap: 14, flex: 1 },
   scoreRing: { width: 52, height: 52, borderRadius: 26, borderWidth: 3, borderColor: T.accent, alignItems: 'center', justifyContent: 'center' },
   scoreRingComplete: { borderColor: T.emerald, backgroundColor: T.emeraldBg },
-  scoreRingText: { fontSize: 15, fontWeight: '800', color: T.accent },
+  scoreRingText: { fontSize: 15, fontWeight: '800', color: T.accentDim },
   scoreRingTextComplete: { color: T.emerald },
   scoreTitle: { fontSize: 16, fontWeight: '700', color: T.textPrimary },
   scoreSub: { fontSize: 12, color: T.textMuted, marginTop: 2 },
   progressBarBg: { height: 6, backgroundColor: T.surface, borderRadius: 3, overflow: 'hidden' },
   progressBarFill: { height: 6, borderRadius: 3 },
   verifyLink: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 14, alignSelf: 'flex-start' },
-  verifyLinkText: { fontSize: 13, fontWeight: '700', color: T.accent },
+  verifyLinkText: { fontSize: 13, fontWeight: '700', color: T.accentDim },
 
   statsRow: { flexDirection: 'row', gap: 10, paddingHorizontal: 20, marginBottom: 24 },
   statCard: { flex: 1, backgroundColor: T.card, borderRadius: 14, borderWidth: 1, borderColor: T.border, padding: 14, alignItems: 'center' },
@@ -324,7 +326,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   sectionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   sectionTitle: { fontSize: 18, fontWeight: '800', color: T.textPrimary },
   seeAll: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  seeAllText: { fontSize: 13, fontWeight: '600', color: T.accent },
+  seeAllText: { fontSize: 13, fontWeight: '600', color: T.accentDim },
 
   checkItem: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: T.border },
   checkIconWrap: { width: 36, height: 36, borderRadius: 10, backgroundColor: T.surface, borderWidth: 1, borderColor: T.border, alignItems: 'center', justifyContent: 'center' },
@@ -336,7 +338,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   checkStatusText: { fontSize: 11, fontWeight: '700', color: T.textMuted },
   checkStatusTextDone: { color: T.emerald },
   checkStatusPending: { backgroundColor: T.accentBg },
-  checkStatusTextPending: { color: T.accent },
+  checkStatusTextPending: { color: T.accentDim },
 
   introEmpty: { alignItems: 'center', gap: 8, paddingVertical: 28, backgroundColor: T.card, borderRadius: 14, borderWidth: 1, borderColor: T.border, paddingHorizontal: 20 },
   introEmptyText: { fontSize: 13, color: T.textMuted, textAlign: 'center', lineHeight: 18 },

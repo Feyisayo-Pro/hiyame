@@ -19,6 +19,7 @@ import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import ScreenFrame from '@/components/ScreenFrame';
 import { SkeletonBlock, SkeletonCard } from '@/components/Skeleton';
 import { FULL_VERIFICATION_THRESHOLD } from '@/lib/verification';
+import PageHead from '@/components/PageHead';
 
 type Persona = 'company' | 'candidate';
 
@@ -215,6 +216,7 @@ export default function AnalyticsScreen({ persona = 'company' }: { persona?: Per
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: T.bg }} edges={['top', 'left', 'right']}>
+      <PageHead title="Insights" />
       <ScreenFrame>
       <View style={{ paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: T.border }}>
         <Text style={{ fontSize: 22, fontWeight: '800', color: T.textPrimary, fontFamily: DISPLAY_FONT_FAMILY }}>Insights</Text>

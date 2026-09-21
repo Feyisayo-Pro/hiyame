@@ -11,6 +11,7 @@ import { TIER_CONFIG, Tier } from '@/lib/mock-data';
 import { getIntroductionContact, IntroductionContact } from '@/lib/introductionContact';
 import ContactReveal from '@/components/ContactReveal';
 import ScreenFrame from '@/components/ScreenFrame';
+import PageHead from '@/components/PageHead';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import { useIsDesktopWeb, useIsWideDesktopWeb } from '@/components/TopNav';
 
@@ -88,6 +89,7 @@ export default function ConnectionsScreen({ persona }: { persona: 'candidate' | 
 
   return (
     <SafeAreaView style={st.container} edges={['top', 'left', 'right']}>
+      <PageHead title="Connections" />
       <ScreenFrame>
       <View style={st.header}>
         <Text style={st.headerTitle}>Connections</Text>

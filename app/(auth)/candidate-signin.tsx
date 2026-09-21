@@ -12,6 +12,7 @@ import ForgotPasswordModal from '@/components/ForgotPasswordModal';
 import { useShake } from '@/lib/useShake';
 import FormField, { NO_NATIVE_OUTLINE } from '@/components/FormField';
 import { DURATION, EASE } from '@/lib/motion';
+import PageHead from '@/components/PageHead';
 
 export default function CandidateSignInScreen() {
   const T = useTheme();
@@ -75,6 +76,7 @@ export default function CandidateSignInScreen() {
 
   return (
     <SafeAreaView style={st.container} edges={['top', 'left', 'right', 'bottom']}>
+      <PageHead title="Candidate Sign In" />
       <ScreenFrame maxWidth={560}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
@@ -229,7 +231,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
 
   /* Forgot */
   forgotRow: { alignSelf: 'flex-end', marginTop: 4, marginBottom: 8 },
-  forgotText: { fontSize: 13, fontWeight: '600', color: T.accent },
+  forgotText: { fontSize: 13, fontWeight: '600', color: T.accentDim },
 
   /* Spacer */
   spacer: { height: 16 },
@@ -244,7 +246,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
 
   /* Button */
   signInButton: {
-    backgroundColor: T.accent, borderRadius: 50,
+    backgroundColor: T.accentSolid, borderRadius: 50,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: 8, paddingVertical: 16,
     shadowColor: T.accent, shadowOffset: { width: 0, height: 6 },
@@ -257,5 +259,5 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   footer: { paddingBottom: 16 },
   registerRow: { flexDirection: 'row', justifyContent: 'center' },
   registerLabel: { fontSize: 14, color: T.textSecondary },
-  registerLink: { fontSize: 14, fontWeight: '700', color: T.accent },
+  registerLink: { fontSize: 14, fontWeight: '700', color: T.accentDim },
 });

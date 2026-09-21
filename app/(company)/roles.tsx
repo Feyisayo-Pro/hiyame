@@ -9,6 +9,7 @@ import { useAuth } from '@/lib/useAuth';
 import { supabase } from '@/lib/supabase';
 import { TIER_CONFIG, Tier } from '@/lib/mock-data';
 import ScreenFrame from '@/components/ScreenFrame';
+import PageHead from '@/components/PageHead';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import { DURATION } from '@/lib/motion';
 import AnimatedPressable from '@/components/AnimatedPressable';
@@ -103,6 +104,7 @@ export default function CompanyRolesScreen() {
 
   return (
     <SafeAreaView style={st.container} edges={['top', 'left', 'right']}>
+      <PageHead title="My Roles" />
       <ScreenFrame>
       <View style={st.header}>
         <View style={{ flex: 1 }}>

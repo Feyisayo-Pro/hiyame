@@ -18,6 +18,7 @@ import { subscribeToPush, unsubscribeFromPush } from '@/lib/webPush';
 import ChangePasswordModal from '@/components/ChangePasswordModal';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import ScreenFrame from '@/components/ScreenFrame';
+import PageHead from '@/components/PageHead';
 
 type Persona = 'company' | 'candidate';
 
@@ -140,6 +141,7 @@ export default function AccountSettings({ persona = 'company' }: { persona?: Per
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: T.bg }} edges={['top', 'left', 'right']}>
+      <PageHead title="Settings" />
       <ScreenFrame>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
         <SwipeFadeContainer>

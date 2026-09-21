@@ -24,6 +24,7 @@ import ScreenFrame from '@/components/ScreenFrame';
 import VerifyEmailModal from '@/components/VerifyEmailModal';
 import { INDUSTRIES, SKILLS_BY_INDUSTRY, DEFAULT_SKILL_SUGGESTIONS } from '@/lib/industrySkills';
 import { useShake } from '@/lib/useShake';
+import PageHead from '@/components/PageHead';
 
 export default function CandidateSignupScreen() {
   const T = useTheme();
@@ -179,6 +180,7 @@ export default function CandidateSignupScreen() {
 
   return (
     <SafeAreaView style={st.container} edges={['top', 'left', 'right', 'bottom']}>
+      <PageHead title="Create Your Candidate Account" />
       <ScreenFrame maxWidth={560}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
@@ -470,7 +472,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   },
   industryChipActive: { borderColor: T.accent, backgroundColor: T.accentBg },
   industryChipText: { fontSize: 13, fontWeight: '500', color: T.textSecondary },
-  industryChipTextActive: { fontWeight: '700', color: T.accent },
+  industryChipTextActive: { fontWeight: '700', color: T.accentDim },
   industryHint: { fontSize: 12, color: T.textMuted, marginTop: 2 },
   skillsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 },
   skillChip: {
@@ -478,7 +480,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
     backgroundColor: T.accentBg, borderWidth: 1, borderColor: T.accentBg20,
     paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8,
   },
-  skillChipText: { fontSize: 13, fontWeight: '600', color: T.accent },
+  skillChipText: { fontSize: 13, fontWeight: '600', color: T.accentDim },
   suggestionsWrap: { marginTop: 10 },
   suggestionsLabel: { fontSize: 11, color: T.textMuted, fontWeight: '600', marginBottom: 6 },
   suggestionsRow: { flexDirection: 'row', gap: 6 },
@@ -494,7 +496,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
     padding: 16, marginBottom: 24,
     borderWidth: 1, borderColor: T.accentBg20,
   },
-  infoText: { flex: 1, fontSize: 13, color: T.accent, lineHeight: 18, fontWeight: '500' },
+  infoText: { flex: 1, fontSize: 13, color: T.accentDim, lineHeight: 18, fontWeight: '500' },
   generalErrorBanner: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
     backgroundColor: T.dangerBg, borderRadius: 12, borderWidth: 1, borderColor: T.danger,
@@ -503,7 +505,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   generalErrorText: { flex: 1, fontSize: 13, fontWeight: '600', color: T.danger, lineHeight: 18 },
   generalErrorLink: { fontSize: 13, fontWeight: '800', color: T.danger, textDecorationLine: 'underline' },
   submitButton: {
-    backgroundColor: T.accent, borderRadius: 50,
+    backgroundColor: T.accentSolid, borderRadius: 50,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: 8, paddingVertical: 16,
     shadowColor: T.accent, shadowOffset: { width: 0, height: 6 },

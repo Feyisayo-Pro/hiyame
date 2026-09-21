@@ -24,6 +24,7 @@ import PasswordStrengthMeter from '@/components/PasswordStrengthMeter';
 import VerifyEmailModal from '@/components/VerifyEmailModal';
 import { useShake } from '@/lib/useShake';
 import { DURATION } from '@/lib/motion';
+import PageHead from '@/components/PageHead';
 
 /* ── Constants ── */
 
@@ -652,6 +653,7 @@ export default function CompanySignupScreen() {
 
   return (
     <SafeAreaView style={st.container} edges={['top', 'left', 'right', 'bottom']}>
+      <PageHead title="Create Your Company Account" />
       <ScreenFrame maxWidth={560}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
@@ -767,7 +769,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
     padding: 16, marginBottom: 16,
     borderWidth: 1, borderColor: T.accentBg20,
   },
-  infoText: { flex: 1, fontSize: 13, color: T.accent, lineHeight: 18, fontWeight: '500' },
+  infoText: { flex: 1, fontSize: 13, color: T.accentDim, lineHeight: 18, fontWeight: '500' },
   generalErrorBanner: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
     backgroundColor: T.dangerBg, borderRadius: 12, borderWidth: 1, borderColor: T.danger,
@@ -776,7 +778,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   generalErrorText: { flex: 1, fontSize: 13, fontWeight: '600', color: T.danger, lineHeight: 18 },
   generalErrorLink: { fontSize: 13, fontWeight: '800', color: T.danger, textDecorationLine: 'underline' },
   continueButton: {
-    backgroundColor: T.accent, borderRadius: 50,
+    backgroundColor: T.accentSolid, borderRadius: 50,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: 8, paddingVertical: 16,
     shadowColor: T.accent, shadowOffset: { width: 0, height: 6 },

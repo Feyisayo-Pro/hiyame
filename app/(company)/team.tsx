@@ -11,6 +11,7 @@ import { useAuth } from '@/lib/useAuth';
 import { supabase } from '@/lib/supabase';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import ScreenFrame from '@/components/ScreenFrame';
+import PageHead from '@/components/PageHead';
 import { notify } from '@/lib/notify';
 import { initials } from '@/lib/format';
 import { SkeletonRow } from '@/components/Skeleton';
@@ -175,6 +176,7 @@ export default function TeamMembersScreen() {
 
   return (
     <SafeAreaView style={s.safeArea} edges={['top', 'left', 'right']}>
+      <PageHead title="Team" />
       <ScreenFrame>
       <View style={s.header}>
         <Pressable style={s.backBtn} onPress={() => router.back()}>
@@ -329,7 +331,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   memberRow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 },
   memberRowBorder: { borderBottomWidth: 1, borderBottomColor: T.border },
   avatarCircle: { width: 40, height: 40, borderRadius: 20, backgroundColor: T.surface, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: T.border },
-  avatarInitials: { fontSize: 13, fontWeight: '700', color: T.accent },
+  avatarInitials: { fontSize: 13, fontWeight: '700', color: T.accentDim },
   memberName: { fontSize: 14, fontWeight: '600', color: T.textPrimary },
   memberEmail: { fontSize: 12, color: T.textSecondary, marginTop: 1 },
   roleBadge: { backgroundColor: T.surface, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },

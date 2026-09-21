@@ -8,6 +8,7 @@ import { useTheme, ThemePalette, DISPLAY_FONT_FAMILY } from '@/lib/theme';
 import ScreenFrame from '@/components/ScreenFrame';
 import AnimatedPressable from '@/components/AnimatedPressable';
 import { DURATION, EASE } from '@/lib/motion';
+import PageHead from '@/components/PageHead';
 
 // A real "choose your account type" screen — previously this route just
 // redirected straight to /(auth)/welcome, and the nav's generic "Sign up"
@@ -67,6 +68,7 @@ export default function RegisterScreen() {
 
   return (
     <SafeAreaView style={st.container} edges={['top', 'left', 'right', 'bottom']}>
+      <PageHead title="Join Hiyame" />
       <ScreenFrame maxWidth={560}>
       <AnimatedPressable style={st.backButton} onPress={() => router.back()} scaleTo={0.9}>
         <AppIcon name="arrow-back" size={20} color={T.textPrimary} />
@@ -183,7 +185,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
     backgroundColor: T.accentBg, paddingHorizontal: 12, paddingVertical: 8,
     borderRadius: 10, borderWidth: 1, borderColor: T.accentBg20,
   },
-  microText: { fontSize: 12, fontWeight: '600', color: T.accent },
+  microText: { fontSize: 12, fontWeight: '600', color: T.accentDim },
 
   footer: { paddingBottom: 16 },
   dividerRow: {
@@ -198,5 +200,5 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
     backgroundColor: T.surface, borderWidth: 1, borderColor: T.border,
   },
   registerButtonHover: { borderColor: T.accent, backgroundColor: T.accentBg },
-  registerText: { fontSize: 15, fontWeight: '700', color: T.accent },
+  registerText: { fontSize: 15, fontWeight: '700', color: T.accentDim },
 });

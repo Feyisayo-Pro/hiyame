@@ -19,6 +19,7 @@ import { notify } from '@/lib/notify';
 import { formatNaira } from '@/lib/currency';
 import { FULL_VERIFICATION_THRESHOLD } from '@/lib/verification';
 import { usePersonaGuard } from '@/lib/usePersonaGuard';
+import PageHead from '@/components/PageHead';
 
 interface RealProfile {
   fullName: string;
@@ -112,6 +113,7 @@ export default function CandidateProfileScreen() {
 
   return (
     <SafeAreaView style={st.container} edges={['top', 'left', 'right']}>
+      <PageHead title="Your Profile" />
       <ScreenFrame>
       <ScrollView contentContainerStyle={st.scroll} showsVerticalScrollIndicator={false}>
         <SwipeFadeContainer>
@@ -417,14 +419,14 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   sectionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   sectionTitle: { fontSize: 18, fontWeight: '800', color: T.textPrimary },
   seeAll: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  seeAllText: { fontSize: 13, fontWeight: '600', color: T.accent },
+  seeAllText: { fontSize: 13, fontWeight: '600', color: T.accentDim },
 
   /* Skills */
   skillCount: { backgroundColor: T.accent, borderRadius: 10, minWidth: 22, height: 22, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 },
   skillCountText: { fontSize: 11, fontWeight: '700', color: T.textOnAccent },
   skillsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   skillChip: { backgroundColor: T.accentBg, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10, borderWidth: 1, borderColor: T.accentBg20 },
-  skillText: { fontSize: 13, fontWeight: '600', color: T.accent },
+  skillText: { fontSize: 13, fontWeight: '600', color: T.accentDim },
   emptySkills: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: T.surface, borderRadius: 12, padding: 16, borderWidth: 1, borderColor: T.border },
   emptySkillsText: { fontSize: 13, color: T.textMuted, fontWeight: '500' },
 
@@ -432,7 +434,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   progressCard: { marginBottom: 12 },
   progressHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   progressLabel: { fontSize: 13, fontWeight: '600', color: T.textSecondary },
-  progressPercent: { fontSize: 14, fontWeight: '800', color: T.accent },
+  progressPercent: { fontSize: 14, fontWeight: '800', color: T.accentDim },
   progressBarBg: { height: 6, backgroundColor: T.surface, borderRadius: 3, overflow: 'hidden' },
   progressBarFill: { height: 6, borderRadius: 3 },
 

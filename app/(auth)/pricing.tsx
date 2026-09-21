@@ -14,6 +14,7 @@ import AnimatedPressable from '@/components/AnimatedPressable';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import { PLANS, PricingPlan } from '@/lib/subscriptionStore';
 import { DURATION, EASE, SPRING } from '@/lib/motion';
+import PageHead from '@/components/PageHead';
 
 // Public, logged-out pricing page — the highest-value, lowest-risk nav
 // addition flagged from the Viamatch research pass: it surfaces the real
@@ -36,8 +37,14 @@ import { DURATION, EASE, SPRING } from '@/lib/motion';
 const PAGE_BG = '#0B1220';
 const COMPANY_COLOR = '#0F1419'; // dark text on the still-white/still-solid-blue button surfaces below
 const CANDIDATE_COLOR = '#1DA1F2';
+// White text directly on solid CANDIDATE_COLOR measures 2.8:1 — fails AA.
+// Same darkened value as lib/theme.ts's accentDim/accentSolid.
+const CANDIDATE_COLOR_DIM = '#136CA2';
 const TEXT_PRIMARY = '#F8FAFC';
-const TEXT_MUTED = '#94A3B8';
+// Lightened from '#94A3B8' — same fix as how-it-works.tsx's identical
+// constant, same reason (measured short of 4.5:1 against this page's dark
+// glass panels via an axe-core sweep).
+const TEXT_MUTED = '#AEB9C9';
 const GLASS_BG = 'rgba(255,255,255,0.04)';
 const GLASS_BORDER = 'rgba(148,163,184,0.14)';
 const STACK_BREAKPOINT = 760;
@@ -50,6 +57,7 @@ export default function PricingScreen() {
 
   return (
     <SafeAreaView style={st.safeArea} edges={['top', 'left', 'right', 'bottom']}>
+      <PageHead title="Pricing" />
       <ScreenFrame maxWidth={1120} style={st.frame}>
         <ScrollView contentContainerStyle={st.scrollContent} showsVerticalScrollIndicator={false}>
           <PublicNav stacked={stacked} active="pricing" />
@@ -264,12 +272,14 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   // on welcome.tsx), and blue is this page's one real "pop" color anyway.
   freeBanner: {
     flexDirection: 'row', alignItems: 'center', gap: 16, justifyContent: 'space-between',
-    backgroundColor: CANDIDATE_COLOR, borderRadius: 20, padding: 20, marginBottom: 28,
+    backgroundColor: CANDIDATE_COLOR_DIM, borderRadius: 20, padding: 20, marginBottom: 28,
   },
   freeBannerStacked: { flexDirection: 'column', alignItems: 'flex-start' },
   freeBannerText: { flex: 1 },
   freeBannerTitle: { fontSize: 15.5, fontWeight: '800', color: '#FFFFFF', marginBottom: 4 },
-  freeBannerBody: { fontSize: 13, color: 'rgba(255,255,255,0.78)', fontWeight: '500', lineHeight: 18 },
+  // 0.78 alpha measured 4.13:1 against the CANDIDATE_COLOR_DIM banner
+  // background — just short of 4.5:1. Same fix as welcome.tsx's panel eyebrow.
+  freeBannerBody: { fontSize: 13, color: 'rgba(255,255,255,0.84)', fontWeight: '500', lineHeight: 18 },
   freeBannerCta: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     backgroundColor: '#FFFFFF', paddingHorizontal: 18, paddingVertical: 12, borderRadius: 999,
@@ -291,7 +301,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   cardHover: { shadowOpacity: 0.3, transform: [{ translateY: -6 }] },
   popularBadge: {
     position: 'absolute', top: -12, alignSelf: 'center',
-    backgroundColor: CANDIDATE_COLOR, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 5,
+    backgroundColor: CANDIDATE_COLOR_DIM, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 5,
   },
   popularBadgeText: { fontSize: 10, fontWeight: '800', color: '#FFFFFF', letterSpacing: 0.4 },
 
@@ -311,7 +321,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
     backgroundColor: GLASS_BG, borderWidth: 1, borderColor: GLASS_BORDER,
   },
   ctaBtnHover: { backgroundColor: 'rgba(255,255,255,0.08)' },
-  ctaBtnHighlight: { backgroundColor: CANDIDATE_COLOR, borderColor: CANDIDATE_COLOR },
+  ctaBtnHighlight: { backgroundColor: CANDIDATE_COLOR_DIM, borderColor: CANDIDATE_COLOR_DIM },
   ctaBtnHighlightHover: { backgroundColor: '#0F8FDE' },
   ctaBtnText: { fontSize: 14, fontWeight: '700', color: TEXT_PRIMARY },
   ctaBtnTextHighlight: { color: '#FFFFFF' },

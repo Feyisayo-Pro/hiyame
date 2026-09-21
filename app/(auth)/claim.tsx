@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, ThemePalette, DISPLAY_FONT_FAMILY } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
 import ScreenFrame from '@/components/ScreenFrame';
+import PageHead from '@/components/PageHead';
 
 // Lands here from a Supabase invite email's magic link — the user is already
 // authenticated (in a "needs a password" state) via that link. Sets a real
@@ -66,6 +67,7 @@ export default function ClaimAccountScreen() {
 
   return (
     <SafeAreaView style={st.container} edges={['top', 'left', 'right', 'bottom']}>
+      <PageHead title="Claim Your Account" />
       <ScreenFrame maxWidth={560}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View style={st.content}>
@@ -136,7 +138,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   input: { flex: 1, fontSize: 15, color: T.textPrimary, fontWeight: '500' },
   errorText: { fontSize: 12, color: T.danger, fontWeight: '500', marginTop: 6, marginLeft: 4 },
   button: {
-    backgroundColor: T.accent, borderRadius: 50,
+    backgroundColor: T.accentSolid, borderRadius: 50,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: 8, paddingVertical: 16,
     shadowColor: T.accent, shadowOffset: { width: 0, height: 6 },

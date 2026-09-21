@@ -12,6 +12,7 @@ import PublicNav from '@/components/PublicNav';
 import GradientBlobBackground from '@/components/GradientBlobBackground';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import { DURATION, EASE, SPRING } from '@/lib/motion';
+import PageHead from '@/components/PageHead';
 
 // The landing screen — folds the old two-step welcome-carousel → register
 // flow into one decisive screen (per the redesign brief: Viamatch's whole
@@ -36,6 +37,12 @@ import { DURATION, EASE, SPRING } from '@/lib/motion';
 // dark *ground* built from a value the palette already commits to, not a
 // bespoke new hue introduced just for this screen.
 const CANDIDATE_COLOR = '#1DA1F2'; // brand accent, solid — reads brighter against the dark ground than the old near-opaque version
+// White panel text (headline/eyebrow/body) directly on the solid
+// CANDIDATE_COLOR panel background measured 2.8:1 via an axe-core sweep —
+// fails even the relaxed 3:1 large-text threshold. Same darkened value as
+// lib/theme.ts's accentDim; kept local since this file uses fixed hex
+// throughout for its own reasons (see file header).
+const CANDIDATE_COLOR_DIM = '#136CA2';
 const CANDIDATE_COLOR_SOFT = 'rgba(29,161,242,0.16)'; // receded-state tint
 const COMPANY_COLOR = 'rgba(30,41,59,0.94)'; // slate-800 glass card — distinct from the page ground, unlike solid near-black which merged into it
 const COMPANY_COLOR_SOFT = 'rgba(30,41,59,0.4)'; // receded-state tint
@@ -159,7 +166,7 @@ export default function WelcomeScreen() {
   const companyFlex = focus.interpolate({ inputRange: [-1, 0, 1], outputRange: [0.72, 1, stacked ? 1 : 1.45] });
   const candidateFlex = focus.interpolate({ inputRange: [-1, 0, 1], outputRange: [stacked ? 1 : 1.45, 1, 0.72] });
   const companyBg = focus.interpolate({ inputRange: [-1, 0, 1], outputRange: [COMPANY_COLOR_SOFT, COMPANY_COLOR, COMPANY_COLOR] });
-  const candidateBg = focus.interpolate({ inputRange: [-1, 0, 1], outputRange: [CANDIDATE_COLOR, CANDIDATE_COLOR, CANDIDATE_COLOR_SOFT] });
+  const candidateBg = focus.interpolate({ inputRange: [-1, 0, 1], outputRange: [CANDIDATE_COLOR_DIM, CANDIDATE_COLOR_DIM, CANDIDATE_COLOR_SOFT] });
   const companyTextOpacity = focus.interpolate({ inputRange: [-1, -0.3, 0], outputRange: [0.35, 1, 1], extrapolate: 'clamp' });
   const candidateTextOpacity = focus.interpolate({ inputRange: [0, 0.3, 1], outputRange: [1, 1, 0.35], extrapolate: 'clamp' });
   const companyCardTilt = focus.interpolate({ inputRange: [-1, 0, 1], outputRange: ['-2deg', '-4deg', '0deg'] });
@@ -167,6 +174,7 @@ export default function WelcomeScreen() {
 
   return (
     <SafeAreaView style={st.safeArea} edges={['top', 'left', 'right', 'bottom']}>
+      <PageHead title="Hiyame replaces job boards and agencies" />
       <ScreenFrame maxWidth={1120} style={st.frame}>
       <ScrollView contentContainerStyle={st.scrollContent} showsVerticalScrollIndicator={false}>
         {/* ── Nav ── */}
@@ -405,7 +413,11 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   panelInner: { flex: 1, padding: 28, justifyContent: 'space-between' },
   panelInnerStacked: { padding: 20 },
 
-  panelEyebrowLight: { fontSize: 11, fontWeight: '700', letterSpacing: 0.6, color: 'rgba(255,255,255,0.7)', marginBottom: 10 },
+  // 0.7 alpha measured 3.6:1 against the candidate panel's CANDIDATE_COLOR_DIM
+  // background (translucent white composites dimmer than solid white) —
+  // 0.84 clears 4.5:1 there and only brightens it further on the company
+  // panel's already-darker background.
+  panelEyebrowLight: { fontSize: 11, fontWeight: '700', letterSpacing: 0.6, color: 'rgba(255,255,255,0.84)', marginBottom: 10 },
   panelHeadlineLight: { fontSize: 28, fontWeight: '800', color: '#FFFFFF', letterSpacing: -0.4, marginBottom: 10, fontFamily: DISPLAY_FONT_FAMILY },
   panelBodyLight: { fontSize: 15, lineHeight: 22, color: 'rgba(255,255,255,0.9)', maxWidth: 360, marginBottom: 20 },
   panelCta: { flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-start', backgroundColor: 'rgba(255,255,255,0.14)', paddingHorizontal: 18, paddingVertical: 12, borderRadius: 999 },
@@ -424,17 +436,17 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   mockAvatar: { width: 34, height: 34, borderRadius: 12, backgroundColor: '#EEF0F3', alignItems: 'center', justifyContent: 'center' },
   mockAvatarText: { fontSize: 12, fontWeight: '700', color: COMPANY_COLOR },
   mockCardName: { fontSize: 14, fontWeight: '700', color: COMPANY_COLOR },
-  mockCardMeta: { fontSize: 11, color: '#8A97A4', marginTop: 1 },
+  mockCardMeta: { fontSize: 11, color: '#616C7A', marginTop: 1 },
   mockScoreBadge: { backgroundColor: 'rgba(23,167,91,0.12)', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
-  mockScoreText: { fontSize: 11, fontWeight: '800', color: '#17A75B' },
+  mockScoreText: { fontSize: 11, fontWeight: '800', color: '#117C43' },
   mockChipRow: { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginTop: 8 },
   mockChip: { backgroundColor: '#EEF0F3', borderRadius: 7, paddingHorizontal: 8, paddingVertical: 4 },
   mockChipText: { fontSize: 10, fontWeight: '600', color: '#5B6875' },
   mockChipDark: { backgroundColor: 'rgba(15,20,25,0.06)' },
   mockChipTextDark: { fontSize: 10, fontWeight: '700', color: COMPANY_COLOR },
-  mockWindowText: { fontSize: 10, fontWeight: '600', color: '#E0870B' },
+  mockWindowText: { fontSize: 10, fontWeight: '600', color: '#9C5C08' },
   mockMatchHead: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 8 },
-  mockMatchHeadText: { fontSize: 11, fontWeight: '700', color: '#17A75B' },
+  mockMatchHeadText: { fontSize: 11, fontWeight: '700', color: '#117C43' },
 
   howLink: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 20, paddingVertical: 4 },
   howLinkText: { fontSize: 13.5, fontWeight: '700', color: CANDIDATE_COLOR },
@@ -471,7 +483,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   closingCtaSubhead: { fontSize: 15, color: TEXT_MUTED, fontWeight: '500', textAlign: 'center', maxWidth: 460, marginBottom: 24 },
   closingCtaButtons: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'center' },
   closingCtaPrimary: {
-    flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: CANDIDATE_COLOR,
+    flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: CANDIDATE_COLOR_DIM,
     paddingHorizontal: 22, paddingVertical: 14, borderRadius: 999,
   },
   closingCtaPrimaryText: { fontSize: 14.5, fontWeight: '700', color: '#FFFFFF' },

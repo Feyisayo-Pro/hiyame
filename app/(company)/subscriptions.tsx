@@ -9,6 +9,7 @@ import { useTheme, ThemePalette } from '@/lib/theme';
 import { useSubscription, SubscriptionTier, PricingPlan, PLANS } from '@/lib/subscriptionStore';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import ScreenFrame from '@/components/ScreenFrame';
+import PageHead from '@/components/PageHead';
 import { notify } from '@/lib/notify';
 
 // Plan copy (id/name/price/features) now lives in lib/subscriptionStore.ts,
@@ -130,6 +131,7 @@ export default function SubscriptionsScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+      <PageHead title="Subscription" />
       <ScreenFrame>
       <View style={styles.header}>
         <Pressable style={styles.backBtn} onPress={() => router.back()}>
@@ -194,7 +196,7 @@ const makeCardStyles = (T: ThemePalette) => StyleSheet.create({
   planSubtitle: { fontSize: 13, fontWeight: '600', color: T.textSecondary, marginTop: 2, marginBottom: 14 },
 
   priceRow: { flexDirection: 'row', alignItems: 'baseline', gap: 4, marginBottom: 16 },
-  price: { fontSize: 30, fontWeight: '800', color: T.accent },
+  price: { fontSize: 30, fontWeight: '800', color: T.accentDim },
   period: { fontSize: 14, color: T.textSecondary },
 
   featuresList: { gap: 10, marginBottom: 20 },

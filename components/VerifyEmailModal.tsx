@@ -149,7 +149,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   verifyBtnDisabled: { opacity: 0.7 },
   verifyBtnText: { fontSize: 15, fontWeight: '700', color: T.textOnAccent },
   resendRow: { marginTop: 18 },
-  resendText: { fontSize: 13, fontWeight: '600', color: T.accent },
+  resendText: { fontSize: 13, fontWeight: '600', color: T.accentDim },
   resendTextDisabled: { color: T.textMuted },
   closeText: { fontSize: 12.5, color: T.textMuted, marginTop: 14 },
 });

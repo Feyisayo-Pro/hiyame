@@ -126,5 +126,5 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 },
   metaText: { fontSize: 12, color: T.textSecondary },
   linkRow: { flexDirection: 'row', alignItems: 'center', gap: 7, paddingVertical: 6 },
-  linkText: { fontSize: 13, color: T.accent, fontWeight: '600', flexShrink: 1 },
+  linkText: { fontSize: 13, color: T.accentDim, fontWeight: '600', flexShrink: 1 },
 });

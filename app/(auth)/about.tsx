@@ -13,6 +13,7 @@ import PublicNav from '@/components/PublicNav';
 import PublicFooter from '@/components/PublicFooter';
 import PersonaTabs from '@/components/PersonaTabs';
 import GradientBlobBackground from '@/components/GradientBlobBackground';
+import PageHead from '@/components/PageHead';
 
 // Public "About" page. Deliberately does NOT include named team bios or
 // photos — there's no real founder/team content anywhere in this codebase
@@ -28,7 +29,10 @@ import GradientBlobBackground from '@/components/GradientBlobBackground';
 const PAGE_BG = '#0B1220';
 const CANDIDATE_COLOR = '#1DA1F2';
 const TEXT_PRIMARY = '#F8FAFC';
-const TEXT_MUTED = '#94A3B8';
+// Lightened from '#94A3B8' — same fix as pricing.tsx/how-it-works.tsx's
+// identical constant (measured short of 4.5:1 against this page's dark
+// glass panels via an axe-core sweep).
+const TEXT_MUTED = '#AEB9C9';
 const GLASS_BG = 'rgba(255,255,255,0.04)';
 const GLASS_BORDER = 'rgba(148,163,184,0.14)';
 const STACK_BREAKPOINT = 760;
@@ -66,6 +70,7 @@ export default function AboutScreen() {
 
   return (
     <SafeAreaView style={st.safeArea} edges={['top', 'left', 'right', 'bottom']}>
+      <PageHead title="About" />
       <ScreenFrame maxWidth={1120} style={st.frame}>
         <ScrollView contentContainerStyle={st.scrollContent} showsVerticalScrollIndicator={false}>
           <PublicNav stacked={stacked} active="about" />

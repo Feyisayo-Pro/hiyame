@@ -8,6 +8,12 @@ import AnimatedPressable from '@/components/AnimatedPressable';
 // about) — pulled out of welcome.tsx once a second and third public page
 // needed the exact same pill so all three don't drift out of sync.
 const CANDIDATE_COLOR = '#1DA1F2';
+// White text on the plain accent hue above is only 2.8:1 — fails WCAG AA
+// even for large/bold text (needs 3:1, body text needs 4.5:1). Found via an
+// axe-core sweep; same fix as lib/theme.ts's accentDim, same darkened value,
+// kept as a local constant here since this file already uses fixed hex
+// (not theme tokens) for its own reasons.
+const CANDIDATE_COLOR_DIM = '#136CA2';
 const COMPANY_COLOR = '#0F1419';
 
 interface Props {
@@ -99,7 +105,7 @@ const st = StyleSheet.create({
   loginPillHover: { borderColor: COMPANY_COLOR, backgroundColor: '#F5F8FC' },
   loginPillText: { fontSize: 13, fontWeight: '700', color: COMPANY_COLOR },
   signUpPill: {
-    backgroundColor: CANDIDATE_COLOR, paddingHorizontal: 18, paddingVertical: 9, borderRadius: 999,
+    backgroundColor: CANDIDATE_COLOR_DIM, paddingHorizontal: 18, paddingVertical: 9, borderRadius: 999,
     shadowColor: CANDIDATE_COLOR, shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0, shadowRadius: 10,
   },
   signUpPillHover: { shadowOpacity: 0.35, transform: [{ translateY: -2 }] },

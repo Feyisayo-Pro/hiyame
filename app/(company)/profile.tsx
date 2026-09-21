@@ -15,6 +15,7 @@ import { pickAndUploadCompanyLogo } from '@/lib/uploadCompanyLogo';
 import { SkeletonBlock } from '@/components/Skeleton';
 import { notify } from '@/lib/notify';
 import { usePersonaGuard } from '@/lib/usePersonaGuard';
+import PageHead from '@/components/PageHead';
 
 interface RealCompany extends CompanyEditable {
   verifiedAt: string | null;
@@ -91,6 +92,7 @@ export default function CompanyProfileScreen() {
 
   return (
     <SafeAreaView style={st.container} edges={['top', 'left', 'right']}>
+      <PageHead title="Company Profile" />
       <ScreenFrame>
       <ScrollView contentContainerStyle={st.scroll} showsVerticalScrollIndicator={false}>
         <SwipeFadeContainer>
@@ -399,7 +401,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   /* Slot allocation */
   slotRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
   slotText: { fontSize: 15, fontWeight: '600', color: T.textPrimary },
-  slotTier: { fontSize: 11, fontWeight: '700', color: T.accent, backgroundColor: T.accentBg20, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 },
+  slotTier: { fontSize: 11, fontWeight: '700', color: T.accentDim, backgroundColor: T.accentBg20, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 },
   slotBarBg: { height: 8, backgroundColor: T.surface, borderRadius: 4, overflow: 'hidden' },
   slotBarFill: { height: 8, borderRadius: 4, backgroundColor: T.accent },
   slotHint: { fontSize: 11, color: T.textMuted, marginTop: 6 },

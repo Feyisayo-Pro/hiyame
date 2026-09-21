@@ -25,6 +25,7 @@ import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import ScreenFrame from '@/components/ScreenFrame';
 import { Text } from '@/components/Themed';
 import { SkeletonRow } from '@/components/Skeleton';
+import PageHead from '@/components/PageHead';
 
 // ── Helpers ──
 
@@ -97,7 +98,7 @@ function ConfigModal({ visible, onClose, T }: { visible: boolean; onClose: () =>
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                     <AppIcon name="crown-outline" size={18} color={T.accent} />
-                    <Text style={{ fontSize: 16, fontWeight: '800', color: T.accent }}>{config.name} Plan</Text>
+                    <Text style={{ fontSize: 16, fontWeight: '800', color: T.accentDim }}>{config.name} Plan</Text>
                   </View>
                   <View style={{ backgroundColor: T.accent, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6 }}>
                     <Text style={{ fontSize: 10, fontWeight: '800', color: T.textOnAccent }}>ACTIVE</Text>
@@ -202,6 +203,7 @@ export default function CompanyDashboardScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+      <PageHead title="Home" />
       <ScreenFrame>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <SwipeFadeContainer direction="left" triggerKey="header">
@@ -427,7 +429,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   greeting: { fontSize: 15, color: T.textPrimary, fontWeight: '600' },
   companyName: { fontSize: 22, color: T.textPrimary, fontWeight: '800', marginTop: 2, fontFamily: DISPLAY_FONT_FAMILY },
   planBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: T.accentBg, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 7, borderWidth: 1, borderColor: T.accent + '30' },
-  planBadgeText: { fontSize: 12, fontWeight: '700', color: T.accent },
+  planBadgeText: { fontSize: 12, fontWeight: '700', color: T.accentDim },
   planBanner: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: T.accentBg, borderRadius: 16, borderWidth: 1, borderColor: T.accent + '30', padding: 14, marginBottom: 16 },
   planBannerPressed: { backgroundColor: T.accentBg20 },
   planBannerIconWrap: { width: 36, height: 36, borderRadius: 12, backgroundColor: T.card, alignItems: 'center', justifyContent: 'center' },
@@ -436,7 +438,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   statusBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: T.accentBg, borderRadius: 14, borderWidth: 1, borderColor: T.accent + '30', paddingHorizontal: 16, paddingVertical: 12, marginBottom: 20 },
   statusBarLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   statusBarText: { fontSize: 13, color: T.textPrimary, fontWeight: '600', marginLeft: 6 },
-  upgradeLink: { fontSize: 13, color: T.accent, fontWeight: '700' },
+  upgradeLink: { fontSize: 13, color: T.accentDim, fontWeight: '700' },
   statsErrorBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: T.dangerBg, borderRadius: 14, borderWidth: 1, borderColor: T.danger + '30', paddingHorizontal: 16, paddingVertical: 12, marginBottom: 20 },
   statsErrorText: { flex: 1, fontSize: 13, color: T.textPrimary, fontWeight: '600' },
   statsErrorRetry: { fontSize: 13, color: T.danger, fontWeight: '700' },
@@ -447,12 +449,12 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   metricLabel: { fontSize: 12, color: T.textSecondary, fontWeight: '500' },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   sectionTitle: { fontSize: 17, fontWeight: '700', color: T.textPrimary, marginBottom: 12 },
-  sectionLink: { fontSize: 13, fontWeight: '600', color: T.accent },
+  sectionLink: { fontSize: 13, fontWeight: '600', color: T.accentDim },
   matchesList: { marginBottom: 24 },
   matchRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: T.card, borderRadius: 14, borderWidth: 1, borderColor: T.border, padding: 12, marginBottom: 10 },
   matchRowPressed: { backgroundColor: T.cardElevated },
   avatarCircle: { width: 44, height: 44, borderRadius: 22, backgroundColor: T.surface, alignItems: 'center', justifyContent: 'center', marginRight: 12, borderWidth: 1, borderColor: T.border },
-  avatarInitials: { fontSize: 14, fontWeight: '700', color: T.accent },
+  avatarInitials: { fontSize: 14, fontWeight: '700', color: T.accentDim },
   matchInfo: { flex: 1, marginRight: 8 },
   matchName: { fontSize: 14, fontWeight: '600', color: T.textPrimary, marginBottom: 2 },
   matchTitle: { fontSize: 12, color: T.textSecondary },

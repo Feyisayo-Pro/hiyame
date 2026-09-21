@@ -11,6 +11,7 @@ import PublicFooter from '@/components/PublicFooter';
 import GradientBlobBackground from '@/components/GradientBlobBackground';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import { DURATION, EASE } from '@/lib/motion';
+import PageHead from '@/components/PageHead';
 
 // Was a section embedded in app/(auth)/welcome.tsx (the home page), reached
 // only by scrolling down or via Pricing/About's persona tabs auto-scrolling
@@ -29,6 +30,9 @@ import { DURATION, EASE } from '@/lib/motion';
 // pointing at what's next) so you can just watch it — clicking a step still
 // jumps straight to it and restarts the timer, but nothing requires a click.
 const CANDIDATE_COLOR = '#1DA1F2';
+// White text directly on solid CANDIDATE_COLOR measures 2.8:1 — fails AA.
+// Same darkened value as lib/theme.ts's accentDim/accentSolid.
+const CANDIDATE_COLOR_DIM = '#136CA2';
 // Still used for text/icons inside the white mock cards further down (they
 // deliberately stay light — they're previews of the real, light-themed
 // in-app screens, same as welcome.tsx's own mock cards) — not for the page
@@ -39,7 +43,11 @@ const CANDIDATE_COLOR = '#1DA1F2';
 const COMPANY_COLOR = '#0F1419';
 const PAGE_BG = '#0B1220';
 const TEXT_PRIMARY = '#F8FAFC';
-const TEXT_MUTED = '#94A3B8';
+// Lightened from '#94A3B8' — measured 3.5-3.9:1 against the dark glass
+// panels' composited background (varies with the ambient gradient blob
+// underneath), short of 4.5:1. Every usage in this file sits on this same
+// dark ground, so lightening it globally here is a clean fix.
+const TEXT_MUTED = '#AEB9C9';
 const GLASS_BG = 'rgba(255,255,255,0.04)';
 const GLASS_BORDER = 'rgba(148,163,184,0.14)';
 const STACK_BREAKPOINT = 900;
@@ -91,6 +99,7 @@ export default function HowItWorksScreen() {
 
   return (
     <SafeAreaView style={st.safeArea} edges={['top', 'left', 'right', 'bottom']}>
+      <PageHead title="How It Works" />
       <ScreenFrame maxWidth={1120} style={st.frame}>
         <ScrollView contentContainerStyle={st.scrollContent} showsVerticalScrollIndicator={false}>
           <SwipeFadeContainer axis="y" offset={16} duration={420} delay={0}>
@@ -285,16 +294,16 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   mockAvatar: { width: 34, height: 34, borderRadius: 12, backgroundColor: '#EEF0F3', alignItems: 'center', justifyContent: 'center' },
   mockAvatarText: { fontSize: 12, fontWeight: '700', color: COMPANY_COLOR },
   mockCardName: { fontSize: 14, fontWeight: '700', color: COMPANY_COLOR },
-  mockCardMeta: { fontSize: 11, color: '#8A97A4', marginTop: 1 },
+  mockCardMeta: { fontSize: 11, color: '#616C7A', marginTop: 1 },
   mockScoreBadge: { backgroundColor: 'rgba(23,167,91,0.12)', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
-  mockScoreText: { fontSize: 11, fontWeight: '800', color: '#17A75B' },
+  mockScoreText: { fontSize: 11, fontWeight: '800', color: '#117C43' },
   mockChipRow: { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginTop: 8 },
   mockChip: { backgroundColor: '#EEF0F3', borderRadius: 7, paddingHorizontal: 8, paddingVertical: 4 },
   mockChipText: { fontSize: 10, fontWeight: '600', color: '#5B6875' },
   mockChipDark: { backgroundColor: 'rgba(15,20,25,0.06)' },
   mockChipTextDark: { fontSize: 10, fontWeight: '700', color: COMPANY_COLOR },
   mockMatchHead: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 8 },
-  mockMatchHeadText: { fontSize: 11, fontWeight: '700', color: '#17A75B' },
+  mockMatchHeadText: { fontSize: 11, fontWeight: '700', color: '#117C43' },
 
   howIntro: { alignItems: 'center', marginTop: 16, marginBottom: 32, paddingHorizontal: 12 },
   howMainEyebrow: { fontSize: 12, fontWeight: '800', letterSpacing: 0.8, color: CANDIDATE_COLOR, marginBottom: 10 },
@@ -311,7 +320,10 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
     shadowColor: '#000000', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.3, shadowRadius: 28, elevation: 3,
   },
 
-  howEyebrow: { fontSize: 11.5, fontWeight: '800', letterSpacing: 0.7, color: CANDIDATE_COLOR, marginBottom: 8 },
+  // A lighter blue than CANDIDATE_COLOR, not the darkened CANDIDATE_COLOR_DIM
+  // used elsewhere — this sits on the dark glass panel, so it needs MORE
+  // light, not less (opposite direction from the light-ground fixes above).
+  howEyebrow: { fontSize: 11.5, fontWeight: '800', letterSpacing: 0.7, color: '#6FC3F7', marginBottom: 8 },
   howTitle: { fontSize: 22, fontWeight: '800', color: TEXT_PRIMARY, letterSpacing: -0.4, marginBottom: 6, fontFamily: DISPLAY_FONT_FAMILY },
   howSubhead: { fontSize: 14, color: TEXT_MUTED, fontWeight: '500', marginBottom: 22 },
 
@@ -324,7 +336,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   // Active pill uses the accent blue, not near-black — a dark pill would
   // nearly vanish against the page's own dark ground (the exact bug already
   // fixed once on welcome.tsx's company panel).
-  stepTabAutoActive: { backgroundColor: CANDIDATE_COLOR, borderColor: CANDIDATE_COLOR },
+  stepTabAutoActive: { backgroundColor: CANDIDATE_COLOR_DIM, borderColor: CANDIDATE_COLOR_DIM },
   stepTabText: { fontSize: 12.5, fontWeight: '700', color: TEXT_MUTED, textAlign: 'center' },
   stepTabTextActive: { color: '#FFFFFF' },
   timerTrack: { height: 3, borderRadius: 2, backgroundColor: 'rgba(0,0,0,0.2)', marginTop: 6, overflow: 'hidden' },
@@ -349,14 +361,14 @@ const mockStyles = StyleSheet.create({
     shadowColor: '#0B1220', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.08, shadowRadius: 20, elevation: 5,
   },
   liveBadge: { alignSelf: 'flex-start', backgroundColor: 'rgba(23,167,91,0.12)', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3, marginBottom: 10 },
-  liveBadgeText: { fontSize: 10, fontWeight: '800', color: '#17A75B', letterSpacing: 0.4 },
+  liveBadgeText: { fontSize: 10, fontWeight: '800', color: '#117C43', letterSpacing: 0.4 },
   formTitle: { fontSize: 15, fontWeight: '800', color: COMPANY_COLOR },
-  formMeta: { fontSize: 12, color: '#8A97A4', marginTop: 2, marginBottom: 4, fontWeight: '600' },
+  formMeta: { fontSize: 12, color: '#616C7A', marginTop: 2, marginBottom: 4, fontWeight: '600' },
   scoreBar: { height: 6, borderRadius: 3, backgroundColor: '#EEF0F3', marginTop: 12, overflow: 'hidden' },
-  scoreBarFill: { height: '100%', backgroundColor: '#17A75B', borderRadius: 3 },
+  scoreBarFill: { height: '100%', backgroundColor: '#117C43', borderRadius: 3 },
   listRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 8, borderTopWidth: 1, borderTopColor: '#F1F5F9' },
   listName: { fontSize: 13, fontWeight: '700', color: COMPANY_COLOR },
   checkRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 7 },
   checkLabel: { fontSize: 13, fontWeight: '600', color: COMPANY_COLOR },
-  windowText: { fontSize: 11, fontWeight: '700', color: '#E0870B', marginTop: 10 },
+  windowText: { fontSize: 11, fontWeight: '700', color: '#9C5C08', marginTop: 10 },
 });

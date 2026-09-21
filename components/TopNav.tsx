@@ -207,7 +207,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   linkActive: { backgroundColor: T.accentBg },
   linkPressed: { backgroundColor: T.surface },
   linkText: { fontSize: 14, fontWeight: '600', color: T.textSecondary, letterSpacing: -0.1 },
-  linkTextActive: { color: T.accent, fontWeight: '700' },
+  linkTextActive: { color: T.accentDim, fontWeight: '700' },
   footer: { gap: 3, borderTopWidth: 1, borderTopColor: T.border, paddingTop: 10, marginTop: 10 },
   footRow: { flexDirection: 'row', alignItems: 'center', gap: 12, height: 40, paddingHorizontal: 12, borderRadius: RADIUS.control },
   footText: { fontSize: 13.5, fontWeight: '600', color: T.textSecondary },
@@ -222,7 +222,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
     alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
   },
   avatarImage: { width: '100%', height: '100%' },
-  avatarInitials: { fontSize: 13, fontWeight: '800', color: T.accent },
+  avatarInitials: { fontSize: 13, fontWeight: '800', color: T.accentDim },
   identityName: { fontSize: 13.5, fontWeight: '700', color: T.textPrimary },
   identityRole: { fontSize: 11, color: T.textMuted, fontWeight: '600', marginTop: 1 },
 });

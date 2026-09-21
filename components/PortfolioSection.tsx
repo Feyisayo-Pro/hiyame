@@ -125,7 +125,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   sectionRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
   sectionTitle: { fontSize: 17, fontWeight: '800', color: T.textPrimary },
   count: { backgroundColor: T.accentBg, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2 },
-  countText: { fontSize: 12, fontWeight: '700', color: T.accent },
+  countText: { fontSize: 12, fontWeight: '700', color: T.accentDim },
   empty: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: T.surface, borderRadius: 14, padding: 14, marginBottom: 10 },
   emptyText: { flex: 1, fontSize: 13, color: T.textSecondary, lineHeight: 18 },
   card: {
@@ -136,7 +136,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   cardTitle: { fontSize: 14, fontWeight: '700', color: T.textPrimary },
   cardDesc: { fontSize: 12, color: T.textSecondary, marginTop: 2, lineHeight: 17 },
   addRow: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 10 },
-  addRowText: { fontSize: 13, fontWeight: '600', color: T.accent },
+  addRowText: { fontSize: 13, fontWeight: '600', color: T.accentDim },
   addForm: { backgroundColor: T.surface, borderRadius: 14, padding: 12, gap: 8, marginTop: 4 },
   input: { backgroundColor: T.card, borderRadius: 10, borderWidth: 1, borderColor: T.border, paddingHorizontal: 12, paddingVertical: 10, fontSize: 13, color: T.textPrimary },
   textArea: { minHeight: 60, textAlignVertical: 'top' },

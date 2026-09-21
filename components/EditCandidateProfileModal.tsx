@@ -161,7 +161,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 6,
     backgroundColor: T.accentBg, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 10, borderWidth: 1, borderColor: T.accentBg20,
   },
-  chipText: { fontSize: 13, fontWeight: '600', color: T.accent },
+  chipText: { fontSize: 13, fontWeight: '600', color: T.accentDim },
   saveBtn: { height: 48, borderRadius: 12, backgroundColor: T.accent, alignItems: 'center', justifyContent: 'center', marginTop: 18 },
   saveBtnDisabled: { opacity: 0.6 },
   saveBtnText: { fontSize: 14, fontWeight: '700', color: T.textOnAccent },

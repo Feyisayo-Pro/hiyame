@@ -12,6 +12,7 @@ import { useAuth } from '@/lib/useAuth';
 import { getCandidateFeed, FeedItem, relativeTime } from '@/lib/dashboardStats';
 import { useIsDesktopWeb, useIsWideDesktopWeb } from '@/components/TopNav';
 import { usePersonaGuard } from '@/lib/usePersonaGuard';
+import PageHead from '@/components/PageHead';
 
 const ICON: Record<FeedItem['kind'], AppIconName> = {
   intro_sent: 'mail-unread-outline',
@@ -57,6 +58,7 @@ export default function CandidateNotificationsScreen() {
 
   return (
     <SafeAreaView style={st.container} edges={['top', 'left', 'right']}>
+      <PageHead title="Notifications" />
       <ScreenFrame>
       <View style={st.header}>
         <View style={st.headerLeft}>

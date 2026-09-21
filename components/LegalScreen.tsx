@@ -6,6 +6,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { Text } from '@/components/Themed';
 import { useTheme, ThemePalette } from '@/lib/theme';
 import ScreenFrame from '@/components/ScreenFrame';
+import PageHead from '@/components/PageHead';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import { DURATION } from '@/lib/motion';
 
@@ -53,6 +54,7 @@ export default function LegalScreen() {
 
   return (
     <SafeAreaView style={st.container} edges={['top', 'left', 'right']}>
+      <PageHead title="Legal" />
       <ScreenFrame>
         <View style={st.header}>
           <Pressable style={st.backBtn} onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Go back">
@@ -101,7 +103,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   tabBtn: { flex: 1, paddingVertical: 10, borderRadius: 10, alignItems: 'center', backgroundColor: T.surface, borderWidth: 1, borderColor: T.border },
   tabBtnActive: { backgroundColor: T.accentBg, borderColor: T.accent },
   tabText: { fontSize: 12.5, fontWeight: '700', color: T.textSecondary },
-  tabTextActive: { color: T.accent },
+  tabTextActive: { color: T.accentDim },
   scroll: { paddingHorizontal: 20, paddingBottom: 40 },
   block: { marginBottom: 18 },
   blockTitle: { fontSize: 14, fontWeight: '800', color: T.textPrimary, marginBottom: 6 },

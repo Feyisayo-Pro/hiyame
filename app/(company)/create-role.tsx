@@ -12,6 +12,7 @@ import { requestMatching } from '@/lib/requestMatching';
 import ScreenFrame from '@/components/ScreenFrame';
 import AnimatedPressable from '@/components/AnimatedPressable';
 import { TIER_CONFIG, Tier } from '@/lib/mock-data';
+import PageHead from '@/components/PageHead';
 
 // Only Corporate/Short-Term are postable here — Gig stays a Phase 3 stub
 // (permanently waitlisted regardless of scoring, per the matching engine's
@@ -117,6 +118,7 @@ export default function CreateRoleScreen() {
 
   return (
     <SafeAreaView style={st.container} edges={['top', 'left', 'right']}>
+      <PageHead title="Post a Role" />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScreenFrame>
         <View style={st.header}>
@@ -368,13 +370,13 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   chip: { paddingHorizontal: 14, paddingVertical: 9, borderRadius: 10, borderWidth: 1.5, borderColor: T.border, backgroundColor: T.surface },
   chipActive: { borderColor: T.accent, backgroundColor: T.accentBg },
   chipText: { fontSize: 13, fontWeight: '600', color: T.textSecondary, textTransform: 'capitalize' },
-  chipTextActive: { color: T.accent, fontWeight: '700' },
+  chipTextActive: { color: T.accentDim, fontWeight: '700' },
   addTagBtn: { width: 30, height: 30, borderRadius: 8, backgroundColor: T.accent, alignItems: 'center', justifyContent: 'center' },
   tagsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 },
   tagChip: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: T.accentBg, borderWidth: 1, borderColor: T.accentBg20, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 },
-  tagChipText: { fontSize: 13, fontWeight: '600', color: T.accent },
+  tagChipText: { fontSize: 13, fontWeight: '600', color: T.accentDim },
   submitButton: {
-    backgroundColor: T.accent, borderRadius: 50,
+    backgroundColor: T.accentSolid, borderRadius: 50,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: 8, paddingVertical: 16, marginTop: 8,
     shadowColor: T.accent, shadowOffset: { width: 0, height: 6 },

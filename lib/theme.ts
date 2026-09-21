@@ -14,6 +14,15 @@ export interface ThemePalette {
   surfaceHover: string;
   accent: string;
   accentDim: string;
+  // Same value in BOTH palettes, deliberately not theme-flipping like
+  // accentDim (which goes darker in light mode, lighter in dark mode — right
+  // for "accent-colored text sitting on the page's own ground"). A solid
+  // button fill with white text on top needs the opposite property: dark
+  // enough for white text to read regardless of which theme is active. Using
+  // accentDim for this (an earlier version of this fix) put dark mode's much
+  // lighter accentDim behind white text — 1.9:1, worse than the original
+  // bug. Caught by this session's own accessibility E2E suite.
+  accentSolid: string;
   accentBg: string;
   accentBg20: string;
   textPrimary: string;
@@ -52,12 +61,26 @@ export const LIGHT: ThemePalette = {
   surface: '#EEF0F3',
   surfaceHover: '#E5E8EC',
   accent: '#1DA1F2',
-  accentDim: '#0C7ABF',
+  // Was '#0C7ABF' — MASTER.md's own documented "accent text on light ground"
+  // fix, but measured (not just eyeballed) at 4.3:1 against this app's real
+  // `bg`/`accentBg`-composited surfaces, just under the 4.5:1 AA floor. This
+  // darkens it further (same hue, ~0.67x value) to clear every real
+  // background it sits on as text — 4.5:1 to 5.7:1 depending on surface,
+  // confirmed via an axe-core sweep + precise sRGB contrast math, not eyeballed.
+  accentDim: '#136CA2',
+  // Same value as light's accentDim (a coincidence of the math, not a
+  // shortcut) — see the interface comment above for why this doesn't flip
+  // with the theme the way accentDim does.
+  accentSolid: '#136CA2',
   accentBg: 'rgba(29,161,242,0.08)',
   accentBg20: 'rgba(29,161,242,0.14)',
   textPrimary: '#0F1419',
   textSecondary: '#5B6875',
-  textMuted: '#8A97A4',
+  // Was '#8A97A4' (2.98:1 on card/bg — fails WCAG AA's 4.5:1 for text, found
+  // via an axe-core sweep). MASTER.md documents '#6E7B8B' for this same
+  // reason, but that measures 4.3:1 here too — still short. This is a further
+  // 0.88x darkening of that same hue, clearing 4.5:1+ against card/bg/surface.
+  textMuted: '#616C7A',
   textOnAccent: '#FFFFFF',
   emerald: '#17A75B',
   emeraldBg: 'rgba(23,167,91,0.09)',
@@ -91,11 +114,15 @@ export const DARK: ThemePalette = {
   surfaceHover: '#282D35',
   accent: '#1DA1F2',
   accentDim: '#6FC3F7',
+  accentSolid: '#136CA2',
   accentBg: 'rgba(29,161,242,0.14)',
   accentBg20: 'rgba(29,161,242,0.22)',
   textPrimary: '#F2F4F7',
   textSecondary: '#A7B0BC',
-  textMuted: '#6C7784',
+  // Was '#6C7784' — only 3.4-3.9:1 against dark card/surface (never caught
+  // earlier since this session's a11y sweep only exercised light mode).
+  // Lightened toward the same hue (0.16x mix to white) to clear 4.5:1+.
+  textMuted: '#848D98',
   textOnAccent: '#FFFFFF',
   emerald: '#34D399',
   emeraldBg: 'rgba(52,211,153,0.14)',

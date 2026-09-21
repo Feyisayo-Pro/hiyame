@@ -13,6 +13,7 @@ import ContactReveal from '@/components/ContactReveal';
 import ScreenFrame from '@/components/ScreenFrame';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import { DURATION } from '@/lib/motion';
+import PageHead from '@/components/PageHead';
 import AnimatedPressable from '@/components/AnimatedPressable';
 import { notifyIntroduction } from '@/lib/requestNotify';
 import { useIsDesktopWeb, useIsWideDesktopWeb } from '@/components/TopNav';
@@ -165,6 +166,7 @@ export default function OpportunitiesScreen() {
 
   return (
     <SafeAreaView style={st.container} edges={['top', 'left', 'right']}>
+      <PageHead title="Introductions" />
       <ScreenFrame>
       <View style={st.header}>
         <Text style={st.headerTitle}>Introductions</Text>

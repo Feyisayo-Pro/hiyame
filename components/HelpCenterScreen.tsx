@@ -6,6 +6,7 @@ import { router } from 'expo-router';
 import { Text } from '@/components/Themed';
 import { useTheme, ThemePalette } from '@/lib/theme';
 import ScreenFrame from '@/components/ScreenFrame';
+import PageHead from '@/components/PageHead';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import { DURATION, EASE } from '@/lib/motion';
 
@@ -122,6 +123,7 @@ export default function HelpCenterScreen({ persona }: { persona: Persona }) {
 
   return (
     <SafeAreaView style={st.container} edges={['top', 'left', 'right']}>
+      <PageHead title="Help Center" />
       <ScreenFrame>
         <View style={st.header}>
           <Pressable style={st.backBtn} onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Go back">
@@ -179,5 +181,5 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   contactCard: { alignItems: 'center', gap: 4, backgroundColor: T.accentBg, borderRadius: 16, padding: 22, marginTop: 4, borderWidth: 1, borderColor: T.accentBg20 },
   contactTitle: { fontSize: 15, fontWeight: '800', color: T.textPrimary, marginTop: 6 },
   contactSub: { fontSize: 12, color: T.textSecondary },
-  contactEmail: { fontSize: 13, fontWeight: '700', color: T.accent, marginTop: 6 },
+  contactEmail: { fontSize: 13, fontWeight: '700', color: T.accentDim, marginTop: 6 },
 });

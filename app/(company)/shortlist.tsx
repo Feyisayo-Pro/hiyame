@@ -13,6 +13,7 @@ import { requestMatching } from '@/lib/requestMatching';
 import { getIntroductionContact, IntroductionContact } from '@/lib/introductionContact';
 import ContactReveal from '@/components/ContactReveal';
 import ScreenFrame from '@/components/ScreenFrame';
+import PageHead from '@/components/PageHead';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import { DURATION } from '@/lib/motion';
 import AnimatedPressable from '@/components/AnimatedPressable';
@@ -201,6 +202,7 @@ export default function ShortlistScreen() {
 
   return (
     <SafeAreaView style={st.container} edges={['top', 'left', 'right']}>
+      <PageHead title="Shortlist" />
       <ScreenFrame>
       <View style={st.header}>
         <Pressable style={st.backButton} onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Go back">
@@ -420,7 +422,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   profileRow: { flexDirection: 'row', gap: 16, marginBottom: 16 },
   photo: { width: 108, height: 108, borderRadius: 26, backgroundColor: T.surface },
   photoFallback: { alignItems: 'center', justifyContent: 'center' },
-  photoInitials: { fontSize: 32, fontWeight: '800', color: T.accent, letterSpacing: -0.5 },
+  photoInitials: { fontSize: 32, fontWeight: '800', color: T.accentDim, letterSpacing: -0.5 },
   profileBody: { flex: 1, minWidth: 0, gap: 8, justifyContent: 'center' },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   candidateName: { flex: 1, fontSize: 17, fontWeight: '800', color: T.textPrimary, letterSpacing: -0.3 },

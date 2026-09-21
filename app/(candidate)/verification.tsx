@@ -9,6 +9,7 @@ import { useAuth } from '@/lib/useAuth';
 import { supabase } from '@/lib/supabase';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import ScreenFrame from '@/components/ScreenFrame';
+import PageHead from '@/components/PageHead';
 import SmileIdVerificationModal from '@/components/SmileIdVerificationModal';
 import { useTheme, ThemePalette, DISPLAY_FONT_FAMILY } from '@/lib/theme';
 import { FULL_VERIFICATION_THRESHOLD, TOTAL_VERIFICATION_COMPONENTS } from '@/lib/verification';
@@ -121,6 +122,7 @@ export default function VerificationScreen() {
 
   return (
     <SafeAreaView style={st.container} edges={['top', 'left', 'right']}>
+      <PageHead title="Verification" />
       <ScreenFrame>
       <ScrollView
         contentContainerStyle={st.scrollContent}
@@ -319,7 +321,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
 
   /* Header */
   header: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8 },
-  headerGreeting: { fontSize: 14, fontWeight: '600', color: T.accent, marginBottom: 2 },
+  headerGreeting: { fontSize: 14, fontWeight: '600', color: T.accentDim, marginBottom: 2 },
   headerTitle: { fontSize: 24, fontWeight: '800', color: T.textPrimary, letterSpacing: -0.3, fontFamily: DISPLAY_FONT_FAMILY },
   headerRole: { fontSize: 13, fontWeight: '600', color: T.textSecondary, marginTop: 2 },
   headerSub: { fontSize: 13, color: T.textMuted, marginTop: 4 },
@@ -339,7 +341,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   progressRingComplete: { borderColor: T.emerald, backgroundColor: T.emeraldBg },
-  progressRingText: { fontSize: 14, fontWeight: '800', color: T.accent },
+  progressRingText: { fontSize: 14, fontWeight: '800', color: T.accentDim },
   progressRingTextComplete: { color: T.emerald },
   progressTitle: { fontSize: 16, fontWeight: '700', color: T.textPrimary },
   progressSub: { fontSize: 12, color: T.textMuted, marginTop: 2 },
@@ -384,7 +386,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   tierChipInactive: { backgroundColor: T.surface, borderColor: T.border },
   tierDot: { width: 6, height: 6, borderRadius: 3 },
   tierChipText: { fontSize: 12, fontWeight: '600', color: T.textMuted },
-  tierChipTextActive: { color: T.accent },
+  tierChipTextActive: { color: T.accentDim },
 
   /* Section Header */
   sectionHeader: {
@@ -409,7 +411,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   stepNumberDone: { backgroundColor: T.emerald, borderColor: T.emerald },
-  stepNumberText: { fontSize: 12, fontWeight: '800', color: T.accent },
+  stepNumberText: { fontSize: 12, fontWeight: '800', color: T.accentDim },
   stepTitle: { fontSize: 15, fontWeight: '700', color: T.textPrimary },
   stepTitleDone: { color: T.emerald },
   stepSubtitle: { fontSize: 11, color: T.textMuted, marginTop: 2 },

@@ -7,6 +7,7 @@ import { Text } from '@/components/Themed';
 import { useTheme, ThemePalette, DISPLAY_FONT_FAMILY } from '@/lib/theme';
 import { useAuth } from '@/lib/useAuth';
 import { supabase } from '@/lib/supabase';
+import PageHead from '@/components/PageHead';
 
 interface Step {
   icon: AppIconName;
@@ -63,6 +64,7 @@ export default function WelcomeTourScreen() {
 
   return (
     <SafeAreaView style={st.container} edges={['top', 'left', 'right', 'bottom']}>
+      <PageHead title="Welcome" />
       <View style={[st.card, { maxWidth: Math.min(width - 32, 460) }]}>
         <View style={st.top}>
           <View style={st.dots}>
@@ -136,7 +138,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   backText: { fontSize: 14, fontWeight: '600', color: T.textSecondary },
   nextBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: T.accent, paddingVertical: 13, paddingHorizontal: 22, borderRadius: 50,
+    backgroundColor: T.accentSolid, paddingVertical: 13, paddingHorizontal: 22, borderRadius: 50,
   },
   nextText: { fontSize: 15, fontWeight: '700', color: T.textOnAccent },
 });
