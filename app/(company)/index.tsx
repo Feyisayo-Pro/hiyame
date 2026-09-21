@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback, useEffect } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { useQuery } from '@tanstack/react-query';
 import AppIcon from '@/components/AppIcon';
 
 import { useTheme, useThemeToggle, ThemePalette, ELEVATION, DISPLAY_FONT_FAMILY } from '@/lib/theme';
@@ -178,14 +179,16 @@ export default function CompanyDashboardScreen() {
   const { companyId } = useAuth();
   const { tier, config, trialDaysLeft } = useSubscription();
   const [showConfig, setShowConfig] = useState(false);
-  const [stats, setStats] = useState<CompanyStats | null>(null);
-
-  useEffect(() => {
-    if (!companyId) { setStats(null); return; }
-    let alive = true;
-    getCompanyStats(companyId).then((s) => { if (alive) setStats(s); });
-    return () => { alive = false; };
-  }, [companyId]);
+  // Real cache (tabbing Home -> Roles -> Home within 30s reuses this instead
+  // of refetching) + a real isError flag — before this, a failed fetch left
+  // `stats` at null forever with the metric cards silently showing 0s
+  // (via the existing `stats?.openRoles ?? 0` fallbacks below) and zero
+  // indication anything went wrong.
+  const { data: stats, isError: statsErrored, refetch: refetchStats } = useQuery({
+    queryKey: ['companyStats', companyId],
+    queryFn: () => getCompanyStats(companyId!),
+    enabled: !!companyId,
+  });
 
   const greeting = useMemo(() => getGreeting(), []);
   const showUpgradeBar = tier !== 'enterprise';
@@ -219,6 +222,20 @@ export default function CompanyDashboardScreen() {
             </View>
           </View>
         </SwipeFadeContainer>
+
+        {/* Stats fetch failed — the rest of the dashboard still renders fine
+            via the `stats?.x ?? 0` fallbacks above, so this stays a small
+            inline notice rather than blocking the whole screen (unlike
+            AnalyticsScreen, whose numbers ARE the entire screen). */}
+        {statsErrored && (
+          <View style={styles.statsErrorBanner}>
+            <AppIcon name="cloud-offline-outline" size={16} color={T.danger} />
+            <Text style={styles.statsErrorText}>Couldn't load your latest stats</Text>
+            <Pressable onPress={() => refetchStats()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <Text style={styles.statsErrorRetry}>Retry</Text>
+            </Pressable>
+          </View>
+        )}
 
         {/* Active plan banner */}
         <SwipeFadeContainer direction="left" triggerKey="planBanner" delay={150}>
@@ -279,7 +296,7 @@ export default function CompanyDashboardScreen() {
           </View>
 
           <View style={styles.matchesList}>
-            {stats === null ? (
+            {!stats ? (
               <>
                 <SkeletonRow />
                 <SkeletonRow />
@@ -420,6 +437,9 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   statusBarLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   statusBarText: { fontSize: 13, color: T.textPrimary, fontWeight: '600', marginLeft: 6 },
   upgradeLink: { fontSize: 13, color: T.accent, fontWeight: '700' },
+  statsErrorBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: T.dangerBg, borderRadius: 14, borderWidth: 1, borderColor: T.danger + '30', paddingHorizontal: 16, paddingVertical: 12, marginBottom: 20 },
+  statsErrorText: { flex: 1, fontSize: 13, color: T.textPrimary, fontWeight: '600' },
+  statsErrorRetry: { fontSize: 13, color: T.danger, fontWeight: '700' },
   metricsGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginBottom: 24 },
   metricCard: { width: '48%', backgroundColor: T.card, borderRadius: 16, borderWidth: 1, borderColor: T.border, padding: 16, marginBottom: 12 },
   metricIconWrap: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },

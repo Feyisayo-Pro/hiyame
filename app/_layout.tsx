@@ -16,6 +16,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useMemo, ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View, StatusBar as RNStatusBar, Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Toast from 'react-native-toast-message';
 import { toastConfig } from '@/lib/toastConfig';
 import AppIcon from '@/components/AppIcon';
@@ -34,9 +35,20 @@ import 'react-native-reanimated';
 initSentry();
 
 // Redirects based on real auth state: signed out + outside (auth) -> welcome;
-// signed in with a resolved persona + inside (auth) -> that persona's home.
-// Renders nothing while the initial session/role check is in flight, same as
-// the existing font-loading gate below.
+// signed in with a resolved persona + inside (auth) -> that persona's home;
+// signed in but sitting in the OTHER persona's route group -> the same path
+// under their real group.
+//
+// That last case is what a fresh page load/reload hits: (candidate) and
+// (company) both declare routes with the same leaf names (index, profile,
+// settings, analytics, ...), so on a cold load — no client-side nav history
+// to disambiguate from — Expo Router's web resolver picks whichever group's
+// route it finds first and renders that, regardless of who's actually signed
+// in. Per-screen guards (lib/usePersonaGuard.ts) patched this for 6 leaf
+// screens, but a screen has to remember to call it — index.tsx (Home, the
+// single most-loaded route) was missed on both sides, so a candidate
+// reloading landed on the company Home. Checking segments[0] here instead
+// covers every route in the tree, present and future, in one place.
 function AuthGate({ children }: { children: ReactNode }) {
   const { session, loading, role } = useAuth();
   const segments = useSegments();
@@ -45,11 +57,21 @@ function AuthGate({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (loading) return;
     const inAuthGroup = segments[0] === '(auth)';
+    const inCandidateGroup = segments[0] === '(candidate)';
+    const inCompanyGroup = segments[0] === '(company)';
 
     if (!session && !inAuthGroup) {
       router.replace('/(auth)/welcome');
     } else if (session && role && inAuthGroup) {
       router.replace(role === 'candidate' ? '/(candidate)' : '/(company)');
+    } else if (
+      session && role &&
+      ((role === 'company' && inCandidateGroup) || (role === 'candidate' && inCompanyGroup))
+    ) {
+      // Re-resolve to the same leaf path, just under the correct group —
+      // e.g. wrong '/(candidate)/profile' -> right '/(company)/profile'.
+      const rest = segments.slice(1).join('/');
+      router.replace(`/(${role})/${rest}` as any);
     }
   }, [loading, session, role, segments, router]);
 
@@ -107,6 +129,17 @@ export const unstable_settings = {
 
 SplashScreen.preventAutoHideAsync();
 
+// Real client-side cache — before this, every screen fetched from scratch
+// on every mount with no de-dupe (navigate Home -> Shortlist -> Home again
+// and you refetch identical data 3 times) and a failed request just left
+// state at `null` forever (the skeleton spins indefinitely, not an error +
+// retry). 30s staleTime means normal in-app navigation between tabs reuses
+// the cache instead of refetching; a manual pull-to-refresh still works
+// since screens can call refetch() directly.
+const queryClient = new QueryClient({
+  defaultOptions: { queries: { staleTime: 30_000, retry: 2 } },
+});
+
 function RootLayout() {
   const [loaded, error] = useFonts({
     // Body face — matches every weight lib/theme.ts's fontFamilyForWeight()
@@ -139,15 +172,17 @@ function RootLayout() {
   if (!loaded) return null;
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <HiyameThemeProvider>
-        <RootLayoutNav />
-      </HiyameThemeProvider>
-      {/* Mounted once at the root, above every screen — lib/notify.ts calls
-          Toast.show() from anywhere in the app without needing its own
-          provider per screen. */}
-      <Toast config={toastConfig} />
-    </GestureHandlerRootView>
+    <QueryClientProvider client={queryClient}>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <HiyameThemeProvider>
+          <RootLayoutNav />
+        </HiyameThemeProvider>
+        {/* Mounted once at the root, above every screen — lib/notify.ts calls
+            Toast.show() from anywhere in the app without needing its own
+            provider per screen. */}
+        <Toast config={toastConfig} />
+      </GestureHandlerRootView>
+    </QueryClientProvider>
   );
 }
 

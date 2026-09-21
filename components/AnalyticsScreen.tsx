@@ -6,8 +6,9 @@
  * No fabricated metrics (profile views, search appearances, response times) —
  * none of those are tracked anywhere.
  */
-import { useEffect, useMemo, useState } from 'react';
-import { ScrollView, View } from 'react-native';
+import { useMemo } from 'react';
+import { Pressable, ScrollView, View } from 'react-native';
+import { useQuery } from '@tanstack/react-query';
 import { Text } from '@/components/Themed';
 import AppIcon, { AppIconName } from '@/components/AppIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -189,17 +190,28 @@ function AnalyticsSkeleton() {
 export default function AnalyticsScreen({ persona = 'company' }: { persona?: Persona }) {
   const T = useTheme();
   const { companyId, candidateId } = useAuth();
-  const [company, setCompany] = useState<CompanyStats | null>(null);
-  const [candidate, setCandidate] = useState<CandidateStats | null>(null);
 
-  useEffect(() => {
-    let alive = true;
-    if (persona === 'company' && companyId) getCompanyStats(companyId).then((s) => { if (alive) setCompany(s); });
-    if (persona === 'candidate' && candidateId) getCandidateStats(candidateId).then((s) => { if (alive) setCandidate(s); });
-    return () => { alive = false; };
-  }, [persona, companyId, candidateId]);
+  // Real cache + real error state — before this, a failed fetch here left
+  // `company`/`candidate` at null forever (the skeleton spins indefinitely,
+  // no retry, no distinction between "still loading" and "the request
+  // actually failed"). Same de-dupe benefit as Home: tabbing away and back
+  // to Insights within 30s reuses the cache instead of refetching.
+  const companyQuery = useQuery({
+    queryKey: ['companyStats', companyId],
+    queryFn: () => getCompanyStats(companyId!),
+    enabled: persona === 'company' && !!companyId,
+  });
+  const candidateQuery = useQuery({
+    queryKey: ['candidateStats', candidateId],
+    queryFn: () => getCandidateStats(candidateId!),
+    enabled: persona === 'candidate' && !!candidateId,
+  });
+  const { data: company, isError: companyErrored, refetch: refetchCompany } = companyQuery;
+  const { data: candidate, isError: candidateErrored, refetch: refetchCandidate } = candidateQuery;
 
   const ready = persona === 'company' ? company : candidate;
+  const errored = persona === 'company' ? companyErrored : candidateErrored;
+  const retry = persona === 'company' ? refetchCompany : refetchCandidate;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: T.bg }} edges={['top', 'left', 'right']}>
@@ -211,7 +223,15 @@ export default function AnalyticsScreen({ persona = 'company' }: { persona?: Per
         </Text>
       </View>
 
-      {!ready ? (
+      {errored ? (
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32, gap: 12 }}>
+          <AppIcon name="cloud-offline-outline" size={28} color={T.textMuted} />
+          <Text style={{ fontSize: 14, color: T.textSecondary, textAlign: 'center' }}>Couldn't load your insights.</Text>
+          <Pressable onPress={() => retry()} style={{ backgroundColor: T.accent, paddingHorizontal: 20, paddingVertical: 10, borderRadius: 10 }}>
+            <Text style={{ color: T.textOnAccent, fontWeight: '700', fontSize: 13 }}>Retry</Text>
+          </Pressable>
+        </View>
+      ) : !ready ? (
         <AnalyticsSkeleton />
       ) : persona === 'company' ? (
         <CompanyAnalytics T={T} stats={company as CompanyStats} />

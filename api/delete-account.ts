@@ -45,7 +45,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     .eq('auth_user_id', authUserId)
     .maybeSingle();
 
+  // Storage cleanup for whichever row actually gets deleted below — found
+  // during a compliance audit: the DB row disappearing (and its cascades)
+  // never touched the uploaded photo/logo file itself. The path is
+  // deterministic (`${id}.${ext}`) but the extension isn't recorded
+  // separately from the URL, so try all three formats the upload endpoints
+  // accept; removing a path that was never uploaded is a silent no-op, not
+  // an error, so this is safe to call unconditionally.
+  const IMAGE_EXTS = ['jpg', 'png', 'webp'];
+  const removeStoredImage = async (bucket: string, id: string) => {
+    await admin.storage.from(bucket).remove(IMAGE_EXTS.map((ext) => `${id}.${ext}`));
+  };
+
   if (candidate) {
+    await removeStoredImage('candidate-photos', candidate.id);
     const { error } = await admin.from('candidates').delete().eq('id', candidate.id);
     if (error) return res.status(500).json({ error: error.message });
   } else {
@@ -63,7 +76,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         .neq('id', companyUser.id);
 
       if (!count) {
-        // Last member — take the whole company with them.
+        // Last member — take the whole company (and its logo) with them.
+        await removeStoredImage('company-logos', companyUser.company_id);
         const { error } = await admin.from('companies').delete().eq('id', companyUser.company_id);
         if (error) return res.status(500).json({ error: error.message });
       } else {
