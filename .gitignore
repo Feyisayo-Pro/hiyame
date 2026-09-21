@@ -43,6 +43,12 @@ scripts/migration-report.json
 # typescript
 *.tsbuildinfo
 
+# Playwright E2E — throwaway test-account credentials + run artifacts, never
+# secrets meant to be shared, and reports are large/local-only.
+/tests/e2e/.auth/
+/playwright-report/
+/test-results/
+
 # generated native folders
 /ios
 /android
