@@ -11,6 +11,7 @@ import { useTheme, ThemePalette } from '@/lib/theme';
 import { useAuth } from '@/lib/useAuth';
 import { getCompanyFeed, FeedItem, relativeTime } from '@/lib/dashboardStats';
 import { useIsDesktopWeb, useIsWideDesktopWeb } from '@/components/TopNav';
+import { usePersonaGuard } from '@/lib/usePersonaGuard';
 
 const ICON: Record<FeedItem['kind'], AppIconName> = {
   intro_sent: 'paper-plane-outline',
@@ -28,6 +29,7 @@ function tone(item: FeedItem, T: ThemePalette) {
 }
 
 export default function CompanyNotificationsScreen() {
+  usePersonaGuard('company');
   const T = useTheme();
   const st = useMemo(() => makeStyles(T), [T]);
   const { companyId } = useAuth();

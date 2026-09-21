@@ -18,6 +18,7 @@ import { SkeletonBlock } from '@/components/Skeleton';
 import { notify } from '@/lib/notify';
 import { formatNaira } from '@/lib/currency';
 import { FULL_VERIFICATION_THRESHOLD } from '@/lib/verification';
+import { usePersonaGuard } from '@/lib/usePersonaGuard';
 
 interface RealProfile {
   fullName: string;
@@ -37,6 +38,7 @@ const VERIFICATION_COMPONENTS = [
 ];
 
 export default function CandidateProfileScreen() {
+  usePersonaGuard('candidate');
   const T = useTheme();
   const { mode, toggleTheme } = useThemeToggle();
   const st = useMemo(() => makeStyles(T), [T]);

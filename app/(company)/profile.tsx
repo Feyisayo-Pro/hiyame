@@ -14,6 +14,7 @@ import { supabase } from '@/lib/supabase';
 import { pickAndUploadCompanyLogo } from '@/lib/uploadCompanyLogo';
 import { SkeletonBlock } from '@/components/Skeleton';
 import { notify } from '@/lib/notify';
+import { usePersonaGuard } from '@/lib/usePersonaGuard';
 
 interface RealCompany extends CompanyEditable {
   verifiedAt: string | null;
@@ -21,6 +22,7 @@ interface RealCompany extends CompanyEditable {
 }
 
 export default function CompanyProfileScreen() {
+  usePersonaGuard('company');
   const T = useTheme();
   const { mode, toggleTheme } = useThemeToggle();
   const st = useMemo(() => makeStyles(T), [T]);
