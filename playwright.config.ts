@@ -22,6 +22,18 @@ export default defineConfig({
     screenshot: 'only-on-failure',
   },
   projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+    {
+      name: 'chromium',
+      use: {
+        ...devices['Desktop Chrome'],
+        // Fake camera/mic device + auto-accepted permission prompt — lets
+        // verification-checklist.spec.ts's video-intro test drive a real
+        // getUserMedia()/MediaRecorder() flow without a physical webcam.
+        // No effect on any other spec (a page that never calls
+        // getUserMedia never sees a prompt either way).
+        launchOptions: { args: ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'] },
+        permissions: ['camera', 'microphone'],
+      },
+    },
   ],
 });

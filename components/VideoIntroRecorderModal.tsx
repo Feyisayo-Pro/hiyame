@@ -52,12 +52,21 @@ export default function VideoIntroRecorderModal({ visible, onClose, onSubmitted 
   };
 
   const teardownVideoEl = () => {
+    // Clear the element's own src/srcObject BEFORE revoking the object URL
+    // or removing it from the DOM — otherwise the browser can still try to
+    // resolve the now-revoked blob: URL as part of tearing the node down,
+    // which surfaces as a harmless but noisy ERR_FILE_NOT_FOUND in the
+    // console (observed during live testing).
+    if (videoElRef.current) {
+      videoElRef.current.removeAttribute('src');
+      videoElRef.current.srcObject = null;
+      videoElRef.current.load();
+    }
     if (objectUrlRef.current) {
       URL.revokeObjectURL(objectUrlRef.current);
       objectUrlRef.current = null;
     }
     if (videoElRef.current) {
-      videoElRef.current.srcObject = null;
       videoElRef.current.remove();
       videoElRef.current = null;
     }
@@ -83,18 +92,24 @@ export default function VideoIntroRecorderModal({ visible, onClose, onSubmitted 
 
   const mountVideoEl = (): HTMLVideoElement | null => {
     // React Native Web forwards a View's ref to its host <div> — not
-    // reflected in RN's own types, hence the cast. Container div is fully
-    // owned by this component (styled empty, nothing else ever renders
-    // into it), so directly managing its one child imperatively is safe.
+    // reflected in RN's own types, hence the cast. This container renders
+    // NO React children (see the JSX below) specifically so this component
+    // can fully own its DOM contents imperatively without React's fiber
+    // tree and the real DOM ever disagreeing about what's in there.
     const container = previewRef.current as unknown as HTMLDivElement | null;
     if (!container) return null;
+    // Remove any previous element explicitly rather than blanket-clearing
+    // via innerHTML — precise, not just "currently safe because empty".
+    if (videoElRef.current) {
+      videoElRef.current.remove();
+      videoElRef.current = null;
+    }
     const el = document.createElement('video');
     el.style.width = '100%';
     el.style.height = '100%';
     el.style.objectFit = 'cover';
     el.style.borderRadius = '14px';
     el.playsInline = true;
-    container.innerHTML = '';
     container.appendChild(el);
     videoElRef.current = el;
     return el;
@@ -216,9 +231,18 @@ export default function VideoIntroRecorderModal({ visible, onClose, onSubmitted 
             </View>
           ) : (
             <>
-              <View ref={previewRef} style={s.previewBox}>
+              <View style={s.previewWrap}>
+                {/* This View must never receive React-rendered children —
+                    its DOM node is owned entirely by mountVideoEl's
+                    imperative appendChild below. Mixing the two caused a
+                    real, reproducible "removeChild: not a child of this
+                    node" crash (React's fiber tree and the real DOM
+                    diverging) the first time this was live-tested with a
+                    conditional child in here. The loading spinner is a
+                    sibling instead, absolutely positioned to overlay it. */}
+                <View ref={previewRef} style={s.previewBox} />
                 {status === 'starting' && (
-                  <View style={s.previewOverlay}>
+                  <View style={s.previewOverlay} pointerEvents="none">
                     <ActivityIndicator color={T.accent} />
                   </View>
                 )}
@@ -286,7 +310,8 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   title: { fontSize: 17, fontWeight: '800', color: T.textPrimary },
   centerWrap: { alignItems: 'center', gap: 12, paddingVertical: 20 },
   body: { fontSize: 13, color: T.textSecondary, textAlign: 'center', lineHeight: 19 },
-  previewBox: { width: '100%', aspectRatio: 4 / 3, backgroundColor: T.surface, borderRadius: 14, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
+  previewWrap: { width: '100%', aspectRatio: 4 / 3, position: 'relative' },
+  previewBox: { width: '100%', height: '100%', backgroundColor: T.surface, borderRadius: 14, overflow: 'hidden' },
   previewOverlay: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center' },
   recordingRow: { flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'center' },
   recDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: T.danger },

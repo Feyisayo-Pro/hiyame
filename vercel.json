@@ -1,5 +1,11 @@
 {
   "outputDirectory": "dist",
   "cleanUrls": true,
-  "trailingSlash": false
+  "trailingSlash": false,
+  "rewrites": [
+    {
+      "source": "/employer-review/:token",
+      "destination": "/employer-review/%5Btoken%5D"
+    }
+  ]
 }
