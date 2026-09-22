@@ -64,5 +64,14 @@ hand or let the next run's setup add another one.
   `filechooser` event on the same `<input type="file">` a real browser
   dialog would drive. Confirms the avatar switches from initials to a real
   `<img>`, not just that the toast appeared.
+- `verification-checklist.spec.ts` — the three real verification-checklist
+  writers (identity stays out of scope everywhere in this app — see
+  lib/verification.ts): a full skills-assessment attempt, a real
+  getUserMedia()/MediaRecorder() video-intro recording (needs the fake
+  camera device flags in playwright.config.ts's `launchOptions`), and the
+  full employer-review flow across two separate browser contexts — a
+  signed-in candidate sends the request, a completely separate signed-out
+  context consumes the emailed link's token and submits the rating,
+  including a check that the same link can't be submitted twice.
 
 Coverage is now complete for every flow this session's manual QA touched.
