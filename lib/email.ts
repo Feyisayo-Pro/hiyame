@@ -156,6 +156,24 @@ export function introductionExpiredEmail(p: {
   };
 }
 
+// Employer review request — to the candidate's named past employer/client.
+// The link's token IS the credential (see api/submit-employer-review-token.ts);
+// no Hiyame account or sign-in involved on the reviewer's end at all.
+export function employerReviewRequestEmail(p: {
+  candidateName: string;
+  reviewUrl: string;
+}): { subject: string; html: string } {
+  return {
+    subject: `${p.candidateName} listed you as a reference on Hiyame`,
+    html: shell(
+      `${esc(p.candidateName)} listed you as a reference`,
+      `<p style="margin:0 0 12px"><b>${esc(p.candidateName)}</b> is completing their verification on Hiyame, a hiring platform, and listed you as a past employer or client.</p>
+       <p style="margin:0">If that's accurate, a short review takes under a minute — no account or sign-in needed. This link is single-use and expires in 30 days.</p>`,
+      { label: 'Leave a review', href: p.reviewUrl },
+    ),
+  };
+}
+
 // Introduction accepted — to the candidate. Company + hiring contact revealed.
 export function introductionAcceptedCandidateEmail(p: {
   roleTitle: string;

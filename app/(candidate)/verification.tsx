@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useMemo} from 'react';
-import { StyleSheet, View, ScrollView, TouchableOpacity } from 'react-native';
+import { ActivityIndicator, StyleSheet, View, ScrollView, TextInput, TouchableOpacity, Pressable } from 'react-native';
 import { Text } from '@/components/Themed';
 import AppIcon, { AppIconName } from '@/components/AppIcon';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,8 +11,13 @@ import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import ScreenFrame from '@/components/ScreenFrame';
 import PageHead from '@/components/PageHead';
 import SmileIdVerificationModal from '@/components/SmileIdVerificationModal';
+import VideoIntroRecorderModal from '@/components/VideoIntroRecorderModal';
+import SkillsAssessmentModal from '@/components/SkillsAssessmentModal';
+import { notify } from '@/lib/notify';
 import { useTheme, ThemePalette, DISPLAY_FONT_FAMILY } from '@/lib/theme';
 import { FULL_VERIFICATION_THRESHOLD, TOTAL_VERIFICATION_COMPONENTS } from '@/lib/verification';
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // Real component keys in verification_records — the same table
 // app/(candidate)/index.tsx, profile.tsx and Insights already read. This
@@ -80,41 +85,98 @@ export default function VerificationScreen() {
   const { identityVerified, setIdentityVerified } = useVerification();
   const { candidateId } = useAuth();
   const [showSmileId, setShowSmileId] = useState(false);
+  const [showVideoModal, setShowVideoModal] = useState(false);
+  const [showAssessmentModal, setShowAssessmentModal] = useState(false);
   const [passedComponents, setPassedComponents] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
+  const refetchRecords = useCallback(() => {
     if (!candidateId) return;
-    let alive = true;
     supabase.from('verification_records').select('component, status').eq('candidate_id', candidateId).then(({ data }) => {
-      if (alive) setPassedComponents(new Set((data ?? []).filter((v) => v.status === 'passed').map((v) => v.component)));
+      setPassedComponents(new Set((data ?? []).filter((v) => v.status === 'passed').map((v) => v.component)));
     });
-    return () => { alive = false; };
   }, [candidateId]);
 
-  // 'identity' is real, backed by lib/useVerification.ts + the Smile ID flow below.
-  // The other 3 steps remain a local dev toggle until their own integrations exist —
-  // but every step's *displayed* done-state now also checks the real
-  // verification_records row, so an already-verified candidate shows correctly
-  // here without needing to re-toggle anything, matching Home/Profile/Insights.
-  const [completed, setCompleted] = useState<Record<string, boolean>>({
-    video: false,
-    assessment: false,
-    review: false,
-  });
+  useEffect(() => {
+    refetchRecords();
+  }, [refetchRecords]);
+
+  // Employer review's own request state — not a pass/fail like the other
+  // two, so it needs a little more than "is it in passedComponents": once a
+  // request is sent, the step shows "awaiting response" rather than the
+  // generic "Begin Verification" button until it either resolves or expires.
+  const [pendingReviewRequest, setPendingReviewRequest] = useState<{ employer_email: string } | null>(null);
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [employerName, setEmployerName] = useState('');
+  const [employerEmail, setEmployerEmail] = useState('');
+  const [sendingRequest, setSendingRequest] = useState(false);
+
+  const refetchReviewRequest = useCallback(() => {
+    if (!candidateId) return;
+    supabase
+      .from('employer_review_requests')
+      .select('employer_email')
+      .eq('candidate_id', candidateId)
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => setPendingReviewRequest(data));
+  }, [candidateId]);
+
+  useEffect(() => {
+    refetchReviewRequest();
+  }, [refetchReviewRequest]);
 
   const toggleStep = useCallback((key: string) => {
     if (key === 'identity') {
       setShowSmileId(true);
+    } else if (key === 'video') {
+      setShowVideoModal(true);
+    } else if (key === 'assessment') {
+      setShowAssessmentModal(true);
+    } else if (key === 'review') {
+      setShowReviewForm(true);
+    }
+  }, []);
+
+  const sendReviewRequest = useCallback(async () => {
+    if (!employerName.trim()) {
+      notify('Name required', "Enter the employer's name.");
       return;
     }
-    setCompleted((prev) => ({ ...prev, [key]: !prev[key] }));
-  }, []);
+    if (!EMAIL_RE.test(employerEmail.trim())) {
+      notify('Invalid email', 'Enter a valid email address.');
+      return;
+    }
+    setSendingRequest(true);
+    try {
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (!token) throw new Error('You need to be signed in.');
+      const res = await fetch('/api/employer-review', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'request', employerName: employerName.trim(), employerEmail: employerEmail.trim() }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body?.error || 'Could not send the request.');
+      notify('Request sent', `We emailed ${employerEmail.trim()} a link to leave a review.`);
+      setShowReviewForm(false);
+      setEmployerName('');
+      setEmployerEmail('');
+      refetchReviewRequest();
+    } catch (e: any) {
+      notify('Could not send request', e?.message || 'Something went wrong. Please try again.');
+    } finally {
+      setSendingRequest(false);
+    }
+  }, [employerName, employerEmail, refetchReviewRequest]);
 
   const allCompleted: Record<string, boolean> = {
     identity: identityVerified || passedComponents.has(REAL_COMPONENT_KEY.identity),
-    video: completed.video || passedComponents.has(REAL_COMPONENT_KEY.video),
-    assessment: completed.assessment || passedComponents.has(REAL_COMPONENT_KEY.assessment),
-    review: completed.review || passedComponents.has(REAL_COMPONENT_KEY.review),
+    video: passedComponents.has(REAL_COMPONENT_KEY.video),
+    assessment: passedComponents.has(REAL_COMPONENT_KEY.assessment),
+    review: passedComponents.has(REAL_COMPONENT_KEY.review),
   };
   const completedCount = Object.values(allCompleted).filter(Boolean).length;
   const isFullyVerified = completedCount >= FULL_VERIFICATION_THRESHOLD;
@@ -277,21 +339,72 @@ export default function VerificationScreen() {
                 <Text style={st.stepDescription}>{step.description}</Text>
               </View>
 
-              {/* Action Button (dev toggle) */}
-              <TouchableOpacity
-                style={[st.stepButton, isDone && st.stepButtonDone]}
-                onPress={() => toggleStep(step.key)}
-                activeOpacity={0.7}
-              >
-                <AppIcon
-                  name={isDone ? (step.key === 'identity' ? 'checkmark-circle-outline' : 'close-circle-outline') : 'arrow-forward-circle-outline'}
-                  size={18}
-                  color={isDone ? T.textMuted : T.textOnAccent}
-                />
-                <Text style={[st.stepButtonText, isDone && st.stepButtonTextDone]}>
-                  {isDone ? (step.key === 'identity' ? 'Re-verify' : 'Reset (Dev)') : 'Begin Verification'}
-                </Text>
-              </TouchableOpacity>
+              {/* Action area — differs per step now that 3 of the 4 are
+                  real: identity re-verifies, video can always be re-recorded,
+                  a passed assessment/review just shows Verified with nothing
+                  to press, and review's own request state (sent/awaiting)
+                  replaces the button entirely while one is outstanding. */}
+              {step.key === 'review' && showReviewForm ? (
+                <View style={st.reviewForm}>
+                  <TextInput
+                    style={st.reviewInput}
+                    value={employerName}
+                    onChangeText={setEmployerName}
+                    placeholder="Employer or client name"
+                    placeholderTextColor={T.textMuted}
+                  />
+                  <TextInput
+                    style={st.reviewInput}
+                    value={employerEmail}
+                    onChangeText={setEmployerEmail}
+                    placeholder="Their email address"
+                    placeholderTextColor={T.textMuted}
+                    autoCapitalize="none"
+                    keyboardType="email-address"
+                  />
+                  <View style={st.reviewFormRow}>
+                    <TouchableOpacity style={st.reviewCancelBtn} onPress={() => setShowReviewForm(false)} disabled={sendingRequest}>
+                      <Text style={st.reviewCancelBtnText}>Cancel</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={[st.stepButton, st.reviewSendBtn]} onPress={sendReviewRequest} disabled={sendingRequest}>
+                      {sendingRequest ? <ActivityIndicator color={T.textOnAccent} size="small" /> : (
+                        <>
+                          <AppIcon name="paper-plane-outline" size={16} color={T.textOnAccent} />
+                          <Text style={st.stepButtonText}>Send Request</Text>
+                        </>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ) : step.key === 'review' && !isDone && pendingReviewRequest ? (
+                <View style={[st.stepButton, st.stepButtonDone]}>
+                  <AppIcon name="time-outline" size={18} color={T.textMuted} />
+                  <Text style={[st.stepButtonText, st.stepButtonTextDone]} numberOfLines={1}>
+                    Awaiting response from {pendingReviewRequest.employer_email}
+                  </Text>
+                </View>
+              ) : isDone && (step.key === 'assessment' || step.key === 'review') ? null : (
+                <TouchableOpacity
+                  style={[st.stepButton, isDone && st.stepButtonDone]}
+                  onPress={() => toggleStep(step.key)}
+                  activeOpacity={0.7}
+                >
+                  <AppIcon
+                    name={isDone ? 'refresh' : 'arrow-forward-circle-outline'}
+                    size={18}
+                    color={isDone ? T.textMuted : T.textOnAccent}
+                  />
+                  <Text style={[st.stepButtonText, isDone && st.stepButtonTextDone]}>
+                    {step.key === 'identity'
+                      ? (isDone ? 'Re-verify' : 'Begin Verification')
+                      : step.key === 'video'
+                      ? (isDone ? 'Re-record' : 'Record Introduction')
+                      : step.key === 'assessment'
+                      ? 'Begin Assessment'
+                      : 'Request a Review'}
+                  </Text>
+                </TouchableOpacity>
+              )}
             </View>
           );
         })}
@@ -307,6 +420,18 @@ export default function VerificationScreen() {
         onClose={() => setShowSmileId(false)}
         onVerified={() => setIdentityVerified(true)}
         userId={fullName || 'candidate-demo'}
+      />
+
+      <VideoIntroRecorderModal
+        visible={showVideoModal}
+        onClose={() => setShowVideoModal(false)}
+        onSubmitted={() => refetchRecords()}
+      />
+
+      <SkillsAssessmentModal
+        visible={showAssessmentModal}
+        onClose={() => setShowAssessmentModal(false)}
+        onPassed={() => refetchRecords()}
       />
     </SafeAreaView>
   );
@@ -438,9 +563,21 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   stepButton: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
     paddingVertical: 12, borderRadius: 10,
-    backgroundColor: T.accent,
+    backgroundColor: T.accentSolid,
   },
   stepButtonDone: { backgroundColor: T.surface, borderWidth: 1, borderColor: T.border },
   stepButtonText: { fontSize: 13, fontWeight: '700', color: T.textOnAccent },
-  stepButtonTextDone: { color: T.textMuted },
+  stepButtonTextDone: { color: T.textMuted, flexShrink: 1 },
+
+  /* Employer review inline request form */
+  reviewForm: { gap: 10 },
+  reviewInput: {
+    borderWidth: 1.5, borderColor: T.border, backgroundColor: T.surface,
+    borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12,
+    fontSize: 14, color: T.textPrimary,
+  },
+  reviewFormRow: { flexDirection: 'row', gap: 10 },
+  reviewCancelBtn: { flex: 1, alignItems: 'center', justifyContent: 'center', borderRadius: 10, borderWidth: 1, borderColor: T.border, paddingVertical: 12 },
+  reviewCancelBtnText: { fontSize: 13, fontWeight: '700', color: T.textSecondary },
+  reviewSendBtn: { flex: 1 },
 });

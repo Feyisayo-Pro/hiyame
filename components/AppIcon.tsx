@@ -7,8 +7,8 @@ import {
   EnvelopeSimple, EnvelopeSimpleOpen, Eye, EyeSlash, FileText, Gear, Globe, House, IdentificationCard,
   Info, Key, Leaf, Lifebuoy, Lightning, Lock, MagnifyingGlass, MapPin, Money, Moon, PaperPlaneTilt,
   PencilSimple, Plus, PlusCircle, Question, Rocket, RocketLaunch, SealCheck, Shield, ShieldCheck,
-  SignIn, SignOut, Sparkle, Star, Sun, Trash, User, UserCircle, UserPlus, Users, UsersThree, VideoCamera,
-  Warning, WarningCircle, X, XCircle,
+  SignIn, SignOut, Sparkle, Star, StopCircle, Sun, Trash, User, UserCircle, UserPlus, Users, UsersThree,
+  VideoCamera, Warning, WarningCircle, X, XCircle,
 } from 'phosphor-react-native';
 
 // Premium icon set, swapped in app-wide for the generic Ionicons everyone's
@@ -100,7 +100,9 @@ const MAP: Record<string, { Icon: typeof House; weight: PhosphorWeight }> = {
   'shield-outline': { Icon: Shield, weight: 'regular' },
   'sparkles': { Icon: Sparkle, weight: 'fill' },
   'sparkles-outline': { Icon: Sparkle, weight: 'regular' },
+  'star': { Icon: Star, weight: 'fill' },
   'star-outline': { Icon: Star, weight: 'regular' },
+  'stop-circle-outline': { Icon: StopCircle, weight: 'regular' },
   'stats-chart-outline': { Icon: ChartBar, weight: 'regular' },
   'sunny-outline': { Icon: Sun, weight: 'regular' },
   'swap-horizontal': { Icon: ArrowsLeftRight, weight: 'bold' },

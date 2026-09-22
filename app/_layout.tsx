@@ -49,6 +49,12 @@ initSentry();
 // single most-loaded route) was missed on both sides, so a candidate
 // reloading landed on the company Home. Checking segments[0] here instead
 // covers every route in the tree, present and future, in one place.
+// Top-level routes a signed-out visitor with no Hiyame account must be able
+// to reach directly — e.g. a past employer following the emailed review
+// link at /employer-review/[token]. Everything else outside (auth) still
+// requires a session; this is a narrow allowlist, not a loosening of that.
+const PUBLIC_SEGMENTS = ['employer-review'];
+
 function AuthGate({ children }: { children: ReactNode }) {
   const { session, loading, role } = useAuth();
   const segments = useSegments();
@@ -59,8 +65,9 @@ function AuthGate({ children }: { children: ReactNode }) {
     const inAuthGroup = segments[0] === '(auth)';
     const inCandidateGroup = segments[0] === '(candidate)';
     const inCompanyGroup = segments[0] === '(company)';
+    const inPublicRoute = PUBLIC_SEGMENTS.includes(segments[0] ?? '');
 
-    if (!session && !inAuthGroup) {
+    if (!session && !inAuthGroup && !inPublicRoute) {
       router.replace('/(auth)/welcome');
     } else if (session && role && inAuthGroup) {
       router.replace(role === 'candidate' ? '/(candidate)' : '/(company)');
