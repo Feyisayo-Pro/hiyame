@@ -31,11 +31,9 @@ import PageHead from '@/components/PageHead';
 // A marketing entry point keeping one deliberate look regardless of the
 // signed-in app's light/dark toggle is standard, not an oversight.
 //
-// Dark hero (deliberate, this page only — Pricing/About/How-it-works stay on
-// their existing light background). '#0B1220' rather than a fresh color:
-// it's already this app's real shadowColor everywhere else, so this is a
-// dark *ground* built from a value the palette already commits to, not a
-// bespoke new hue introduced just for this screen.
+// Light hero, matching the other 3 public pages (welcome/pricing/about/
+// how-it-works all moved back to a white ground together — was dark for a
+// stretch, changed back on direct request).
 const CANDIDATE_COLOR = '#1DA1F2'; // brand accent, solid — reads brighter against the dark ground than the old near-opaque version
 // White panel text (headline/eyebrow/body) directly on the solid
 // CANDIDATE_COLOR panel background measured 2.8:1 via an axe-core sweep —
@@ -47,8 +45,9 @@ const CANDIDATE_COLOR_SOFT = 'rgba(29,161,242,0.16)'; // receded-state tint
 const COMPANY_COLOR = 'rgba(30,41,59,0.94)'; // slate-800 glass card — distinct from the page ground, unlike solid near-black which merged into it
 const COMPANY_COLOR_SOFT = 'rgba(30,41,59,0.4)'; // receded-state tint
 const COMPANY_BORDER = 'rgba(59,130,246,0.28)'; // faint blue glow ring, the one thing that keeps the company panel reading as its own object on a dark ground
-const PAGE_BG = '#0B1220'; // near-black slate
-const TEXT_MUTED = '#94A3B8'; // slate-400 — secondary text on the dark ground, ~7:1 against PAGE_BG
+const PAGE_BG = '#FFFFFF';
+const TEXT_PRIMARY = '#0F1419';
+const TEXT_MUTED = '#5B6875';
 
 const STACK_BREAKPOINT = 760;
 
@@ -183,7 +182,7 @@ export default function WelcomeScreen() {
         </SwipeFadeContainer>
 
         <View style={st.blobZone}>
-        <GradientBlobBackground dark />
+        <GradientBlobBackground />
 
         {/* ── Headline ── */}
         <SwipeFadeContainer axis="y" offset={16} duration={420} delay={90}>
@@ -376,15 +375,15 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
 
   headlineBlock: { alignItems: 'center', marginBottom: 20, paddingHorizontal: 12 },
   headlineBlockStacked: { marginBottom: 14 },
-  headline: { fontSize: 40, lineHeight: 46, fontWeight: '800', color: '#F8FAFC', letterSpacing: -0.6, textAlign: 'center', maxWidth: 720, fontFamily: DISPLAY_FONT_FAMILY },
+  headline: { fontSize: 40, lineHeight: 46, fontWeight: '800', color: TEXT_PRIMARY, letterSpacing: -0.6, textAlign: 'center', maxWidth: 720, fontFamily: DISPLAY_FONT_FAMILY },
   headlineStacked: { fontSize: 28, lineHeight: 34 },
   subhead: { fontSize: 17, color: TEXT_MUTED, marginTop: 12, fontWeight: '600', maxWidth: 640, textAlign: 'center' },
 
   statsRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: 20, marginBottom: 24 },
   statItem: { alignItems: 'center', minWidth: 96 },
-  statValue: { fontSize: 22, fontWeight: '800', color: '#F8FAFC', fontFamily: DISPLAY_FONT_FAMILY },
+  statValue: { fontSize: 22, fontWeight: '800', color: TEXT_PRIMARY, fontFamily: DISPLAY_FONT_FAMILY },
   statLabel: { fontSize: 12, color: TEXT_MUTED, fontWeight: '600', marginTop: 2 },
-  statDivider: { width: 1, height: 28, backgroundColor: 'rgba(148,163,184,0.25)' },
+  statDivider: { width: 1, height: 28, backgroundColor: '#E6E9ED' },
 
   // SwipeFadeContainer's own Animated.View needs flex:1 too, or the panels'
   // own flex:1 (which makes them fill the remaining single-viewport height)
@@ -453,7 +452,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
 
   // Features section added to provide more landing-page content
   featuresSection: { marginTop: 24, paddingHorizontal: 12, alignItems: 'center' },
-  featuresTitle: { fontSize: 20, fontWeight: '800', color: '#F8FAFC', marginBottom: 16, fontFamily: DISPLAY_FONT_FAMILY },
+  featuresTitle: { fontSize: 20, fontWeight: '800', color: TEXT_PRIMARY, marginBottom: 16, fontFamily: DISPLAY_FONT_FAMILY },
   // flexWrap added — 3 fixed-content cards in one unwrapped row overflowed
   // the viewport horizontally on mobile (the 3rd card was cut off at the
   // edge), which is also a banned anti-pattern (no horizontal page scroll).
@@ -466,20 +465,20 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   // wrapping cleanly (no horizontal scroll) at phone widths.
   featureCard: {
     flexBasis: 240, flexGrow: 1, alignItems: 'flex-start', gap: 10,
-    backgroundColor: 'rgba(255,255,255,0.05)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: '#F6F7F9', borderWidth: 1, borderColor: '#E6E9ED',
     paddingHorizontal: 18, paddingVertical: 20, borderRadius: 18,
   },
   featureIconBadge: {
     width: 36, height: 36, borderRadius: 12, backgroundColor: 'rgba(29,161,242,0.14)',
     alignItems: 'center', justifyContent: 'center',
   },
-  featureCardTitle: { fontSize: 14.5, color: '#F8FAFC', fontWeight: '700' },
+  featureCardTitle: { fontSize: 14.5, color: TEXT_PRIMARY, fontWeight: '700' },
   featureCardDesc: { fontSize: 13, color: TEXT_MUTED, fontWeight: '500', lineHeight: 19 },
 
   // Closing CTA — persona-specific buttons (Post a role / Get verified),
   // same real live stats already fetched for the hero's own stats row.
   closingCta: { marginTop: 40, paddingHorizontal: 12, alignItems: 'center', paddingBottom: 8 },
-  closingCtaTitle: { fontSize: 26, fontWeight: '800', color: '#F8FAFC', marginBottom: 10, fontFamily: DISPLAY_FONT_FAMILY, textAlign: 'center' },
+  closingCtaTitle: { fontSize: 26, fontWeight: '800', color: TEXT_PRIMARY, marginBottom: 10, fontFamily: DISPLAY_FONT_FAMILY, textAlign: 'center' },
   closingCtaSubhead: { fontSize: 15, color: TEXT_MUTED, fontWeight: '500', textAlign: 'center', maxWidth: 460, marginBottom: 24 },
   closingCtaButtons: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'center' },
   closingCtaPrimary: {
@@ -489,7 +488,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   closingCtaPrimaryText: { fontSize: 14.5, fontWeight: '700', color: '#FFFFFF' },
   closingCtaSecondary: {
     paddingHorizontal: 22, paddingVertical: 14, borderRadius: 999,
-    borderWidth: 1, borderColor: 'rgba(148,163,184,0.35)', backgroundColor: 'rgba(255,255,255,0.04)',
+    borderWidth: 1, borderColor: '#E6E9ED', backgroundColor: '#F6F7F9',
   },
-  closingCtaSecondaryText: { fontSize: 14.5, fontWeight: '700', color: '#F8FAFC' },
+  closingCtaSecondaryText: { fontSize: 14.5, fontWeight: '700', color: TEXT_PRIMARY },
 });

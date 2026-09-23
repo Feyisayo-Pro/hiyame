@@ -2,10 +2,10 @@ import type { ComponentProps } from 'react';
 import type { ColorValue } from 'react-native';
 import {
   ArrowCircleRight, ArrowLeft, ArrowRight, ArrowsClockwise, ArrowsLeftRight, Bell, BookmarkSimple,
-  Briefcase, Buildings, Camera, CaretDown, CaretRight, CaretUp, ChartBar, ChatCircle, ChatCircleDots,
+  Briefcase, Buildings, Calendar, Camera, CaretDown, CaretRight, CaretUp, ChartBar, ChatCircle, ChatCircleDots,
   Check, CheckCircle, Clock, CloudArrowUp, CloudSlash, Code, Compass, CreditCard, Crown, DeviceMobile,
   EnvelopeSimple, EnvelopeSimpleOpen, Eye, EyeSlash, FileText, Gear, Globe, House, IdentificationCard,
-  Info, Key, Leaf, Lifebuoy, Lightning, Lock, MagnifyingGlass, MapPin, Money, Moon, PaperPlaneTilt,
+  Info, Key, Leaf, Lifebuoy, Lightning, Link, Lock, MagnifyingGlass, MapPin, Money, Moon, PaperPlaneTilt,
   PencilSimple, Plus, PlusCircle, Question, Rocket, RocketLaunch, SealCheck, Shield, ShieldCheck,
   SignIn, SignOut, Sparkle, Star, StopCircle, Sun, Trash, User, UserCircle, UserPlus, Users, UsersThree,
   VideoCamera, Warning, WarningCircle, X, XCircle,
@@ -35,6 +35,7 @@ const MAP: Record<string, { Icon: typeof House; weight: PhosphorWeight }> = {
   'briefcase-outline': { Icon: Briefcase, weight: 'regular' },
   'business': { Icon: Buildings, weight: 'fill' },
   'business-outline': { Icon: Buildings, weight: 'regular' },
+  'calendar-outline': { Icon: Calendar, weight: 'regular' },
   'camera': { Icon: Camera, weight: 'fill' },
   'camera-outline': { Icon: Camera, weight: 'regular' },
   'card-outline': { Icon: CreditCard, weight: 'regular' },
@@ -72,6 +73,7 @@ const MAP: Record<string, { Icon: typeof House; weight: PhosphorWeight }> = {
   'key-outline': { Icon: Key, weight: 'regular' },
   'leaf': { Icon: Leaf, weight: 'fill' },
   'location-outline': { Icon: MapPin, weight: 'regular' },
+  'link': { Icon: Link, weight: 'regular' },
   'lock-closed': { Icon: Lock, weight: 'fill' },
   'lock-closed-outline': { Icon: Lock, weight: 'regular' },
   'log-out-outline': { Icon: SignOut, weight: 'regular' },

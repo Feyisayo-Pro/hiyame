@@ -33,23 +33,17 @@ const CANDIDATE_COLOR = '#1DA1F2';
 // White text directly on solid CANDIDATE_COLOR measures 2.8:1 — fails AA.
 // Same darkened value as lib/theme.ts's accentDim/accentSolid.
 const CANDIDATE_COLOR_DIM = '#136CA2';
-// Still used for text/icons inside the white mock cards further down (they
-// deliberately stay light — they're previews of the real, light-themed
-// in-app screens, same as welcome.tsx's own mock cards) — not for the page
-// chrome around them, which is now dark to match welcome.tsx's hero
-// (previously this page was light while welcome was dark, a split that was
-// never a deliberate choice, just an artifact of the hero redesign landing
-// on welcome first).
+// Text/icons inside the white mock cards further down — previews of the
+// real, light-themed in-app screens, same as welcome.tsx's own mock cards.
 const COMPANY_COLOR = '#0F1419';
-const PAGE_BG = '#0B1220';
-const TEXT_PRIMARY = '#F8FAFC';
-// Lightened from '#94A3B8' — measured 3.5-3.9:1 against the dark glass
-// panels' composited background (varies with the ambient gradient blob
-// underneath), short of 4.5:1. Every usage in this file sits on this same
-// dark ground, so lightening it globally here is a clean fix.
-const TEXT_MUTED = '#AEB9C9';
-const GLASS_BG = 'rgba(255,255,255,0.04)';
-const GLASS_BORDER = 'rgba(148,163,184,0.14)';
+// Light ground, matching welcome/pricing/about (all 4 public pages moved
+// back to white together — was dark for a stretch, changed back on direct
+// request).
+const PAGE_BG = '#FFFFFF';
+const TEXT_PRIMARY = '#0F1419';
+const TEXT_MUTED = '#5B6875';
+const GLASS_BG = '#F6F7F9';
+const GLASS_BORDER = '#E6E9ED';
 const STACK_BREAKPOINT = 900;
 const STEP_DURATION = 3400; // ms each step stays active before auto-advancing
 
@@ -107,7 +101,7 @@ export default function HowItWorksScreen() {
           </SwipeFadeContainer>
 
           <View style={st.blobZone}>
-            <GradientBlobBackground dark />
+            <GradientBlobBackground />
 
             <SwipeFadeContainer axis="y" offset={14} duration={420} delay={80}>
               <View style={st.howIntro}>
@@ -306,7 +300,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   mockMatchHeadText: { fontSize: 11, fontWeight: '700', color: '#117C43' },
 
   howIntro: { alignItems: 'center', marginTop: 16, marginBottom: 32, paddingHorizontal: 12 },
-  howMainEyebrow: { fontSize: 12, fontWeight: '800', letterSpacing: 0.8, color: CANDIDATE_COLOR, marginBottom: 10 },
+  howMainEyebrow: { fontSize: 12, fontWeight: '800', letterSpacing: 0.8, color: CANDIDATE_COLOR_DIM, marginBottom: 10 },
   howMainTitle: { fontSize: 32, fontWeight: '800', color: TEXT_PRIMARY, letterSpacing: -0.6, marginBottom: 8, fontFamily: DISPLAY_FONT_FAMILY, textAlign: 'center' },
   howMainSubhead: { fontSize: 15.5, color: TEXT_MUTED, fontWeight: '500', maxWidth: 480, textAlign: 'center' },
 
@@ -323,7 +317,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   // A lighter blue than CANDIDATE_COLOR, not the darkened CANDIDATE_COLOR_DIM
   // used elsewhere — this sits on the dark glass panel, so it needs MORE
   // light, not less (opposite direction from the light-ground fixes above).
-  howEyebrow: { fontSize: 11.5, fontWeight: '800', letterSpacing: 0.7, color: '#6FC3F7', marginBottom: 8 },
+  howEyebrow: { fontSize: 11.5, fontWeight: '800', letterSpacing: 0.7, color: CANDIDATE_COLOR_DIM, marginBottom: 8 },
   howTitle: { fontSize: 22, fontWeight: '800', color: TEXT_PRIMARY, letterSpacing: -0.4, marginBottom: 6, fontFamily: DISPLAY_FONT_FAMILY },
   howSubhead: { fontSize: 14, color: TEXT_MUTED, fontWeight: '500', marginBottom: 22 },
 
@@ -344,7 +338,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
 
   stepContentAuto: { alignItems: 'flex-start' },
   stepIconWrap: { width: 40, height: 40, borderRadius: 13, backgroundColor: 'rgba(29,161,242,0.14)', alignItems: 'center', justifyContent: 'center', marginBottom: 14 },
-  stepNumber: { fontSize: 11, fontWeight: '800', color: CANDIDATE_COLOR, letterSpacing: 0.4, marginBottom: 6 },
+  stepNumber: { fontSize: 11, fontWeight: '800', color: CANDIDATE_COLOR_DIM, letterSpacing: 0.4, marginBottom: 6 },
   stepTitle: { fontSize: 19, fontWeight: '800', color: TEXT_PRIMARY, marginBottom: 8, letterSpacing: -0.2, fontFamily: DISPLAY_FONT_FAMILY },
   stepBody: { fontSize: 14, color: TEXT_MUTED, lineHeight: 21, fontWeight: '500' },
   stepMockColAuto: { width: '100%', alignItems: 'center', justifyContent: 'center', marginTop: 20 },

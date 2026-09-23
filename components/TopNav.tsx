@@ -27,6 +27,7 @@ const CANDIDATE: Item[] = [
   { label: 'Home', route: '/(candidate)', screen: 'index', icon: 'home-outline' },
   { label: 'Jobs', route: '/(candidate)/opportunities', screen: 'opportunities', icon: 'briefcase-outline' },
   { label: 'Connections', route: '/(candidate)/messages', screen: 'messages', icon: 'people-outline' },
+  { label: 'Interviews', route: '/(candidate)/interviews', screen: 'interviews', icon: 'calendar-outline' },
   { label: 'Profile', route: '/(candidate)/profile', screen: 'profile', icon: 'person-outline' },
 ];
 
@@ -34,6 +35,7 @@ const COMPANY: Item[] = [
   { label: 'Home', route: '/(company)', screen: 'index', icon: 'home-outline' },
   { label: 'Discover', route: '/(company)/roles', screen: 'roles', icon: 'compass-outline' },
   { label: 'Connections', route: '/(company)/messages', screen: 'messages', icon: 'people-outline' },
+  { label: 'Interviews', route: '/(company)/interviews', screen: 'interviews', icon: 'calendar-outline' },
   { label: 'Insights', route: '/(company)/analytics', screen: 'analytics', icon: 'stats-chart-outline' },
 ];
 

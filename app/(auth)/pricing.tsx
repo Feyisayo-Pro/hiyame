@@ -31,22 +31,21 @@ import PageHead from '@/components/PageHead';
 // comparison is a feature comparison, not invented cost figures — viamatch's
 // version cites specific £ agency/LinkedIn costs that aren't something we
 // have real verified numbers for.
-// Dark ground, matching welcome.tsx/how-it-works.tsx/about.tsx now — was
-// the odd light page out while the other three went dark, an artifact of
-// the redesign landing on welcome first rather than a deliberate choice.
-const PAGE_BG = '#0B1220';
-const COMPANY_COLOR = '#0F1419'; // dark text on the still-white/still-solid-blue button surfaces below
+// Light ground, matching welcome/about/how-it-works (all 4 public pages
+// moved back to white together — was dark for a stretch, changed back on
+// direct request).
+const PAGE_BG = '#FFFFFF';
+const COMPANY_COLOR = '#0F1419';
 const CANDIDATE_COLOR = '#1DA1F2';
 // White text directly on solid CANDIDATE_COLOR measures 2.8:1 — fails AA.
-// Same darkened value as lib/theme.ts's accentDim/accentSolid.
+// Same darkened value as lib/theme.ts's accentDim/accentSolid — also the
+// right choice for accent-colored TEXT sitting directly on this page's
+// white ground (accent-on-white is the same 2.6:1 failure).
 const CANDIDATE_COLOR_DIM = '#136CA2';
-const TEXT_PRIMARY = '#F8FAFC';
-// Lightened from '#94A3B8' — same fix as how-it-works.tsx's identical
-// constant, same reason (measured short of 4.5:1 against this page's dark
-// glass panels via an axe-core sweep).
-const TEXT_MUTED = '#AEB9C9';
-const GLASS_BG = 'rgba(255,255,255,0.04)';
-const GLASS_BORDER = 'rgba(148,163,184,0.14)';
+const TEXT_PRIMARY = '#0F1419';
+const TEXT_MUTED = '#5B6875';
+const GLASS_BG = '#F6F7F9';
+const GLASS_BORDER = '#E6E9ED';
 const STACK_BREAKPOINT = 760;
 
 export default function PricingScreen() {
@@ -64,7 +63,7 @@ export default function PricingScreen() {
           <PersonaTabs />
 
           <View style={st.blobZone}>
-            <GradientBlobBackground dark />
+            <GradientBlobBackground />
 
             <SwipeFadeContainer axis="y" offset={16} duration={420} delay={0}>
               <View style={st.headlineBlock}>
@@ -250,7 +249,7 @@ function CompCell({ value, st, highlight }: { value: boolean | string; st: Retur
       <AppIcon
         name={value ? 'checkmark-circle' : 'close-circle-outline'}
         size={18}
-        color={value ? (highlight ? CANDIDATE_COLOR : '#17A75B') : 'rgba(148,163,184,0.4)'}
+        color={value ? (highlight ? CANDIDATE_COLOR : '#17A75B') : '#C4CBD2'}
       />
     </View>
   );
@@ -320,7 +319,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
     borderRadius: 999, paddingVertical: 13, alignItems: 'center',
     backgroundColor: GLASS_BG, borderWidth: 1, borderColor: GLASS_BORDER,
   },
-  ctaBtnHover: { backgroundColor: 'rgba(255,255,255,0.08)' },
+  ctaBtnHover: { backgroundColor: '#EEF0F3' },
   ctaBtnHighlight: { backgroundColor: CANDIDATE_COLOR_DIM, borderColor: CANDIDATE_COLOR_DIM },
   ctaBtnHighlightHover: { backgroundColor: '#0F8FDE' },
   ctaBtnText: { fontSize: 14, fontWeight: '700', color: TEXT_PRIMARY },
@@ -336,13 +335,13 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   compTitle: { fontSize: 22, fontWeight: '800', color: TEXT_PRIMARY, marginBottom: 18, textAlign: 'center', fontFamily: DISPLAY_FONT_FAMILY },
   compTable: { backgroundColor: GLASS_BG, borderRadius: 20, borderWidth: 1, borderColor: GLASS_BORDER, overflow: 'hidden' },
   compRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 16 },
-  compHeaderRow: { backgroundColor: 'rgba(255,255,255,0.03)', borderBottomWidth: 1, borderBottomColor: GLASS_BORDER },
-  compRowAlt: { backgroundColor: 'rgba(255,255,255,0.02)' },
+  compHeaderRow: { backgroundColor: '#EEF0F3', borderBottomWidth: 1, borderBottomColor: GLASS_BORDER },
+  compRowAlt: { backgroundColor: '#EEF0F3' },
   compLabelColSpacer: { flex: 2, paddingRight: 8 },
   compLabelText: { flex: 2, fontSize: 13, fontWeight: '600', color: TEXT_PRIMARY, paddingRight: 8 },
   compHeaderCell: { flex: 1, textAlign: 'center', fontSize: 11.5, fontWeight: '800', color: TEXT_MUTED, letterSpacing: 0.3 },
-  compHeaderCellHiyame: { color: CANDIDATE_COLOR },
+  compHeaderCellHiyame: { color: CANDIDATE_COLOR_DIM },
   compCellText: { flex: 1, textAlign: 'center', fontSize: 12, fontWeight: '600', color: TEXT_MUTED },
-  compCellTextHiyame: { color: CANDIDATE_COLOR },
+  compCellTextHiyame: { color: CANDIDATE_COLOR_DIM },
   compCellIcon: { flex: 1, alignItems: 'center' },
 });

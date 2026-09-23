@@ -107,7 +107,7 @@ export default function CandidateProfileScreen() {
   };
 
   const checklistItems = [
-    { icon: 'camera-outline' as const, label: 'Profile Picture', done: hasProfilePhoto, optional: true },
+    { icon: 'camera-outline' as const, label: 'Profile Picture', done: hasProfilePhoto, optional: false },
     ...VERIFICATION_COMPONENTS.map((c) => ({ icon: c.icon, label: c.label, done: passedComponents.has(c.key), optional: false })),
   ];
 

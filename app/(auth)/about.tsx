@@ -23,18 +23,21 @@ import PageHead from '@/components/PageHead';
 // real: pulled live from the database, not hardcoded, so they stay honest
 // as the network grows instead of going stale the day after launch.
 //
-// Dark ground, matching welcome.tsx/how-it-works.tsx now — this page used
-// to be the odd one out (light while the hero was dark), not a deliberate
-// choice, just an artifact of the redesign landing on welcome first.
-const PAGE_BG = '#0B1220';
+// Light ground, matching welcome/pricing/how-it-works (all 4 public pages
+// moved back to white together — was dark for a stretch, changed back on
+// direct request).
+const PAGE_BG = '#FFFFFF';
 const CANDIDATE_COLOR = '#1DA1F2';
-const TEXT_PRIMARY = '#F8FAFC';
+// Text-on-white needs the darkened accent, not the raw brand blue (2.6:1,
+// fails AA) — same value as lib/theme.ts's accentDim/accentSolid.
+const CANDIDATE_COLOR_DIM = '#136CA2';
+const TEXT_PRIMARY = '#0F1419';
 // Lightened from '#94A3B8' — same fix as pricing.tsx/how-it-works.tsx's
 // identical constant (measured short of 4.5:1 against this page's dark
 // glass panels via an axe-core sweep).
-const TEXT_MUTED = '#AEB9C9';
-const GLASS_BG = 'rgba(255,255,255,0.04)';
-const GLASS_BORDER = 'rgba(148,163,184,0.14)';
+const TEXT_MUTED = '#5B6875';
+const GLASS_BG = '#F6F7F9';
+const GLASS_BORDER = '#E6E9ED';
 const STACK_BREAKPOINT = 760;
 
 interface Stats {
@@ -77,7 +80,7 @@ export default function AboutScreen() {
           <PersonaTabs />
 
           <View style={st.blobZone}>
-            <GradientBlobBackground dark />
+            <GradientBlobBackground />
 
             <SwipeFadeContainer axis="y" offset={16} duration={420} delay={0}>
               <View style={st.headlineBlock}>
@@ -208,7 +211,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   blobZone: { position: 'relative' },
 
   headlineBlock: { alignItems: 'center', marginBottom: 32, paddingHorizontal: 12 },
-  eyebrow: { fontSize: 12, fontWeight: '800', letterSpacing: 0.8, color: CANDIDATE_COLOR, marginBottom: 12 },
+  eyebrow: { fontSize: 12, fontWeight: '800', letterSpacing: 0.8, color: CANDIDATE_COLOR_DIM, marginBottom: 12 },
   headline: { fontSize: 30, lineHeight: 37, fontWeight: '800', color: TEXT_PRIMARY, letterSpacing: -0.5, textAlign: 'center', maxWidth: 640, fontFamily: DISPLAY_FONT_FAMILY },
   subhead: { fontSize: 15.5, color: TEXT_MUTED, marginTop: 14, fontWeight: '500', textAlign: 'center', maxWidth: 560, lineHeight: 23 },
 
