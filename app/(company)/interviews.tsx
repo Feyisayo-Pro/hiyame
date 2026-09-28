@@ -197,10 +197,15 @@ function ScheduleInterviewModal({ visible, companyId, onClose, onScheduled }: {
     if (!visible || !companyId) return;
     // Scoped to candidates this company already has a real relationship
     // with (any introduction) — not a free search across every candidate
-    // on the platform.
+    // on the platform. `roles!inner(...)` is load-bearing, not decorative:
+    // without the !inner hint, PostgREST silently drops the .eq() filter
+    // below instead of erroring, returning every introduction across every
+    // company with `roles: null` on the ones that don't match — confirmed
+    // live (a real bug caught testing this exact modal, same mistake
+    // ConnectionsScreen.tsx's loadShortlisted already gets right).
     supabase
       .from('introductions')
-      .select('candidate_id, role_id, candidates(full_name), roles(title)')
+      .select('candidate_id, role_id, candidates(full_name), roles!inner(title, company_id)')
       .eq('roles.company_id', companyId)
       .then(({ data }) => {
         const seen = new Set<string>();
