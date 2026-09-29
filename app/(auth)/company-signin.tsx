@@ -63,15 +63,21 @@ export default function CompanySignInScreen() {
       password,
     });
 
-    setLoading(false);
     if (error) {
+      setLoading(false);
       setErrors((e) => ({ ...e, general: error.message }));
       shake();
       return;
     }
-    // AuthProvider picks up the new session via onAuthStateChange and the
-    // routing guard in app/_layout.tsx routes to the right persona home.
-    router.replace('/(company)');
+    // Deliberately no router.replace('/(company)') here: this screen has no
+    // way to know the signed-in account is actually a company user — any
+    // valid Hiyame credentials authenticate here, including a candidate
+    // account's. AuthProvider resolves the *real* role from the database
+    // (lib/useAuth.ts's resolveRole) via the onAuthStateChange it just
+    // triggered, and app/_layout.tsx's AuthGate redirects to that role's
+    // home once it resolves — a candidate who lands on this screen still
+    // ends up in (candidate), not stuck in (company). Stay in the loading
+    // state (don't reset it) until that redirect unmounts this screen.
   };
 
   return (
