@@ -13,6 +13,21 @@ export interface AuthContextValue {
   /** The signed-in candidate's own id, once `role === 'candidate'` resolves. */
   candidateId: string | null;
   signOut: () => Promise<void>;
+  /**
+   * Which persona a sign-in screen expects the account to be, set right
+   * before calling signInWithPassword. AuthGate (app/_layout.tsx) is the
+   * single place that compares this against the real resolved `role` and
+   * either redirects (match) or rejects + signs back out (mismatch) —
+   * deliberately not decided on the signin screen itself, which would race
+   * against AuthGate's own independent role-driven redirect and could
+   * navigate the user away before the screen's own check even runs.
+   */
+  signInIntent: UserRole;
+  setSignInIntent: (role: UserRole) => void;
+  /** Set by AuthGate on a signInIntent mismatch; the signin screen displays
+   *  it, then clears it via setAuthError(null). */
+  authError: string | null;
+  setAuthError: (message: string | null) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -20,9 +35,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 // Resolve which persona a signed-in user is by checking which table has a row
 // for them — RLS already scopes both queries to `auth_user_id = auth.uid()`, so
 // this works fine with the anon-key client and never leaks another user's row.
-// Exported so the sign-in screens can check "does this account actually match
-// the screen I'm on?" right after authenticating, before ever navigating.
-export async function resolveRole(userId: string): Promise<{ role: UserRole; companyId: string | null; candidateId: string | null }> {
+async function resolveRole(userId: string): Promise<{ role: UserRole; companyId: string | null; candidateId: string | null }> {
   const { data: candidate } = await supabase
     .from('candidates')
     .select('id')
@@ -113,6 +126,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [role, setRole] = useState<UserRole>(null);
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [candidateId, setCandidateId] = useState<string | null>(null);
+  const [signInIntent, setSignInIntent] = useState<UserRole>(null);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -156,7 +171,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut();
   }, []);
 
-  const value: AuthContextValue = { session, loading, role, companyId, candidateId, signOut };
+  const value: AuthContextValue = {
+    session, loading, role, companyId, candidateId, signOut,
+    signInIntent, setSignInIntent, authError, setAuthError,
+  };
 
   return React.createElement(AuthContext.Provider, { value }, children);
 }

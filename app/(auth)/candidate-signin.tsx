@@ -6,7 +6,7 @@ import AppIcon from '@/components/AppIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, ThemePalette, DISPLAY_FONT_FAMILY } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
-import { resolveRole } from '@/lib/useAuth';
+import { useAuth } from '@/lib/useAuth';
 import AnimatedPressable from '@/components/AnimatedPressable';
 import ScreenFrame from '@/components/ScreenFrame';
 import ForgotPasswordModal from '@/components/ForgotPasswordModal';
@@ -26,6 +26,7 @@ export default function CandidateSignInScreen() {
   const [errors, setErrors] = useState<{ email?: string; password?: string; general?: string }>({});
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const { shake, shakeStyle } = useShake();
+  const { setSignInIntent, authError, setAuthError } = useAuth();
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(24)).current;
@@ -36,6 +37,19 @@ export default function CandidateSignInScreen() {
       Animated.timing(slideAnim, { toValue: 0, duration: DURATION.entrance, easing: EASE.enter, useNativeDriver: true }),
     ]).start();
   }, []);
+
+  // AuthGate is the single place that compares signInIntent (set below,
+  // right before authenticating) against the real resolved role and
+  // rejects a mismatch — see app/_layout.tsx for why that decision can't
+  // safely live here on the screen (it would race against AuthGate's own
+  // redirect). This just surfaces whatever it decided.
+  useEffect(() => {
+    if (!authError) return;
+    setLoading(false);
+    setErrors((e) => ({ ...e, general: authError }));
+    shake();
+    setAuthError(null);
+  }, [authError]);
 
   const validate = (): boolean => {
     const newErrors: { email?: string; password?: string } = {};
@@ -58,6 +72,7 @@ export default function CandidateSignInScreen() {
     if (!validate()) { shake(); return; }
     setLoading(true);
     setErrors((e) => ({ ...e, general: undefined }));
+    setSignInIntent('candidate');
 
     const { error } = await supabase.auth.signInWithPassword({
       email: email.trim(),
@@ -65,32 +80,15 @@ export default function CandidateSignInScreen() {
     });
 
     if (error) {
+      setSignInIntent(null);
       setLoading(false);
       setErrors((e) => ({ ...e, general: error.message }));
       shake();
       return;
     }
-
-    // Valid credentials authenticate here even for a company account —
-    // Supabase Auth doesn't know or care which of the two sign-in screens
-    // was used. Silently routing a company account to (candidate) anyway
-    // (the previous fix) is *correct* but confusing: it looks like the app
-    // dropped you somewhere random instead of telling you what happened.
-    // Check the real persona ourselves and reject the mismatch outright,
-    // with a specific message, rather than ever navigating a company
-    // account into the candidate section.
-    const { data: userData } = await supabase.auth.getUser();
-    const resolved = await resolveRole(userData.user!.id);
-    if (resolved.role === 'company') {
-      await supabase.auth.signOut();
-      setLoading(false);
-      setErrors((e) => ({ ...e, general: 'This is a company email. Sign in from the company page instead.' }));
-      shake();
-      return;
-    }
-    // role === 'candidate' or null (e.g. mid-signup) both belong here —
-    // AuthGate (app/_layout.tsx) owns the actual redirect once role
-    // resolves; stay in the loading state until it unmounts this screen.
+    // Stay in the loading state — AuthGate (app/_layout.tsx) redirects on a
+    // match, or rejects (signs back out + the authError effect above fires)
+    // on a mismatch, once the real role resolves.
   };
 
   return (

@@ -26,6 +26,7 @@ import { VerificationProvider } from '@/lib/useVerification';
 import { SubscriptionProvider } from '@/lib/subscriptionStore';
 import { HiyameThemeProvider, useTheme, ThemePalette, DISPLAY_FONT_FAMILY } from '@/lib/theme';
 import { AuthProvider, useAuth } from '@/lib/useAuth';
+import { supabase } from '@/lib/supabase';
 import { useGlobalFocusRing } from '@/lib/focusRing';
 import { initSentry, Sentry } from '@/lib/sentry';
 import 'react-native-reanimated';
@@ -56,7 +57,7 @@ initSentry();
 const PUBLIC_SEGMENTS = ['employer-review'];
 
 function AuthGate({ children }: { children: ReactNode }) {
-  const { session, loading, role } = useAuth();
+  const { session, loading, role, signInIntent, setSignInIntent, setAuthError } = useAuth();
   const segments = useSegments();
   const router = useRouter();
 
@@ -70,6 +71,25 @@ function AuthGate({ children }: { children: ReactNode }) {
     if (!session && !inAuthGroup && !inPublicRoute) {
       router.replace('/(auth)/welcome');
     } else if (session && role && inAuthGroup) {
+      // A sign-in screen (candidate-signin.tsx / company-signin.tsx) sets
+      // signInIntent right before authenticating. Checked here — the same
+      // place that would otherwise redirect — rather than on the screen
+      // itself, since that would race against this same effect: on a
+      // mismatch the screen's own check could still be in flight while this
+      // effect already navigated the user into the *other* persona's home,
+      // and a delayed sign-out from the screen would then land on Welcome
+      // (session null, no longer inAuthGroup) instead of back on sign-in.
+      if (signInIntent && signInIntent !== role) {
+        setAuthError(
+          role === 'company'
+            ? 'This is a company email. Sign in from the company page instead.'
+            : 'This is a candidate email. Sign in from the candidate page instead.'
+        );
+        setSignInIntent(null);
+        supabase.auth.signOut();
+        return;
+      }
+      setSignInIntent(null);
       router.replace(role === 'candidate' ? '/(candidate)' : '/(company)');
     } else if (
       session && role &&
