@@ -74,6 +74,35 @@ test('a11y: company Home (signed in)', async ({ page }) => {
   expect(results.violations, formatViolations(results.violations)).toEqual([]);
 });
 
+// Added alongside the CV-format profile rebuild (Summary, Job Experience,
+// Education, Certifications) and the Employment Type/Urgency job-posting
+// fields (2026-09-29) — neither page was in the sweep before, and both
+// gained real form UI (chips, a Switch, multiple add/edit forms) worth
+// checking rather than assuming clean.
+test('a11y: candidate Profile (signed in)', async ({ page }) => {
+  const { candidate } = loadTestAccounts();
+  await signIn(page, 'candidate', candidate.email, candidate.password);
+  await page.goto('/(candidate)/profile', { waitUntil: 'networkidle' });
+  await page.waitForTimeout(SETTLE_MS);
+  const results = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'best-practice'])
+    .disableRules(DEFERRED_RULES)
+    .analyze();
+  expect(results.violations, formatViolations(results.violations)).toEqual([]);
+});
+
+test('a11y: company Create Role form', async ({ page }) => {
+  const { company } = loadTestAccounts();
+  await signIn(page, 'company', company.email, company.password);
+  await page.goto('/(company)/create-role', { waitUntil: 'networkidle' });
+  await page.waitForTimeout(SETTLE_MS);
+  const results = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa', 'best-practice'])
+    .disableRules(DEFERRED_RULES)
+    .analyze();
+  expect(results.violations, formatViolations(results.violations)).toEqual([]);
+});
+
 // The app defaults every session to light mode and only reaches dark mode
 // via this in-app toggle (no OS-preference detection, nothing persisted) —
 // so emulating a dark colorScheme at the browser level wouldn't exercise it.

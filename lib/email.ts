@@ -174,6 +174,30 @@ export function employerReviewRequestEmail(p: {
   };
 }
 
+// Interview scheduled — to the candidate. The company already has an
+// accepted introduction with this candidate, so no identity masking here.
+export function interviewScheduledEmail(p: {
+  companyName: string;
+  roleTitle: string | null;
+  scheduledAt: string;
+  durationMinutes: number;
+  meetingUrl: string | null;
+}): { subject: string; html: string } {
+  const when = new Date(p.scheduledAt).toLocaleString('en-US', {
+    weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit',
+  });
+  return {
+    subject: `Interview scheduled with ${p.companyName}${p.roleTitle ? `: ${p.roleTitle}` : ''}`,
+    html: shell(
+      'Your interview is scheduled',
+      `<p style="margin:0 0 12px"><b>${esc(p.companyName)}</b> booked an interview with you${p.roleTitle ? ` for <b>${esc(p.roleTitle)}</b>` : ''}.</p>
+       <p style="margin:0 0 12px"><b>${esc(when)}</b> &middot; ${p.durationMinutes} min</p>
+       ${p.meetingUrl ? `<p style="margin:0">Join link: <a href="${esc(p.meetingUrl)}" style="color:${ACCENT}">${esc(p.meetingUrl)}</a></p>` : ''}`,
+      { label: 'View in Hiyame', href: `${APP_URL}/interviews` },
+    ),
+  };
+}
+
 // Introduction accepted — to the candidate. Company + hiring contact revealed.
 export function introductionAcceptedCandidateEmail(p: {
   roleTitle: string;

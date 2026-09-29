@@ -13,6 +13,9 @@ import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import ScreenFrame from '@/components/ScreenFrame';
 import EditCandidateProfileModal from '@/components/EditCandidateProfileModal';
 import PortfolioSection from '@/components/PortfolioSection';
+import ExperienceSection from '@/components/ExperienceSection';
+import EducationSection from '@/components/EducationSection';
+import CertificationsSection from '@/components/CertificationsSection';
 import { useTheme, useThemeToggle, ThemePalette, DISPLAY_FONT_FAMILY } from '@/lib/theme';
 import { SkeletonBlock } from '@/components/Skeleton';
 import { notify } from '@/lib/notify';
@@ -23,6 +26,7 @@ import PageHead from '@/components/PageHead';
 
 interface RealProfile {
   fullName: string;
+  summary: string | null;
   skillTags: string[];
   ratePreferred: number | null;
   photoUrl: string | null;
@@ -60,14 +64,20 @@ export default function CandidateProfileScreen() {
 
   const loadReal = async () => {
     if (!candidateId) return;
-    const [{ data }, { data: vrecs }, candidateStats] = await Promise.all([
+    // `summary` is fetched as its own parallel query, not folded into the
+    // core select below: it's a new column, so a database that hasn't run
+    // the migration adding it yet would error the whole select (and the
+    // rest of the profile with it) if it were combined with the others.
+    const [{ data }, { data: summaryRow }, { data: vrecs }, candidateStats] = await Promise.all([
       supabase.from('candidates').select('full_name, skill_tags, rate_preferred, photo_url').eq('id', candidateId).maybeSingle(),
+      supabase.from('candidates').select('summary').eq('id', candidateId).maybeSingle(),
       supabase.from('verification_records').select('component, status').eq('candidate_id', candidateId),
       getCandidateStats(candidateId),
     ]);
     if (data) {
       setReal({
         fullName: data.full_name,
+        summary: summaryRow?.summary ?? null,
         skillTags: data.skill_tags ?? [],
         ratePreferred: data.rate_preferred,
         photoUrl: data.photo_url,
@@ -187,6 +197,14 @@ export default function CandidateProfileScreen() {
           </View>
         )}
 
+        {/* ── Summary ── */}
+        {real?.summary ? (
+          <View style={st.section}>
+            <Text style={st.sectionTitle}>Summary</Text>
+            <Text style={st.summaryText}>{real.summary}</Text>
+          </View>
+        ) : null}
+
         {/* ── Core Skills ── */}
         <View style={st.section}>
           <View style={st.sectionRow}>
@@ -211,6 +229,15 @@ export default function CandidateProfileScreen() {
             </View>
           )}
         </View>
+
+        {/* ── Job Experience ── */}
+        <ExperienceSection candidateId={candidateId} />
+
+        {/* ── Education ── */}
+        <EducationSection candidateId={candidateId} />
+
+        {/* ── Certifications ── */}
+        <CertificationsSection candidateId={candidateId} />
 
         {/* ── Portfolio ── */}
         <PortfolioSection candidateId={candidateId} />
@@ -306,7 +333,7 @@ export default function CandidateProfileScreen() {
             </View>
             <View style={st.actionContent}>
               <Text style={st.actionLabel}>Edit Profile</Text>
-              <Text style={st.actionDesc}>Update name, skills, rate</Text>
+              <Text style={st.actionDesc}>Update name, summary, skills, rate</Text>
             </View>
             <AppIcon name="chevron-forward" size={18} color={T.textMuted} />
           </Pressable>
@@ -361,9 +388,9 @@ export default function CandidateProfileScreen() {
       <EditCandidateProfileModal
         visible={showEdit}
         candidateId={candidateId}
-        initial={{ fullName: real?.fullName ?? '', skillTags: coreSkills, ratePreferred: real?.ratePreferred ?? null }}
+        initial={{ fullName: real?.fullName ?? '', summary: real?.summary ?? null, skillTags: coreSkills, ratePreferred: real?.ratePreferred ?? null }}
         onClose={() => setShowEdit(false)}
-        onSaved={(updated) => setReal((prev) => ({ fullName: updated.fullName, skillTags: updated.skillTags, ratePreferred: updated.ratePreferred, photoUrl: prev?.photoUrl ?? null }))}
+        onSaved={(updated) => setReal((prev) => ({ fullName: updated.fullName, summary: updated.summary, skillTags: updated.skillTags, ratePreferred: updated.ratePreferred, photoUrl: prev?.photoUrl ?? null }))}
       />
     </SafeAreaView>
   );
@@ -418,6 +445,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   section: { marginBottom: 24, paddingHorizontal: 20 },
   sectionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   sectionTitle: { fontSize: 18, fontWeight: '800', color: T.textPrimary },
+  summaryText: { fontSize: 14, lineHeight: 21, color: T.textSecondary, marginTop: 10 },
   seeAll: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   seeAllText: { fontSize: 13, fontWeight: '600', color: T.accentDim },
 

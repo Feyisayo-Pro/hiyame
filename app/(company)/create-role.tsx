@@ -21,6 +21,8 @@ const POSTABLE_TIERS: Tier[] = ['corporate', 'short_term'];
 const EXPERIENCE_LEVELS = ['junior', 'mid', 'senior', 'lead'] as const;
 const LOCATION_TYPES = ['remote', 'hybrid', 'on_site'] as const;
 const RATE_TYPES = ['monthly', 'hourly', 'fixed'] as const;
+const EMPLOYMENT_TYPES = ['permanent', 'contract'] as const;
+const URGENCY_LEVELS = ['standard', 'urgent', 'immediate'] as const;
 
 export default function CreateRoleScreen() {
   const T = useTheme();
@@ -37,6 +39,8 @@ export default function CreateRoleScreen() {
   const [niceToHave, setNiceToHave] = useState<string[]>([]);
 
   const [experienceLevel, setExperienceLevel] = useState<typeof EXPERIENCE_LEVELS[number] | null>(null);
+  const [employmentType, setEmploymentType] = useState<typeof EMPLOYMENT_TYPES[number] | null>(null);
+  const [urgency, setUrgency] = useState<typeof URGENCY_LEVELS[number]>('standard');
   const [locationType, setLocationType] = useState<typeof LOCATION_TYPES[number]>('remote');
   const [locationCity, setLocationCity] = useState('');
   const [locationCountry, setLocationCountry] = useState('');
@@ -62,6 +66,7 @@ export default function CreateRoleScreen() {
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
     if (!title.trim()) newErrors.title = 'Role title is required';
+    if (!employmentType) newErrors.employmentType = 'Pick permanent or contract';
     if (!description.trim()) newErrors.description = 'A candidate-facing description is required';
     if (locationType !== 'remote' && !locationCity.trim()) newErrors.locationCity = 'City is required for on-site/hybrid roles';
     if (rateMin && isNaN(Number(rateMin))) newErrors.rateMin = 'Enter a valid number';
@@ -88,10 +93,12 @@ export default function CreateRoleScreen() {
         function: roleFunction.trim() || null,
         required_skills: { must_have: mustHave, nice_to_have: niceToHave },
         experience_level: experienceLevel,
+        employment_type: employmentType,
+        urgency,
         location_type: locationType,
         location_city: locationType === 'remote' ? null : locationCity.trim() || null,
         location_country: locationType === 'remote' ? null : locationCountry.trim() || null,
-        contract_length: contractLength.trim() || null,
+        contract_length: employmentType === 'contract' ? (contractLength.trim() || null) : null,
         rate_min: rateMin ? Number(rateMin) : null,
         rate_max: rateMax ? Number(rateMax) : null,
         rate_type: rateType,
@@ -189,6 +196,40 @@ export default function CreateRoleScreen() {
             </View>
           </View>
 
+          <View style={{ flexDirection: 'row', gap: 12 }}>
+            <View style={[st.fieldWrap, { flex: 1 }]}>
+              <Text style={st.label}>Employment Type *</Text>
+              <View style={st.chipRow}>
+                {EMPLOYMENT_TYPES.map((et) => (
+                  <Pressable key={et} style={[st.chip, employmentType === et && st.chipActive]} onPress={() => { setEmploymentType(et); setErrors((e) => ({ ...e, employmentType: '' })); }}>
+                    <Text style={[st.chipText, employmentType === et && st.chipTextActive]}>{et === 'permanent' ? 'Permanent' : 'Contract'}</Text>
+                  </Pressable>
+                ))}
+              </View>
+              {errors.employmentType ? <Text style={st.errorText}>{errors.employmentType}</Text> : null}
+            </View>
+
+            <View style={[st.fieldWrap, { flex: 1 }]}>
+              <Text style={st.label}>Urgency</Text>
+              <View style={st.chipRow}>
+                {URGENCY_LEVELS.map((u) => (
+                  <Pressable key={u} style={[st.chip, urgency === u && st.chipActive]} onPress={() => setUrgency(u)}>
+                    <Text style={[st.chipText, urgency === u && st.chipTextActive]}>{u === 'standard' ? 'Standard' : u === 'urgent' ? 'Urgent' : 'Immediate'}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+          </View>
+
+          {employmentType === 'contract' && (
+            <View style={st.fieldWrap}>
+              <Text style={st.label}>Contract Length</Text>
+              <View style={st.inputWrap}>
+                <TextInput style={st.input} placeholder="e.g. 6 months" placeholderTextColor={T.textMuted} value={contractLength} onChangeText={setContractLength} />
+              </View>
+            </View>
+          )}
+
           <TagField
             T={T} st={st} label="Must-Have Skills"
             inputValue={mustHaveInput} onInputChange={setMustHaveInput}
@@ -247,26 +288,17 @@ export default function CreateRoleScreen() {
 
           <Pressable style={st.moreDetailsToggle} onPress={() => setShowMore((v) => !v)} accessibilityRole="button" accessibilityLabel="Toggle more details">
             <Text style={st.moreDetailsText}>More details</Text>
-            <Text style={st.moreDetailsHint}>Contract length, start date</Text>
+            <Text style={st.moreDetailsHint}>Start date</Text>
             <AppIcon name={showMore ? 'chevron-up' : 'chevron-down'} size={18} color={T.textSecondary} />
           </Pressable>
 
           {showMore && (
-            <View style={{ flexDirection: 'row', gap: 12 }}>
-              <View style={[st.fieldWrap, { flex: 1 }]}>
-                <Text style={st.label}>Contract Length</Text>
-                <View style={st.inputWrap}>
-                  <TextInput style={st.input} placeholder="Permanent, 6 months..." placeholderTextColor={T.textMuted} value={contractLength} onChangeText={setContractLength} />
-                </View>
+            <View style={st.fieldWrap}>
+              <Text style={st.label}>Start Date</Text>
+              <View style={[st.inputWrap, errors.startDate ? st.inputError : null]}>
+                <TextInput style={st.input} placeholder="YYYY-MM-DD" placeholderTextColor={T.textMuted} value={startDate} onChangeText={(t) => { setStartDate(t); setErrors((e) => ({ ...e, startDate: '' })); }} />
               </View>
-
-              <View style={[st.fieldWrap, { flex: 1 }]}>
-                <Text style={st.label}>Start Date</Text>
-                <View style={[st.inputWrap, errors.startDate ? st.inputError : null]}>
-                  <TextInput style={st.input} placeholder="YYYY-MM-DD" placeholderTextColor={T.textMuted} value={startDate} onChangeText={(t) => { setStartDate(t); setErrors((e) => ({ ...e, startDate: '' })); }} />
-                </View>
-                {errors.startDate ? <Text style={st.errorText}>{errors.startDate}</Text> : null}
-              </View>
+              {errors.startDate ? <Text style={st.errorText}>{errors.startDate}</Text> : null}
             </View>
           )}
 

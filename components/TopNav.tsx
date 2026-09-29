@@ -98,7 +98,7 @@ export default function SideNav({ role }: { role: 'candidate' | 'company' }) {
     <View style={st.bar}>
       <Pressable style={st.brand} onPress={() => router.navigate(items[0].route as any)} accessibilityRole="link">
         <View style={st.brandDot}>
-          <AppIcon name="flash" size={ICON.md} color={T.textOnAccent} />
+          <Image source={require('@/assets/images/icon.png')} style={st.brandMark} resizeMode="cover" />
         </View>
         <Text style={st.brandText}>Hiyame</Text>
       </Pressable>
@@ -199,7 +199,8 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
     paddingHorizontal: 14,
   },
   brand: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 10, marginBottom: 26 },
-  brandDot: { width: 30, height: 30, borderRadius: 9, backgroundColor: T.accent, alignItems: 'center', justifyContent: 'center' },
+  brandDot: { width: 30, height: 30, borderRadius: 9, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
+  brandMark: { width: '100%', height: '100%' },
   brandText: { fontSize: 18, fontWeight: '800', color: T.textPrimary, letterSpacing: -0.3 },
   links: { gap: 3, flex: 1 },
   link: {

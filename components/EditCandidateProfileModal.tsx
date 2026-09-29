@@ -8,6 +8,7 @@ import { notify } from '@/lib/notify';
 
 export interface CandidateEditable {
   fullName: string;
+  summary: string | null;
   skillTags: string[];
   ratePreferred: number | null;
 }
@@ -25,6 +26,7 @@ export default function EditCandidateProfileModal({ visible, candidateId, initia
   const s = useMemo(() => makeStyles(T), [T]);
 
   const [fullName, setFullName] = useState(initial.fullName);
+  const [summary, setSummary] = useState(initial.summary ?? '');
   const [skills, setSkills] = useState<string[]>(initial.skillTags);
   const [skillInput, setSkillInput] = useState('');
   const [rate, setRate] = useState(initial.ratePreferred ? String(initial.ratePreferred) : '');
@@ -33,6 +35,7 @@ export default function EditCandidateProfileModal({ visible, candidateId, initia
   useEffect(() => {
     if (visible) {
       setFullName(initial.fullName);
+      setSummary(initial.summary ?? '');
       setSkills(initial.skillTags);
       setSkillInput('');
       setRate(initial.ratePreferred ? String(initial.ratePreferred) : '');
@@ -64,9 +67,10 @@ export default function EditCandidateProfileModal({ visible, candidateId, initia
     }
 
     setSaving(true);
+    const trimmedSummary = summary.trim() || null;
     const { error } = await supabase
       .from('candidates')
-      .update({ full_name: name, skill_tags: skills, rate_preferred: parsedRate })
+      .update({ full_name: name, summary: trimmedSummary, skill_tags: skills, rate_preferred: parsedRate })
       .eq('id', candidateId);
     setSaving(false);
 
@@ -74,7 +78,7 @@ export default function EditCandidateProfileModal({ visible, candidateId, initia
       notify('Could not save', error.message);
       return;
     }
-    onSaved({ fullName: name, skillTags: skills, ratePreferred: parsedRate });
+    onSaved({ fullName: name, summary: trimmedSummary, skillTags: skills, ratePreferred: parsedRate });
     notify('Profile updated', 'Your changes are live.');
     onClose();
   };
@@ -93,6 +97,17 @@ export default function EditCandidateProfileModal({ visible, candidateId, initia
           <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
             <Text style={s.label}>Full name</Text>
             <TextInput style={s.input} value={fullName} onChangeText={setFullName} placeholder="Your name" placeholderTextColor={T.textMuted} />
+
+            <Text style={s.label}>Summary</Text>
+            <TextInput
+              style={[s.input, s.textArea]}
+              value={summary}
+              onChangeText={setSummary}
+              placeholder="A short professional summary — who you are, what you do, what you're looking for"
+              placeholderTextColor={T.textMuted}
+              multiline
+              numberOfLines={4}
+            />
 
             <Text style={s.label}>Target rate (₦/month)</Text>
             <TextInput
@@ -154,6 +169,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
     height: 46, borderRadius: 12, borderWidth: 1, borderColor: T.border,
     backgroundColor: T.inputBg, paddingHorizontal: 14, fontSize: 14, color: T.textPrimary,
   },
+  textArea: { height: 96, paddingVertical: 12, textAlignVertical: 'top' },
   skillInputRow: { flexDirection: 'row', gap: 8, alignItems: 'center' },
   addBtn: { width: 40, height: 40, borderRadius: 10, backgroundColor: T.accent, alignItems: 'center', justifyContent: 'center' },
   chipsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 },

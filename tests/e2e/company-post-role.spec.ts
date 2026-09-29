@@ -19,6 +19,11 @@ test('company can post a role and land on its shortlist', async ({ page }) => {
 
   const roleTitle = `E2E Test Role ${Date.now()}`;
   await page.getByPlaceholder('Senior Backend Engineer').fill(roleTitle);
+  // Employment Type is a required field (validation added alongside Urgency) —
+  // Permanent/Contract/Standard/Urgent/Immediate are plain chips, not real
+  // <button> elements, so match by exact text like the "Post Role" submit
+  // below rather than getByRole.
+  await page.locator('text="Permanent"').click();
   await page.getByPlaceholder('What will this person actually do? What makes the role compelling?').fill(
     'A throwaway role posted by the automated E2E suite to verify the create-role flow end to end.'
   );

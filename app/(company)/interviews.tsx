@@ -7,6 +7,7 @@ import { useTheme, ThemePalette, DISPLAY_FONT_FAMILY } from '@/lib/theme';
 import { useAuth } from '@/lib/useAuth';
 import { supabase } from '@/lib/supabase';
 import { notify } from '@/lib/notify';
+import { notifyInterviewScheduled } from '@/lib/requestNotify';
 import ScreenFrame from '@/components/ScreenFrame';
 import PageHead from '@/components/PageHead';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
@@ -232,7 +233,7 @@ function ScheduleInterviewModal({ visible, companyId, onClose, onScheduled }: {
     if (!dateTime || isNaN(scheduledAt.getTime())) { notify('Invalid date & time', 'Enter a real date and time.'); return; }
     if (!companyId) return;
     setSaving(true);
-    const { error } = await supabase.from('interviews').insert({
+    const { data, error } = await supabase.from('interviews').insert({
       company_id: companyId,
       candidate_id: selected.id,
       role_id: selected.roleId,
@@ -240,10 +241,11 @@ function ScheduleInterviewModal({ visible, companyId, onClose, onScheduled }: {
       duration_minutes: Number(duration) || 60,
       meeting_type: meetingType,
       meeting_url: meetingUrl.trim() || null,
-    });
+    }).select('id').single();
     setSaving(false);
     if (error) { notify('Could not schedule', error.message); return; }
     notify('Interview scheduled', `${selected.name} — ${scheduledAt.toLocaleString()}`);
+    if (data?.id) void notifyInterviewScheduled(data.id);
     reset();
     onScheduled();
   };
