@@ -37,33 +37,57 @@ test.describe('persona guard survives a reload', () => {
   });
 });
 
-// Regression test for a second, distinct persona-routing bug (reported
-// repeatedly, fixed 2026-09-29): candidate-signin.tsx and company-signin.tsx
-// each used to call router.replace() to their own persona's home right after
-// any successful supabase.auth.signInWithPassword() call — but sign-in
-// authenticates against the same auth.users table regardless of which of
-// the two screens you're on, so a company account signing in through
-// /candidate-signin (wrong link clicked, bookmark, etc.) got hard-routed
-// into (candidate) anyway. Fixed by deleting those explicit redirects
-// entirely and letting AuthGate (app/_layout.tsx) — which resolves the real
-// role from the database, not from which screen was used — own 100% of the
-// post-sign-in redirect.
-test.describe('sign-in screen redirects by real role, not by which screen was used', () => {
-  test('a company account signing in via /candidate-signin still lands on company Home', async ({ page }) => {
+// Regression test for a second, distinct persona bug (reported repeatedly,
+// fixed 2026-09-29, then corrected same-day after live feedback):
+// candidate-signin.tsx and company-signin.tsx each used to call
+// router.replace() to their own persona's home right after any successful
+// supabase.auth.signInWithPassword() call — but sign-in authenticates
+// against the same auth.users table regardless of which of the two screens
+// you're on, so a company account signing in through /candidate-signin
+// (wrong link, bookmark, muscle memory) got hard-routed into (candidate)
+// anyway. First fix let AuthGate route by the real resolved role instead —
+// correct, but silently dropping a company account into the candidate UI
+// (or vice versa) still read as broken/unprofessional to a real user rather
+// than "helpfully redirected". Final behavior: reject the mismatch outright
+// with a specific message and sign back out, instead of ever navigating a
+// company account into the candidate section or vice versa.
+test.describe('sign-in screen rejects a real-role mismatch instead of redirecting to it', () => {
+  test('a company email on /candidate-signin is rejected, not redirected', async ({ page }) => {
     const { company } = loadTestAccounts();
-    await signIn(page, 'candidate', company.email, company.password);
+    await page.goto('/(auth)/candidate-signin', { waitUntil: 'networkidle' });
+    await page.fill('input[type="email"]', company.email);
+    await page.fill('input[type="password"]', company.password);
+    const signInButtons = await page.$$('text=Sign In');
+    await signInButtons[signInButtons.length - 1].click();
 
-    await expect(page.getByText('Company', { exact: true })).toBeVisible({ timeout: 15_000 });
-    await expect(page.locator('text=Open Roles')).toBeVisible();
-    await expect(page.locator('text=Verification Checklist')).toHaveCount(0);
+    await expect(page.locator('text=This is a company email. Sign in from the company page instead.')).toBeVisible({ timeout: 15_000 });
+    // Still on the candidate sign-in screen, not signed in anywhere.
+    await expect(page).toHaveURL(/candidate-signin/);
+    await expect(page.locator('text=Sign out')).toHaveCount(0);
   });
 
-  test('a candidate account signing in via /company-signin still lands on candidate Home', async ({ page }) => {
+  test('a candidate email on /company-signin is rejected, not redirected', async ({ page }) => {
     const { candidate } = loadTestAccounts();
-    await signIn(page, 'company', candidate.email, candidate.password);
+    await page.goto('/(auth)/company-signin', { waitUntil: 'networkidle' });
+    await page.fill('input[type="email"]', candidate.email);
+    await page.fill('input[type="password"]', candidate.password);
+    const signInButtons = await page.$$('text=Sign In');
+    await signInButtons[signInButtons.length - 1].click();
 
+    await expect(page.locator('text=This is a candidate email. Sign in from the candidate page instead.')).toBeVisible({ timeout: 15_000 });
+    await expect(page).toHaveURL(/company-signin/);
+    await expect(page.locator('text=Sign out')).toHaveCount(0);
+  });
+
+  test('a candidate signing in via /candidate-signin still lands on candidate Home', async ({ page }) => {
+    const { candidate } = loadTestAccounts();
+    await signIn(page, 'candidate', candidate.email, candidate.password);
     await expect(page.getByText('Candidate', { exact: true })).toBeVisible({ timeout: 15_000 });
-    await expect(page.locator('text=Verification Checklist')).toBeVisible();
-    await expect(page.locator('text=Open Roles')).toHaveCount(0);
+  });
+
+  test('a company account signing in via /company-signin still lands on company Home', async ({ page }) => {
+    const { company } = loadTestAccounts();
+    await signIn(page, 'company', company.email, company.password);
+    await expect(page.getByText('Company', { exact: true })).toBeVisible({ timeout: 15_000 });
   });
 });

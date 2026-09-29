@@ -20,7 +20,9 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 // Resolve which persona a signed-in user is by checking which table has a row
 // for them — RLS already scopes both queries to `auth_user_id = auth.uid()`, so
 // this works fine with the anon-key client and never leaks another user's row.
-async function resolveRole(userId: string): Promise<{ role: UserRole; companyId: string | null; candidateId: string | null }> {
+// Exported so the sign-in screens can check "does this account actually match
+// the screen I'm on?" right after authenticating, before ever navigating.
+export async function resolveRole(userId: string): Promise<{ role: UserRole; companyId: string | null; candidateId: string | null }> {
   const { data: candidate } = await supabase
     .from('candidates')
     .select('id')

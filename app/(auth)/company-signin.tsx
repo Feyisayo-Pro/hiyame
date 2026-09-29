@@ -6,6 +6,7 @@ import AppIcon from '@/components/AppIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, ThemePalette, DISPLAY_FONT_FAMILY } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
+import { resolveRole } from '@/lib/useAuth';
 import AnimatedPressable from '@/components/AnimatedPressable';
 import ScreenFrame from '@/components/ScreenFrame';
 import ForgotPasswordModal from '@/components/ForgotPasswordModal';
@@ -69,15 +70,27 @@ export default function CompanySignInScreen() {
       shake();
       return;
     }
-    // Deliberately no router.replace('/(company)') here: this screen has no
-    // way to know the signed-in account is actually a company user — any
-    // valid Hiyame credentials authenticate here, including a candidate
-    // account's. AuthProvider resolves the *real* role from the database
-    // (lib/useAuth.ts's resolveRole) via the onAuthStateChange it just
-    // triggered, and app/_layout.tsx's AuthGate redirects to that role's
-    // home once it resolves — a candidate who lands on this screen still
-    // ends up in (candidate), not stuck in (company). Stay in the loading
-    // state (don't reset it) until that redirect unmounts this screen.
+
+    // Valid credentials authenticate here even for a candidate account —
+    // Supabase Auth doesn't know or care which of the two sign-in screens
+    // was used. Silently routing a candidate account to (company) anyway
+    // (the previous fix) is *correct* but confusing: it looks like the app
+    // dropped you somewhere random instead of telling you what happened.
+    // Check the real persona ourselves and reject the mismatch outright,
+    // with a specific message, rather than ever navigating a candidate
+    // account into the company section.
+    const { data: userData } = await supabase.auth.getUser();
+    const resolved = await resolveRole(userData.user!.id);
+    if (resolved.role === 'candidate') {
+      await supabase.auth.signOut();
+      setLoading(false);
+      setErrors((e) => ({ ...e, general: 'This is a candidate email. Sign in from the candidate page instead.' }));
+      shake();
+      return;
+    }
+    // role === 'company' or null (e.g. mid-signup) both belong here —
+    // AuthGate (app/_layout.tsx) owns the actual redirect once role
+    // resolves; stay in the loading state until it unmounts this screen.
   };
 
   return (
