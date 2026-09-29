@@ -23,12 +23,12 @@ export default function PersonaTabs() {
         <AnimatedPressable style={(state) => [st.tab, state.hovered && st.tabHover]} onPress={() => go('hiring')} scaleTo={0.97}>
           <AppIcon name="business-outline" size={14} color={COMPANY_COLOR} />
           <Text style={st.tabText}>Company</Text>
-          <AppIcon name="arrow-forward" size={12} color="#8A97A4" />
+          <AppIcon name="arrow-forward" size={12} color="#616C7A" />
         </AnimatedPressable>
         <AnimatedPressable style={(state) => [st.tab, state.hovered && st.tabHover]} onPress={() => go('candidate')} scaleTo={0.97}>
           <AppIcon name="person-outline" size={14} color={COMPANY_COLOR} />
           <Text style={st.tabText}>Candidate</Text>
-          <AppIcon name="arrow-forward" size={12} color="#8A97A4" />
+          <AppIcon name="arrow-forward" size={12} color="#616C7A" />
         </AnimatedPressable>
       </View>
     </View>
@@ -37,7 +37,9 @@ export default function PersonaTabs() {
 
 const st = StyleSheet.create({
   wrap: { alignItems: 'center', marginBottom: 28 },
-  label: { fontSize: 12, fontWeight: '700', color: '#8A97A4', letterSpacing: 0.3, marginBottom: 10 },
+  // '#8A97A4' measured 2.98:1 here — fails WCAG AA's 4.5:1 (same known-bad
+  // value lib/theme.ts's textMuted already replaced with this exact hex).
+  label: { fontSize: 12, fontWeight: '700', color: '#616C7A', letterSpacing: 0.3, marginBottom: 10 },
   row: { flexDirection: 'row', gap: 10, flexWrap: 'wrap', justifyContent: 'center' },
   tab: {
     flexDirection: 'row', alignItems: 'center', gap: 7, paddingHorizontal: 16, paddingVertical: 10,

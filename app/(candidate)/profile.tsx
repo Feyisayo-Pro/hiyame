@@ -181,7 +181,7 @@ export default function CandidateProfileScreen() {
                 size={13}
                 color={isFullyVerified ? T.emerald : T.accent}
               />
-              <Text style={[st.verBadgeText, { color: isFullyVerified ? T.emerald : T.accent }]}>
+              <Text style={[st.verBadgeText, { color: isFullyVerified ? T.emerald : T.accentDim }]}>
                 {isFullyVerified ? 'Fully Verified' : `${completedCount}/${totalCount} Verified`}
               </Text>
             </View>

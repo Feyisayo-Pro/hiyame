@@ -23,6 +23,12 @@ const LOCATION_TYPES = ['remote', 'hybrid', 'on_site'] as const;
 const RATE_TYPES = ['monthly', 'hourly', 'fixed'] as const;
 const EMPLOYMENT_TYPES = ['permanent', 'contract'] as const;
 const URGENCY_LEVELS = ['standard', 'urgent', 'immediate'] as const;
+// TIER_CONFIG.corporate.accent ('#059669') on its own selected-chip tint
+// background measures 3.27:1 — fails WCAG AA's 4.5:1 (found via axe-core).
+// Scoped to this one selected-chip text/icon use, not TIER_CONFIG itself,
+// since short_term's accent already passes here and other TIER_CONFIG call
+// sites (badges on solid, more saturated backgrounds) weren't flagged.
+const TIER_TEXT_COLOR: Partial<Record<Tier, string>> = { corporate: '#047857' };
 
 export default function CreateRoleScreen() {
   const T = useTheme();
@@ -156,14 +162,15 @@ export default function CreateRoleScreen() {
               {POSTABLE_TIERS.map((t) => {
                 const cfg = TIER_CONFIG[t];
                 const selected = tier === t;
+                const textColor = TIER_TEXT_COLOR[t] ?? cfg.accent;
                 return (
                   <Pressable
                     key={t}
                     style={[st.tierCard, selected && { borderColor: cfg.accent, backgroundColor: cfg.accent + '10' }]}
                     onPress={() => setTier(t)}
                   >
-                    <AppIcon name={cfg.icon as AppIconName} size={18} color={selected ? cfg.accent : T.textMuted} />
-                    <Text style={[st.tierCardText, selected && { color: cfg.accent, fontWeight: '700' }]}>{cfg.label}</Text>
+                    <AppIcon name={cfg.icon as AppIconName} size={18} color={selected ? textColor : T.textMuted} />
+                    <Text style={[st.tierCardText, selected && { color: textColor, fontWeight: '700' }]}>{cfg.label}</Text>
                   </Pressable>
                 );
               })}
