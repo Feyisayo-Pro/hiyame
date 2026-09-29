@@ -55,7 +55,7 @@ test.describe('sign-in screen redirects by real role, not by which screen was us
 
     await expect(page.getByText('Company', { exact: true })).toBeVisible({ timeout: 15_000 });
     await expect(page.locator('text=Open Roles')).toBeVisible();
-    await expect(page.locator('text=Discover')).toBeVisible();
+    await expect(page.locator('text=Verification Checklist')).toHaveCount(0);
   });
 
   test('a candidate account signing in via /company-signin still lands on candidate Home', async ({ page }) => {
