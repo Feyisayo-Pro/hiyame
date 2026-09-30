@@ -80,6 +80,16 @@ function AuthGate({ children }: { children: ReactNode }) {
       // and a delayed sign-out from the screen would then land on Welcome
       // (session null, no longer inAuthGroup) instead of back on sign-in.
       if (signInIntent && signInIntent !== role) {
+        // Confirmed live (2026-09-30): signInWithPassword's own auth-state
+        // transition briefly navigates through a route-ambiguous bare "/"
+        // before this effect ever runs — harmless in the match branch below
+        // because its router.replace() call claims a definitive route right
+        // after. This branch used to just signOut() with no replace() of
+        // its own, leaving that earlier "/" navigation uncancelled; it went
+        // on to resolve against app/index.tsx's unconditional redirect to
+        // Welcome once the session cleared. Explicitly re-claiming the
+        // sign-in screen's own URL here closes that gap.
+        router.replace(signInIntent === 'candidate' ? '/(auth)/candidate-signin' : '/(auth)/company-signin');
         setAuthError(
           role === 'company'
             ? 'This is a company email. Sign in from the company page instead.'
