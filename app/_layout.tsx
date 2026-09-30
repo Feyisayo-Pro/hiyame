@@ -63,6 +63,16 @@ function AuthGate({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (loading) return;
+    // segments briefly reports [] (route-group-ambiguous, mid-transition)
+    // on *every* auth state change on web, not just the initial sign-in —
+    // confirmed live via console instrumentation, including right after
+    // supabase.auth.signOut() fires its own onAuthStateChange. Acting on it
+    // as "not in the auth group" during that window incorrectly satisfies
+    // the very next check below and force-navigates to Welcome. The real
+    // bare "/" case is already handled unconditionally by app/index.tsx's
+    // own redirect, so this effect never needs to — skipping while segments
+    // hasn't resolved yet is safe, not a loss of coverage.
+    if (!segments[0]) return;
     const inAuthGroup = segments[0] === '(auth)';
     const inCandidateGroup = segments[0] === '(candidate)';
     const inCompanyGroup = segments[0] === '(company)';
