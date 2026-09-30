@@ -34,7 +34,7 @@ test('candidate can add and edit Job Experience, Education, and Certifications',
   const qualification = `BSc E2E Testing ${Date.now()}`;
   await page.locator('text="Add education"').click();
   await page.getByPlaceholder('Institution').fill('E2E University');
-  await page.getByPlaceholder('Qualification (e.g. BSc Computer Science)').fill(qualification);
+  await page.getByPlaceholder('Qualification (BSc Computer Science)').fill(qualification);
   await page.locator('text="Save"').last().click();
   await expect(page.locator(`text=${qualification}`)).toBeVisible({ timeout: 10_000 });
 
