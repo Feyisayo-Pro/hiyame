@@ -13,7 +13,7 @@ import {
 } from '@expo-google-fonts/bricolage-grotesque';
 import { DefaultTheme, Stack, ThemeProvider, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect, useMemo, ReactNode } from 'react';
+import { useEffect, useMemo, useRef, ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View, StatusBar as RNStatusBar, Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -60,19 +60,29 @@ function AuthGate({ children }: { children: ReactNode }) {
   const { session, loading, role, signInIntent, setSignInIntent, setAuthError } = useAuth();
   const segments = useSegments();
   const router = useRouter();
+  // Set the moment a sign-in mismatch is rejected, cleared only once the
+  // signOut() that triggers has fully landed (session confirmed null) —
+  // see the long comment below for why nothing short of that is reliable.
+  const rejectingRef = useRef(false);
 
   useEffect(() => {
     if (loading) return;
-    // segments briefly reports [] (route-group-ambiguous, mid-transition)
-    // on *every* auth state change on web, not just the initial sign-in —
-    // confirmed live via console instrumentation, including right after
-    // supabase.auth.signOut() fires its own onAuthStateChange. Acting on it
-    // as "not in the auth group" during that window incorrectly satisfies
-    // the very next check below and force-navigates to Welcome. The real
-    // bare "/" case is already handled unconditionally by app/index.tsx's
-    // own redirect, so this effect never needs to — skipping while segments
-    // hasn't resolved yet is safe, not a loss of coverage.
-    if (!segments[0]) return;
+
+    if (rejectingRef.current) {
+      // Mid-rejection: every render between calling signOut() and its
+      // onAuthStateChange actually landing is unreliable — confirmed live
+      // (2026-09-30) that Expo Router's web segments briefly reports []
+      // (route-group-ambiguous) on *every* auth transition, not just the
+      // first, and reading that as "signed out, not on an auth page"
+      // force-navigates to Welcome via the very first branch below. Rather
+      // than chase each transient state as it's discovered, ignore all of
+      // them: do nothing at all until session is confirmed null, which
+      // needs no segments/timing assumption to be reliable.
+      if (!session) rejectingRef.current = false;
+      return;
+    }
+
+    if (!segments[0]) return; // still resolving which group we're in
     const inAuthGroup = segments[0] === '(auth)';
     const inCandidateGroup = segments[0] === '(candidate)';
     const inCompanyGroup = segments[0] === '(company)';
@@ -86,19 +96,9 @@ function AuthGate({ children }: { children: ReactNode }) {
       // place that would otherwise redirect — rather than on the screen
       // itself, since that would race against this same effect: on a
       // mismatch the screen's own check could still be in flight while this
-      // effect already navigated the user into the *other* persona's home,
-      // and a delayed sign-out from the screen would then land on Welcome
-      // (session null, no longer inAuthGroup) instead of back on sign-in.
+      // effect already navigated the user into the *other* persona's home.
       if (signInIntent && signInIntent !== role) {
-        // Confirmed live (2026-09-30): signInWithPassword's own auth-state
-        // transition briefly navigates through a route-ambiguous bare "/"
-        // before this effect ever runs — harmless in the match branch below
-        // because its router.replace() call claims a definitive route right
-        // after. This branch used to just signOut() with no replace() of
-        // its own, leaving that earlier "/" navigation uncancelled; it went
-        // on to resolve against app/index.tsx's unconditional redirect to
-        // Welcome once the session cleared. Explicitly re-claiming the
-        // sign-in screen's own URL here closes that gap.
+        rejectingRef.current = true;
         router.replace(signInIntent === 'candidate' ? '/(auth)/candidate-signin' : '/(auth)/company-signin');
         setAuthError(
           role === 'company'
