@@ -10,6 +10,7 @@ import {
   Platform,
 } from 'react-native';
 import { router } from 'expo-router';
+import { goBack } from '@/lib/goBack';
 import { Text } from '@/components/Themed';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import AppIcon from '@/components/AppIcon';
@@ -293,7 +294,7 @@ export default function CompanySignupScreen() {
       setStep(step - 1);
       setErrors({});
     } else {
-      router.back();
+      goBack(router, '/(auth)/welcome');
     }
   }, [step]);
 

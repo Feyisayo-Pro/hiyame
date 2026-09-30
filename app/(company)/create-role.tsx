@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, TextInput, View, KeyboardAvoidingView, Platform } from 'react-native';
 import { router } from 'expo-router';
+import { goBack } from '@/lib/goBack';
 import { Text } from '@/components/Themed';
 import AppIcon, { AppIconName } from '@/components/AppIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -55,7 +56,13 @@ export default function CreateRoleScreen() {
   const [rateMax, setRateMax] = useState('');
   const [rateType, setRateType] = useState<typeof RATE_TYPES[number]>('monthly');
   const [startDate, setStartDate] = useState('');
-  const [description, setDescription] = useState('');
+  // Stored as one formatted visibility_description (no schema change, no
+  // update needed anywhere that already reads that column) but *entered* as
+  // three separate fields — structure the company can't skip, rather than
+  // one blob most postings left as an unstructured paragraph.
+  const [overview, setOverview] = useState('');
+  const [responsibilities, setResponsibilities] = useState('');
+  const [requirements, setRequirements] = useState('');
 
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -78,7 +85,9 @@ export default function CreateRoleScreen() {
     // (lib/matchingEngine.ts's skillOverlapScore) — confirmed live, this was
     // the actual cause of candidates seeing completely unrelated roles.
     if (mustHave.length === 0) newErrors.mustHave = 'Add at least one must-have skill so matching can tell who actually fits';
-    if (!description.trim()) newErrors.description = 'A candidate-facing description is required';
+    if (!overview.trim()) newErrors.overview = 'An overview is required';
+    if (!responsibilities.trim()) newErrors.responsibilities = 'List at least the core responsibilities';
+    if (!requirements.trim()) newErrors.requirements = 'List at least the core requirements';
     if (locationType !== 'remote' && !locationCity.trim()) newErrors.locationCity = 'City is required for on-site/hybrid roles';
     if (rateMin && isNaN(Number(rateMin))) newErrors.rateMin = 'Enter a valid number';
     if (rateMax && isNaN(Number(rateMax))) newErrors.rateMax = 'Enter a valid number';
@@ -94,6 +103,12 @@ export default function CreateRoleScreen() {
       return;
     }
     setLoading(true);
+
+    const visibilityDescription = [
+      `Overview\n${overview.trim()}`,
+      `Responsibilities\n${responsibilities.trim()}`,
+      `Requirements\n${requirements.trim()}`,
+    ].join('\n\n');
 
     const { data, error } = await supabase
       .from('roles')
@@ -114,7 +129,7 @@ export default function CreateRoleScreen() {
         rate_max: rateMax ? Number(rateMax) : null,
         rate_type: rateType,
         start_date: startDate || null,
-        visibility_description: description.trim(),
+        visibility_description: visibilityDescription,
         status: 'matching',
       })
       .select()
@@ -140,7 +155,7 @@ export default function CreateRoleScreen() {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScreenFrame>
         <View style={st.header}>
-          <Pressable style={st.backButton} onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Go back">
+          <Pressable style={st.backButton} onPress={() => goBack(router, '/(company)')} accessibilityRole="button" accessibilityLabel="Go back">
             <AppIcon name="arrow-back" size={20} color={T.textPrimary} />
           </Pressable>
           <Text style={st.headerTitle}>Post a Role</Text>
@@ -317,20 +332,54 @@ export default function CreateRoleScreen() {
           )}
 
           <View style={st.fieldWrap}>
-            <Text style={st.label}>Description *</Text>
-            <View style={[st.textAreaWrap, errors.description ? st.inputError : null]}>
+            <Text style={st.label}>Overview *</Text>
+            <View style={[st.textAreaWrap, errors.overview ? st.inputError : null]}>
               <TextInput
                 style={st.textArea}
                 placeholder="What will this person actually do? What makes the role compelling?"
                 placeholderTextColor={T.textMuted}
-                value={description}
-                onChangeText={(t) => { setDescription(t); setErrors((e) => ({ ...e, description: '' })); }}
+                value={overview}
+                onChangeText={(t) => { setOverview(t); setErrors((e) => ({ ...e, overview: '' })); }}
                 multiline
-                numberOfLines={5}
+                numberOfLines={4}
                 textAlignVertical="top"
               />
             </View>
-            {errors.description ? <Text style={st.errorText}>{errors.description}</Text> : null}
+            {errors.overview ? <Text style={st.errorText}>{errors.overview}</Text> : null}
+          </View>
+
+          <View style={st.fieldWrap}>
+            <Text style={st.label}>Responsibilities *</Text>
+            <View style={[st.textAreaWrap, errors.responsibilities ? st.inputError : null]}>
+              <TextInput
+                style={st.textArea}
+                placeholder="Day-to-day duties — one per line reads best"
+                placeholderTextColor={T.textMuted}
+                value={responsibilities}
+                onChangeText={(t) => { setResponsibilities(t); setErrors((e) => ({ ...e, responsibilities: '' })); }}
+                multiline
+                numberOfLines={4}
+                textAlignVertical="top"
+              />
+            </View>
+            {errors.responsibilities ? <Text style={st.errorText}>{errors.responsibilities}</Text> : null}
+          </View>
+
+          <View style={st.fieldWrap}>
+            <Text style={st.label}>Requirements *</Text>
+            <View style={[st.textAreaWrap, errors.requirements ? st.inputError : null]}>
+              <TextInput
+                style={st.textArea}
+                placeholder="What a candidate needs to already have — experience, qualifications, must-haves"
+                placeholderTextColor={T.textMuted}
+                value={requirements}
+                onChangeText={(t) => { setRequirements(t); setErrors((e) => ({ ...e, requirements: '' })); }}
+                multiline
+                numberOfLines={4}
+                textAlignVertical="top"
+              />
+            </View>
+            {errors.requirements ? <Text style={st.errorText}>{errors.requirements}</Text> : null}
           </View>
 
           <AnimatedPressable style={[st.submitButton, loading && st.submitButtonDisabled]} onPress={handleSubmit} disabled={loading}>

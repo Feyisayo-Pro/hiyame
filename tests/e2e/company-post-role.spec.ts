@@ -24,9 +24,18 @@ test('company can post a role and land on its shortlist', async ({ page }) => {
   // <button> elements, so match by exact text like the "Post Role" submit
   // below rather than getByRole.
   await page.locator('text="Permanent"').click();
+  // Must-Have Skills is required (an under-specified role used to match
+  // every candidate at full credit — lib/matchingEngine.ts's
+  // skillOverlapScore — so this is now enforced at the source).
+  await page.getByPlaceholder('Type a skill and press add').first().fill('E2E Testing');
+  await page.getByPlaceholder('Type a skill and press add').first().press('Enter');
+  // Description is now three required fields (Overview/Responsibilities/
+  // Requirements) instead of one free-text blob.
   await page.getByPlaceholder('What will this person actually do? What makes the role compelling?').fill(
     'A throwaway role posted by the automated E2E suite to verify the create-role flow end to end.'
   );
+  await page.getByPlaceholder('Day-to-day duties — one per line reads best').fill('Run the E2E suite. Verify the flow works.');
+  await page.getByPlaceholder('What a candidate needs to already have — experience, qualifications, must-haves').fill('Playwright experience.');
 
   // The submit button has no accessibilityRole set, so it doesn't expose an
   // ARIA button role on web — match its exact text instead. "Post Role" is

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useMemo} from 'react';
 import { Animated, Pressable, ScrollView, StyleSheet, TextInput, View, KeyboardAvoidingView, Platform } from 'react-native';
 import { router } from 'expo-router';
+import { goBack } from '@/lib/goBack';
 import { Text } from '@/components/Themed';
 import AppIcon from '@/components/AppIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -107,7 +108,7 @@ export default function CompanySignInScreen() {
           bounces={false}
         >
           {/* Back */}
-          <Pressable style={st.backButton} onPress={() => router.back()}>
+          <Pressable style={st.backButton} onPress={() => goBack(router, '/(auth)/welcome')}>
             <AppIcon name="arrow-back" size={20} color={T.textPrimary} />
           </Pressable>
 

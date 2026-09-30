@@ -2,6 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { goBack } from '@/lib/goBack';
 import AppIcon from '@/components/AppIcon';
 
 import { Text } from '@/components/Themed';
@@ -134,7 +135,7 @@ export default function SubscriptionsScreen() {
       <PageHead title="Subscription" />
       <ScreenFrame>
       <View style={styles.header}>
-        <Pressable style={styles.backBtn} onPress={() => router.back()}>
+        <Pressable style={styles.backBtn} onPress={() => goBack(router, '/(company)')}>
           <AppIcon name="arrow-back" size={20} color={T.textPrimary} />
         </Pressable>
         <Text style={styles.headerTitle}>Plans & Pricing</Text>

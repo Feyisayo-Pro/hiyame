@@ -2,6 +2,7 @@ import { useMemo, useState, useCallback, useEffect } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { goBack } from '@/lib/goBack';
 import AppIcon from '@/components/AppIcon';
 
 import { Text } from '@/components/Themed';
@@ -179,7 +180,7 @@ export default function TeamMembersScreen() {
       <PageHead title="Team" />
       <ScreenFrame>
       <View style={s.header}>
-        <Pressable style={s.backBtn} onPress={() => router.back()}>
+        <Pressable style={s.backBtn} onPress={() => goBack(router, '/(company)')}>
           <AppIcon name="arrow-back" size={20} color={T.textPrimary} />
         </Pressable>
         <Text style={s.headerTitle}>Team Members</Text>

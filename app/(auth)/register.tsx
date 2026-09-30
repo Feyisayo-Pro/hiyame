@@ -1,6 +1,7 @@
 import { useRef, useEffect, useMemo } from 'react';
 import { Animated, ScrollView, StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
+import { goBack } from '@/lib/goBack';
 import { Text } from '@/components/Themed';
 import AppIcon, { AppIconName } from '@/components/AppIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -70,7 +71,7 @@ export default function RegisterScreen() {
     <SafeAreaView style={st.container} edges={['top', 'left', 'right', 'bottom']}>
       <PageHead title="Join Hiyame" />
       <ScreenFrame maxWidth={560}>
-      <AnimatedPressable style={st.backButton} onPress={() => router.back()} scaleTo={0.9}>
+      <AnimatedPressable style={st.backButton} onPress={() => goBack(router, '/(auth)/welcome')} scaleTo={0.9}>
         <AppIcon name="arrow-back" size={20} color={T.textPrimary} />
       </AnimatedPressable>
 

@@ -10,6 +10,7 @@ import {
   Platform,
 } from 'react-native';
 import { router } from 'expo-router';
+import { goBack } from '@/lib/goBack';
 import { Text } from '@/components/Themed';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import AppIcon from '@/components/AppIcon';
@@ -186,7 +187,7 @@ export default function CandidateSignupScreen() {
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <Pressable style={st.backButton} onPress={() => router.back()}>
+        <Pressable style={st.backButton} onPress={() => goBack(router, '/(auth)/welcome')}>
           <AppIcon name="arrow-back" size={20} color={T.textPrimary} />
         </Pressable>
 

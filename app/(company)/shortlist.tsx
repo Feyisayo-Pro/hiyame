@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, View, ActivityIndicator } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
+import { goBack } from '@/lib/goBack';
 import { Text } from '@/components/Themed';
 import AppIcon from '@/components/AppIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -205,7 +206,7 @@ export default function ShortlistScreen() {
       <PageHead title="Shortlist" />
       <ScreenFrame>
       <View style={st.header}>
-        <Pressable style={st.backButton} onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Go back">
+        <Pressable style={st.backButton} onPress={() => goBack(router, '/(company)/roles')} accessibilityRole="button" accessibilityLabel="Go back">
           <AppIcon name="arrow-back" size={20} color={T.textPrimary} />
         </Pressable>
         <View style={{ flex: 1 }}>
