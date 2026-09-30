@@ -99,7 +99,7 @@ export default function PortfolioSection({ candidateId }: { candidateId: string 
 
       {adding ? (
         <View style={st.addForm}>
-          <TextInput style={st.input} placeholder="Title (e.g. Payroll dashboard rebuild)" placeholderTextColor={T.textMuted} value={title} onChangeText={setTitle} />
+          <TextInput style={st.input} placeholder="Title (Payroll dashboard rebuild)" placeholderTextColor={T.textMuted} value={title} onChangeText={setTitle} />
           <TextInput style={[st.input, st.textArea]} placeholder="Short description (optional)" placeholderTextColor={T.textMuted} value={description} onChangeText={setDescription} multiline numberOfLines={3} />
           <View style={st.addFormRow}>
             <Pressable style={st.cancelBtn} onPress={() => { setAdding(false); setTitle(''); setDescription(''); }}>

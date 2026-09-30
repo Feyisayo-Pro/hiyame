@@ -14,13 +14,13 @@ import ContactReveal from '@/components/ContactReveal';
 import ScreenFrame from '@/components/ScreenFrame';
 import PageHead from '@/components/PageHead';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
-import { useIsDesktopWeb, useIsWideDesktopWeb } from '@/components/TopNav';
 
 interface ShortlistedRow {
   roleId: string;
   roleTitle: string;
   candidateName: string;
   score: number;
+  summary: string;
 }
 
 // The "Connections" tab — every accepted introduction for the signed-in user,
@@ -31,19 +31,48 @@ interface ShortlistedRow {
 
 interface Connection {
   introductionId: string;
+  roleId: string;
   roleTitle: string;
   roleTier: Tier;
   respondedAt: string | null;
   contact: IntroductionContact | null;
+  summary: string;
+}
+
+// One-line descriptor under a candidate's name — experience level + their
+// top couple of skill tags, the closest real signal to "why this person" the
+// data actually has (there's no free-text blurb anywhere in the schema).
+function candidateSummary(experienceLevel: string | null, skillTags: string[] | null): string {
+  const level = experienceLevel ? experienceLevel[0].toUpperCase() + experienceLevel.slice(1) : null;
+  const skills = (skillTags ?? []).slice(0, 3).join(', ');
+  if (level && skills) return `${level} · ${skills}`;
+  return level ?? skills ?? 'No profile details yet';
+}
+
+// Groups a flat list by role so the screen reads as "Role A: these people /
+// Role B: those people" instead of one undifferentiated pile spanning every
+// job at once — preserves each group's first-seen order (both source lists
+// already arrive pre-sorted: shortlisted by score, connections by response
+// time), so within a role nothing gets silently re-ordered.
+function groupByRole<T extends { roleId: string; roleTitle: string }>(rows: T[]): { roleId: string; roleTitle: string; items: T[] }[] {
+  const groups: { roleId: string; roleTitle: string; items: T[] }[] = [];
+  const index = new Map<string, number>();
+  for (const row of rows) {
+    let i = index.get(row.roleId);
+    if (i === undefined) {
+      i = groups.length;
+      index.set(row.roleId, i);
+      groups.push({ roleId: row.roleId, roleTitle: row.roleTitle, items: [] });
+    }
+    groups[i].items.push(row);
+  }
+  return groups;
 }
 
 export default function ConnectionsScreen({ persona }: { persona: 'candidate' | 'company' }) {
   const T = useTheme();
   const st = useMemo(() => makeStyles(T), [T]);
   const { candidateId, companyId } = useAuth();
-  const isDesktop = useIsDesktopWeb();
-  const isWideDesktop = useIsWideDesktopWeb();
-  const gridItemStyle = isWideDesktop ? st.gridItemThird : isDesktop && st.gridItemHalf;
 
   const [connections, setConnections] = useState<Connection[] | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -63,7 +92,7 @@ export default function ConnectionsScreen({ persona }: { persona: 'candidate' | 
     const [scoresRes, introsRes] = await Promise.all([
       supabase
         .from('match_scores')
-        .select('candidate_id, score, company_action, candidates(full_name), roles!inner(id, title, company_id)')
+        .select('candidate_id, score, company_action, candidates(full_name, experience_level, skill_tags), roles!inner(id, title, company_id)')
         .eq('roles.company_id', companyId)
         .order('score', { ascending: false }),
       supabase.from('introductions').select('role_id, candidate_id, roles!inner(company_id)').eq('roles.company_id', companyId),
@@ -82,6 +111,7 @@ export default function ConnectionsScreen({ persona }: { persona: 'candidate' | 
           roleTitle: row.roles.title,
           candidateName: row.candidates?.full_name ?? 'Candidate',
           score: row.score,
+          summary: candidateSummary(row.candidates?.experience_level ?? null, row.candidates?.skill_tags ?? null),
         }))
     );
   }, [persona, companyId]);
@@ -94,10 +124,14 @@ export default function ConnectionsScreen({ persona }: { persona: 'candidate' | 
     }
 
     // Company-side RLS already scopes introductions to the caller's company;
-    // candidate-side needs the explicit candidate_id filter.
+    // candidate-side needs the explicit candidate_id filter. candidates(...)
+    // is only meaningful to a company viewer (RLS hides it from candidates
+    // reading someone else's row anyway); companies(...) is the candidate
+    // viewer's equivalent one-line signal, the same industry/size band shown
+    // pre-acceptance on the Introductions screen.
     let query = supabase
       .from('introductions')
-      .select('id, role_id, responded_at, roles(title, tier)')
+      .select('id, role_id, responded_at, roles(title, tier, companies(industry, size_range)), candidates(experience_level, skill_tags)')
       .eq('status', 'accepted')
       .order('responded_at', { ascending: false });
     if (persona === 'candidate') query = query.eq('candidate_id', candidateId);
@@ -112,12 +146,17 @@ export default function ConnectionsScreen({ persona }: { persona: 'candidate' | 
     const rows: Connection[] = [];
     for (const row of (data ?? []) as any[]) {
       const contact = await getIntroductionContact(row.id);
+      const summary = persona === 'company'
+        ? candidateSummary(row.candidates?.experience_level ?? null, row.candidates?.skill_tags ?? null)
+        : [row.roles?.companies?.industry, row.roles?.companies?.size_range].filter(Boolean).join(' · ') || 'Company details unavailable';
       rows.push({
         introductionId: row.id,
+        roleId: row.role_id,
         roleTitle: row.roles?.title ?? 'Role',
         roleTier: (row.roles?.tier as Tier) ?? 'corporate',
         respondedAt: row.responded_at,
         contact,
+        summary,
       });
     }
     setConnections(rows);
@@ -178,21 +217,26 @@ export default function ConnectionsScreen({ persona }: { persona: 'candidate' | 
                 <Text style={st.emptySub}>Once a role finishes matching, ranked candidates show up here until you introduce or skip them.</Text>
               </View>
             ) : (
-              <View style={st.grid}>
-                {shortlisted.map((s, i) => (
-                  <SwipeFadeContainer key={`${s.roleId}-${s.candidateName}-${i}`} axis="y" offset={14} duration={240} delay={Math.min(i, 8) * 40} style={[st.gridItem, gridItemStyle]}>
-                    <Pressable style={st.block} onPress={() => router.push({ pathname: '/(company)/shortlist', params: { roleId: s.roleId } })}>
-                      <View style={st.blockHead}>
-                        <Text style={st.roleTitle} numberOfLines={1}>{s.candidateName}</Text>
-                        <View style={[st.tierPill, { backgroundColor: T.accent + '14' }]}>
-                          <Text style={[st.tierText, { color: T.accent }]}>{Math.round(s.score)}% MATCH</Text>
-                        </View>
-                      </View>
-                      <Text style={st.pendingText}>{s.roleTitle} · tap to review on the shortlist</Text>
-                    </Pressable>
-                  </SwipeFadeContainer>
-                ))}
-              </View>
+              groupByRole(shortlisted).map((group) => (
+                <View key={group.roleId} style={st.roleSection}>
+                  <Text style={st.roleSectionTitle}>{group.roleTitle} ({group.items.length})</Text>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={st.hScroll}>
+                    {group.items.map((s, i) => (
+                      <SwipeFadeContainer key={`${s.roleId}-${s.candidateName}-${i}`} axis="x" offset={14} duration={240} delay={Math.min(i, 8) * 40} style={st.hCard}>
+                        <Pressable style={st.block} onPress={() => router.push({ pathname: '/(company)/shortlist', params: { roleId: s.roleId } })}>
+                          <View style={st.blockHead}>
+                            <Text style={st.roleTitle} numberOfLines={1}>{s.candidateName}</Text>
+                            <View style={[st.tierPill, { backgroundColor: T.accent + '14' }]}>
+                              <Text style={[st.tierText, { color: T.accent }]}>{Math.round(s.score)}% MATCH</Text>
+                            </View>
+                          </View>
+                          <Text style={st.pendingText} numberOfLines={2}>{s.summary}</Text>
+                        </Pressable>
+                      </SwipeFadeContainer>
+                    ))}
+                  </ScrollView>
+                </View>
+              ))
             )}
           </ScrollView>
         )
@@ -218,28 +262,36 @@ export default function ConnectionsScreen({ persona }: { persona: 'candidate' | 
               </Text>
             </View>
           ) : (
-            <View style={st.grid}>
-              {connections.map((c, i) => {
-                const cfg = TIER_CONFIG[c.roleTier];
-                return (
-                  <SwipeFadeContainer key={c.introductionId} axis="y" offset={14} duration={240} delay={Math.min(i, 8) * 40} style={[st.gridItem, gridItemStyle]}>
-                    <View style={st.block}>
-                      <View style={st.blockHead}>
-                        <Text style={st.roleTitle} numberOfLines={1}>{c.roleTitle}</Text>
-                        <View style={[st.tierPill, { backgroundColor: cfg.accent + '14' }]}>
-                          <Text style={[st.tierText, { color: cfg.accent }]}>{cfg.label.toUpperCase()}</Text>
+            groupByRole(connections).map((group) => (
+              <View key={group.roleId} style={st.roleSection}>
+                <Text style={st.roleSectionTitle}>{group.roleTitle} ({group.items.length})</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={st.hScroll}>
+                  {group.items.map((c, i) => {
+                    const cfg = TIER_CONFIG[c.roleTier];
+                    return (
+                      <SwipeFadeContainer key={c.introductionId} axis="x" offset={14} duration={240} delay={Math.min(i, 8) * 40} style={st.hCard}>
+                        <View style={st.block}>
+                          <View style={st.blockHead}>
+                            <Text style={st.roleTitle} numberOfLines={1}>
+                              {persona === 'company' ? (c.contact?.candidateName ?? 'Candidate') : (c.contact?.companyName ?? c.roleTitle)}
+                            </Text>
+                            <View style={[st.tierPill, { backgroundColor: cfg.accent + '14' }]}>
+                              <Text style={[st.tierText, { color: cfg.accent }]}>{cfg.label.toUpperCase()}</Text>
+                            </View>
+                          </View>
+                          <Text style={st.pendingText} numberOfLines={2}>{c.summary}</Text>
+                          {c.contact ? (
+                            <ContactReveal contact={c.contact} viewer={persona} />
+                          ) : (
+                            <Text style={st.pendingText}>Contact details unavailable.</Text>
+                          )}
                         </View>
-                      </View>
-                      {c.contact ? (
-                        <ContactReveal contact={c.contact} viewer={persona} />
-                      ) : (
-                        <Text style={st.pendingText}>Contact details unavailable.</Text>
-                      )}
-                    </View>
-                  </SwipeFadeContainer>
-                );
-              })}
-            </View>
+                      </SwipeFadeContainer>
+                    );
+                  })}
+                </ScrollView>
+              </View>
+            ))
           )}
         </ScrollView>
       )}
@@ -263,13 +315,13 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   emptyBlock: { alignItems: 'center', paddingTop: 60, paddingHorizontal: 20 },
   emptyTitle: { fontSize: 17, fontWeight: '800', color: T.textPrimary, marginTop: 12, marginBottom: 6 },
   emptySub: { fontSize: 13, color: T.textSecondary, textAlign: 'center', lineHeight: 19 },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 14 },
-  gridItem: { width: '100%' },
-  gridItemHalf: { width: '48.5%' },
-  gridItemThird: { width: '32%' },
+  roleSection: { marginBottom: 22 },
+  roleSectionTitle: { fontSize: 13, fontWeight: '800', color: T.textMuted, letterSpacing: 0.3, marginBottom: 10 },
+  hScroll: { gap: 12, paddingRight: 20, paddingBottom: 2 },
+  hCard: { width: 260 },
   block: {
-    marginBottom: 18, backgroundColor: T.card, borderRadius: 16, padding: 16,
-    borderWidth: 1, borderColor: T.border, ...ELEVATION.card,
+    backgroundColor: T.card, borderRadius: 16, padding: 16,
+    borderWidth: 1, borderColor: T.border, height: '100%', ...ELEVATION.card,
   },
   blockHead: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 },
   roleTitle: { fontSize: 15, fontWeight: '700', color: T.textPrimary, flexShrink: 1 },

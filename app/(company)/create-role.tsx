@@ -73,6 +73,11 @@ export default function CreateRoleScreen() {
     const newErrors: Record<string, string> = {};
     if (!title.trim()) newErrors.title = 'Role title is required';
     if (!employmentType) newErrors.employmentType = 'Pick permanent or contract';
+    // Required, not just encouraged: a role with no must-have skills used to
+    // match every candidate at full credit regardless of actual fit
+    // (lib/matchingEngine.ts's skillOverlapScore) — confirmed live, this was
+    // the actual cause of candidates seeing completely unrelated roles.
+    if (mustHave.length === 0) newErrors.mustHave = 'Add at least one must-have skill so matching can tell who actually fits';
     if (!description.trim()) newErrors.description = 'A candidate-facing description is required';
     if (locationType !== 'remote' && !locationCity.trim()) newErrors.locationCity = 'City is required for on-site/hybrid roles';
     if (rateMin && isNaN(Number(rateMin))) newErrors.rateMin = 'Enter a valid number';
@@ -232,16 +237,18 @@ export default function CreateRoleScreen() {
             <View style={st.fieldWrap}>
               <Text style={st.label}>Contract Length</Text>
               <View style={st.inputWrap}>
-                <TextInput style={st.input} placeholder="e.g. 6 months" placeholderTextColor={T.textMuted} value={contractLength} onChangeText={setContractLength} />
+                <TextInput style={st.input} placeholder="6 months" placeholderTextColor={T.textMuted} value={contractLength} onChangeText={setContractLength} />
               </View>
             </View>
           )}
 
           <TagField
-            T={T} st={st} label="Must-Have Skills"
+            T={T} st={st} label="Must-Have Skills *"
             inputValue={mustHaveInput} onInputChange={setMustHaveInput}
-            tags={mustHave} onAdd={() => addTag(mustHaveInput, mustHave, setMustHave, () => setMustHaveInput(''))}
+            tags={mustHave}
+            onAdd={() => { addTag(mustHaveInput, mustHave, setMustHave, () => setMustHaveInput('')); setErrors((e) => ({ ...e, mustHave: '' })); }}
             onRemove={(s) => setMustHave(mustHave.filter((x) => x !== s))}
+            error={errors.mustHave}
           />
 
           <TagField
@@ -343,15 +350,15 @@ export default function CreateRoleScreen() {
   );
 }
 
-function TagField({ T, st, label, inputValue, onInputChange, tags, onAdd, onRemove }: {
+function TagField({ T, st, label, inputValue, onInputChange, tags, onAdd, onRemove, error }: {
   T: ThemePalette; st: ReturnType<typeof makeStyles>; label: string;
   inputValue: string; onInputChange: (v: string) => void;
-  tags: string[]; onAdd: () => void; onRemove: (tag: string) => void;
+  tags: string[]; onAdd: () => void; onRemove: (tag: string) => void; error?: string;
 }) {
   return (
     <View style={st.fieldWrap}>
       <Text style={st.label}>{label}</Text>
-      <View style={st.inputWrap}>
+      <View style={[st.inputWrap, error ? st.inputError : null]}>
         <TextInput
           style={st.input}
           placeholder="Type a skill and press add"
@@ -379,6 +386,7 @@ function TagField({ T, st, label, inputValue, onInputChange, tags, onAdd, onRemo
           ))}
         </View>
       )}
+      {error ? <Text style={st.errorText}>{error}</Text> : null}
     </View>
   );
 }

@@ -151,7 +151,7 @@ export default function EducationSection({ candidateId }: { candidateId: string 
       {formOpen ? (
         <View style={st.addForm}>
           <TextInput style={st.input} placeholder="Institution" placeholderTextColor={T.textMuted} value={institution} onChangeText={setInstitution} />
-          <TextInput style={st.input} placeholder="Qualification (e.g. BSc Computer Science)" placeholderTextColor={T.textMuted} value={qualification} onChangeText={setQualification} />
+          <TextInput style={st.input} placeholder="Qualification (BSc Computer Science)" placeholderTextColor={T.textMuted} value={qualification} onChangeText={setQualification} />
           <TextInput style={st.input} placeholder="Field of study (optional)" placeholderTextColor={T.textMuted} value={fieldOfStudy} onChangeText={setFieldOfStudy} />
           <View style={st.dateRow}>
             <TextInput style={[st.input, { flex: 1 }]} placeholder="Start (YYYY-MM-DD)" placeholderTextColor={T.textMuted} value={startDate} onChangeText={setStartDate} />

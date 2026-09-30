@@ -310,7 +310,7 @@ export default function CompanySignupScreen() {
             <AppIcon name="person-outline" size={18} color={errors.contactName ? T.danger : focused ? T.accent : T.textMuted} />
             <TextInput
               style={[st.input, NO_NATIVE_OUTLINE]}
-              placeholder="e.g. Amara Osei"
+              placeholder="Amara Osei"
               placeholderTextColor={T.textMuted}
               autoCapitalize="words"
               value={contactName}
@@ -378,7 +378,7 @@ export default function CompanySignupScreen() {
             <AppIcon name="business-outline" size={18} color={errors.companyName ? T.danger : focused ? T.accent : T.textMuted} />
             <TextInput
               style={[st.input, NO_NATIVE_OUTLINE]}
-              placeholder="e.g. Acme Corp"
+              placeholder="Acme Corp"
               placeholderTextColor={T.textMuted}
               value={companyName}
               onChangeText={(t) => { setCompanyName(t); clearError('companyName'); }}
@@ -396,7 +396,7 @@ export default function CompanySignupScreen() {
             <AppIcon name="document-text-outline" size={18} color={focused ? T.accent : T.textMuted} />
             <TextInput
               style={[st.input, NO_NATIVE_OUTLINE]}
-              placeholder="Optional, e.g. RC12345678"
+              placeholder="Optional — RC12345678"
               placeholderTextColor={T.textMuted}
               value={taxId}
               onChangeText={setTaxId}
@@ -414,7 +414,7 @@ export default function CompanySignupScreen() {
             <AppIcon name="globe-outline" size={18} color={focused ? T.accent : T.textMuted} />
             <TextInput
               style={[st.input, NO_NATIVE_OUTLINE]}
-              placeholder="e.g. https://acmecorp.com"
+              placeholder="https://acmecorp.com"
               placeholderTextColor={T.textMuted}
               value={website}
               onChangeText={setWebsite}
@@ -505,7 +505,7 @@ export default function CompanySignupScreen() {
             <AppIcon name="location-outline" size={18} color={focused ? T.accent : T.textMuted} />
             <TextInput
               style={[st.input, NO_NATIVE_OUTLINE]}
-              placeholder="e.g. Lagos, Nigeria"
+              placeholder="Lagos, Nigeria"
               placeholderTextColor={T.textMuted}
               value={hqLocation}
               onChangeText={setHqLocation}

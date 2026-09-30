@@ -173,7 +173,15 @@ export interface MatchResult {
 }
 
 function skillOverlapScore(required: string[], has: string[], weight: number): number {
-  if (required.length === 0) return weight; // nothing required -> full credit for this bucket
+  // An under-specified role (no skills entered) used to give every candidate
+  // full credit here regardless of actual fit — confirmed live (2026-10-01):
+  // 89 of 91 real posted roles have empty required_skills, while 93% of real
+  // candidates have rich skill_tags, so this fallback was the dominant signal
+  // for nearly every match, not an edge case. create-role.tsx now requires at
+  // least one must-have skill going forward; this stays as a conservative
+  // (not zero — a role can legitimately be skills-agnostic) defense-in-depth
+  // for the pre-existing under-specified roles already in the database.
+  if (required.length === 0) return weight * 0.4;
   const owned = new Set(has.map((s) => s.toLowerCase()));
   const matched = required.filter((s) => owned.has(s.toLowerCase())).length;
   return (matched / required.length) * weight;

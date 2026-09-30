@@ -114,7 +114,7 @@ export default function EditCandidateProfileModal({ visible, candidateId, initia
               style={s.input}
               value={rate}
               onChangeText={setRate}
-              placeholder="e.g. 500000"
+              placeholder="500000"
               placeholderTextColor={T.textMuted}
               keyboardType="numeric"
             />

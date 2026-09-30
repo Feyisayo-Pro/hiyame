@@ -40,6 +40,11 @@ interface CandidateOption {
   roleTitle: string | null;
 }
 
+interface RoleOption {
+  id: string;
+  title: string;
+}
+
 const TABS = ['Upcoming', 'Completed', 'Cancelled', 'All'] as const;
 type Tab = typeof TABS[number];
 
@@ -185,7 +190,10 @@ function ScheduleInterviewModal({ visible, companyId, onClose, onScheduled }: {
 }) {
   const T = useTheme();
   const s = useMemo(() => makeStyles(T), [T]);
+  const [roles, setRoles] = useState<RoleOption[]>([]);
+  const [selectedRoleId, setSelectedRoleId] = useState<string | null>(null);
   const [candidates, setCandidates] = useState<CandidateOption[]>([]);
+  const [candidatesLoaded, setCandidatesLoaded] = useState(false);
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<CandidateOption | null>(null);
   const [meetingType, setMeetingType] = useState<'link' | 'google_meet'>('link');
@@ -194,34 +202,45 @@ function ScheduleInterviewModal({ visible, companyId, onClose, onScheduled }: {
   const [meetingUrl, setMeetingUrl] = useState('');
   const [saving, setSaving] = useState(false);
 
+  // Role dropdown — this company's own posted roles, newest first.
   useEffect(() => {
     if (!visible || !companyId) return;
-    // Scoped to candidates this company already has a real relationship
-    // with (any introduction) — not a free search across every candidate
-    // on the platform. `roles!inner(...)` is load-bearing, not decorative:
-    // without the !inner hint, PostgREST silently drops the .eq() filter
-    // below instead of erroring, returning every introduction across every
-    // company with `roles: null` on the ones that don't match — confirmed
-    // live (a real bug caught testing this exact modal, same mistake
-    // ConnectionsScreen.tsx's loadShortlisted already gets right).
     supabase
-      .from('introductions')
-      .select('candidate_id, role_id, candidates(full_name), roles!inner(title, company_id)')
-      .eq('roles.company_id', companyId)
-      .then(({ data }) => {
-        const seen = new Set<string>();
-        const opts: CandidateOption[] = [];
-        for (const row of (data ?? []) as any[]) {
-          if (!row.candidates || seen.has(row.candidate_id)) continue;
-          seen.add(row.candidate_id);
-          opts.push({ id: row.candidate_id, name: row.candidates.full_name, roleId: row.role_id, roleTitle: row.roles?.title ?? null });
-        }
-        setCandidates(opts);
-      });
+      .from('roles')
+      .select('id, title')
+      .eq('company_id', companyId)
+      .order('created_at', { ascending: false })
+      .then(({ data }) => setRoles((data ?? []) as RoleOption[]));
   }, [visible, companyId]);
 
+  // Candidate dropdown — only candidates with an *accepted* introduction for
+  // the selected role. Scoping by role_id (already known to belong to this
+  // company, since it came from the roles query above) makes this simpler
+  // and safer than the old flat "any introduction across any role" search:
+  // no join-based company filter needed, and it can't surface a candidate
+  // who accepted a different role or hasn't accepted at all.
+  useEffect(() => {
+    setSelected(null);
+    setCandidates([]);
+    setCandidatesLoaded(false);
+    if (!selectedRoleId) return;
+    supabase
+      .from('introductions')
+      .select('candidate_id, candidates(full_name)')
+      .eq('role_id', selectedRoleId)
+      .eq('status', 'accepted')
+      .then(({ data }) => {
+        const roleTitle = roles.find((r) => r.id === selectedRoleId)?.title ?? null;
+        const opts: CandidateOption[] = ((data ?? []) as any[])
+          .filter((row) => row.candidates)
+          .map((row) => ({ id: row.candidate_id, name: row.candidates.full_name, roleId: selectedRoleId, roleTitle }));
+        setCandidates(opts);
+        setCandidatesLoaded(true);
+      });
+  }, [selectedRoleId, roles]);
+
   const reset = () => {
-    setSearch(''); setSelected(null); setMeetingType('link'); setDateTime(''); setDuration('60'); setMeetingUrl('');
+    setSelectedRoleId(null); setSearch(''); setSelected(null); setMeetingType('link'); setDateTime(''); setDuration('60'); setMeetingUrl('');
   };
   const close = () => { if (saving) return; reset(); onClose(); };
 
@@ -259,16 +278,37 @@ function ScheduleInterviewModal({ visible, companyId, onClose, onScheduled }: {
             <Pressable onPress={close} hitSlop={8}><AppIcon name="close" size={22} color={T.textMuted} /></Pressable>
           </View>
           <ScrollView keyboardShouldPersistTaps="handled">
+            <Text style={s.label}>Role</Text>
+            {roles.length === 0 ? (
+              <Text style={s.emptyHint}>Post a role first — interviews are scheduled against a specific role.</Text>
+            ) : (
+              <View style={s.roleRow}>
+                {roles.map((r) => (
+                  <Pressable
+                    key={r.id}
+                    style={[s.roleBtn, selectedRoleId === r.id && s.roleBtnActive]}
+                    onPress={() => setSelectedRoleId(r.id)}
+                  >
+                    <Text style={[s.roleBtnText, selectedRoleId === r.id && s.roleBtnTextActive]} numberOfLines={1}>{r.title}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            )}
+
             <Text style={s.label}>Candidate</Text>
-            {selected ? (
+            {!selectedRoleId ? (
+              <Text style={s.emptyHint}>Pick a role above to see who's accepted an introduction for it.</Text>
+            ) : selected ? (
               <View style={s.selectedCandidate}>
                 <Text style={s.selectedCandidateText}>{selected.name}{selected.roleTitle ? ` · ${selected.roleTitle}` : ''}</Text>
                 <Pressable onPress={() => setSelected(null)}><AppIcon name="close" size={16} color={T.textMuted} /></Pressable>
               </View>
+            ) : candidatesLoaded && candidates.length === 0 ? (
+              <Text style={s.emptyHint}>No one has accepted an introduction for this role yet.</Text>
             ) : (
               <>
                 <TextInput style={s.input} value={search} onChangeText={setSearch} placeholder="Search by name..." placeholderTextColor={T.textMuted} />
-                {search.length > 0 && filteredCandidates.slice(0, 6).map((c) => (
+                {filteredCandidates.slice(0, 6).map((c) => (
                   <Pressable key={c.id} style={s.candidateOption} onPress={() => setSelected(c)}>
                     <Text style={s.candidateOptionText}>{c.name}{c.roleTitle ? ` · ${c.roleTitle}` : ''}</Text>
                   </Pressable>
@@ -358,6 +398,12 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   typeBtnActive: { backgroundColor: T.accentSolid, borderColor: T.accentSolid },
   typeBtnText: { fontSize: 13, fontWeight: '700', color: T.textSecondary },
   typeBtnTextActive: { color: T.textOnAccent },
+  emptyHint: { fontSize: 13, color: T.textMuted, lineHeight: 18, paddingVertical: 4 },
+  roleRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  roleBtn: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 10, backgroundColor: T.surface, borderWidth: 1, borderColor: T.border, maxWidth: '100%' },
+  roleBtnActive: { backgroundColor: T.accentSolid, borderColor: T.accentSolid },
+  roleBtnText: { fontSize: 13, fontWeight: '700', color: T.textSecondary },
+  roleBtnTextActive: { color: T.textOnAccent },
   submitBtn: { backgroundColor: T.accentSolid, borderRadius: 12, paddingVertical: 14, alignItems: 'center', marginTop: 22, marginBottom: 6 },
   submitBtnText: { color: T.textOnAccent, fontWeight: '700', fontSize: 15 },
 });

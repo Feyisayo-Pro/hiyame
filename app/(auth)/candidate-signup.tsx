@@ -257,7 +257,7 @@ export default function CandidateSignupScreen() {
                   <AppIcon name="person-outline" size={18} color={errors.fullName ? T.danger : focused ? T.accent : T.textMuted} />
                   <TextInput
                     style={[st.input, NO_NATIVE_OUTLINE]}
-                    placeholder="e.g. Amara Osei"
+                    placeholder="Amara Osei"
                     placeholderTextColor={T.textMuted}
                     autoCapitalize="words"
                     value={fullName}
@@ -275,7 +275,7 @@ export default function CandidateSignupScreen() {
                   <AppIcon name="briefcase-outline" size={18} color={errors.title ? T.danger : focused ? T.accent : T.textMuted} />
                   <TextInput
                     style={[st.input, NO_NATIVE_OUTLINE]}
-                    placeholder="e.g. Senior Backend Engineer"
+                    placeholder="Senior Backend Engineer"
                     placeholderTextColor={T.textMuted}
                     autoCapitalize="words"
                     value={professionalTitle}
@@ -366,7 +366,7 @@ export default function CandidateSignupScreen() {
                   <Text style={[st.currencyPrefix, errors.rate ? { color: T.danger } : null]}>₦</Text>
                   <TextInput
                     style={[st.input, NO_NATIVE_OUTLINE]}
-                    placeholder="e.g. 500000"
+                    placeholder="500000"
                     placeholderTextColor={T.textMuted}
                     keyboardType="numeric"
                     value={rateInput}
