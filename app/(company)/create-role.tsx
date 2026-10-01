@@ -9,7 +9,6 @@ import { useTheme, ThemePalette } from '@/lib/theme';
 import { useAuth } from '@/lib/useAuth';
 import { supabase } from '@/lib/supabase';
 import { notify } from '@/lib/notify';
-import { requestMatching } from '@/lib/requestMatching';
 import ScreenFrame from '@/components/ScreenFrame';
 import AnimatedPressable from '@/components/AnimatedPressable';
 import { TIER_CONFIG, Tier } from '@/lib/mock-data';
@@ -141,11 +140,15 @@ export default function CreateRoleScreen() {
       return;
     }
 
-    // Kick off matching for the new role. Don't block navigation on it — the
-    // shortlist screen shows its own "finding candidates" state and will
-    // trigger the run itself if this didn't land (e.g. local dev has no
-    // /api route).
-    void requestMatching(data.id);
+    // Matching is NOT triggered here — shortlist.tsx's own auto-trigger
+    // (on first open of a never-matched role) already does it and, unlike
+    // this call, reloads the screen's cards afterward. Confirmed live
+    // (2026-10-01): calling requestMatching() from both places fires two
+    // concurrent /api/run-matching requests for the same role, which race
+    // on match_scores' upsert-then-delete-stale-rows sequence — the
+    // shortlist screen's own load() can land mid-race and read an empty
+    // result even though matching genuinely succeeded, showing a blank
+    // "No candidates matched" where real matches exist.
     router.replace({ pathname: '/(company)/shortlist', params: { roleId: data.id } });
   };
 
