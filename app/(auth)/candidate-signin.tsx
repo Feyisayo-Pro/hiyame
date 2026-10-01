@@ -129,7 +129,7 @@ export default function CandidateSignInScreen() {
                   <AppIcon name="mail-outline" size={18} color={errors.email ? T.danger : focused ? T.accent : T.textMuted} />
                   <TextInput
                     style={[st.input, NO_NATIVE_OUTLINE]}
-                    placeholder="you@example.com"
+                    placeholder="Email address"
                     placeholderTextColor={T.textMuted}
                     keyboardType="email-address"
                     autoCapitalize="none"

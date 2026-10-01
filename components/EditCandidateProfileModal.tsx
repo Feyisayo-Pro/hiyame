@@ -62,7 +62,7 @@ export default function EditCandidateProfileModal({ visible, candidateId, initia
     }
     const parsedRate = rate.trim() ? Number(rate.trim().replace(/[^0-9.]/g, '')) : null;
     if (rate.trim() && (parsedRate === null || Number.isNaN(parsedRate) || parsedRate < 0)) {
-      notify('Invalid rate', 'Enter a plain number, e.g. 5000.');
+      notify('Invalid rate', 'Enter a plain number, like 5000.');
       return;
     }
 

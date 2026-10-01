@@ -129,7 +129,7 @@ export default function CompanySignInScreen() {
                   <AppIcon name="mail-outline" size={18} color={errors.email ? T.danger : focused ? T.accent : T.textMuted} />
                   <TextInput
                     style={[st.input, NO_NATIVE_OUTLINE]}
-                    placeholder="hiring@company.com"
+                    placeholder="Work email address"
                     placeholderTextColor={T.textMuted}
                     keyboardType="email-address"
                     autoCapitalize="none"

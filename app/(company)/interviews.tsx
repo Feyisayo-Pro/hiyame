@@ -194,11 +194,10 @@ function ScheduleInterviewModal({ visible, companyId, onClose, onScheduled }: {
   const [selectedRoleId, setSelectedRoleId] = useState<string | null>(null);
   const [candidates, setCandidates] = useState<CandidateOption[]>([]);
   const [candidatesLoaded, setCandidatesLoaded] = useState(false);
-  const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<CandidateOption | null>(null);
   const [meetingType, setMeetingType] = useState<'link' | 'google_meet'>('link');
-  const [dateTime, setDateTime] = useState('');
-  const [duration, setDuration] = useState('60');
+  const [date, setDate] = useState('');
+  const [time, setTime] = useState('');
   const [meetingUrl, setMeetingUrl] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -240,24 +239,28 @@ function ScheduleInterviewModal({ visible, companyId, onClose, onScheduled }: {
   }, [selectedRoleId, roles]);
 
   const reset = () => {
-    setSelectedRoleId(null); setSearch(''); setSelected(null); setMeetingType('link'); setDateTime(''); setDuration('60'); setMeetingUrl('');
+    setSelectedRoleId(null); setSelected(null); setMeetingType('link'); setDate(''); setTime(''); setMeetingUrl('');
   };
   const close = () => { if (saving) return; reset(); onClose(); };
 
-  const filteredCandidates = candidates.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()));
-
   const submit = async () => {
-    if (!selected) { notify('Pick a candidate', 'Search and select who this interview is with.'); return; }
-    const scheduledAt = new Date(dateTime);
-    if (!dateTime || isNaN(scheduledAt.getTime())) { notify('Invalid date & time', 'Enter a real date and time.'); return; }
+    if (!selected) { notify('Pick a candidate', 'Select who this interview is with.'); return; }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date.trim())) { notify('Invalid date', 'Enter the date as YYYY-MM-DD.'); return; }
+    if (!/^\d{1,2}:\d{2}$/.test(time.trim())) { notify('Invalid time', 'Enter the time as HH:MM (24-hour).'); return; }
+    const scheduledAt = new Date(`${date.trim()}T${time.trim().padStart(5, '0')}`);
+    if (isNaN(scheduledAt.getTime())) { notify('Invalid date & time', 'Enter a real date and time.'); return; }
     if (!companyId) return;
     setSaving(true);
+    // Duration isn't a field the company fills in — every interview defaults
+    // to a standard 60 minutes rather than asking for a number nobody varies
+    // in practice; interviews.duration_minutes still exists for the rare
+    // case someone wants to adjust it directly later.
     const { data, error } = await supabase.from('interviews').insert({
       company_id: companyId,
       candidate_id: selected.id,
       role_id: selected.roleId,
       scheduled_at: scheduledAt.toISOString(),
-      duration_minutes: Number(duration) || 60,
+      duration_minutes: 60,
       meeting_type: meetingType,
       meeting_url: meetingUrl.trim() || null,
     }).select('id').single();
@@ -306,14 +309,11 @@ function ScheduleInterviewModal({ visible, companyId, onClose, onScheduled }: {
             ) : candidatesLoaded && candidates.length === 0 ? (
               <Text style={s.emptyHint}>No one has accepted an introduction for this role yet.</Text>
             ) : (
-              <>
-                <TextInput style={s.input} value={search} onChangeText={setSearch} placeholder="Search by name..." placeholderTextColor={T.textMuted} />
-                {filteredCandidates.slice(0, 6).map((c) => (
-                  <Pressable key={c.id} style={s.candidateOption} onPress={() => setSelected(c)}>
-                    <Text style={s.candidateOptionText}>{c.name}{c.roleTitle ? ` · ${c.roleTitle}` : ''}</Text>
-                  </Pressable>
-                ))}
-              </>
+              candidates.map((c) => (
+                <Pressable key={c.id} style={s.candidateOption} onPress={() => setSelected(c)}>
+                  <Text style={s.candidateOptionText}>{c.name}</Text>
+                </Pressable>
+              ))
             )}
 
             <Text style={s.label}>Meeting Type</Text>
@@ -329,13 +329,13 @@ function ScheduleInterviewModal({ visible, companyId, onClose, onScheduled }: {
             </View>
 
             <View style={{ flexDirection: 'row', gap: 10 }}>
-              <View style={{ flex: 2 }}>
-                <Text style={s.label}>Date & Time</Text>
-                <TextInput style={s.input} value={dateTime} onChangeText={setDateTime} placeholder="YYYY-MM-DD HH:MM" placeholderTextColor={T.textMuted} />
+              <View style={{ flex: 1 }}>
+                <Text style={s.label}>Date</Text>
+                <TextInput style={s.input} value={date} onChangeText={setDate} placeholder="YYYY-MM-DD" placeholderTextColor={T.textMuted} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={s.label}>Duration (min)</Text>
-                <TextInput style={s.input} value={duration} onChangeText={setDuration} keyboardType="numeric" placeholder="60" placeholderTextColor={T.textMuted} />
+                <Text style={s.label}>Time</Text>
+                <TextInput style={s.input} value={time} onChangeText={setTime} placeholder="HH:MM" placeholderTextColor={T.textMuted} />
               </View>
             </View>
 

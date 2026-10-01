@@ -80,7 +80,7 @@ export default function ForgotPasswordModal({ visible, initialEmail = '', onClos
                 style={s.emailInput}
                 value={email}
                 onChangeText={(t) => { setEmail(t); setError(''); }}
-                placeholder="you@example.com"
+                placeholder="Email address"
                 placeholderTextColor={T.textMuted}
                 keyboardType="email-address"
                 autoCapitalize="none"
