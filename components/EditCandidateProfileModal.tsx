@@ -32,6 +32,13 @@ export default function EditCandidateProfileModal({ visible, candidateId, initia
   const [rate, setRate] = useState(initial.ratePreferred ? String(initial.ratePreferred) : '');
   const [saving, setSaving] = useState(false);
 
+  // Deliberately depends on `visible` alone, not `initial` — profile.tsx
+  // passes `initial` as a fresh object literal on every render (confirmed
+  // live: this caused a real bug), so depending on it here reset whatever
+  // the user had typed back to the original values on any incidental parent
+  // re-render while the modal was still open, mid-edit. Re-initializing only
+  // when the modal actually opens still reads the freshest `initial` at that
+  // moment (closure), it just doesn't resync while someone is editing.
   useEffect(() => {
     if (visible) {
       setFullName(initial.fullName);
@@ -40,7 +47,8 @@ export default function EditCandidateProfileModal({ visible, candidateId, initia
       setSkillInput('');
       setRate(initial.ratePreferred ? String(initial.ratePreferred) : '');
     }
-  }, [visible, initial]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible]);
 
   const addSkill = (raw: string) => {
     const trimmed = raw.trim();
