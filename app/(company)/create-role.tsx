@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Pressable, ScrollView, StyleSheet, TextInput, View, KeyboardAvoidingView, Platform } from 'react-native';
 import { router } from 'expo-router';
 import { goBack } from '@/lib/goBack';
@@ -66,6 +66,19 @@ export default function CreateRoleScreen() {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showMore, setShowMore] = useState(false);
+  // Lightweight account-vetting gate (2026-10-02, ahead of the real CRM
+  // integration) — null while loading, so the form doesn't flash blocked
+  // then unblocked for an already-approved company on every visit.
+  const [companyStatus, setCompanyStatus] = useState<'pending' | 'approved' | 'rejected' | null>(null);
+
+  useEffect(() => {
+    if (!companyId) return;
+    supabase.from('companies').select('status').eq('id', companyId).maybeSingle().then(({ data, error }) => {
+      // Missing column (migration not yet applied) degrades to "approved" —
+      // never block posting over infrastructure that isn't live yet.
+      setCompanyStatus(error ? 'approved' : (data?.status as any) ?? 'approved');
+    });
+  }, [companyId]);
 
   const addTag = (value: string, list: string[], setList: (s: string[]) => void, clear: () => void) => {
     const trimmed = value.trim();
@@ -99,6 +112,10 @@ export default function CreateRoleScreen() {
     if (!validate()) return;
     if (!companyId) {
       notify('Something went wrong', 'No company account found for this session.');
+      return;
+    }
+    if (companyStatus === 'pending' || companyStatus === 'rejected') {
+      notify('Account pending approval', "You can't post a role until your account is approved.");
       return;
     }
     setLoading(true);
@@ -164,6 +181,19 @@ export default function CreateRoleScreen() {
           <Text style={st.headerTitle}>Post a Role</Text>
         </View>
 
+        {companyStatus === 'pending' || companyStatus === 'rejected' ? (
+          <View style={st.pendingBlock}>
+            <AppIcon name="time-outline" size={28} color={T.textMuted} />
+            <Text style={st.pendingTitle}>
+              {companyStatus === 'rejected' ? 'Account not approved' : 'Account pending approval'}
+            </Text>
+            <Text style={st.pendingSub}>
+              {companyStatus === 'rejected'
+                ? "Your company account wasn't approved to post roles. Contact Hiyame support if you think this is a mistake."
+                : "Your company account is awaiting review. You'll be able to post roles once it's approved."}
+            </Text>
+          </View>
+        ) : (
         <ScrollView contentContainerStyle={st.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
           <View style={st.fieldWrap}>
             <Text style={st.label}>Role Title *</Text>
@@ -396,6 +426,7 @@ export default function CreateRoleScreen() {
             )}
           </AnimatedPressable>
         </ScrollView>
+        )}
         </ScreenFrame>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -449,6 +480,9 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   backButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: T.card, borderWidth: 1, borderColor: T.border, alignItems: 'center', justifyContent: 'center' },
   headerTitle: { fontSize: 20, fontWeight: '800', color: T.textPrimary },
   scroll: { paddingHorizontal: 20, paddingBottom: 40 },
+  pendingBlock: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32, gap: 10 },
+  pendingTitle: { fontSize: 17, fontWeight: '800', color: T.textPrimary, textAlign: 'center' },
+  pendingSub: { fontSize: 13, color: T.textSecondary, textAlign: 'center', lineHeight: 19 },
   fieldWrap: { marginBottom: 22 },
   label: { fontSize: 13, fontWeight: '700', color: T.textSecondary, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.3 },
   inputWrap: {

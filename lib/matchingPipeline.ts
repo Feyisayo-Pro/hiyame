@@ -27,14 +27,14 @@ async function selectAll(
   supabase: SupabaseLike,
   table: string,
   columns: string,
+  filter?: (q: any) => any,
 ): Promise<any[]> {
   const pageSize = 1000;
   const all: any[] = [];
   for (let from = 0; ; from += pageSize) {
-    const { data, error } = await supabase
-      .from(table)
-      .select(columns)
-      .range(from, from + pageSize - 1);
+    let q = supabase.from(table).select(columns);
+    if (filter) q = filter(q);
+    const { data, error } = await q.range(from, from + pageSize - 1);
     if (error) throw error;
     const page = data ?? [];
     all.push(...page);
@@ -106,10 +106,15 @@ export async function runMatchingForRole(
   // tier_preferences, so a `.contains('tier_preferences', [tier])` pre-filter
   // (what the strict pipeline used) would return nothing. The engine's own
   // tier-preference filter handles the empty-list case as "open to all".
+  // status != 'approved' (the lightweight account-vetting gate, 2026-10-02)
+  // excludes a pending candidate from matching entirely — every migrated
+  // candidate was backfilled to 'approved', so this only affects brand new
+  // signups awaiting admin review.
   const candidates = await selectAll(
     supabase,
     'candidates',
     'id, tier_preferences, experience_level, rate_min, availability_date, location, remote_preference, reliability_score, skill_tags',
+    (q) => q.eq('status', 'approved'),
   );
 
   const allRecords = await selectAll(supabase, 'verification_records', 'candidate_id, component, status');
