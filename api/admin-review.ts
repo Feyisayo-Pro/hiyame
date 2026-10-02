@@ -7,7 +7,7 @@ import { createClient } from '@supabase/supabase-js';
 // signed-in user (candidate or company) whose email is in ADMIN_EMAILS can
 // list and act on pending accounts. Add emails here, not in a database
 // table — there's no admin UI to manage admins themselves at this stage.
-const ADMIN_EMAILS = ['feyilive@gmail.com'];
+const ADMIN_EMAILS = ['feyilive@gmail.com', 'hiyame2026@gmail.com'];
 
 const SUPABASE_URL = process.env.SUPABASE_URL ?? process.env.EXPO_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
