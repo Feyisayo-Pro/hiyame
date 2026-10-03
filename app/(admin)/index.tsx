@@ -14,6 +14,7 @@ interface Overview {
   candidates: { pending: number; approved: number; rejected: number };
   companies: { pending: number; approved: number; rejected: number };
   assessmentRequests: number;
+  cvReviewRequests: number;
 }
 
 async function authedFetch(path: string) {
@@ -46,7 +47,7 @@ export default function AdminOverviewScreen() {
     );
   }
 
-  const totalPending = (overview?.candidates.pending ?? 0) + (overview?.companies.pending ?? 0) + (overview?.assessmentRequests ?? 0);
+  const totalPending = (overview?.candidates.pending ?? 0) + (overview?.companies.pending ?? 0) + (overview?.assessmentRequests ?? 0) + (overview?.cvReviewRequests ?? 0);
 
   return (
     <SafeAreaView style={st.container} edges={['top', 'left', 'right']}>
@@ -78,7 +79,7 @@ export default function AdminOverviewScreen() {
           />
           <AnimatedPressable
             style={st.assessmentCard}
-            onPress={() => router.push({ pathname: '/(admin)/candidates', params: { status: 'pending', assessment: '1' } })}
+            onPress={() => router.push({ pathname: '/(admin)/candidates', params: { component: 'skills_assessment' } })}
           >
             <View style={[st.statIconWrap, { backgroundColor: T.amberBg }]}>
               <AppIcon name="shield-checkmark-outline" size={18} color={T.amber} />
@@ -86,6 +87,19 @@ export default function AdminOverviewScreen() {
             <View style={{ flex: 1 }}>
               <Text style={st.statTitle}>Skills Assessment Requests</Text>
               <Text style={st.statMeta}>{overview?.assessmentRequests ?? 0} awaiting internal review</Text>
+            </View>
+            <AppIcon name="chevron-forward" size={18} color={T.textMuted} />
+          </AnimatedPressable>
+          <AnimatedPressable
+            style={st.assessmentCard}
+            onPress={() => router.push({ pathname: '/(admin)/candidates', params: { component: 'cv_review' } })}
+          >
+            <View style={[st.statIconWrap, { backgroundColor: T.indigoBg }]}>
+              <AppIcon name="document-text-outline" size={18} color={T.indigo} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={st.statTitle}>CV Review Requests</Text>
+              <Text style={st.statMeta}>{overview?.cvReviewRequests ?? 0} awaiting internal review</Text>
             </View>
             <AppIcon name="chevron-forward" size={18} color={T.textMuted} />
           </AnimatedPressable>

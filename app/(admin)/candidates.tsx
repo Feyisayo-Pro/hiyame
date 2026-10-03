@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, Linking, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Text } from '@/components/Themed';
 import AppIcon from '@/components/AppIcon';
 import AnimatedPressable from '@/components/AnimatedPressable';
@@ -25,6 +25,11 @@ const COMPONENT_LABEL: Record<string, string> = {
   cv_review: 'CV / Portfolio',
 };
 
+const PENDING_COMPONENT_TITLE: Record<string, string> = {
+  skills_assessment: 'Skills Assessment Requests',
+  cv_review: 'CV Review Requests',
+};
+
 interface VerificationRow { component: string; status: string }
 interface Candidate {
   id: string; full_name: string; email: string | null; phone: string | null;
@@ -33,6 +38,7 @@ interface Candidate {
   tier_preferences: string[] | null; rate_min: number | null; rate_preferred: number | null; rate_max: number | null;
   availability_date: string | null; reliability_score: number | null;
   status: 'pending' | 'approved' | 'rejected'; created_at: string; photo_url: string | null;
+  cv_url: string | null; portfolio_url: string | null;
   verification: VerificationRow[];
 }
 
@@ -45,7 +51,15 @@ async function authedFetch(path: string, init?: RequestInit) {
 export default function AdminCandidatesScreen() {
   const T = useTheme();
   const st = useMemo(() => makeStyles(T), [T]);
-  const params = useLocalSearchParams<{ status?: string }>();
+  const params = useLocalSearchParams<{ status?: string; component?: string }>();
+  // Two distinct lenses sharing one screen: the normal account-status
+  // directory (filter chips + search), or — when `component` is in the
+  // URL (set by Overview's request cards) — a flat list of candidates with
+  // a PENDING verification request for that one component, regardless of
+  // their account status. A candidate can be long-since approved and still
+  // have a pending CV review, so the account-status filter below can't
+  // find these at all.
+  const pendingComponent = params.component === 'skills_assessment' || params.component === 'cv_review' ? params.component : null;
 
   const [status, setStatus] = useState<StatusFilter>((params.status as StatusFilter) ?? 'pending');
   const [searchInput, setSearchInput] = useState('');
@@ -62,24 +76,26 @@ export default function AdminCandidatesScreen() {
   }, [searchInput]);
 
   const load = useCallback(async () => {
-    const q = new URLSearchParams({ view: 'candidates', status, search, page: String(page) });
+    const q = pendingComponent
+      ? new URLSearchParams({ view: 'candidates', component: pendingComponent, page: String(page) })
+      : new URLSearchParams({ view: 'candidates', status, search, page: String(page) });
     const resp = await authedFetch(`/api/admin-review?${q.toString()}`);
     if (resp.ok) {
       const body = await resp.json();
       setCandidates(body.candidates ?? []);
       setTotal(body.total ?? 0);
     }
-  }, [status, search, page]);
+  }, [pendingComponent, status, search, page]);
 
   useEffect(() => { setCandidates(null); load(); }, [load]);
-  useEffect(() => { setPage(1); }, [status, search]);
+  useEffect(() => { setPage(1); }, [status, search, pendingComponent]);
 
-  const decide = async (id: string, decision: 'approved' | 'rejected') => {
+  const decide = async (type: 'candidate' | 'assessment' | 'cv_review', id: string, decision: 'approved' | 'rejected') => {
     setBusyId(id);
     const resp = await authedFetch('/api/admin-review', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'candidate', id, decision }),
+      body: JSON.stringify({ type, id, decision }),
     });
     setBusyId(null);
     if (!resp.ok) {
@@ -87,38 +103,59 @@ export default function AdminCandidatesScreen() {
       notify('Could not update', body?.error ?? 'Something went wrong.');
       return;
     }
-    notify(decision === 'approved' ? 'Approved' : 'Rejected', 'The candidate status has been updated.');
+    notify(
+      decision === 'approved' ? 'Approved' : 'Rejected',
+      type === 'candidate' ? 'The candidate status has been updated.' : 'The review status has been updated.'
+    );
     load();
   };
 
   const totalPages = Math.max(1, Math.ceil(total / 20));
+  const decideType: 'candidate' | 'assessment' | 'cv_review' = pendingComponent === 'skills_assessment' ? 'assessment' : pendingComponent === 'cv_review' ? 'cv_review' : 'candidate';
 
   return (
     <SafeAreaView style={st.container} edges={['top', 'left', 'right']}>
-      <PageHead title="Candidates" />
+      <PageHead title={pendingComponent ? PENDING_COMPONENT_TITLE[pendingComponent] : 'Candidates'} />
       <View style={st.header}>
-        <Text style={st.headerTitle}>Candidates</Text>
-        <Text style={st.headerSub}>{total} {status === 'all' ? 'total' : status}</Text>
+        {pendingComponent ? (
+          <>
+            <AnimatedPressable style={st.backLink} onPress={() => router.replace('/(admin)/candidates')}>
+              <AppIcon name="chevron-forward" size={14} color={T.textSecondary} style={{ transform: [{ rotate: '180deg' }] }} />
+              <Text style={st.backLinkText}>All Candidates</Text>
+            </AnimatedPressable>
+            <Text style={st.headerTitle}>{PENDING_COMPONENT_TITLE[pendingComponent]}</Text>
+            <Text style={st.headerSub}>{total} awaiting review</Text>
+          </>
+        ) : (
+          <>
+            <Text style={st.headerTitle}>Candidates</Text>
+            <Text style={st.headerSub}>{total} {status === 'all' ? 'total' : status}</Text>
+          </>
+        )}
       </View>
 
-      <View style={st.filterRow}>
-        {FILTERS.map((f) => (
-          <AnimatedPressable key={f} style={[st.filterChip, status === f && st.filterChipActive]} onPress={() => setStatus(f)}>
-            <Text style={[st.filterChipText, status === f && st.filterChipTextActive]}>{f[0].toUpperCase() + f.slice(1)}</Text>
-          </AnimatedPressable>
-        ))}
-      </View>
+      {!pendingComponent && (
+        <>
+          <View style={st.filterRow}>
+            {FILTERS.map((f) => (
+              <AnimatedPressable key={f} style={[st.filterChip, status === f && st.filterChipActive]} onPress={() => setStatus(f)}>
+                <Text style={[st.filterChipText, status === f && st.filterChipTextActive]}>{f[0].toUpperCase() + f.slice(1)}</Text>
+              </AnimatedPressable>
+            ))}
+          </View>
 
-      <View style={st.searchWrap}>
-        <AppIcon name="search" size={16} color={T.textMuted} />
-        <TextInput
-          style={st.searchInput}
-          placeholder="Search by name"
-          placeholderTextColor={T.textMuted}
-          value={searchInput}
-          onChangeText={setSearchInput}
-        />
-      </View>
+          <View style={st.searchWrap}>
+            <AppIcon name="search" size={16} color={T.textMuted} />
+            <TextInput
+              style={st.searchInput}
+              placeholder="Search by name"
+              placeholderTextColor={T.textMuted}
+              value={searchInput}
+              onChangeText={setSearchInput}
+            />
+          </View>
+        </>
+      )}
 
       <ScrollView contentContainerStyle={st.scroll} showsVerticalScrollIndicator={false}>
         {candidates === null ? (
@@ -126,18 +163,21 @@ export default function AdminCandidatesScreen() {
         ) : candidates.length === 0 ? (
           <View style={st.emptyBlock}>
             <AppIcon name="person-outline" size={20} color={T.textMuted} />
-            <Text style={st.emptyText}>No {status === 'all' ? '' : status} candidates found{search ? ` for "${search}"` : ''}.</Text>
+            <Text style={st.emptyText}>
+              {pendingComponent ? 'Nothing pending here right now.' : `No ${status === 'all' ? '' : status} candidates found${search ? ` for "${search}"` : ''}.`}
+            </Text>
           </View>
         ) : (
           candidates.map((c, i) => (
             <SwipeFadeContainer key={c.id} axis="y" offset={14} duration={DURATION.stagger} delay={Math.min(i, 8) * 40}>
               <CandidateRow
                 T={T} st={st} candidate={c}
+                pendingComponent={pendingComponent}
                 expanded={expandedId === c.id}
                 onToggle={() => setExpandedId(expandedId === c.id ? null : c.id)}
                 busy={busyId === c.id}
-                onApprove={() => decide(c.id, 'approved')}
-                onReject={() => decide(c.id, 'rejected')}
+                onApprove={() => decide(decideType, c.id, 'approved')}
+                onReject={() => decide(decideType, c.id, 'rejected')}
               />
             </SwipeFadeContainer>
           ))
@@ -159,8 +199,8 @@ export default function AdminCandidatesScreen() {
   );
 }
 
-function CandidateRow({ T, st, candidate: c, expanded, onToggle, busy, onApprove, onReject }: {
-  T: ThemePalette; st: ReturnType<typeof makeStyles>; candidate: Candidate;
+function CandidateRow({ T, st, candidate: c, pendingComponent, expanded, onToggle, busy, onApprove, onReject }: {
+  T: ThemePalette; st: ReturnType<typeof makeStyles>; candidate: Candidate; pendingComponent: 'skills_assessment' | 'cv_review' | null;
   expanded: boolean; onToggle: () => void; busy: boolean; onApprove: () => void; onReject: () => void;
 }) {
   const passed = new Set(c.verification.filter((v) => v.status === 'passed').map((v) => v.component));
@@ -179,11 +219,41 @@ function CandidateRow({ T, st, candidate: c, expanded, onToggle, busy, onApprove
             {[c.experience_level, (c.skill_tags ?? []).slice(0, 3).join(', ')].filter(Boolean).join(' · ') || 'No profile details yet'}
           </Text>
         </View>
-        <View style={[st.statusPill, { backgroundColor: statusBg }]}>
-          <Text style={[st.statusPillText, { color: statusColor }]}>{c.status}</Text>
-        </View>
+        {pendingComponent ? (
+          <View style={[st.statusPill, { backgroundColor: T.amberBg }]}>
+            <Text style={[st.statusPillText, { color: T.amber }]}>account {c.status}</Text>
+          </View>
+        ) : (
+          <View style={[st.statusPill, { backgroundColor: statusBg }]}>
+            <Text style={[st.statusPillText, { color: statusColor }]}>{c.status}</Text>
+          </View>
+        )}
         <AppIcon name={expanded ? 'chevron-up' : 'chevron-down'} size={16} color={T.textMuted} />
       </AnimatedPressable>
+
+      {/* In the pending-component lens, the review decision is the primary
+          action on every row — always visible, not behind expand. Expand
+          still works underneath for the full profile. */}
+      {pendingComponent && (
+        <View style={st.detailActions}>
+          <AnimatedPressable style={[st.actionBtn, st.rejectBtn]} onPress={onReject} disabled={busy} accessibilityRole="button" accessibilityLabel={`Reject ${c.full_name}'s ${COMPONENT_LABEL[pendingComponent]}`}>
+            {busy ? <ActivityIndicator size="small" color={T.danger} /> : (
+              <>
+                <AppIcon name="close" size={16} color={T.danger} />
+                <Text style={[st.actionBtnText, { color: T.danger }]}>Fail</Text>
+              </>
+            )}
+          </AnimatedPressable>
+          <AnimatedPressable style={[st.actionBtn, st.approveBtn]} onPress={onApprove} disabled={busy} accessibilityRole="button" accessibilityLabel={`Approve ${c.full_name}'s ${COMPONENT_LABEL[pendingComponent]}`}>
+            {busy ? <ActivityIndicator size="small" color={T.emerald} /> : (
+              <>
+                <AppIcon name="checkmark" size={16} color={T.emerald} />
+                <Text style={[st.actionBtnText, { color: T.emerald }]}>Pass</Text>
+              </>
+            )}
+          </AnimatedPressable>
+        </View>
+      )}
 
       {expanded && (
         <View style={st.detail}>
@@ -204,6 +274,16 @@ function CandidateRow({ T, st, candidate: c, expanded, onToggle, busy, onApprove
           <DetailRow T={T} label="Availability" value={c.availability_date} />
           <DetailRow T={T} label="Reliability score" value={c.reliability_score != null ? `${c.reliability_score}/100` : null} />
           <DetailRow T={T} label="Signed up" value={new Date(c.created_at).toLocaleDateString()} />
+          {c.cv_url ? (
+            <DetailLinkRow T={T} label="CV" url={c.cv_url} display="View PDF" />
+          ) : (
+            <DetailRow T={T} label="CV" value={null} />
+          )}
+          {c.portfolio_url ? (
+            <DetailLinkRow T={T} label="Portfolio" url={c.portfolio_url} display={c.portfolio_url} />
+          ) : (
+            <DetailRow T={T} label="Portfolio" value={null} />
+          )}
 
           <Text style={st.detailLabel}>Verification</Text>
           <View style={st.verificationRow}>
@@ -215,24 +295,26 @@ function CandidateRow({ T, st, candidate: c, expanded, onToggle, busy, onApprove
             ))}
           </View>
 
-          <View style={st.detailActions}>
-            <AnimatedPressable style={[st.actionBtn, st.rejectBtn]} onPress={onReject} disabled={busy} accessibilityRole="button" accessibilityLabel={`Reject ${c.full_name}`}>
-              {busy ? <ActivityIndicator size="small" color={T.danger} /> : (
-                <>
-                  <AppIcon name="close" size={16} color={T.danger} />
-                  <Text style={[st.actionBtnText, { color: T.danger }]}>Reject</Text>
-                </>
-              )}
-            </AnimatedPressable>
-            <AnimatedPressable style={[st.actionBtn, st.approveBtn]} onPress={onApprove} disabled={busy} accessibilityRole="button" accessibilityLabel={`Approve ${c.full_name}`}>
-              {busy ? <ActivityIndicator size="small" color={T.emerald} /> : (
-                <>
-                  <AppIcon name="checkmark" size={16} color={T.emerald} />
-                  <Text style={[st.actionBtnText, { color: T.emerald }]}>Approve</Text>
-                </>
-              )}
-            </AnimatedPressable>
-          </View>
+          {!pendingComponent && (
+            <View style={st.detailActions}>
+              <AnimatedPressable style={[st.actionBtn, st.rejectBtn]} onPress={onReject} disabled={busy} accessibilityRole="button" accessibilityLabel={`Reject ${c.full_name}`}>
+                {busy ? <ActivityIndicator size="small" color={T.danger} /> : (
+                  <>
+                    <AppIcon name="close" size={16} color={T.danger} />
+                    <Text style={[st.actionBtnText, { color: T.danger }]}>Reject</Text>
+                  </>
+                )}
+              </AnimatedPressable>
+              <AnimatedPressable style={[st.actionBtn, st.approveBtn]} onPress={onApprove} disabled={busy} accessibilityRole="button" accessibilityLabel={`Approve ${c.full_name}`}>
+                {busy ? <ActivityIndicator size="small" color={T.emerald} /> : (
+                  <>
+                    <AppIcon name="checkmark" size={16} color={T.emerald} />
+                    <Text style={[st.actionBtnText, { color: T.emerald }]}>Approve</Text>
+                  </>
+                )}
+              </AnimatedPressable>
+            </View>
+          )}
         </View>
       )}
     </View>
@@ -248,9 +330,22 @@ function DetailRow({ T, label, value }: { T: ThemePalette; label: string; value:
   );
 }
 
+function DetailLinkRow({ T, label, url, display }: { T: ThemePalette; label: string; url: string; display: string }) {
+  return (
+    <View style={{ flexDirection: 'row', paddingVertical: 5, alignItems: 'center' }}>
+      <Text style={{ width: 130, fontSize: 12, fontWeight: '600', color: T.textMuted }}>{label}</Text>
+      <AnimatedPressable onPress={() => Linking.openURL(url)} style={{ flex: 1 }}>
+        <Text style={{ fontSize: 12.5, color: T.accent, fontWeight: '600' }} numberOfLines={1}>{display}</Text>
+      </AnimatedPressable>
+    </View>
+  );
+}
+
 const makeStyles = (T: ThemePalette) => StyleSheet.create({
   container: { flex: 1, backgroundColor: T.bg },
   header: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 8 },
+  backLink: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 6, alignSelf: 'flex-start' },
+  backLinkText: { fontSize: 12.5, fontWeight: '600', color: T.textSecondary },
   headerTitle: { fontSize: 22, fontWeight: '800', color: T.textPrimary, fontFamily: DISPLAY_FONT_FAMILY },
   headerSub: { fontSize: 13, color: T.textMuted, marginTop: 2 },
 
@@ -290,7 +385,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   verificationChipText: { fontSize: 11, fontWeight: '600', color: T.textMuted },
   verificationChipTextDone: { color: T.emerald },
 
-  detailActions: { flexDirection: 'row', gap: 10 },
+  detailActions: { flexDirection: 'row', gap: 10, paddingHorizontal: 14, paddingBottom: 14 },
   actionBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, height: 38, borderRadius: 10, borderWidth: 1.5 },
   rejectBtn: { backgroundColor: T.dangerBg, borderColor: T.danger },
   approveBtn: { backgroundColor: T.emeraldBg, borderColor: T.emerald },

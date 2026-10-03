@@ -12,11 +12,10 @@ import ScreenFrame from '@/components/ScreenFrame';
 import PageHead from '@/components/PageHead';
 import SmileIdVerificationModal from '@/components/SmileIdVerificationModal';
 import VideoIntroRecorderModal from '@/components/VideoIntroRecorderModal';
+import { uploadCandidateCV } from '@/lib/uploadCandidateCV';
 import { notify } from '@/lib/notify';
 import { useTheme, ThemePalette, DISPLAY_FONT_FAMILY } from '@/lib/theme';
 import { FULL_VERIFICATION_THRESHOLD, TOTAL_VERIFICATION_COMPONENTS } from '@/lib/verification';
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // Real component keys in verification_records — the same table
 // app/(candidate)/index.tsx, profile.tsx and Insights already read. This
@@ -27,7 +26,7 @@ const REAL_COMPONENT_KEY: Record<string, string> = {
   identity: 'identity',
   video: 'video_intro',
   assessment: 'skills_assessment',
-  review: 'employer_review',
+  cv: 'cv_review',
 };
 
 // ==========================================
@@ -64,11 +63,11 @@ const STEPS: VerificationStep[] = [
     description: "Request a skills assessment in your primary domain. Hiyame's internal team runs it directly with you and marks it as a verified badge on your profile once complete.",
   },
   {
-    key: 'review',
-    title: 'Employer Review',
-    subtitle: 'Reference from Past Employer',
-    icon: 'star-outline',
-    description: 'Request a verified review from a previous employer or client. Corporate-tier roles require this for matching eligibility.',
+    key: 'cv',
+    title: 'CV / Portfolio',
+    subtitle: 'CV required, portfolio link optional',
+    icon: 'document-text-outline',
+    description: "Upload your CV as a PDF — required. You can also add a portfolio link. Hiyame's internal team reviews your CV before it counts toward verification.",
   },
 ];
 
@@ -98,6 +97,7 @@ export default function VerificationScreen() {
     supabase.from('verification_records').select('component, status').eq('candidate_id', candidateId).then(({ data }) => {
       setPassedComponents(new Set((data ?? []).filter((v) => v.status === 'passed').map((v) => v.component)));
       setAssessmentPending((data ?? []).some((v) => v.component === 'skills_assessment' && v.status === 'pending'));
+      setCvPending((data ?? []).some((v) => v.component === 'cv_review' && v.status === 'pending'));
     });
   }, [candidateId]);
 
@@ -105,32 +105,29 @@ export default function VerificationScreen() {
     refetchRecords();
   }, [refetchRecords]);
 
-  // Employer review's own request state — not a pass/fail like the other
-  // two, so it needs a little more than "is it in passedComponents": once a
-  // request is sent, the step shows "awaiting response" rather than the
-  // generic "Begin Verification" button until it either resolves or expires.
-  const [pendingReviewRequest, setPendingReviewRequest] = useState<{ employer_email: string } | null>(null);
-  const [showReviewForm, setShowReviewForm] = useState(false);
-  const [employerName, setEmployerName] = useState('');
-  const [employerEmail, setEmployerEmail] = useState('');
-  const [sendingRequest, setSendingRequest] = useState(false);
+  // CV upload (required) + portfolio link (optional) — replaces Employer
+  // Review's slot in the checklist (2026-10-03). CV goes through
+  // lib/uploadCandidateCV.ts's signed-URL flow, same shape as the video
+  // intro; portfolio_url is just a text field the candidate can set
+  // directly (grant update (portfolio_url) on candidates — see the
+  // cv_portfolio_verification migration), no review attached to it.
+  const [cvPending, setCvPending] = useState(false);
+  const [uploadingCV, setUploadingCV] = useState(false);
+  const [portfolioUrl, setPortfolioUrl] = useState('');
+  const [portfolioInput, setPortfolioInput] = useState('');
+  const [savingPortfolio, setSavingPortfolio] = useState(false);
 
-  const refetchReviewRequest = useCallback(() => {
+  const refetchCandidateLinks = useCallback(() => {
     if (!candidateId) return;
-    supabase
-      .from('employer_review_requests')
-      .select('employer_email')
-      .eq('candidate_id', candidateId)
-      .eq('status', 'pending')
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle()
-      .then(({ data }) => setPendingReviewRequest(data));
+    supabase.from('candidates').select('portfolio_url').eq('id', candidateId).maybeSingle().then(({ data }) => {
+      setPortfolioUrl(data?.portfolio_url ?? '');
+      setPortfolioInput(data?.portfolio_url ?? '');
+    });
   }, [candidateId]);
 
   useEffect(() => {
-    refetchReviewRequest();
-  }, [refetchReviewRequest]);
+    refetchCandidateLinks();
+  }, [refetchCandidateLinks]);
 
   const requestAssessment = useCallback(async () => {
     setRequestingAssessment(true);
@@ -153,6 +150,31 @@ export default function VerificationScreen() {
     }
   }, [refetchRecords]);
 
+  const uploadCV = useCallback(() => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'application/pdf';
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      if (file.type !== 'application/pdf') {
+        notify('Invalid file', 'Please upload your CV as a PDF.');
+        return;
+      }
+      setUploadingCV(true);
+      try {
+        await uploadCandidateCV(file);
+        notify('CV submitted', "Hiyame's team will review your CV.");
+        refetchRecords();
+      } catch (e: any) {
+        notify('Could not upload CV', e?.message || 'Something went wrong. Please try again.');
+      } finally {
+        setUploadingCV(false);
+      }
+    };
+    input.click();
+  }, [refetchRecords]);
+
   const toggleStep = useCallback((key: string) => {
     if (key === 'identity') {
       setShowSmileId(true);
@@ -160,49 +182,34 @@ export default function VerificationScreen() {
       setShowVideoModal(true);
     } else if (key === 'assessment') {
       requestAssessment();
-    } else if (key === 'review') {
-      setShowReviewForm(true);
+    } else if (key === 'cv') {
+      uploadCV();
     }
-  }, [requestAssessment]);
+  }, [requestAssessment, uploadCV]);
 
-  const sendReviewRequest = useCallback(async () => {
-    if (!employerName.trim()) {
-      notify('Name required', "Enter the employer's name.");
+  const savePortfolioLink = useCallback(async () => {
+    if (!candidateId) return;
+    const trimmed = portfolioInput.trim();
+    if (trimmed && !/^https?:\/\//i.test(trimmed)) {
+      notify('Invalid link', 'Portfolio link must start with http:// or https://');
       return;
     }
-    if (!EMAIL_RE.test(employerEmail.trim())) {
-      notify('Invalid email', 'Enter a valid email address.');
+    setSavingPortfolio(true);
+    const { error } = await supabase.from('candidates').update({ portfolio_url: trimmed || null }).eq('id', candidateId);
+    setSavingPortfolio(false);
+    if (error) {
+      notify('Could not save link', error.message);
       return;
     }
-    setSendingRequest(true);
-    try {
-      const { data } = await supabase.auth.getSession();
-      const token = data.session?.access_token;
-      if (!token) throw new Error('You need to be signed in.');
-      const res = await fetch('/api/employer-review', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'request', employerName: employerName.trim(), employerEmail: employerEmail.trim() }),
-      });
-      const body = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(body?.error || 'Could not send the request.');
-      notify('Request sent', `We emailed ${employerEmail.trim()} a link to leave a review.`);
-      setShowReviewForm(false);
-      setEmployerName('');
-      setEmployerEmail('');
-      refetchReviewRequest();
-    } catch (e: any) {
-      notify('Could not send request', e?.message || 'Something went wrong. Please try again.');
-    } finally {
-      setSendingRequest(false);
-    }
-  }, [employerName, employerEmail, refetchReviewRequest]);
+    setPortfolioUrl(trimmed);
+    notify(trimmed ? 'Portfolio link saved' : 'Portfolio link removed', '');
+  }, [candidateId, portfolioInput]);
 
   const allCompleted: Record<string, boolean> = {
     identity: identityVerified || passedComponents.has(REAL_COMPONENT_KEY.identity),
     video: passedComponents.has(REAL_COMPONENT_KEY.video),
     assessment: passedComponents.has(REAL_COMPONENT_KEY.assessment),
-    review: passedComponents.has(REAL_COMPONENT_KEY.review),
+    cv: passedComponents.has(REAL_COMPONENT_KEY.cv),
   };
   const completedCount = Object.values(allCompleted).filter(Boolean).length;
   const isFullyVerified = completedCount >= FULL_VERIFICATION_THRESHOLD;
@@ -366,66 +373,33 @@ export default function VerificationScreen() {
                 <Text style={st.stepDescription}>{step.description}</Text>
               </View>
 
-              {/* Action area — differs per step now that 3 of the 4 are
-                  real: identity re-verifies, video can always be re-recorded,
-                  a passed assessment/review just shows Verified with nothing
-                  to press, and review's own request state (sent/awaiting)
-                  replaces the button entirely while one is outstanding. */}
-              {step.key === 'review' && showReviewForm ? (
-                <View style={st.reviewForm}>
-                  <TextInput
-                    style={st.reviewInput}
-                    value={employerName}
-                    onChangeText={setEmployerName}
-                    placeholder="Employer or client name"
-                    placeholderTextColor={T.textMuted}
-                  />
-                  <TextInput
-                    style={st.reviewInput}
-                    value={employerEmail}
-                    onChangeText={setEmployerEmail}
-                    placeholder="Their email address"
-                    placeholderTextColor={T.textMuted}
-                    autoCapitalize="none"
-                    keyboardType="email-address"
-                    spellCheck={false}
-                  />
-                  <View style={st.reviewFormRow}>
-                    <TouchableOpacity style={st.reviewCancelBtn} onPress={() => setShowReviewForm(false)} disabled={sendingRequest}>
-                      <Text style={st.reviewCancelBtnText}>Cancel</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={[st.stepButton, st.reviewSendBtn]} onPress={sendReviewRequest} disabled={sendingRequest}>
-                      {sendingRequest ? <ActivityIndicator color={T.textOnAccent} size="small" /> : (
-                        <>
-                          <AppIcon name="paper-plane-outline" size={16} color={T.textOnAccent} />
-                          <Text style={st.stepButtonText}>Send Request</Text>
-                        </>
-                      )}
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              ) : step.key === 'review' && !isDone && pendingReviewRequest ? (
-                <View style={[st.stepButton, st.stepButtonDone]}>
-                  <AppIcon name="time-outline" size={18} color={T.textMuted} />
-                  <Text style={[st.stepButtonText, st.stepButtonTextDone]} numberOfLines={1}>
-                    Awaiting response from {pendingReviewRequest.employer_email}
-                  </Text>
-                </View>
-              ) : step.key === 'assessment' && !isDone && assessmentPending ? (
+              {/* Action area — differs per step now that all 4 are real:
+                  identity re-verifies, video can always be re-recorded, a
+                  passed assessment/cv just shows Verified with nothing to
+                  press, and each one's own pending-review state replaces
+                  the button entirely while a decision is outstanding. */}
+              {step.key === 'assessment' && !isDone && assessmentPending ? (
                 <View style={[st.stepButton, st.stepButtonDone]}>
                   <AppIcon name="time-outline" size={18} color={T.textMuted} />
                   <Text style={[st.stepButtonText, st.stepButtonTextDone]} numberOfLines={1}>
                     Awaiting review from the Hiyame team
                   </Text>
                 </View>
-              ) : isDone && (step.key === 'assessment' || step.key === 'review') ? null : (
+              ) : step.key === 'cv' && !isDone && cvPending ? (
+                <View style={[st.stepButton, st.stepButtonDone]}>
+                  <AppIcon name="time-outline" size={18} color={T.textMuted} />
+                  <Text style={[st.stepButtonText, st.stepButtonTextDone]} numberOfLines={1}>
+                    CV submitted — awaiting review from the Hiyame team
+                  </Text>
+                </View>
+              ) : isDone && (step.key === 'assessment' || step.key === 'cv') ? null : (
                 <TouchableOpacity
                   style={[st.stepButton, isDone && st.stepButtonDone]}
                   onPress={() => toggleStep(step.key)}
                   activeOpacity={0.7}
-                  disabled={step.key === 'assessment' && requestingAssessment}
+                  disabled={(step.key === 'assessment' && requestingAssessment) || (step.key === 'cv' && uploadingCV)}
                 >
-                  {step.key === 'assessment' && requestingAssessment ? (
+                  {(step.key === 'assessment' && requestingAssessment) || (step.key === 'cv' && uploadingCV) ? (
                     <ActivityIndicator color={T.textOnAccent} size="small" />
                   ) : (
                     <AppIcon
@@ -441,9 +415,31 @@ export default function VerificationScreen() {
                       ? (isDone ? 'Re-record' : 'Record Introduction')
                       : step.key === 'assessment'
                       ? 'Request Assessment'
-                      : 'Request a Review'}
+                      : (isDone ? 'Replace CV' : 'Upload CV (required)')}
                   </Text>
                 </TouchableOpacity>
+              )}
+
+              {/* Portfolio link — optional, independent of CV review, so it
+                  always shows for this step regardless of CV status. */}
+              {step.key === 'cv' && (
+                <View style={st.portfolioRow}>
+                  <TextInput
+                    style={st.portfolioInput}
+                    value={portfolioInput}
+                    onChangeText={setPortfolioInput}
+                    placeholder="Portfolio link (optional)"
+                    placeholderTextColor={T.textMuted}
+                    autoCapitalize="none"
+                    keyboardType="url"
+                    spellCheck={false}
+                  />
+                  {portfolioInput.trim() !== portfolioUrl && (
+                    <TouchableOpacity style={st.portfolioSaveBtn} onPress={savePortfolioLink} disabled={savingPortfolio}>
+                      {savingPortfolio ? <ActivityIndicator color={T.textOnAccent} size="small" /> : <Text style={st.portfolioSaveBtnText}>Save</Text>}
+                    </TouchableOpacity>
+                  )}
+                </View>
               )}
             </View>
           );
@@ -606,15 +602,14 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   stepButtonText: { fontSize: 13, fontWeight: '700', color: T.textOnAccent },
   stepButtonTextDone: { color: T.textMuted, flexShrink: 1 },
 
-  /* Employer review inline request form */
-  reviewForm: { gap: 10 },
-  reviewInput: {
+  /* Portfolio link — optional, inline under the CV step's own action */
+  portfolioRow: { flexDirection: 'row', gap: 8, marginTop: 10 },
+  portfolioInput: {
+    flex: 1,
     borderWidth: 1.5, borderColor: T.border, backgroundColor: T.surface,
-    borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12,
-    fontSize: 14, color: T.textPrimary,
+    borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10,
+    fontSize: 13.5, color: T.textPrimary,
   },
-  reviewFormRow: { flexDirection: 'row', gap: 10 },
-  reviewCancelBtn: { flex: 1, alignItems: 'center', justifyContent: 'center', borderRadius: 10, borderWidth: 1, borderColor: T.border, paddingVertical: 12 },
-  reviewCancelBtnText: { fontSize: 13, fontWeight: '700', color: T.textSecondary },
-  reviewSendBtn: { flex: 1 },
+  portfolioSaveBtn: { alignItems: 'center', justifyContent: 'center', borderRadius: 10, paddingHorizontal: 16, backgroundColor: T.accentSolid },
+  portfolioSaveBtnText: { fontSize: 13, fontWeight: '700', color: T.textOnAccent },
 });

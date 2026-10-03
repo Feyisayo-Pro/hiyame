@@ -22,7 +22,7 @@ const VERIFY_COMPONENTS: { key: string; label: string; icon: AppIconName }[] = [
   { key: 'identity', label: 'Identity Check', icon: 'id-card-outline' },
   { key: 'video_intro', label: 'Video Introduction', icon: 'videocam-outline' },
   { key: 'skills_assessment', label: 'Skills Assessment', icon: 'shield-checkmark-outline' },
-  { key: 'employer_review', label: 'Employer Review', icon: 'star-outline' },
+  { key: 'cv_review', label: 'CV / Portfolio', icon: 'document-text-outline' },
 ];
 
 function greeting(): string {

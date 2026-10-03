@@ -13,8 +13,20 @@ import { isAdminEmail } from '../lib/adminEmails';
 //
 // GET  ?view=overview                              — pending/approved/rejected counts
 // GET  ?view=candidates&status=&search=&page=       — paginated candidate directory
+// GET  ?view=candidates&component=skills_assessment|cv_review&page= — candidates
+//      with a PENDING verification request for that component, independent
+//      of their account status (a candidate can be long since approved and
+//      still have a pending CV review, so the account-status filter above
+//      can't find these — the Overview screen's two request cards link here).
 // GET  ?view=companies&status=&search=&page=        — paginated company directory
-// POST { type: 'company'|'candidate'|'assessment', id, decision } — approve/reject
+// POST { type: 'company'|'candidate'|'assessment'|'cv_review', id, decision } — approve/reject
+//   'assessment' and 'cv_review' update a verification_records component
+//   (skills_assessment / cv_review) rather than the account's own status.
+
+const REVIEW_COMPONENT: Record<string, string> = {
+  assessment: 'skills_assessment',
+  cv_review: 'cv_review',
+};
 
 const SUPABASE_URL = process.env.SUPABASE_URL ?? process.env.EXPO_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -43,7 +55,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const [
         { count: candPending }, { count: candApproved }, { count: candRejected },
         { count: coPending }, { count: coApproved }, { count: coRejected },
-        { count: assessmentPending },
+        { count: assessmentPending }, { count: cvReviewPending },
       ] = await Promise.all([
         admin.from('candidates').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
         admin.from('candidates').select('*', { count: 'exact', head: true }).eq('status', 'approved'),
@@ -52,11 +64,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         admin.from('companies').select('*', { count: 'exact', head: true }).eq('status', 'approved'),
         admin.from('companies').select('*', { count: 'exact', head: true }).eq('status', 'rejected'),
         admin.from('verification_records').select('*', { count: 'exact', head: true }).eq('component', 'skills_assessment').eq('status', 'pending'),
+        admin.from('verification_records').select('*', { count: 'exact', head: true }).eq('component', 'cv_review').eq('status', 'pending'),
       ]);
       return res.status(200).json({
         candidates: { pending: candPending ?? 0, approved: candApproved ?? 0, rejected: candRejected ?? 0 },
         companies: { pending: coPending ?? 0, approved: coApproved ?? 0, rejected: coRejected ?? 0 },
         assessmentRequests: assessmentPending ?? 0,
+        cvReviewRequests: cvReviewPending ?? 0,
       });
     }
 
@@ -67,6 +81,40 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const to = from + PAGE_SIZE - 1;
 
     if (view === 'candidates') {
+      const component = String(req.query.component ?? '').trim();
+
+      if (component === 'skills_assessment' || component === 'cv_review') {
+        // Independent of account status — see this file's own top comment.
+        const { data: vrRows, count, error: vrErr } = await admin
+          .from('verification_records')
+          .select('candidate_id', { count: 'exact' })
+          .eq('component', component)
+          .eq('status', 'pending')
+          .order('created_at', { ascending: false })
+          .range(from, to);
+        if (vrErr) return res.status(500).json({ error: vrErr.message });
+
+        const ids = (vrRows ?? []).map((r) => r.candidate_id);
+        const [{ data: rows, error }, { data: allVrecs }] = ids.length
+          ? await Promise.all([
+              admin.from('candidates').select('*').in('id', ids),
+              admin.from('verification_records').select('candidate_id, component, status').in('candidate_id', ids),
+            ])
+          : [{ data: [] as any[], error: null }, { data: [] as any[] }];
+        if (error) return res.status(500).json({ error: error.message });
+
+        const vrByCandidate = new Map<string, { component: string; status: string }[]>();
+        for (const v of allVrecs ?? []) {
+          const list = vrByCandidate.get(v.candidate_id) ?? [];
+          list.push({ component: v.component, status: v.status });
+          vrByCandidate.set(v.candidate_id, list);
+        }
+        const byId = new Map((rows ?? []).map((r) => [r.id, r]));
+        const candidates = ids.map((id) => byId.get(id)).filter(Boolean)
+          .map((r: any) => ({ ...r, verification: vrByCandidate.get(r.id) ?? [] }));
+        return res.status(200).json({ candidates, total: count ?? 0, page, pageSize: PAGE_SIZE });
+      }
+
       let query = admin.from('candidates').select('*', { count: 'exact' }).order('created_at', { ascending: false });
       if (status !== 'all') query = query.eq('status', status);
       if (search) query = query.ilike('full_name', `%${search}%`);
@@ -116,18 +164,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const type: unknown = body?.type;
     const id: unknown = body?.id;
     const decision: unknown = body?.decision;
-    if (type !== 'company' && type !== 'candidate' && type !== 'assessment') {
-      return res.status(400).json({ error: 'type must be "company", "candidate", or "assessment".' });
+    if (type !== 'company' && type !== 'candidate' && type !== 'assessment' && type !== 'cv_review') {
+      return res.status(400).json({ error: 'type must be "company", "candidate", "assessment", or "cv_review".' });
     }
     if (typeof id !== 'string' || id.length < 10) return res.status(400).json({ error: 'id is required.' });
     if (decision !== 'approved' && decision !== 'rejected') return res.status(400).json({ error: 'decision must be "approved" or "rejected".' });
 
-    if (type === 'assessment') {
+    const component = REVIEW_COMPONENT[type];
+    if (component) {
       const { error } = await admin
         .from('verification_records')
         .update({ status: decision === 'approved' ? 'passed' : 'failed', updated_at: new Date().toISOString() })
         .eq('candidate_id', id)
-        .eq('component', 'skills_assessment');
+        .eq('component', component);
       if (error) return res.status(500).json({ error: error.message });
       return res.status(200).json({ ok: true });
     }

@@ -116,7 +116,10 @@ export const MATCH_WEIGHTS = {
   location: 10,
   // Additive on top of the base 100 above, then the total is clamped to 100.
   reliabilityBoost: 3,
-  employerReviewBoost: 2,
+  // Was employerReviewBoost — repointed to the CV/portfolio review step
+  // (2026-10-03) when that replaced Employer Review in the candidate
+  // checklist; same weight, same "verified trust signal" meaning, new source.
+  cvReviewBoost: 2,
   // Only applied when verification is a soft signal (requireVerification: false)
   // rather than a hard gate — see scoreCandidate's opts. Rewards a candidate who
   // *is* fully verified for the tier without excluding those who aren't yet,
@@ -137,7 +140,7 @@ export interface ScoringCandidateInput {
   reliabilityScore: number | null;
   skillTags: string[];
   verification: VerificationState;
-  hasPassedEmployerReview: boolean;
+  hasPassedCvReview: boolean;
 }
 
 export interface ScoringRoleInput {
@@ -310,7 +313,7 @@ export function scoreCandidate(
 
   let boosts = 0;
   if (candidate.reliabilityScore !== null && candidate.reliabilityScore >= 70) boosts += MATCH_WEIGHTS.reliabilityBoost;
-  if (candidate.hasPassedEmployerReview) boosts += MATCH_WEIGHTS.employerReviewBoost;
+  if (candidate.hasPassedCvReview) boosts += MATCH_WEIGHTS.cvReviewBoost;
   // In relaxed mode a fully-verified candidate is rewarded rather than being the
   // only kind that gets scored. In gate mode every scored candidate is verified,
   // so this would be noise — skip it.

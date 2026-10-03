@@ -130,8 +130,10 @@ export async function runMatchingForRole(
   for (const candidate of candidates ?? []) {
     const records = recordsByCandidate.get(candidate.id) ?? [];
     const verification = buildVerificationState(records);
-    const hasPassedEmployerReview = records.some(
-      (r) => r.component === 'employer_review' && r.status === 'passed',
+    // Was 'employer_review' — repointed to 'cv_review' (2026-10-03) when
+    // CV/portfolio review replaced Employer Review in the checklist.
+    const hasPassedCvReview = records.some(
+      (r) => r.component === 'cv_review' && r.status === 'passed',
     );
 
     const candidateInput: ScoringCandidateInput = {
@@ -145,7 +147,7 @@ export async function runMatchingForRole(
       reliabilityScore: candidate.reliability_score,
       skillTags: candidate.skill_tags ?? [],
       verification,
-      hasPassedEmployerReview,
+      hasPassedCvReview,
     };
 
     entries.push({ candidateId: candidate.id, result: scoreCandidate(candidateInput, roleInput, { requireVerification }) });

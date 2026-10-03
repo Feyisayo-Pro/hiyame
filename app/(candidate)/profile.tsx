@@ -40,7 +40,7 @@ const VERIFICATION_COMPONENTS = [
   { key: 'identity', icon: 'id-card-outline' as const, label: 'Identity Check' },
   { key: 'video_intro', icon: 'videocam-outline' as const, label: 'Video Introduction' },
   { key: 'skills_assessment', icon: 'shield-checkmark-outline' as const, label: 'Skills Assessment' },
-  { key: 'employer_review', icon: 'star-outline' as const, label: 'Employer Review' },
+  { key: 'cv_review', icon: 'document-text-outline' as const, label: 'CV / Portfolio' },
 ];
 
 export default function CandidateProfileScreen() {

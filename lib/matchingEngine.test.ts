@@ -34,7 +34,7 @@ function baseCandidate(overrides: Partial<ScoringCandidateInput> = {}): ScoringC
     reliabilityScore: 80,
     skillTags: ['IFRS', 'Financial Reporting', 'SAP'],
     verification: FULLY_VERIFIED,
-    hasPassedEmployerReview: true,
+    hasPassedCvReview: true,
     ...overrides,
   };
 }
