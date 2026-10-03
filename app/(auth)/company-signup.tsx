@@ -331,6 +331,7 @@ export default function CompanySignupScreen() {
               placeholder="Work email address"
               placeholderTextColor={T.textMuted}
               keyboardType="email-address"
+              spellCheck={false}
               autoCapitalize="none"
               autoComplete="email"
               value={email}
@@ -357,7 +358,7 @@ export default function CompanySignupScreen() {
               onFocus={onFocus}
               onBlur={() => { onBlur(); validateAccountField('password'); }}
             />
-            <Pressable onPress={() => setShowPassword(!showPassword)} hitSlop={8}>
+            <Pressable onPress={() => setShowPassword(!showPassword)} hitSlop={8} accessibilityRole="button" accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}>
               <AppIcon name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color={T.textMuted} />
             </Pressable>
           </>
@@ -530,7 +531,7 @@ export default function CompanySignupScreen() {
           {({ onFocus, onBlur }) => (
             <TextInput
               style={[st.textArea, NO_NATIVE_OUTLINE]}
-              placeholder="Tell candidates what makes your company a great place to work..."
+              placeholder="Tell candidates what makes your company a great place to work…"
               placeholderTextColor={T.textMuted}
               value={bio}
               onChangeText={(t) => { setBio(t); clearError('bio'); }}
@@ -642,7 +643,7 @@ export default function CompanySignupScreen() {
       >
         {/* Top Bar */}
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 8, paddingBottom: 4 }}>
-          <Pressable style={st.backButton} onPress={handleBack}>
+          <Pressable style={st.backButton} onPress={handleBack} hitSlop={2} accessibilityRole="button" accessibilityLabel="Go back">
             <AppIcon name="arrow-back" size={20} color={T.textPrimary} />
           </Pressable>
           <Text style={{ fontSize: 12, fontWeight: '600', color: T.textMuted }}>Step {step + 1} of {TOTAL_STEPS}</Text>

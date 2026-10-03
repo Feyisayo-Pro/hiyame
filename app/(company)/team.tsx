@@ -180,7 +180,7 @@ export default function TeamMembersScreen() {
       <PageHead title="Team" />
       <ScreenFrame>
       <View style={s.header}>
-        <Pressable style={s.backBtn} onPress={() => goBack(router, '/(company)')}>
+        <Pressable style={s.backBtn} onPress={() => goBack(router, '/(company)')} hitSlop={4} accessibilityRole="button" accessibilityLabel="Go back">
           <AppIcon name="arrow-back" size={20} color={T.textPrimary} />
         </Pressable>
         <Text style={s.headerTitle}>Team Members</Text>
@@ -274,6 +274,7 @@ export default function TeamMembersScreen() {
               placeholder="teammate@company.com"
               placeholderTextColor={T.inputPlaceholder}
               keyboardType="email-address"
+              spellCheck={false}
               autoCapitalize="none"
               editable={!seatsFull && !inviting}
               style={[s.inviteInput, (seatsFull || inviting) && s.inviteInputDisabled]}

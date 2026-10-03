@@ -187,7 +187,7 @@ export default function CandidateSignupScreen() {
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <Pressable style={st.backButton} onPress={() => goBack(router, '/(auth)/welcome')}>
+        <Pressable style={st.backButton} onPress={() => goBack(router, '/(auth)/welcome')} hitSlop={2} accessibilityRole="button" accessibilityLabel="Go back">
           <AppIcon name="arrow-back" size={20} color={T.textPrimary} />
         </Pressable>
 
@@ -218,6 +218,7 @@ export default function CandidateSignupScreen() {
                     placeholder="Email address"
                     placeholderTextColor={T.textMuted}
                     keyboardType="email-address"
+                    spellCheck={false}
                     autoCapitalize="none"
                     autoComplete="email"
                     value={email}
@@ -244,7 +245,7 @@ export default function CandidateSignupScreen() {
                     onFocus={onFocus}
                     onBlur={() => { onBlur(); validateField('password'); }}
                   />
-                  <Pressable onPress={() => setShowPassword(!showPassword)} hitSlop={8}>
+                  <Pressable onPress={() => setShowPassword(!showPassword)} hitSlop={8} accessibilityRole="button" accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}>
                     <AppIcon name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color={T.textMuted} />
                   </Pressable>
                 </>
@@ -323,7 +324,7 @@ export default function CandidateSignupScreen() {
                       onBlur={onBlur}
                     />
                     {skillInput.trim().length > 0 && (
-                      <Pressable style={st.addSkillBtn} onPress={() => addSkill(skillInput)} hitSlop={8}>
+                      <Pressable style={st.addSkillBtn} onPress={() => addSkill(skillInput)} hitSlop={8} accessibilityRole="button" accessibilityLabel="Add skill">
                         <AppIcon name="add" size={18} color={T.textOnAccent} />
                       </Pressable>
                     )}
@@ -336,7 +337,7 @@ export default function CandidateSignupScreen() {
                   {coreSkills.map((skill) => (
                     <View key={skill} style={st.skillChip}>
                       <Text style={st.skillChipText}>{skill}</Text>
-                      <Pressable onPress={() => removeSkill(skill)} hitSlop={6}>
+                      <Pressable onPress={() => removeSkill(skill)} hitSlop={6} accessibilityRole="button" accessibilityLabel={`Remove ${skill}`}>
                         <AppIcon name="close" size={14} color={T.accent} />
                       </Pressable>
                     </View>

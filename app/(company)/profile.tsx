@@ -99,7 +99,7 @@ export default function CompanyProfileScreen() {
         {/* ── Header ── */}
         <View style={st.header}>
           <Text style={st.headerTitle}>Company Profile</Text>
-          <Pressable onPress={() => router.push('/(company)/settings')} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: T.surface, alignItems: 'center', justifyContent: 'center' }}>
+          <Pressable onPress={() => router.push('/(company)/settings')} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: T.surface, alignItems: 'center', justifyContent: 'center' }} hitSlop={4} accessibilityRole="button" accessibilityLabel="Settings">
             <AppIcon name="settings-outline" size={20} color={T.textSecondary} />
           </Pressable>
         </View>

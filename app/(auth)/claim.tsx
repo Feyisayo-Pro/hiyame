@@ -92,7 +92,7 @@ export default function ClaimAccountScreen() {
                 value={password}
                 onChangeText={(t) => { setPassword(t); setError(''); }}
               />
-              <Pressable onPress={() => setShowPassword(!showPassword)} hitSlop={8}>
+              <Pressable onPress={() => setShowPassword(!showPassword)} hitSlop={8} accessibilityRole="button" accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}>
                 <AppIcon name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color={T.textMuted} />
               </Pressable>
             </View>
@@ -101,7 +101,7 @@ export default function ClaimAccountScreen() {
 
           <Pressable style={[st.button, loading && st.buttonDisabled]} onPress={handleClaim} disabled={loading}>
             {loading ? (
-              <Text style={st.buttonText}>Finishing up...</Text>
+              <Text style={st.buttonText}>Finishing up…</Text>
             ) : (
               <>
                 <Text style={st.buttonText}>Continue</Text>

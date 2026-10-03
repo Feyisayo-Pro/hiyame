@@ -165,7 +165,7 @@ export default function CreateRoleScreen() {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScreenFrame>
         <View style={st.header}>
-          <Pressable style={st.backButton} onPress={() => goBack(router, '/(company)')} accessibilityRole="button" accessibilityLabel="Go back">
+          <Pressable style={st.backButton} onPress={() => goBack(router, '/(company)')} hitSlop={2} accessibilityRole="button" accessibilityLabel="Go back">
             <AppIcon name="arrow-back" size={20} color={T.textPrimary} />
           </Pressable>
           <Text style={st.headerTitle}>Post a Role</Text>
@@ -216,7 +216,7 @@ export default function CreateRoleScreen() {
               <View style={st.inputWrap}>
                 <TextInput
                   style={st.input}
-                  placeholder="Engineering, Sales..."
+                  placeholder="Engineering, Sales…"
                   placeholderTextColor={T.textMuted}
                   value={roleFunction}
                   onChangeText={setRoleFunction}
@@ -397,7 +397,7 @@ export default function CreateRoleScreen() {
 
           <AnimatedPressable style={[st.submitButton, loading && st.submitButtonDisabled]} onPress={handleSubmit} disabled={loading}>
             {loading ? (
-              <Text style={st.submitText}>Posting...</Text>
+              <Text style={st.submitText}>Posting…</Text>
             ) : (
               <>
                 <Text style={st.submitText}>Post Role</Text>

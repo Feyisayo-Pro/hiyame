@@ -64,7 +64,7 @@ export default function SmileIdVerificationModal({ visible, onClose, onVerified,
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <View style={{ flex: 1, backgroundColor: T.bg }}>
         <View style={s.header}>
-          <Pressable onPress={onClose} style={s.backBtn}>
+          <Pressable onPress={onClose} style={s.backBtn} hitSlop={4} accessibilityRole="button" accessibilityLabel="Close">
             <AppIcon name="close" size={22} color={T.textPrimary} />
           </Pressable>
           <Text style={s.headerTitle}>Identity Verification</Text>

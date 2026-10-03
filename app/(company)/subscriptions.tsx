@@ -117,7 +117,7 @@ export default function SubscriptionsScreen() {
 
     notify(
       'Paystack Secure Checkout',
-      'Connecting to Paystack Secure Checkout Gateway...',
+      'Connecting to Paystack Secure Checkout Gateway…',
       [
         {
           text: 'OK',
@@ -135,7 +135,7 @@ export default function SubscriptionsScreen() {
       <PageHead title="Subscription" />
       <ScreenFrame>
       <View style={styles.header}>
-        <Pressable style={styles.backBtn} onPress={() => goBack(router, '/(company)')}>
+        <Pressable style={styles.backBtn} onPress={() => goBack(router, '/(company)')} hitSlop={4} accessibilityRole="button" accessibilityLabel="Go back">
           <AppIcon name="arrow-back" size={20} color={T.textPrimary} />
         </Pressable>
         <Text style={styles.headerTitle}>Plans & Pricing</Text>

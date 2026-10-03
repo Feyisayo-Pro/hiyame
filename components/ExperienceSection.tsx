@@ -178,7 +178,7 @@ export default function ExperienceSection({ candidateId }: { candidateId: string
               <Text style={st.cancelBtnText}>Cancel</Text>
             </Pressable>
             <Pressable style={[st.saveBtn, (!jobTitle.trim() || !companyName.trim() || saving) && st.saveBtnDisabled]} onPress={handleSave} disabled={!jobTitle.trim() || !companyName.trim() || saving}>
-              <Text style={st.saveBtnText}>{saving ? 'Saving...' : editingId ? 'Save Changes' : 'Save'}</Text>
+              <Text style={st.saveBtnText}>{saving ? 'Saving…' : editingId ? 'Save Changes' : 'Save'}</Text>
             </Pressable>
           </View>
         </View>

@@ -388,6 +388,7 @@ export default function VerificationScreen() {
                     placeholderTextColor={T.textMuted}
                     autoCapitalize="none"
                     keyboardType="email-address"
+                    spellCheck={false}
                   />
                   <View style={st.reviewFormRow}>
                     <TouchableOpacity style={st.reviewCancelBtn} onPress={() => setShowReviewForm(false)} disabled={sendingRequest}>

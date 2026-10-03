@@ -89,7 +89,7 @@ function ConfigModal({ visible, onClose, T }: { visible: boolean; onClose: () =>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 12 }}>
               <Text style={{ fontSize: 20, fontWeight: '800', color: T.textPrimary }}>Settings</Text>
-              <Pressable onPress={onClose} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: T.surface, alignItems: 'center', justifyContent: 'center' }}>
+              <Pressable onPress={onClose} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: T.surface, alignItems: 'center', justifyContent: 'center' }} hitSlop={4} accessibilityRole="button" accessibilityLabel="Close settings">
                 <AppIcon name="close" size={20} color={T.textPrimary} />
               </Pressable>
             </View>
@@ -243,7 +243,7 @@ export default function CompanyDashboardScreen() {
                 <AppIcon name="crown-outline" size={14} color={T.accent} style={{ marginRight: 4 }} />
                 <Text style={styles.planBadgeText}>{config.name}</Text>
               </View>
-              <Pressable onPress={() => setShowConfig(true)} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: T.surface, alignItems: 'center', justifyContent: 'center' }}>
+              <Pressable onPress={() => setShowConfig(true)} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: T.surface, alignItems: 'center', justifyContent: 'center' }} hitSlop={4} accessibilityRole="button" accessibilityLabel="Settings">
                 <AppIcon name="settings-outline" size={20} color={T.textSecondary} />
               </Pressable>
             </View>

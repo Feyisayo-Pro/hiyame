@@ -22,7 +22,7 @@ function StarRow({ value, onChange, label }: { value: number; onChange: (n: numb
       <Text style={s.label}>{label}</Text>
       <View style={s.starRow}>
         {[1, 2, 3, 4, 5].map((n) => (
-          <Pressable key={n} onPress={() => onChange(n)} hitSlop={6}>
+          <Pressable key={n} onPress={() => onChange(n)} hitSlop={6} accessibilityRole="button" accessibilityLabel={`Rate ${n} of 5 stars`}>
             <AppIcon name={n <= value ? 'star' : 'star-outline'} size={28} color={n <= value ? T.amber : T.textMuted} />
           </Pressable>
         ))}

@@ -211,7 +211,7 @@ export default function ShortlistScreen() {
       <PageHead title="Shortlist" />
       <ScreenFrame>
       <View style={st.header}>
-        <Pressable style={st.backButton} onPress={() => goBack(router, '/(company)/roles')} accessibilityRole="button" accessibilityLabel="Go back">
+        <Pressable style={st.backButton} onPress={() => goBack(router, '/(company)/roles')} hitSlop={2} accessibilityRole="button" accessibilityLabel="Go back">
           <AppIcon name="arrow-back" size={20} color={T.textPrimary} />
         </Pressable>
         <View style={{ flex: 1 }}>

@@ -162,14 +162,14 @@ export default function CompanyInterviewsScreen() {
                   {i.status === 'scheduled' ? (
                     <View style={st.rowActions}>
                       {i.meetingUrl && (
-                        <Pressable style={st.rowActionBtn} onPress={() => notify('Meeting link', i.meetingUrl!)}>
+                        <Pressable style={st.rowActionBtn} onPress={() => notify('Meeting link', i.meetingUrl!)} hitSlop={7} accessibilityRole="button" accessibilityLabel="View meeting link">
                           <AppIcon name="link" size={16} color={T.accent} />
                         </Pressable>
                       )}
-                      <Pressable style={st.rowActionBtn} onPress={() => setStatus(i.id, 'completed')}>
+                      <Pressable style={st.rowActionBtn} onPress={() => setStatus(i.id, 'completed')} hitSlop={7} accessibilityRole="button" accessibilityLabel="Mark interview completed">
                         <AppIcon name="checkmark-circle-outline" size={16} color={T.emerald} />
                       </Pressable>
-                      <Pressable style={st.rowActionBtn} onPress={() => setStatus(i.id, 'cancelled')}>
+                      <Pressable style={st.rowActionBtn} onPress={() => setStatus(i.id, 'cancelled')} hitSlop={7} accessibilityRole="button" accessibilityLabel="Cancel interview">
                         <AppIcon name="close-circle-outline" size={16} color={T.danger} />
                       </Pressable>
                     </View>
@@ -290,7 +290,7 @@ function ScheduleInterviewModal({ visible, companyId, onClose, onScheduled }: {
         <View style={s.card}>
           <View style={s.headerRow}>
             <Text style={s.title}>Schedule Interview</Text>
-            <Pressable onPress={close} hitSlop={8}><AppIcon name="close" size={22} color={T.textMuted} /></Pressable>
+            <Pressable onPress={close} hitSlop={11} accessibilityRole="button" accessibilityLabel="Close"><AppIcon name="close" size={22} color={T.textMuted} /></Pressable>
           </View>
           <ScrollView keyboardShouldPersistTaps="handled">
             <Text style={s.label}>Role</Text>
@@ -316,7 +316,7 @@ function ScheduleInterviewModal({ visible, companyId, onClose, onScheduled }: {
             ) : selected ? (
               <View style={s.selectedCandidate}>
                 <Text style={s.selectedCandidateText}>{selected.name}{selected.roleTitle ? ` · ${selected.roleTitle}` : ''}</Text>
-                <Pressable onPress={() => setSelected(null)}><AppIcon name="close" size={16} color={T.textMuted} /></Pressable>
+                <Pressable onPress={() => setSelected(null)} accessibilityRole="button" accessibilityLabel="Clear selected candidate"><AppIcon name="close" size={16} color={T.textMuted} /></Pressable>
               </View>
             ) : candidatesLoaded && candidates.length === 0 ? (
               <Text style={s.emptyHint}>No one has accepted an introduction for this role yet.</Text>
@@ -356,7 +356,7 @@ function ScheduleInterviewModal({ visible, companyId, onClose, onScheduled }: {
               style={s.input}
               value={meetingUrl}
               onChangeText={setMeetingUrl}
-              placeholder={meetingType === 'google_meet' ? 'https://meet.google.com/...' : 'https://...'}
+              placeholder={meetingType === 'google_meet' ? 'https://meet.google.com/…' : 'https://…'}
               placeholderTextColor={T.textMuted}
               autoCapitalize="none"
             />

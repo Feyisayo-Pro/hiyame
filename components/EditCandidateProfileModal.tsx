@@ -97,7 +97,7 @@ export default function EditCandidateProfileModal({ visible, candidateId, initia
         <View style={s.card}>
           <View style={s.headerRow}>
             <Text style={s.title}>Edit Profile</Text>
-            <Pressable onPress={close} hitSlop={8}>
+            <Pressable onPress={close} hitSlop={11} accessibilityRole="button" accessibilityLabel="Close">
               <AppIcon name="close" size={22} color={T.textMuted} />
             </Pressable>
           </View>
@@ -139,7 +139,7 @@ export default function EditCandidateProfileModal({ visible, candidateId, initia
                 returnKeyType="done"
               />
               {skillInput.trim().length > 0 && (
-                <Pressable style={s.addBtn} onPress={() => addSkill(skillInput)} hitSlop={8}>
+                <Pressable style={s.addBtn} onPress={() => addSkill(skillInput)} hitSlop={8} accessibilityRole="button" accessibilityLabel="Add skill">
                   <AppIcon name="add" size={18} color={T.textOnAccent} />
                 </Pressable>
               )}
@@ -149,7 +149,7 @@ export default function EditCandidateProfileModal({ visible, candidateId, initia
                 {skills.map((skill) => (
                   <View key={skill} style={s.chip}>
                     <Text style={s.chipText}>{skill}</Text>
-                    <Pressable onPress={() => removeSkill(skill)} hitSlop={6}>
+                    <Pressable onPress={() => removeSkill(skill)} hitSlop={6} accessibilityRole="button" accessibilityLabel={`Remove ${skill}`}>
                       <AppIcon name="close" size={13} color={T.accent} />
                     </Pressable>
                   </View>

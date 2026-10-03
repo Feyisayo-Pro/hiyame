@@ -71,7 +71,7 @@ export default function RegisterScreen() {
     <SafeAreaView style={st.container} edges={['top', 'left', 'right', 'bottom']}>
       <PageHead title="Join Hiyame" />
       <ScreenFrame maxWidth={560}>
-      <AnimatedPressable style={st.backButton} onPress={() => goBack(router, '/(auth)/welcome')} scaleTo={0.9}>
+      <AnimatedPressable style={st.backButton} onPress={() => goBack(router, '/(auth)/welcome')} scaleTo={0.9} hitSlop={2} accessibilityRole="button" accessibilityLabel="Go back">
         <AppIcon name="arrow-back" size={20} color={T.textPrimary} />
       </AnimatedPressable>
 

@@ -83,6 +83,7 @@ export default function ForgotPasswordModal({ visible, initialEmail = '', onClos
                 placeholder="Email address"
                 placeholderTextColor={T.textMuted}
                 keyboardType="email-address"
+                spellCheck={false}
                 autoCapitalize="none"
                 autoComplete="email"
                 autoFocus

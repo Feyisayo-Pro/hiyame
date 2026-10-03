@@ -218,7 +218,7 @@ export default function AccountSettings({ persona = 'company' }: { persona?: Per
               <SettingsRow icon="log-out-outline" label="Sign Out" onPress={() => supabase.auth.signOut()} T={T} danger />
               <SettingsRow
                 icon="trash-outline"
-                label={deleting ? 'Deleting...' : 'Delete Account'}
+                label={deleting ? 'Deleting…' : 'Delete Account'}
                 onPress={deleting ? undefined : handleDeleteAccount}
                 T={T}
                 danger

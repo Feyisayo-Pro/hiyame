@@ -106,7 +106,7 @@ export default function PortfolioSection({ candidateId }: { candidateId: string 
               <Text style={st.cancelBtnText}>Cancel</Text>
             </Pressable>
             <Pressable style={[st.saveBtn, (!title.trim() || saving) && st.saveBtnDisabled]} onPress={handleAdd} disabled={!title.trim() || saving}>
-              <Text style={st.saveBtnText}>{saving ? 'Saving...' : 'Save'}</Text>
+              <Text style={st.saveBtnText}>{saving ? 'Saving…' : 'Save'}</Text>
             </Pressable>
           </View>
         </View>

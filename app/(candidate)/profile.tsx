@@ -130,7 +130,7 @@ export default function CandidateProfileScreen() {
         {/* ── Header ── */}
         <View style={st.header}>
           <Text style={st.headerTitle}>Profile</Text>
-          <Pressable onPress={() => router.push('/(candidate)/settings')} style={st.settingsBtn}>
+          <Pressable onPress={() => router.push('/(candidate)/settings')} style={st.settingsBtn} hitSlop={4} accessibilityRole="button" accessibilityLabel="Settings">
             <AppIcon name="settings-outline" size={20} color={T.textSecondary} />
           </Pressable>
         </View>

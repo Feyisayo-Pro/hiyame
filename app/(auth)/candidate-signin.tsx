@@ -108,7 +108,7 @@ export default function CandidateSignInScreen() {
           bounces={false}
         >
           {/* Back */}
-          <Pressable style={st.backButton} onPress={() => goBack(router, '/(auth)/welcome')}>
+          <Pressable style={st.backButton} onPress={() => goBack(router, '/(auth)/welcome')} hitSlop={2} accessibilityRole="button" accessibilityLabel="Go back">
             <AppIcon name="arrow-back" size={20} color={T.textPrimary} />
           </Pressable>
 
@@ -132,6 +132,7 @@ export default function CandidateSignInScreen() {
                     placeholder="Email address"
                     placeholderTextColor={T.textMuted}
                     keyboardType="email-address"
+                    spellCheck={false}
                     autoCapitalize="none"
                     autoComplete="email"
                     value={email}
@@ -159,7 +160,7 @@ export default function CandidateSignInScreen() {
                     onFocus={onFocus}
                     onBlur={onBlur}
                   />
-                  <Pressable onPress={() => setShowPassword(!showPassword)} hitSlop={8}>
+                  <Pressable onPress={() => setShowPassword(!showPassword)} hitSlop={8} accessibilityRole="button" accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}>
                     <AppIcon name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color={T.textMuted} />
                   </Pressable>
                 </>
@@ -188,7 +189,7 @@ export default function CandidateSignInScreen() {
               disabled={loading}
             >
               {loading ? (
-                <Text style={st.signInText}>Signing in...</Text>
+                <Text style={st.signInText}>Signing in…</Text>
               ) : (
                 <>
                   <Text style={st.signInText}>Sign In</Text>

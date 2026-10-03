@@ -54,7 +54,7 @@ export default function ChangePasswordModal({ visible, onClose }: { visible: boo
         <View style={s.card}>
           <View style={s.headerRow}>
             <Text style={s.title}>Change Password</Text>
-            <Pressable onPress={close} hitSlop={8}>
+            <Pressable onPress={close} hitSlop={11} accessibilityRole="button" accessibilityLabel="Close">
               <AppIcon name="close" size={22} color={T.textMuted} />
             </Pressable>
           </View>

@@ -216,7 +216,7 @@ export default function VideoIntroRecorderModal({ visible, onClose, onSubmitted 
         <View style={s.card}>
           <View style={s.headerRow}>
             <Text style={s.title}>Video Introduction</Text>
-            <Pressable onPress={close} hitSlop={8} disabled={status === 'uploading'}>
+            <Pressable onPress={close} hitSlop={11} disabled={status === 'uploading'} accessibilityRole="button" accessibilityLabel="Close">
               <AppIcon name="close" size={22} color={T.textMuted} />
             </Pressable>
           </View>

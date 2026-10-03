@@ -66,7 +66,7 @@ export default function LoginScreen() {
       <PageHead title="Sign In" />
       <ScreenFrame maxWidth={560}>
       {/* Back Button */}
-      <AnimatedPressable style={st.backButton} onPress={() => goBack(router, '/(auth)/welcome')} scaleTo={0.9}>
+      <AnimatedPressable style={st.backButton} onPress={() => goBack(router, '/(auth)/welcome')} scaleTo={0.9} hitSlop={2} accessibilityRole="button" accessibilityLabel="Go back">
         <AppIcon name="arrow-back" size={20} color={T.textPrimary} />
       </AnimatedPressable>
 
