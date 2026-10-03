@@ -1,25 +1,28 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 
-// Both steps of the video-intro upload in one function — Vercel's Hobby
-// plan caps a deployment at 12 serverless functions, so this and
-// api/skills-assessment.ts / api/employer-review.ts each fold what would
-// otherwise be 2 separate endpoints behind an `action` field instead.
+// Both candidate self-upload flows that need a signed Storage URL (too
+// large for Vercel's ~4.5MB JSON body cap the way upload-candidate-photo's
+// base64 approach handles a downscaled JPEG) — video intro and CV — share
+// this one function via a `kind` field. Folded together specifically
+// because Vercel's Hobby plan caps a deployment at 12 serverless functions:
+// this project hit that exact cap with upload-candidate-cv.ts as its own
+// file (confirmed live, 2026-10-04 — the deploy failed even at exactly 12,
+// so the real margin is tighter than the raw count suggests; don't add a
+// 12th file again without folding something first).
 //
-// action: 'get-upload-url' — a 60s webcam clip is too large to route
-//   through a single Vercel function body the way upload-candidate-photo
-//   does with a downscaled JPEG (Vercel's JSON body cap is ~4.5MB). Instead
-//   this hands back a short-lived signed Storage upload URL; the client
-//   uploads the recorded Blob straight to Storage with it (bytes never
-//   touch this function), then calls back with action: 'complete'.
-// action: 'complete' — called once the client has uploaded the recorded
-//   clip via that signed URL. Stamps candidates.video_intro_url (mirrors
-//   candidates.photo_url exactly) and marks 'video_intro' verification
-//   'passed' — the actual write app/(candidate)/verification.tsx's
-//   checklist has been missing since this feature has existed. "Passed"
-//   here means "a real video was submitted", not an automated content
-//   review — matches this step's own description (companies watch it
-//   themselves, the system doesn't grade it).
+// kind: 'video' (default, omit the field entirely for the recorder's own
+//   calls — keeps lib/uploadCandidateVideo.ts's existing payload shape
+//   working unchanged) | 'cv'
+// action: 'get-upload-url' — hands back a short-lived signed Storage
+//   upload URL; the client uploads the Blob/File straight to Storage with
+//   it, bytes never touch this function, then calls back with 'complete'.
+// action: 'complete' — confirms the upload actually landed (never trusts
+//   the client's say-so), stamps the right candidates column, and upserts
+//   verification_records. Video intro marks itself 'passed' immediately —
+//   "passed" means "a real video exists", not an automated content review,
+//   companies watch it themselves. CV marks 'pending' instead — it
+//   genuinely needs an admin to open the document before it counts.
 //
 // Auth: caller sends their Supabase bearer token for both actions; the
 // token's auth user must own the candidate row. Env: SUPABASE_URL,
@@ -27,16 +30,28 @@ import { createClient } from '@supabase/supabase-js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL ?? process.env.EXPO_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const BUCKET = 'candidate-videos';
 
-// Matches the bucket's own allowedMimeTypes (scripts/create-video-bucket.ts)
-// — 'video/quicktime' (.mov) added for uploaded files since that's the
-// default export format on iPhone, the most likely upload source; the
-// in-app recorder only ever produces webm, never mov.
-const EXTENSION_BY_MIME: Record<string, string> = {
-  'video/webm': 'webm',
-  'video/mp4': 'mp4',
-  'video/quicktime': 'mov',
+const KIND_CONFIG = {
+  video: {
+    bucket: 'candidate-videos',
+    // 'video/quicktime' (.mov) covers an uploaded file — that's iPhone's
+    // default export format; the in-app recorder only ever produces webm.
+    extensionByMime: { 'video/webm': 'webm', 'video/mp4': 'mp4', 'video/quicktime': 'mov' } as Record<string, string>,
+    defaultMime: 'video/webm',
+    column: 'video_intro_url',
+    component: 'video_intro',
+    finalStatus: 'passed' as const,
+    notFoundMessage: 'No uploaded video found for this account. Upload it first.',
+  },
+  cv: {
+    bucket: 'candidate-cvs',
+    extensionByMime: { 'application/pdf': 'pdf' } as Record<string, string>,
+    defaultMime: 'application/pdf',
+    column: 'cv_url',
+    component: 'cv_review',
+    finalStatus: 'pending' as const,
+    notFoundMessage: 'No uploaded CV found for this account. Upload it first.',
+  },
 };
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -56,6 +71,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (action !== 'get-upload-url' && action !== 'complete') {
     return res.status(400).json({ error: "action must be 'get-upload-url' or 'complete'." });
   }
+  const kindKey = body?.kind === 'cv' ? 'cv' : 'video';
+  const kind = KIND_CONFIG[kindKey];
 
   const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 
@@ -71,58 +88,57 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!candidate) return res.status(404).json({ error: 'No candidate profile for this account.' });
 
   // Stable path per candidate (upsert on completion), same "own id, own
-  // file" convention as candidate-photos/company-logos — one intro video at
-  // a time, re-recording or re-uploading replaces it. Unlike photos/logos
-  // the extension isn't fixed — a recorded clip is always webm, but an
-  // uploaded file could be webm/mp4/mov, so it's re-derived here from the
-  // caller-supplied mimeType (never trusted for anything beyond picking an
-  // extension — 'complete' independently confirms a real file landed).
+  // file" convention as candidate-photos/company-logos — one file at a
+  // time, re-uploading replaces it. The extension isn't fixed for video
+  // (webm/mp4/mov depending on source), so it's re-derived here from the
+  // caller-supplied mimeType — never trusted for anything beyond picking
+  // an extension, 'complete' independently confirms a real file landed.
 
   if (action === 'get-upload-url') {
-    const mimeType = typeof body?.mimeType === 'string' ? body.mimeType : 'video/webm';
-    const ext = EXTENSION_BY_MIME[mimeType];
-    if (!ext) return res.status(400).json({ error: 'Unsupported video format. Use WebM, MP4, or MOV.' });
+    const mimeType = typeof body?.mimeType === 'string' ? body.mimeType : kind.defaultMime;
+    const ext = kind.extensionByMime[mimeType];
+    if (!ext) return res.status(400).json({ error: kindKey === 'video' ? 'Unsupported video format. Use WebM, MP4, or MOV.' : 'Unsupported file format. Use PDF.' });
     const path = `${candidate.id}.${ext}`;
 
     // Clean up a previous submission in a different format — otherwise
     // switching from (say) a recorded .webm to an uploaded .mp4 next time
     // would leave the old .webm behind as an orphaned file forever, since
-    // each extension is its own distinct storage path.
-    const { data: existing } = await admin.storage.from(BUCKET).list('', { search: candidate.id });
+    // each extension is its own distinct storage path. (CV only ever has
+    // one possible extension, so this is a no-op there.)
+    const { data: existing } = await admin.storage.from(kind.bucket).list('', { search: candidate.id });
     const stale = (existing ?? []).filter((f) => f.name.startsWith(`${candidate.id}.`) && f.name !== path);
     if (stale.length > 0) {
-      await admin.storage.from(BUCKET).remove(stale.map((f) => f.name));
+      await admin.storage.from(kind.bucket).remove(stale.map((f) => f.name));
     }
 
     const { data: signed, error: signErr } = await admin.storage
-      .from(BUCKET)
+      .from(kind.bucket)
       .createSignedUploadUrl(path, { upsert: true });
     if (signErr || !signed) return res.status(502).json({ error: signErr?.message ?? 'Could not prepare upload.' });
     return res.status(200).json({ signedUrl: signed.signedUrl, path: signed.path, token: signed.token });
   }
 
   // action === 'complete' — confirm the upload actually landed before
-  // marking anything "passed", so a client can't fake a verified step by
-  // just calling this without really uploading. Matched by prefix, not an
-  // exact filename, since the extension depends on which format was
-  // uploaded this time.
-  const { data: found, error: statErr } = await admin.storage.from(BUCKET).list('', { search: candidate.id });
+  // writing anything, so a client can't fake a submission by just calling
+  // this without really uploading. Matched by prefix, not an exact
+  // filename, since the extension depends on which format was uploaded.
+  const { data: found, error: statErr } = await admin.storage.from(kind.bucket).list('', { search: candidate.id });
   if (statErr) return res.status(502).json({ error: statErr.message });
   const uploaded = (found ?? []).find((f) => f.name.startsWith(`${candidate.id}.`));
   if (!uploaded) {
-    return res.status(400).json({ error: 'No uploaded video found for this account. Upload it first.' });
+    return res.status(400).json({ error: kind.notFoundMessage });
   }
 
-  const { data: pub } = admin.storage.from(BUCKET).getPublicUrl(uploaded.name);
+  const { data: pub } = admin.storage.from(kind.bucket).getPublicUrl(uploaded.name);
   const url = `${pub.publicUrl}?v=${Date.now()}`;
 
-  const { error: updateErr } = await admin.from('candidates').update({ video_intro_url: url }).eq('id', candidate.id);
+  const { error: updateErr } = await admin.from('candidates').update({ [kind.column]: url }).eq('id', candidate.id);
   if (updateErr) return res.status(500).json({ error: updateErr.message });
 
   const { error: vrErr } = await admin
     .from('verification_records')
     .upsert(
-      { candidate_id: candidate.id, component: 'video_intro', status: 'passed', updated_at: new Date().toISOString() },
+      { candidate_id: candidate.id, component: kind.component, status: kind.finalStatus, updated_at: new Date().toISOString() },
       { onConflict: 'candidate_id,component' }
     );
   if (vrErr) return res.status(500).json({ error: vrErr.message });

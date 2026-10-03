@@ -1,7 +1,10 @@
 import { Platform } from 'react-native';
 import { supabase } from './supabase';
 
-// Mirrors lib/uploadCandidateVideo.ts's signed-URL pattern exactly — a real
+// Shares api/video-intro.ts with the video-intro upload (kind: 'cv') —
+// Vercel's Hobby plan caps a deployment at 12 serverless functions, and
+// this project hit that cap with a standalone upload-candidate-cv.ts file
+// (confirmed live, 2026-10-04). Same signed-URL pattern either way: a real
 // CV PDF can be several MB, too large to route through a single Vercel
 // function body the way the base64-JSON photo/logo upload does.
 
@@ -14,10 +17,10 @@ export async function uploadCandidateCV(file: Blob): Promise<string> {
   const token = data.session?.access_token;
   if (!token) throw new Error('You need to be signed in to upload your CV.');
 
-  const urlRes = await fetch('/api/upload-candidate-cv', {
+  const urlRes = await fetch('/api/video-intro', {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action: 'get-upload-url' }),
+    body: JSON.stringify({ action: 'get-upload-url', kind: 'cv', mimeType: 'application/pdf' }),
   });
   const urlBody = await urlRes.json().catch(() => ({}));
   if (!urlRes.ok) throw new Error(urlBody?.error || 'Could not prepare the upload.');
@@ -28,10 +31,10 @@ export async function uploadCandidateCV(file: Blob): Promise<string> {
     .uploadToSignedUrl(path, uploadToken, file, { contentType: 'application/pdf' });
   if (uploadErr) throw new Error(uploadErr.message || 'Upload failed. Please try again.');
 
-  const completeRes = await fetch('/api/upload-candidate-cv', {
+  const completeRes = await fetch('/api/video-intro', {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action: 'complete' }),
+    body: JSON.stringify({ action: 'complete', kind: 'cv' }),
   });
   const completeBody = await completeRes.json().catch(() => ({}));
   if (!completeRes.ok) throw new Error(completeBody?.error || 'Could not finish saving your CV.');
