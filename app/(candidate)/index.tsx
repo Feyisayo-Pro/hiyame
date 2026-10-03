@@ -1,5 +1,5 @@
 import { useCallback, useState, useMemo, useEffect } from 'react';
-import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Image, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import { Text } from '@/components/Themed';
 import AppIcon, { AppIconName } from '@/components/AppIcon';
@@ -15,6 +15,7 @@ import { useTheme, useThemeToggle, ThemePalette, ELEVATION, DISPLAY_FONT_FAMILY 
 import { FULL_VERIFICATION_THRESHOLD, TOTAL_VERIFICATION_COMPONENTS } from '@/lib/verification';
 import { SkeletonRow } from '@/components/Skeleton';
 import PageHead from '@/components/PageHead';
+import { useAccountStatus } from '@/lib/useAccountStatus';
 
 const VERIFY_COMPONENTS: { key: string; label: string; icon: AppIconName }[] = [
   { key: 'identity', label: 'Identity Check', icon: 'id-card-outline' },
@@ -43,6 +44,7 @@ export default function CandidateHomeScreen() {
   const { mode, toggleTheme } = useThemeToggle();
   const st = useMemo(() => makeStyles(T), [T]);
   const { candidateId } = useAuth();
+  const candidateStatus = useAccountStatus('candidates', candidateId);
   const isDesktop = useIsDesktopWeb();
 
   const [stats, setStats] = useState<CandidateStats | null>(null);
@@ -108,7 +110,11 @@ export default function CandidateHomeScreen() {
             <View style={st.headerRow}>
               <View style={st.profileRow}>
                 <View style={st.avatar}>
-                  <AppIcon name="person" size={16} color={T.accent} />
+                  {stats?.photoUrl ? (
+                    <Image source={{ uri: stats.photoUrl }} style={st.avatarImage} resizeMode="cover" />
+                  ) : (
+                    <AppIcon name="person" size={16} color={T.accent} />
+                  )}
                 </View>
                 <View>
                   <Text style={st.greeting}>{greeting()}</Text>
@@ -138,6 +144,21 @@ export default function CandidateHomeScreen() {
               <Pressable onPress={load} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                 <Text style={st.errorBannerRetry}>Retry</Text>
               </Pressable>
+            </View>
+          )}
+
+          {(candidateStatus === 'pending' || candidateStatus === 'rejected') && (
+            <View style={candidateStatus === 'rejected' ? st.statusBannerDanger : st.statusBanner}>
+              <AppIcon
+                name={candidateStatus === 'rejected' ? 'close-circle-outline' : 'time-outline'}
+                size={16}
+                color={candidateStatus === 'rejected' ? T.danger : T.amber}
+              />
+              <Text style={candidateStatus === 'rejected' ? st.statusBannerDangerText : st.statusBannerText}>
+                {candidateStatus === 'rejected'
+                  ? "Your account wasn't approved. Contact Hiyame support if you think this is a mistake."
+                  : "Your account is pending review. Introductions and interviews unlock once it's approved."}
+              </Text>
             </View>
           )}
 
@@ -292,7 +313,8 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   header: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 16 },
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   profileRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: T.accentBg, alignItems: 'center', justifyContent: 'center' },
+  avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: T.accentBg, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  avatarImage: { width: '100%', height: '100%' },
   greeting: { fontSize: 15, color: T.textPrimary, fontWeight: '600' },
   userName: { fontSize: 22, fontWeight: '800', color: T.textPrimary, fontFamily: DISPLAY_FONT_FAMILY },
   headerActions: { flexDirection: 'row', gap: 8 },
@@ -301,6 +323,10 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   errorBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: 20, marginBottom: 20, backgroundColor: T.dangerBg, borderRadius: 14, borderWidth: 1, borderColor: T.danger + '30', paddingHorizontal: 16, paddingVertical: 12 },
   errorBannerText: { flex: 1, fontSize: 13, color: T.textPrimary, fontWeight: '600' },
   errorBannerRetry: { fontSize: 13, color: T.danger, fontWeight: '700' },
+  statusBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: 20, marginBottom: 20, backgroundColor: T.amberBg, borderRadius: 14, borderWidth: 1, borderColor: T.amber, paddingHorizontal: 16, paddingVertical: 12 },
+  statusBannerText: { flex: 1, fontSize: 13, color: T.textPrimary, fontWeight: '600', lineHeight: 18 },
+  statusBannerDanger: { flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: 20, marginBottom: 20, backgroundColor: T.dangerBg, borderRadius: 14, borderWidth: 1, borderColor: T.danger, paddingHorizontal: 16, paddingVertical: 12 },
+  statusBannerDangerText: { flex: 1, fontSize: 13, color: T.textPrimary, fontWeight: '600', lineHeight: 18 },
 
   scoreCard: { marginHorizontal: 20, marginBottom: 20, padding: 20, borderRadius: 16, backgroundColor: T.card, borderWidth: 1, borderColor: T.border, ...ELEVATION.card },
   scoreHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },

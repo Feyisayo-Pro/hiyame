@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/useAuth';
 import { initials } from '@/lib/format';
 import AnimatedPressable from '@/components/AnimatedPressable';
+import { isAdminEmail } from '@/lib/adminEmails';
 
 // Persistent left sidebar for desktop web. The tab layouts render this beside
 // the screen content (flexDirection: row) and hide the bottom tab bar at this
@@ -59,7 +60,8 @@ export default function SideNav({ role }: { role: 'candidate' | 'company' }) {
   const { mode, toggleTheme } = useThemeToggle();
   const pathname = usePathname();
   const isDesktop = useIsDesktopWeb();
-  const { candidateId, companyId } = useAuth();
+  const { candidateId, companyId, session } = useAuth();
+  const isAdmin = isAdminEmail(session?.user?.email);
 
   const [identity, setIdentity] = useState<{ name: string; photoUrl: string | null } | null>(null);
 
@@ -183,6 +185,18 @@ export default function SideNav({ role }: { role: 'candidate' | 'company' }) {
           <AppIcon name="log-out-outline" size={ICON.md} color={T.danger} />
           <Text style={[st.footText, { color: T.danger }]}>Sign out</Text>
         </AnimatedPressable>
+        {isAdmin && (
+          <AnimatedPressable
+            scaleTo={0.97}
+            style={({ pressed }: { pressed: boolean }) => [st.footRow, pressed && st.linkPressed]}
+            onPress={() => router.navigate('/admin' as any)}
+            accessibilityRole="link"
+            accessibilityLabel="Admin review"
+          >
+            <AppIcon name="shield-checkmark-outline" size={ICON.md} color={T.textSecondary} />
+            <Text style={st.footText}>Admin</Text>
+          </AnimatedPressable>
+        )}
       </View>
     </View>
   );

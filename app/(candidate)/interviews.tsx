@@ -12,6 +12,8 @@ import PageHead from '@/components/PageHead';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import { SkeletonRow } from '@/components/Skeleton';
 import { usePersonaGuard } from '@/lib/usePersonaGuard';
+import { useAccountStatus } from '@/lib/useAccountStatus';
+import PendingAccountBlock from '@/components/PendingAccountBlock';
 
 // Read-only: scheduling is a company action (app/(company)/interviews.tsx),
 // same "company drives, candidate responds" shape as introductions.
@@ -32,6 +34,7 @@ export default function CandidateInterviewsScreen() {
   const T = useTheme();
   const st = useMemo(() => makeStyles(T), [T]);
   const { candidateId } = useAuth();
+  const candidateStatus = useAccountStatus('candidates', candidateId);
   const [interviews, setInterviews] = useState<Interview[] | null>(null);
 
   const load = useCallback(async () => {
@@ -72,6 +75,9 @@ export default function CandidateInterviewsScreen() {
           <Text style={st.headerSub}>{upcoming.length} upcoming</Text>
         </View>
 
+        {candidateStatus === 'pending' || candidateStatus === 'rejected' ? (
+          <PendingAccountBlock status={candidateStatus} action="see scheduled interviews" />
+        ) : (
         <ScrollView contentContainerStyle={st.scroll} showsVerticalScrollIndicator={false}>
           <SwipeFadeContainer>
             {interviews === null ? (
@@ -125,6 +131,7 @@ export default function CandidateInterviewsScreen() {
             )}
           </SwipeFadeContainer>
         </ScrollView>
+        )}
       </ScreenFrame>
     </SafeAreaView>
   );

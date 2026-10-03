@@ -22,6 +22,9 @@ import { notifyIntroduction } from '@/lib/requestNotify';
 import { useIsDesktopWeb, useIsWideDesktopWeb } from '@/components/TopNav';
 import { formatNaira } from '@/lib/currency';
 import { SkeletonCard } from '@/components/Skeleton';
+import { useAuth } from '@/lib/useAuth';
+import { useAccountStatus } from '@/lib/useAccountStatus';
+import PendingAccountBlock from '@/components/PendingAccountBlock';
 
 // Response-window hours per tier (architecture doc §7.4).
 const RESPONSE_WINDOW_HOURS: Record<Tier, number> = {
@@ -62,6 +65,8 @@ export default function ShortlistScreen() {
   const isWideDesktop = useIsWideDesktopWeb();
   const gridItemStyle = isWideDesktop ? st.gridItemThird : isDesktop && st.gridItemHalf;
   const { roleId } = useLocalSearchParams<{ roleId: string }>();
+  const { companyId } = useAuth();
+  const companyStatus = useAccountStatus('companies', companyId);
 
   const [roleTitle, setRoleTitle] = useState<string | null>(null);
   const [roleTier, setRoleTier] = useState<Tier | null>(null);
@@ -232,7 +237,9 @@ export default function ShortlistScreen() {
         </Pressable>
       </View>
 
-      {cards === null ? (
+      {companyStatus === 'pending' || companyStatus === 'rejected' ? (
+        <PendingAccountBlock status={companyStatus} action="view your shortlist" />
+      ) : cards === null ? (
         <ScrollView contentContainerStyle={st.scroll}>
           <View style={st.grid}>
             <View style={[st.gridItem, gridItemStyle]}><SkeletonCard /></View>

@@ -13,6 +13,8 @@ import PageHead from '@/components/PageHead';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import { SkeletonRow } from '@/components/Skeleton';
 import { usePersonaGuard } from '@/lib/usePersonaGuard';
+import { useAccountStatus } from '@/lib/useAccountStatus';
+import PendingAccountBlock from '@/components/PendingAccountBlock';
 
 // Real interview scheduling — a company picks from candidates they already
 // have a real relationship with (any introduction), sets a time and a
@@ -53,6 +55,8 @@ export default function CompanyInterviewsScreen() {
   const T = useTheme();
   const st = useMemo(() => makeStyles(T), [T]);
   const { companyId } = useAuth();
+  const companyStatus = useAccountStatus('companies', companyId);
+  const companyBlocked = companyStatus === 'pending' || companyStatus === 'rejected';
 
   const [tab, setTab] = useState<Tab>('Upcoming');
   const [interviews, setInterviews] = useState<Interview[] | null>(null);
@@ -108,12 +112,18 @@ export default function CompanyInterviewsScreen() {
             <Text style={st.headerTitle}>Interviews</Text>
             <Text style={st.headerSub}>{filtered.length} {tab.toLowerCase()}</Text>
           </View>
-          <Pressable style={st.scheduleBtn} onPress={() => setShowSchedule(true)}>
-            <AppIcon name="add-circle-outline" size={18} color={T.textOnAccent} />
-            <Text style={st.scheduleBtnText}>Schedule</Text>
-          </Pressable>
+          {!companyBlocked && (
+            <Pressable style={st.scheduleBtn} onPress={() => setShowSchedule(true)}>
+              <AppIcon name="add-circle-outline" size={18} color={T.textOnAccent} />
+              <Text style={st.scheduleBtnText}>Schedule</Text>
+            </Pressable>
+          )}
         </View>
 
+        {companyBlocked ? (
+          <PendingAccountBlock status={companyStatus as 'pending' | 'rejected'} action="schedule interviews" />
+        ) : (
+        <>
         <View style={st.tabRow}>
           {TABS.map((t) => (
             <Pressable key={t} style={[st.tab, tab === t && st.tabActive]} onPress={() => setTab(t)}>
@@ -173,6 +183,8 @@ export default function CompanyInterviewsScreen() {
             )}
           </SwipeFadeContainer>
         </ScrollView>
+        </>
+        )}
       </ScreenFrame>
 
       <ScheduleInterviewModal

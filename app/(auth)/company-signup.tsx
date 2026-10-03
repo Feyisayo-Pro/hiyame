@@ -164,7 +164,6 @@ export default function CompanySignupScreen() {
 
   // Step 3 — Bio & Branding
   const [bio, setBio] = useState('');
-  const [logoUploaded, setLogoUploaded] = useState(false);
 
   // Step 4 — Tier Selection
   const [selectedTier, setSelectedTier] = useState<SubscriptionTier>('pilot');
@@ -549,37 +548,11 @@ export default function CompanySignupScreen() {
         </View>
       </View>
 
-      <View style={st.fieldWrap}>
-        <Text style={st.label}>Company Logo</Text>
-        <Pressable
-          onPress={() => setLogoUploaded(!logoUploaded)}
-          style={{
-            borderWidth: 2, borderStyle: 'dashed',
-            borderColor: logoUploaded ? T.emerald : T.border,
-            borderRadius: 16, paddingVertical: 28,
-            alignItems: 'center', justifyContent: 'center',
-            backgroundColor: logoUploaded ? T.emeraldBg : T.surface,
-          }}
-        >
-          {logoUploaded ? (
-            <>
-              <View style={{ width: 56, height: 56, borderRadius: 16, backgroundColor: T.emerald + '20', alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
-                <AppIcon name="checkmark-circle" size={28} color={T.emerald} />
-              </View>
-              <Text style={{ fontSize: 14, fontWeight: '700', color: T.emerald }}>Logo uploaded</Text>
-              <Text style={{ fontSize: 12, color: T.textSecondary, marginTop: 2 }}>Tap to remove</Text>
-            </>
-          ) : (
-            <>
-              <View style={{ width: 56, height: 56, borderRadius: 16, backgroundColor: T.accentBg, alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
-                <AppIcon name="cloud-upload-outline" size={28} color={T.accent} />
-              </View>
-              <Text style={{ fontSize: 14, fontWeight: '700', color: T.textPrimary }}>Upload Logo</Text>
-              <Text style={{ fontSize: 12, color: T.textSecondary, marginTop: 2 }}>PNG, JPG, or SVG (max 2MB)</Text>
-            </>
-          )}
-        </Pressable>
-        <Text style={[st.hintText, { marginTop: 6 }]}>Mock upload. In production this opens the device gallery.</Text>
+      <View style={st.infoCard}>
+        <AppIcon name="camera-outline" size={18} color={T.accent} />
+        <Text style={st.infoText}>
+          You can add your company logo once your account is created, from Settings.
+        </Text>
       </View>
     </>
   );
@@ -646,6 +619,13 @@ export default function CompanySignupScreen() {
           All plans include a 14-day free trial of premium features. You can change your plan anytime from Settings.
         </Text>
       </View>
+
+      <View style={st.infoCard}>
+        <AppIcon name="shield-checkmark-outline" size={18} color={T.accent} />
+        <Text style={st.infoText}>
+          Hiyame reviews every new company account before it can post roles — this usually takes under a day. You'll be notified as soon as yours is approved.
+        </Text>
+      </View>
     </>
   );
 
@@ -710,7 +690,7 @@ export default function CompanySignupScreen() {
                   disabled={loading}
                 >
                   {loading ? (
-                    <Text style={st.continueText}>Creating account...</Text>
+                    <Text style={st.continueText}>Creating your account…</Text>
                   ) : step < TOTAL_STEPS - 1 ? (
                     <>
                       <Text style={st.continueText}>Continue</Text>
@@ -718,7 +698,7 @@ export default function CompanySignupScreen() {
                     </>
                   ) : (
                     <>
-                      <Text style={st.continueText}>Launch Dashboard</Text>
+                      <Text style={st.continueText}>Create Account</Text>
                       <AppIcon name="rocket-outline" size={18} color={T.textOnAccent} />
                     </>
                   )}

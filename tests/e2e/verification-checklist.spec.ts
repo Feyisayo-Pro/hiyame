@@ -1,14 +1,21 @@
-// Covers the three verification steps that were pure decoration before this
-// milestone — see app/(candidate)/verification.tsx's own history: nothing
-// in the app ever wrote to verification_records until these three write
-// paths existed (api/video-intro.ts, api/skills-assessment.ts,
-// api/employer-review.ts). Identity Check is out of scope everywhere in
-// this codebase right now (lib/verification.ts documents Smile ID as
-// paused pending a real KYC vendor account), so it isn't covered here.
+// Covers verification steps that were pure decoration before this milestone
+// — see app/(candidate)/verification.tsx's own history: nothing in the app
+// ever wrote to verification_records until real write paths existed
+// (api/video-intro.ts, api/skills-assessment.ts, api/employer-review.ts).
+// Identity Check is out of scope everywhere in this codebase right now
+// (lib/verification.ts documents Smile ID as paused pending a real KYC
+// vendor account), so it isn't covered here.
 //
-// All three assert against the real database via a service-role client,
-// not just UI text — a toast or a "Verified" pill proves the UI updated,
-// not that verification_records actually changed underneath it.
+// Skills assessment is no longer self-serve/auto-graded (2026-10-03) —
+// Hiyame's internal team runs it, and an admin marks the outcome from
+// app/admin.tsx (api/admin-review.ts). The candidate side of this test
+// covers the request landing in verification_records as 'pending'; the
+// admin side covers that an approval flips it to 'passed' and the step
+// shows Verified back on the candidate's own screen.
+//
+// All assert against the real database via a service-role client, not just
+// UI text — a toast or a "Verified" pill proves the UI updated, not that
+// verification_records actually changed underneath it.
 import { test, expect } from '@playwright/test';
 import { createClient } from '@supabase/supabase-js';
 import { loadTestAccounts, signIn } from './helpers';
@@ -18,51 +25,43 @@ function adminClient() {
   return createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 }
 
-// Correct-answer option text for lib/skillsAssessmentBank.ts's 12 questions,
-// in order — this suite deliberately answers every question, since scoring
-// itself is a server-side concern already covered by the fact this route
-// exists at all; what needs an E2E check is that a real attempt reaches the
-// database with the right outcome.
-const CORRECT_ANSWERS = [
-  "Tell your manager what's already committed today and ask how they'd like it prioritized",
-  'Ignore the tone, take a moment, and respond to the substance of the feedback',
-  'Flag it to the stakeholder as soon as you know, with a realistic new estimate',
-  "Raise your concerns clearly once, then support the team's direction once a decision is made",
-  "Say you're not certain, and commit to a specific time you'll follow up with an answer",
-  'Proactively flag the mistake and the fix to whoever received the work',
-  'Suggest a specific change — an agenda, a time limit, or a clearer goal — to whoever runs it',
-  'Accept, and proactively flag where you might need support or more time given the gap in expertise',
-  'Surface the conflict to both parties so they can align, rather than deciding for them',
-  "Look for a way to add value — reviewing your own work, helping a teammate, or getting ahead on what's next",
-  "State your best interpretation, proceed on that basis, and confirm it as soon as they're available",
-  'Raise the pattern directly and propose a way to lock scope for the next phase',
-];
-
-test('candidate can pass the skills assessment', async ({ page }) => {
+test('candidate requests a skills assessment, admin approval marks it passed', async ({ page }) => {
   const { candidate } = loadTestAccounts();
+  const admin = adminClient();
+
+  // Known starting state — a retake-safe test, not reliant on a clean DB.
+  await admin.from('verification_records').delete().eq('candidate_id', candidate.candidateId).eq('component', 'skills_assessment');
+
   await signIn(page, 'candidate', candidate.email, candidate.password);
   await page.goto('/(candidate)/verification', { waitUntil: 'networkidle' });
 
-  await page.locator('text=Begin Assessment').click();
-  await page.locator('text="Start"').click();
+  await page.locator('text=Request Assessment').click();
+  await expect(page.locator('text=Request sent')).toBeVisible({ timeout: 10_000 });
+  await expect(page.locator('text=Awaiting review from the Hiyame team')).toBeVisible({ timeout: 10_000 });
 
-  for (let i = 0; i < CORRECT_ANSWERS.length; i++) {
-    await page.locator(`text=${CORRECT_ANSWERS[i]}`).click();
-    const isLast = i === CORRECT_ANSWERS.length - 1;
-    await page.locator(isLast ? 'text="Submit"' : 'text="Next"').click();
-  }
-
-  await expect(page.locator("text=You've passed the skills assessment.")).toBeVisible({ timeout: 15_000 });
-
-  const admin = adminClient();
-  const { data } = await admin
+  const { data: afterRequest } = await admin
     .from('verification_records')
-    .select('status, provider_ref')
+    .select('status')
     .eq('candidate_id', candidate.candidateId)
     .eq('component', 'skills_assessment')
     .maybeSingle();
-  expect(data?.status).toBe('passed');
-  expect(data?.provider_ref).toBe('12/12');
+  expect(afterRequest?.status).toBe('pending');
+
+  const { error: approveErr } = await admin
+    .from('verification_records')
+    .update({ status: 'passed' })
+    .eq('candidate_id', candidate.candidateId)
+    .eq('component', 'skills_assessment');
+  expect(approveErr).toBeNull();
+
+  // Both the "awaiting review" state and the request button are unique to
+  // an un-passed assessment step — their absence after reload is what
+  // "Skills Assessment" flipping to Verified actually looks like in this UI
+  // (every step's own Verified/Pending pill text repeats across all 4
+  // steps, so it can't disambiguate on its own).
+  await page.reload({ waitUntil: 'networkidle' });
+  await expect(page.locator('text=Awaiting review from the Hiyame team')).toHaveCount(0);
+  await expect(page.locator('text=Request Assessment')).toHaveCount(0);
 });
 
 test('candidate can record and submit a video introduction', async ({ page }) => {

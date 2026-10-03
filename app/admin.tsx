@@ -31,6 +31,14 @@ interface PendingCandidate {
   experience_level: string | null;
   created_at: string;
 }
+interface AssessmentRequest {
+  id: string;
+  fullName: string;
+  email: string | null;
+  skillTags: string[] | null;
+  experienceLevel: string | null;
+  requestedAt: string;
+}
 
 export default function AdminReviewScreen() {
   const T = useTheme();
@@ -40,6 +48,7 @@ export default function AdminReviewScreen() {
   const [forbidden, setForbidden] = useState(false);
   const [companies, setCompanies] = useState<PendingCompany[]>([]);
   const [candidates, setCandidates] = useState<PendingCandidate[]>([]);
+  const [assessmentRequests, setAssessmentRequests] = useState<AssessmentRequest[]>([]);
   const [busyId, setBusyId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -51,12 +60,13 @@ export default function AdminReviewScreen() {
     const payload = await resp.json().catch(() => null);
     setCompanies(payload?.companies ?? []);
     setCandidates(payload?.candidates ?? []);
+    setAssessmentRequests(payload?.assessmentRequests ?? []);
     setLoading(false);
   }, []);
 
   useEffect(() => { load(); }, [load]);
 
-  const decide = async (type: 'company' | 'candidate', id: string, decision: 'approved' | 'rejected') => {
+  const decide = async (type: 'company' | 'candidate' | 'assessment', id: string, decision: 'approved' | 'rejected') => {
     setBusyId(id);
     const { data } = await supabase.auth.getSession();
     const token = data.session?.access_token;
@@ -71,7 +81,7 @@ export default function AdminReviewScreen() {
       notify('Could not update', payload?.error ?? 'Something went wrong.');
       return;
     }
-    notify(decision === 'approved' ? 'Approved' : 'Rejected', 'The account status has been updated.');
+    notify(decision === 'approved' ? 'Approved' : 'Rejected', type === 'assessment' ? 'The skills assessment status has been updated.' : 'The account status has been updated.');
     await load();
   };
 
@@ -100,7 +110,7 @@ export default function AdminReviewScreen() {
       <PageHead title="Admin Review" />
       <ScrollView contentContainerStyle={st.scroll} showsVerticalScrollIndicator={false}>
         <Text style={st.headerTitle}>Account Review</Text>
-        <Text style={st.headerSub}>Pending companies and candidates — approve to unlock their dashboard.</Text>
+        <Text style={st.headerSub}>Pending companies, candidates, and skills assessment requests.</Text>
 
         <Text style={st.sectionTitle}>Companies ({companies.length})</Text>
         {companies.length === 0 ? (
@@ -144,6 +154,31 @@ export default function AdminReviewScreen() {
                 <Pressable style={[st.actionBtn, st.approveBtn]} onPress={() => decide('candidate', c.id, 'approved')} disabled={busyId === c.id}>
                   <AppIcon name="checkmark" size={16} color={T.emerald} />
                   <Text style={st.approveText}>Approve</Text>
+                </Pressable>
+              </View>
+            </View>
+          ))
+        )}
+
+        <Text style={st.sectionTitle}>Skills Assessment Requests ({assessmentRequests.length})</Text>
+        {assessmentRequests.length === 0 ? (
+          <Text style={st.emptyText}>No assessment requests waiting on review.</Text>
+        ) : (
+          assessmentRequests.map((c) => (
+            <View key={c.id} style={st.card}>
+              <View style={{ flex: 1 }}>
+                <Text style={st.cardTitle}>{c.fullName}</Text>
+                <Text style={st.cardSub} numberOfLines={1}>
+                  {[c.experienceLevel, (c.skillTags ?? []).slice(0, 3).join(', ')].filter(Boolean).join(' · ') || c.email || 'No profile details yet'}
+                </Text>
+              </View>
+              <View style={st.actions}>
+                <Pressable style={[st.actionBtn, st.rejectBtn]} onPress={() => decide('assessment', c.id, 'rejected')} disabled={busyId === c.id}>
+                  <AppIcon name="close" size={16} color={T.danger} />
+                </Pressable>
+                <Pressable style={[st.actionBtn, st.approveBtn]} onPress={() => decide('assessment', c.id, 'approved')} disabled={busyId === c.id}>
+                  <AppIcon name="checkmark" size={16} color={T.emerald} />
+                  <Text style={st.approveText}>Passed</Text>
                 </Pressable>
               </View>
             </View>

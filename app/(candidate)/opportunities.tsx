@@ -17,6 +17,8 @@ import PageHead from '@/components/PageHead';
 import AnimatedPressable from '@/components/AnimatedPressable';
 import { notifyIntroduction } from '@/lib/requestNotify';
 import { useIsDesktopWeb, useIsWideDesktopWeb } from '@/components/TopNav';
+import { useAccountStatus } from '@/lib/useAccountStatus';
+import PendingAccountBlock from '@/components/PendingAccountBlock';
 
 // Replaces the old Tinder-style swipe deck over mock roles. Under the real
 // architecture, candidates don't browse and swipe an open pool — a company's
@@ -65,6 +67,7 @@ export default function OpportunitiesScreen() {
   const T = useTheme();
   const st = useMemo(() => makeStyles(T), [T]);
   const { candidateId } = useAuth();
+  const candidateStatus = useAccountStatus('candidates', candidateId);
   const isDesktop = useIsDesktopWeb();
   const isWideDesktop = useIsWideDesktopWeb();
   const gridItemStyle = isWideDesktop ? st.gridItemThird : isDesktop && st.gridItemHalf;
@@ -173,7 +176,9 @@ export default function OpportunitiesScreen() {
         <Text style={st.headerSub}>Companies interested in working with you</Text>
       </View>
 
-      {pending === null ? (
+      {candidateStatus === 'pending' || candidateStatus === 'rejected' ? (
+        <PendingAccountBlock status={candidateStatus} action="see introductions from companies" />
+      ) : pending === null ? (
         <View style={st.centerFill}>
           <ActivityIndicator color={T.accent} />
         </View>

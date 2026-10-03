@@ -383,7 +383,14 @@ export default function CandidateSignupScreen() {
             <View style={st.infoCard}>
               <AppIcon name="shield-checkmark-outline" size={18} color={T.accent} />
               <Text style={st.infoText}>
-                After setting up your profile, you'll be taken to the Verification Center to complete your 4-step verification (Identity, Video Intro, Skills Assessment, Employer Review).
+                After setting up your profile, you'll be taken to the Verification Center to complete 4 steps: Identity Check, Video Introduction, Skills Assessment, and Employer Review.
+              </Text>
+            </View>
+
+            <View style={st.infoCard}>
+              <AppIcon name="time-outline" size={18} color={T.accent} />
+              <Text style={st.infoText}>
+                Hiyame reviews every new candidate account before matching begins — this usually takes under a day.
               </Text>
             </View>
 
@@ -405,7 +412,7 @@ export default function CandidateSignupScreen() {
               disabled={loading}
             >
               {loading ? (
-                <Text style={st.submitText}>Saving profile...</Text>
+                <Text style={st.submitText}>Creating your profile…</Text>
               ) : (
                 <>
                   <Text style={st.submitText}>Continue to Verification</Text>

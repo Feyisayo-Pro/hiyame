@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -8,6 +8,7 @@ import {
   Modal,
   Switch,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -26,6 +27,7 @@ import ScreenFrame from '@/components/ScreenFrame';
 import { Text } from '@/components/Themed';
 import { SkeletonRow } from '@/components/Skeleton';
 import PageHead from '@/components/PageHead';
+import { useAccountStatus } from '@/lib/useAccountStatus';
 
 // ── Helpers ──
 
@@ -178,8 +180,22 @@ export default function CompanyDashboardScreen() {
   const styles = useMemo(() => makeStyles(T), [T]);
   const router = useRouter();
   const { companyId } = useAuth();
+  const companyStatus = useAccountStatus('companies', companyId);
   const { tier, config, trialDaysLeft } = useSubscription();
   const [showConfig, setShowConfig] = useState(false);
+  // logo_url is on the same not-always-applied migration TopNav.tsx already
+  // guards for (20260911140000_notification_prefs.sql) — fetched separately
+  // and swallowed on error so a not-yet-migrated database still renders the
+  // rest of this dashboard instead of failing the whole stats query.
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!companyId) return;
+    let alive = true;
+    supabase.from('companies').select('logo_url').eq('id', companyId).maybeSingle().then(({ data, error }) => {
+      if (alive && !error && data?.logo_url) setLogoUrl(data.logo_url);
+    });
+    return () => { alive = false; };
+  }, [companyId]);
   // Real cache (tabbing Home -> Roles -> Home within 30s reuses this instead
   // of refetching) + a real isError flag — before this, a failed fetch left
   // `stats` at null forever with the metric cards silently showing 0s
@@ -209,9 +225,18 @@ export default function CompanyDashboardScreen() {
         <SwipeFadeContainer direction="left" triggerKey="header">
           {/* Header */}
           <View style={styles.header}>
-            <View style={styles.headerTextBlock}>
-              <Text style={styles.greeting}>{greeting},</Text>
-              <Text style={styles.companyName}>{stats?.companyName ?? '…'}</Text>
+            <View style={styles.headerIdentity}>
+              <View style={styles.logoWrap}>
+                {logoUrl ? (
+                  <Image source={{ uri: logoUrl }} style={styles.logoImage} resizeMode="cover" />
+                ) : (
+                  <Text style={styles.logoInitials}>{initials(stats?.companyName || 'Co')}</Text>
+                )}
+              </View>
+              <View style={styles.headerTextBlock}>
+                <Text style={styles.greeting}>{greeting},</Text>
+                <Text style={styles.companyName}>{stats?.companyName ?? '…'}</Text>
+              </View>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
               <View style={styles.planBadge}>
@@ -236,6 +261,21 @@ export default function CompanyDashboardScreen() {
             <Pressable onPress={() => refetchStats()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
               <Text style={styles.statsErrorRetry}>Retry</Text>
             </Pressable>
+          </View>
+        )}
+
+        {(companyStatus === 'pending' || companyStatus === 'rejected') && (
+          <View style={companyStatus === 'rejected' ? styles.statusBannerDanger : styles.statusBanner}>
+            <AppIcon
+              name={companyStatus === 'rejected' ? 'close-circle-outline' : 'time-outline'}
+              size={16}
+              color={companyStatus === 'rejected' ? T.danger : T.amber}
+            />
+            <Text style={companyStatus === 'rejected' ? styles.statusBannerDangerText : styles.statusBannerText}>
+              {companyStatus === 'rejected'
+                ? "Your account wasn't approved. Contact Hiyame support if you think this is a mistake."
+                : "Your account is pending review. Posting roles, shortlists, and interviews unlock once it's approved."}
+            </Text>
           </View>
         )}
 
@@ -425,6 +465,14 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   scroll: { flex: 1, backgroundColor: T.bg },
   scrollContent: { paddingHorizontal: 20, paddingTop: 8 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 },
+  headerIdentity: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
+  logoWrap: {
+    width: 44, height: 44, borderRadius: 14, backgroundColor: T.accentBg,
+    borderWidth: 1, borderColor: T.accentBg20,
+    alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
+  },
+  logoImage: { width: '100%', height: '100%' },
+  logoInitials: { fontSize: 15, fontWeight: '800', color: T.accentDim },
   headerTextBlock: { flex: 1 },
   greeting: { fontSize: 15, color: T.textPrimary, fontWeight: '600' },
   companyName: { fontSize: 22, color: T.textPrimary, fontWeight: '800', marginTop: 2, fontFamily: DISPLAY_FONT_FAMILY },
@@ -442,6 +490,10 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   statsErrorBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: T.dangerBg, borderRadius: 14, borderWidth: 1, borderColor: T.danger + '30', paddingHorizontal: 16, paddingVertical: 12, marginBottom: 20 },
   statsErrorText: { flex: 1, fontSize: 13, color: T.textPrimary, fontWeight: '600' },
   statsErrorRetry: { fontSize: 13, color: T.danger, fontWeight: '700' },
+  statusBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: T.amberBg, borderRadius: 14, borderWidth: 1, borderColor: T.amber, paddingHorizontal: 16, paddingVertical: 12, marginBottom: 20 },
+  statusBannerText: { flex: 1, fontSize: 13, color: T.textPrimary, fontWeight: '600', lineHeight: 18 },
+  statusBannerDanger: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: T.dangerBg, borderRadius: 14, borderWidth: 1, borderColor: T.danger, paddingHorizontal: 16, paddingVertical: 12, marginBottom: 20 },
+  statusBannerDangerText: { flex: 1, fontSize: 13, color: T.textPrimary, fontWeight: '600', lineHeight: 18 },
   metricsGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginBottom: 24 },
   metricCard: { width: '48%', backgroundColor: T.card, borderRadius: 16, borderWidth: 1, borderColor: T.border, padding: 16, marginBottom: 12 },
   metricIconWrap: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },

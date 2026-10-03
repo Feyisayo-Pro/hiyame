@@ -132,6 +132,7 @@ export async function getCompanyFeed(companyId: string): Promise<FeedItem[]> {
 // ── candidate ──────────────────────────────────────────────────────────
 export interface CandidateStats {
   fullName: string;
+  photoUrl: string | null;
   introsPending: number;
   introsAccepted: number;
   introsTotal: number;
@@ -144,7 +145,7 @@ const PROFILE_FIELDS = ['full_name', 'phone', 'location', 'experience_level', 'r
 
 export async function getCandidateStats(candidateId: string): Promise<CandidateStats> {
   const [{ data: cand }, { data: intros }, { data: vrecs }] = await Promise.all([
-    supabase.from('candidates').select('full_name, phone, location, experience_level, remote_preference, availability_date, skill_tags, tier_preferences').eq('id', candidateId).maybeSingle(),
+    supabase.from('candidates').select('full_name, photo_url, phone, location, experience_level, remote_preference, availability_date, skill_tags, tier_preferences').eq('id', candidateId).maybeSingle(),
     supabase.from('introductions').select('id, role_id, status, sent_at, responded_at').eq('candidate_id', candidateId).order('sent_at', { ascending: false }),
     supabase.from('verification_records').select('component, status').eq('candidate_id', candidateId),
   ]);
@@ -190,6 +191,7 @@ export async function getCandidateStats(candidateId: string): Promise<CandidateS
 
   return {
     fullName: (cand as any)?.full_name ?? 'there',
+    photoUrl: (cand as any)?.photo_url ?? null,
     introsPending: introRows.filter((i) => i.status === 'sent').length,
     introsAccepted: introRows.filter((i) => i.status === 'accepted').length,
     introsTotal: introRows.length,

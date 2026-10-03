@@ -12,7 +12,6 @@ import ScreenFrame from '@/components/ScreenFrame';
 import PageHead from '@/components/PageHead';
 import SmileIdVerificationModal from '@/components/SmileIdVerificationModal';
 import VideoIntroRecorderModal from '@/components/VideoIntroRecorderModal';
-import SkillsAssessmentModal from '@/components/SkillsAssessmentModal';
 import { notify } from '@/lib/notify';
 import { useTheme, ThemePalette, DISPLAY_FONT_FAMILY } from '@/lib/theme';
 import { FULL_VERIFICATION_THRESHOLD, TOTAL_VERIFICATION_COMPONENTS } from '@/lib/verification';
@@ -60,9 +59,9 @@ const STEPS: VerificationStep[] = [
   {
     key: 'assessment',
     title: 'Skills Assessment',
-    subtitle: 'Domain-Specific Evaluation',
+    subtitle: 'Reviewed by the Hiyame Team',
     icon: 'shield-checkmark-outline',
-    description: 'Complete a timed skills assessment in your primary domain. Results are scored and displayed as a verified badge on your profile.',
+    description: "Request a skills assessment in your primary domain. Hiyame's internal team runs it directly with you and marks it as a verified badge on your profile once complete.",
   },
   {
     key: 'review',
@@ -86,13 +85,19 @@ export default function VerificationScreen() {
   const { candidateId } = useAuth();
   const [showSmileId, setShowSmileId] = useState(false);
   const [showVideoModal, setShowVideoModal] = useState(false);
-  const [showAssessmentModal, setShowAssessmentModal] = useState(false);
   const [passedComponents, setPassedComponents] = useState<Set<string>>(new Set());
+  // Skills assessment is no longer self-serve/auto-graded (2026-10-03) —
+  // Hiyame's internal team runs it. A candidate request just upserts this
+  // component's row to 'pending' (api/skills-assessment.ts); an admin flips
+  // it to passed/failed once the team has actually assessed them.
+  const [assessmentPending, setAssessmentPending] = useState(false);
+  const [requestingAssessment, setRequestingAssessment] = useState(false);
 
   const refetchRecords = useCallback(() => {
     if (!candidateId) return;
     supabase.from('verification_records').select('component, status').eq('candidate_id', candidateId).then(({ data }) => {
       setPassedComponents(new Set((data ?? []).filter((v) => v.status === 'passed').map((v) => v.component)));
+      setAssessmentPending((data ?? []).some((v) => v.component === 'skills_assessment' && v.status === 'pending'));
     });
   }, [candidateId]);
 
@@ -127,17 +132,38 @@ export default function VerificationScreen() {
     refetchReviewRequest();
   }, [refetchReviewRequest]);
 
+  const requestAssessment = useCallback(async () => {
+    setRequestingAssessment(true);
+    try {
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (!token) throw new Error('You need to be signed in.');
+      const res = await fetch('/api/skills-assessment', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body?.error || 'Could not send the request.');
+      notify('Request sent', "Hiyame's team will reach out to schedule your skills assessment.");
+      refetchRecords();
+    } catch (e: any) {
+      notify('Could not send request', e?.message || 'Something went wrong. Please try again.');
+    } finally {
+      setRequestingAssessment(false);
+    }
+  }, [refetchRecords]);
+
   const toggleStep = useCallback((key: string) => {
     if (key === 'identity') {
       setShowSmileId(true);
     } else if (key === 'video') {
       setShowVideoModal(true);
     } else if (key === 'assessment') {
-      setShowAssessmentModal(true);
+      requestAssessment();
     } else if (key === 'review') {
       setShowReviewForm(true);
     }
-  }, []);
+  }, [requestAssessment]);
 
   const sendReviewRequest = useCallback(async () => {
     if (!employerName.trim()) {
@@ -304,7 +330,8 @@ export default function VerificationScreen() {
           <Text style={st.sectionCount}>{completedCount} of 4 complete</Text>
         </View>
 
-        {/* Step Cards */}
+        {/* Step Cards — 2 per row, per the demo-prep design pass */}
+        <View style={st.stepsGrid}>
         {STEPS.map((step, index) => {
           const isDone = allCompleted[step.key];
           return (
@@ -383,24 +410,36 @@ export default function VerificationScreen() {
                     Awaiting response from {pendingReviewRequest.employer_email}
                   </Text>
                 </View>
+              ) : step.key === 'assessment' && !isDone && assessmentPending ? (
+                <View style={[st.stepButton, st.stepButtonDone]}>
+                  <AppIcon name="time-outline" size={18} color={T.textMuted} />
+                  <Text style={[st.stepButtonText, st.stepButtonTextDone]} numberOfLines={1}>
+                    Awaiting review from the Hiyame team
+                  </Text>
+                </View>
               ) : isDone && (step.key === 'assessment' || step.key === 'review') ? null : (
                 <TouchableOpacity
                   style={[st.stepButton, isDone && st.stepButtonDone]}
                   onPress={() => toggleStep(step.key)}
                   activeOpacity={0.7}
+                  disabled={step.key === 'assessment' && requestingAssessment}
                 >
-                  <AppIcon
-                    name={isDone ? 'refresh' : 'arrow-forward-circle-outline'}
-                    size={18}
-                    color={isDone ? T.textMuted : T.textOnAccent}
-                  />
+                  {step.key === 'assessment' && requestingAssessment ? (
+                    <ActivityIndicator color={T.textOnAccent} size="small" />
+                  ) : (
+                    <AppIcon
+                      name={isDone ? 'refresh' : 'arrow-forward-circle-outline'}
+                      size={18}
+                      color={isDone ? T.textMuted : T.textOnAccent}
+                    />
+                  )}
                   <Text style={[st.stepButtonText, isDone && st.stepButtonTextDone]}>
                     {step.key === 'identity'
                       ? (isDone ? 'Re-verify' : 'Begin Verification')
                       : step.key === 'video'
                       ? (isDone ? 'Re-record' : 'Record Introduction')
                       : step.key === 'assessment'
-                      ? 'Begin Assessment'
+                      ? 'Request Assessment'
                       : 'Request a Review'}
                   </Text>
                 </TouchableOpacity>
@@ -408,6 +447,7 @@ export default function VerificationScreen() {
             </View>
           );
         })}
+        </View>
 
         {/* Bottom Spacer */}
         <View style={{ height: 32 }} />
@@ -426,12 +466,6 @@ export default function VerificationScreen() {
         visible={showVideoModal}
         onClose={() => setShowVideoModal(false)}
         onSubmitted={() => refetchRecords()}
-      />
-
-      <SkillsAssessmentModal
-        visible={showAssessmentModal}
-        onClose={() => setShowAssessmentModal(false)}
-        onPassed={() => refetchRecords()}
       />
     </SafeAreaView>
   );
@@ -521,9 +555,11 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   sectionTitle: { fontSize: 18, fontWeight: '800', color: T.textPrimary },
   sectionCount: { fontSize: 13, color: T.textMuted, fontWeight: '600' },
 
-  /* Step Card */
+  /* Step Cards grid — two per row on wide-enough screens, wrapping to one
+     per row below ~560px (two 260px cards + the row gap). */
+  stepsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 14, paddingHorizontal: 20, marginBottom: 14 },
   stepCard: {
-    marginHorizontal: 20, marginBottom: 14,
+    flexGrow: 1, flexBasis: 260, minWidth: 260,
     backgroundColor: T.card, borderRadius: 16,
     padding: 18, borderWidth: 1, borderColor: T.border,
   },
