@@ -83,6 +83,15 @@ export default function AdminTabLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="crm"
+        options={{
+          title: 'CRM Sync',
+          tabBarIcon: ({ color }) => (
+            <TabIcon name="sync-circle" label="CRM" color={color} />
+          ),
+        }}
+      />
       </Tabs>
       </View>
     </View>

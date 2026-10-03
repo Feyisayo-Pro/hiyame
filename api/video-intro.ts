@@ -29,6 +29,16 @@ const SUPABASE_URL = process.env.SUPABASE_URL ?? process.env.EXPO_PUBLIC_SUPABAS
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const BUCKET = 'candidate-videos';
 
+// Matches the bucket's own allowedMimeTypes (scripts/create-video-bucket.ts)
+// — 'video/quicktime' (.mov) added for uploaded files since that's the
+// default export format on iPhone, the most likely upload source; the
+// in-app recorder only ever produces webm, never mov.
+const EXTENSION_BY_MIME: Record<string, string> = {
+  'video/webm': 'webm',
+  'video/mp4': 'mp4',
+  'video/quicktime': 'mov',
+};
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
@@ -61,12 +71,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!candidate) return res.status(404).json({ error: 'No candidate profile for this account.' });
 
   // Stable path per candidate (upsert on completion), same "own id, own
-  // file" convention as candidate-photos/company-logos — one intro video
-  // at a time, re-recording overwrites it. Re-derived here, never trusted
-  // from the request body.
-  const path = `${candidate.id}.webm`;
+  // file" convention as candidate-photos/company-logos — one intro video at
+  // a time, re-recording or re-uploading replaces it. Unlike photos/logos
+  // the extension isn't fixed — a recorded clip is always webm, but an
+  // uploaded file could be webm/mp4/mov, so it's re-derived here from the
+  // caller-supplied mimeType (never trusted for anything beyond picking an
+  // extension — 'complete' independently confirms a real file landed).
 
   if (action === 'get-upload-url') {
+    const mimeType = typeof body?.mimeType === 'string' ? body.mimeType : 'video/webm';
+    const ext = EXTENSION_BY_MIME[mimeType];
+    if (!ext) return res.status(400).json({ error: 'Unsupported video format. Use WebM, MP4, or MOV.' });
+    const path = `${candidate.id}.${ext}`;
+
+    // Clean up a previous submission in a different format — otherwise
+    // switching from (say) a recorded .webm to an uploaded .mp4 next time
+    // would leave the old .webm behind as an orphaned file forever, since
+    // each extension is its own distinct storage path.
+    const { data: existing } = await admin.storage.from(BUCKET).list('', { search: candidate.id });
+    const stale = (existing ?? []).filter((f) => f.name.startsWith(`${candidate.id}.`) && f.name !== path);
+    if (stale.length > 0) {
+      await admin.storage.from(BUCKET).remove(stale.map((f) => f.name));
+    }
+
     const { data: signed, error: signErr } = await admin.storage
       .from(BUCKET)
       .createSignedUploadUrl(path, { upsert: true });
@@ -76,14 +103,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // action === 'complete' — confirm the upload actually landed before
   // marking anything "passed", so a client can't fake a verified step by
-  // just calling this without really uploading.
-  const { data: exists, error: statErr } = await admin.storage.from(BUCKET).list('', { search: path });
+  // just calling this without really uploading. Matched by prefix, not an
+  // exact filename, since the extension depends on which format was
+  // uploaded this time.
+  const { data: found, error: statErr } = await admin.storage.from(BUCKET).list('', { search: candidate.id });
   if (statErr) return res.status(502).json({ error: statErr.message });
-  if (!exists?.some((f) => f.name === path)) {
+  const uploaded = (found ?? []).find((f) => f.name.startsWith(`${candidate.id}.`));
+  if (!uploaded) {
     return res.status(400).json({ error: 'No uploaded video found for this account. Upload it first.' });
   }
 
-  const { data: pub } = admin.storage.from(BUCKET).getPublicUrl(path);
+  const { data: pub } = admin.storage.from(BUCKET).getPublicUrl(uploaded.name);
   const url = `${pub.publicUrl}?v=${Date.now()}`;
 
   const { error: updateErr } = await admin.from('candidates').update({ video_intro_url: url }).eq('id', candidate.id);

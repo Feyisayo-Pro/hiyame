@@ -11,7 +11,12 @@ import { supabase } from './supabase';
 // photo upload does: this asks for a short-lived signed Storage upload URL,
 // uploads the recorded Blob straight to Storage with it (bytes never pass
 // through a Vercel function), then tells the server to finish the write.
-export async function uploadCandidateVideo(blob: Blob): Promise<string> {
+// mimeType defaults to the recorder's own output ('video/webm' — see
+// VideoIntroRecorderModal's MediaRecorder call); a candidate uploading an
+// existing file instead passes that File's real `.type` so the stored
+// object's extension/content-type match what was actually uploaded, not a
+// hardcoded guess.
+export async function uploadCandidateVideo(blob: Blob, mimeType: string = 'video/webm'): Promise<string> {
   if (Platform.OS !== 'web') {
     throw new Error('Video introduction recording is only available on the web app right now.');
   }
@@ -23,7 +28,7 @@ export async function uploadCandidateVideo(blob: Blob): Promise<string> {
   const urlRes = await fetch('/api/video-intro', {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action: 'get-upload-url' }),
+    body: JSON.stringify({ action: 'get-upload-url', mimeType }),
   });
   const urlBody = await urlRes.json().catch(() => ({}));
   if (!urlRes.ok) throw new Error(urlBody?.error || 'Could not prepare the upload.');
@@ -31,7 +36,7 @@ export async function uploadCandidateVideo(blob: Blob): Promise<string> {
   const { path, token: uploadToken } = urlBody as { path: string; token: string };
   const { error: uploadErr } = await supabase.storage
     .from('candidate-videos')
-    .uploadToSignedUrl(path, uploadToken, blob, { contentType: 'video/webm' });
+    .uploadToSignedUrl(path, uploadToken, blob, { contentType: mimeType });
   if (uploadErr) throw new Error(uploadErr.message || 'Upload failed. Please try again.');
 
   const completeRes = await fetch('/api/video-intro', {

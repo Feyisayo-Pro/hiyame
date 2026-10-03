@@ -44,6 +44,7 @@ const ADMIN: Item[] = [
   { label: 'Candidates', route: '/(admin)/candidates', screen: 'candidates', icon: 'person-outline' },
   { label: 'Companies', route: '/(admin)/companies', screen: 'companies', icon: 'business-outline' },
   { label: 'Interviews', route: '/(admin)/interviews', screen: 'interviews', icon: 'calendar-outline' },
+  { label: 'CRM Sync', route: '/(admin)/crm', screen: 'crm', icon: 'sync-circle' },
 ];
 
 export function useIsDesktopWeb(): boolean {

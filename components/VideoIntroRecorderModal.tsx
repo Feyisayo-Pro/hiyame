@@ -37,6 +37,7 @@ export default function VideoIntroRecorderModal({ visible, onClose, onSubmitted 
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const blobRef = useRef<Blob | null>(null);
+  const mimeTypeRef = useRef<string>('video/webm');
   const objectUrlRef = useRef<string | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -80,6 +81,7 @@ export default function VideoIntroRecorderModal({ visible, onClose, onSubmitted 
     recorderRef.current = null;
     chunksRef.current = [];
     blobRef.current = null;
+    mimeTypeRef.current = 'video/webm';
     setSecondsLeft(MAX_SECONDS);
     setErrorMessage('');
     setStatus('idle');
@@ -152,6 +154,7 @@ export default function VideoIntroRecorderModal({ visible, onClose, onSubmitted 
     recorder.onstop = () => {
       const blob = new Blob(chunksRef.current, { type: 'video/webm' });
       blobRef.current = blob;
+      mimeTypeRef.current = 'video/webm';
       stopStream();
       const el = videoElRef.current;
       if (el) {
@@ -195,12 +198,43 @@ export default function VideoIntroRecorderModal({ visible, onClose, onSubmitted 
     startCamera();
   };
 
+  // Alternative to recording live — pick an existing video file. Shares the
+  // same preview-then-submit flow as a recorded clip: once chosen, it's
+  // just another Blob in blobRef, so submit() doesn't need to know which
+  // path produced it.
+  const pickVideoFile = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'video/*';
+    input.onchange = () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      clearTimer();
+      stopStream();
+      setErrorMessage('');
+      blobRef.current = file;
+      mimeTypeRef.current = file.type || 'video/mp4';
+      const el = mountVideoEl();
+      if (el) {
+        const url = URL.createObjectURL(file);
+        objectUrlRef.current = url;
+        el.srcObject = null;
+        el.src = url;
+        el.muted = false;
+        el.controls = true;
+        el.autoplay = false;
+      }
+      setStatus('preview');
+    };
+    input.click();
+  };
+
   const submit = async () => {
     const blob = blobRef.current;
     if (!blob) return;
     setStatus('uploading');
     try {
-      const url = await uploadCandidateVideo(blob);
+      const url = await uploadCandidateVideo(blob, mimeTypeRef.current);
       notify('Video submitted', 'Your introduction is saved.');
       onSubmitted(url);
       reset();
@@ -226,9 +260,14 @@ export default function VideoIntroRecorderModal({ visible, onClose, onSubmitted 
             <View style={s.centerWrap}>
               <AppIcon name="warning-outline" size={32} color={T.amber} />
               <Text style={s.body}>{errorMessage}</Text>
-              <AnimatedPressable style={s.actionBtn} onPress={startCamera}>
-                <Text style={s.actionBtnText}>Try Again</Text>
-              </AnimatedPressable>
+              <View style={s.controlsRow}>
+                <AnimatedPressable style={s.secondaryBtn} onPress={pickVideoFile}>
+                  <Text style={s.secondaryBtnText}>Upload a Video Instead</Text>
+                </AnimatedPressable>
+                <AnimatedPressable style={s.actionBtn} onPress={startCamera}>
+                  <Text style={s.actionBtnText}>Try Again</Text>
+                </AnimatedPressable>
+              </View>
             </View>
           ) : (
             <>
@@ -268,10 +307,15 @@ export default function VideoIntroRecorderModal({ visible, onClose, onSubmitted 
 
               <View style={s.controlsRow}>
                 {status === 'ready' && (
-                  <AnimatedPressable style={s.actionBtn} onPress={startRecording}>
-                    <AppIcon name="videocam-outline" size={18} color={T.textOnAccent} />
-                    <Text style={s.actionBtnText}>Start Recording</Text>
-                  </AnimatedPressable>
+                  <>
+                    <AnimatedPressable style={s.secondaryBtn} onPress={pickVideoFile}>
+                      <Text style={s.secondaryBtnText}>Upload Instead</Text>
+                    </AnimatedPressable>
+                    <AnimatedPressable style={s.actionBtn} onPress={startRecording}>
+                      <AppIcon name="videocam-outline" size={18} color={T.textOnAccent} />
+                      <Text style={s.actionBtnText}>Start Recording</Text>
+                    </AnimatedPressable>
+                  </>
                 )}
                 {status === 'recording' && (
                   <AnimatedPressable style={[s.actionBtn, s.actionBtnDanger]} onPress={stopRecording}>
