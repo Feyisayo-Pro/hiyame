@@ -131,6 +131,39 @@ uppercase labels get positive tracking or they read as a solid block.
 10. **Charts & data (LOW)** — legends + tooltips; never color alone to encode a
     category; label the values the marks actually reach.
 
+## Copy & microcopy conventions
+
+Not covered by the vendored skill's priority table — adapted from Vercel's
+Web Interface Guidelines (github.com/vercel-labs/web-interface-guidelines),
+restated for RN string literals rather than HTML/CSS:
+
+- Ellipsis is the real character `…`, not three periods `...` — in loading/
+  saving states too: `"Saving…"`, not `"Saving..."`.
+- Curly quotes `“` `”` in copy, not straight `"` — matters in static strings
+  you write by hand (not user input).
+- Non-breaking space (the real ` ` character, not an HTML entity — RN
+  has no entity decoding) between a number and its unit, and before a
+  keyboard shortcut: `` `10 MB` ``, `` `⌘ K` ``.
+- Numerals for counts — "8 deployments", not "eight".
+- Buttons: Title Case, specific action labels ("Save Changes", not
+  "Continue" when a generic label would be ambiguous about what happens).
+- Active voice, second person: "You can change this later", not "This can
+  be changed later" or "I will change this for you".
+- Error messages state the fix or next step, not just the problem — "Enter
+  a valid email address", not "Invalid input".
+- Dates/currency through a real formatter (`Intl.DateTimeFormat`,
+  `lib/currency.ts`'s `formatNaira()`) — never a hand-rolled date/number
+  string.
+- Forms: never block paste (`onPaste` + `preventDefault`); set
+  `spellCheck={false}` on email/code/username fields; a submit button that
+  disables on press needs a spinner or label change the instant it's
+  pressed — a dead-looking button with no feedback reads as broken (ties
+  into rule 2, Touch & interaction, above).
+- A multi-step form with real unsaved input (company-signup's 5-step
+  wizard, create-role) should warn before a back-navigation or tab close
+  discards it — not yet applied anywhere in this codebase; a backlog item,
+  not a blocker for new forms.
+
 ## Anti-patterns — do not ship
 
 Emoji as icons · placeholder-only labels · error messages only at the top of a

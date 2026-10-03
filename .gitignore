@@ -49,6 +49,11 @@ scripts/migration-report.json
 /playwright-report/
 /test-results/
 
+# @playwright/cli session logs/snapshots/screenshots (2026-10-03) — ad-hoc
+# manual browser checks during a session, not test output, never meant to
+# be committed.
+/.playwright-cli/
+
 # generated native folders
 /ios
 /android
