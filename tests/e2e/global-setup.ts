@@ -42,6 +42,12 @@ export default async function globalSetup() {
       email: candidateEmail,
       skill_tags: ['e2e-test'],
       experience_level: 'mid',
+      // This is a direct service-role insert, not a real signup through
+      // create_company_and_claim/completePendingSignup — the column default
+      // ('pending', see the account-vetting migration) is meant for an
+      // actual new account awaiting admin review, not a known-good test
+      // fixture the suite needs full access with immediately.
+      status: 'approved',
     })
     .select('id')
     .single();
@@ -61,7 +67,7 @@ export default async function globalSetup() {
   }
   const { data: companyRow, error: companyRowErr } = await admin
     .from('companies')
-    .insert({ legal_name: 'E2E Test Co', trading_name: 'E2E Test Co', plan_tier: 'enterprise' })
+    .insert({ legal_name: 'E2E Test Co', trading_name: 'E2E Test Co', plan_tier: 'enterprise', status: 'approved' })
     .select('id')
     .single();
   if (companyRowErr || !companyRow) {
