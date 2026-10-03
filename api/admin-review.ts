@@ -2,16 +2,23 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { isAdminEmail } from '../lib/adminEmails';
 
-// Minimal admin review endpoint for the lightweight account-vetting gate
-// (2026-10-02) — a placeholder ahead of the real company CRM integration
-// that will eventually own this. No separate admin auth/persona: any
-// signed-in user (candidate or company) whose email is in lib/adminEmails.ts
-// can list and act on pending accounts/assessment requests. Add emails
-// there, not here — components/TopNav.tsx reads the same list to show the
-// sidebar link, so the two must never drift.
+// The admin API — backs the whole (admin) route group (app/(admin)/*.tsx).
+// One function, not several, because Vercel's Hobby plan caps serverless
+// functions at 12 and this project was already at 11 before this file grew
+// (see api/video-intro.ts's own comment for the same reasoning on bundling
+// multiple actions into one function). No separate admin auth/persona in
+// the database — any signed-in user whose email is in lib/adminEmails.ts
+// can call this; lib/useAuth.ts resolves that same email list to
+// role: 'admin' client-side, so the two must never drift.
+//
+// GET  ?view=overview                              — pending/approved/rejected counts
+// GET  ?view=candidates&status=&search=&page=       — paginated candidate directory
+// GET  ?view=companies&status=&search=&page=        — paginated company directory
+// POST { type: 'company'|'candidate'|'assessment', id, decision } — approve/reject
 
 const SUPABASE_URL = process.env.SUPABASE_URL ?? process.env.EXPO_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const PAGE_SIZE = 20;
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
@@ -30,27 +37,78 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   if (req.method === 'GET') {
-    const [{ data: companies, error: compErr }, { data: candidates, error: candErr }, { data: assessmentRows, error: vrErr }] = await Promise.all([
-      admin.from('companies').select('id, legal_name, trading_name, industry, size_range, created_at').eq('status', 'pending').order('created_at'),
-      admin.from('candidates').select('id, full_name, email, skill_tags, experience_level, created_at').eq('status', 'pending').order('created_at'),
-      // Skills assessment is no longer self-serve/auto-graded (2026-10-03) —
-      // a candidate requesting one just upserts this row to 'pending'
-      // (api/skills-assessment.ts), and an admin here marks it passed/failed
-      // once Hiyame's internal team has actually run the assessment.
-      admin.from('verification_records').select('candidate_id, created_at, candidates(id, full_name, email, skill_tags, experience_level)').eq('component', 'skills_assessment').eq('status', 'pending').order('created_at'),
-    ]);
-    if (compErr || candErr || vrErr) return res.status(500).json({ error: (compErr ?? candErr ?? vrErr)!.message });
-    const assessmentRequests = (assessmentRows ?? [])
-      .filter((r: any) => r.candidates)
-      .map((r: any) => ({
-        id: r.candidates.id,
-        fullName: r.candidates.full_name,
-        email: r.candidates.email,
-        skillTags: r.candidates.skill_tags,
-        experienceLevel: r.candidates.experience_level,
-        requestedAt: r.created_at,
-      }));
-    return res.status(200).json({ companies: companies ?? [], candidates: candidates ?? [], assessmentRequests });
+    const view = String(req.query.view ?? 'overview');
+
+    if (view === 'overview') {
+      const [
+        { count: candPending }, { count: candApproved }, { count: candRejected },
+        { count: coPending }, { count: coApproved }, { count: coRejected },
+        { count: assessmentPending },
+      ] = await Promise.all([
+        admin.from('candidates').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+        admin.from('candidates').select('*', { count: 'exact', head: true }).eq('status', 'approved'),
+        admin.from('candidates').select('*', { count: 'exact', head: true }).eq('status', 'rejected'),
+        admin.from('companies').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+        admin.from('companies').select('*', { count: 'exact', head: true }).eq('status', 'approved'),
+        admin.from('companies').select('*', { count: 'exact', head: true }).eq('status', 'rejected'),
+        admin.from('verification_records').select('*', { count: 'exact', head: true }).eq('component', 'skills_assessment').eq('status', 'pending'),
+      ]);
+      return res.status(200).json({
+        candidates: { pending: candPending ?? 0, approved: candApproved ?? 0, rejected: candRejected ?? 0 },
+        companies: { pending: coPending ?? 0, approved: coApproved ?? 0, rejected: coRejected ?? 0 },
+        assessmentRequests: assessmentPending ?? 0,
+      });
+    }
+
+    const status = String(req.query.status ?? 'pending');
+    const search = String(req.query.search ?? '').trim();
+    const page = Math.max(1, parseInt(String(req.query.page ?? '1'), 10) || 1);
+    const from = (page - 1) * PAGE_SIZE;
+    const to = from + PAGE_SIZE - 1;
+
+    if (view === 'candidates') {
+      let query = admin.from('candidates').select('*', { count: 'exact' }).order('created_at', { ascending: false });
+      if (status !== 'all') query = query.eq('status', status);
+      if (search) query = query.ilike('full_name', `%${search}%`);
+      const { data: rows, count, error } = await query.range(from, to);
+      if (error) return res.status(500).json({ error: error.message });
+
+      const ids = (rows ?? []).map((r) => r.id);
+      const { data: vrecs } = ids.length
+        ? await admin.from('verification_records').select('candidate_id, component, status').in('candidate_id', ids)
+        : { data: [] as any[] };
+      const vrByCandidate = new Map<string, { component: string; status: string }[]>();
+      for (const v of vrecs ?? []) {
+        const list = vrByCandidate.get(v.candidate_id) ?? [];
+        list.push({ component: v.component, status: v.status });
+        vrByCandidate.set(v.candidate_id, list);
+      }
+      const candidates = (rows ?? []).map((r) => ({ ...r, verification: vrByCandidate.get(r.id) ?? [] }));
+      return res.status(200).json({ candidates, total: count ?? 0, page, pageSize: PAGE_SIZE });
+    }
+
+    if (view === 'companies') {
+      let query = admin.from('companies').select('*', { count: 'exact' }).order('created_at', { ascending: false });
+      if (status !== 'all') query = query.eq('status', status);
+      if (search) query = query.or(`legal_name.ilike.%${search}%,trading_name.ilike.%${search}%`);
+      const { data: rows, count, error } = await query.range(from, to);
+      if (error) return res.status(500).json({ error: error.message });
+
+      const ids = (rows ?? []).map((r) => r.id);
+      const { data: teamRows } = ids.length
+        ? await admin.from('company_users').select('company_id, full_name, email, role').in('company_id', ids)
+        : { data: [] as any[] };
+      const teamByCompany = new Map<string, { full_name: string | null; email: string; role: string }[]>();
+      for (const t of teamRows ?? []) {
+        const list = teamByCompany.get(t.company_id) ?? [];
+        list.push({ full_name: t.full_name, email: t.email, role: t.role });
+        teamByCompany.set(t.company_id, list);
+      }
+      const companies = (rows ?? []).map((r) => ({ ...r, team: teamByCompany.get(r.id) ?? [] }));
+      return res.status(200).json({ companies, total: count ?? 0, page, pageSize: PAGE_SIZE });
+    }
+
+    return res.status(400).json({ error: 'view must be "overview", "candidates", or "companies".' });
   }
 
   if (req.method === 'POST') {

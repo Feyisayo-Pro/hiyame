@@ -1,8 +1,9 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from './supabase';
+import { isAdminEmail } from './adminEmails';
 
-export type UserRole = 'candidate' | 'company' | null;
+export type UserRole = 'candidate' | 'company' | 'admin' | null;
 
 export interface AuthContextValue {
   session: Session | null;
@@ -32,10 +33,18 @@ export interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-// Resolve which persona a signed-in user is by checking which table has a row
-// for them — RLS already scopes both queries to `auth_user_id = auth.uid()`, so
-// this works fine with the anon-key client and never leaks another user's row.
-async function resolveRole(userId: string): Promise<{ role: UserRole; companyId: string | null; candidateId: string | null }> {
+// Resolve which persona a signed-in user is. Admin is checked first, purely
+// by email against lib/adminEmails.ts — deliberately no DB row at all (no
+// candidates/company_users lookup), so an admin account never depends on
+// having a candidate or company profile. Everyone else is resolved by
+// checking which table has a row for them — RLS already scopes both queries
+// to `auth_user_id = auth.uid()`, so this works fine with the anon-key
+// client and never leaks another user's row.
+async function resolveRole(userId: string, email: string | null | undefined): Promise<{ role: UserRole; companyId: string | null; candidateId: string | null }> {
+  if (isAdminEmail(email)) {
+    return { role: 'admin', companyId: null, candidateId: null };
+  }
+
   const { data: candidate } = await supabase
     .from('candidates')
     .select('id')
@@ -141,11 +150,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setLoading(false);
         return;
       }
-      let resolved = await resolveRole(next.user.id);
+      let resolved = await resolveRole(next.user.id, next.user.email);
       if (resolved.role === null) {
         await completePendingSignup(next.user.id);
         if (cancelled) return;
-        resolved = await resolveRole(next.user.id);
+        resolved = await resolveRole(next.user.id, next.user.email);
       }
       if (cancelled) return;
       setRole(resolved.role);

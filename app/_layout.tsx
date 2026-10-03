@@ -87,6 +87,7 @@ function AuthGate({ children }: { children: ReactNode }) {
     const inAuthGroup = segments[0] === '(auth)';
     const inCandidateGroup = segments[0] === '(candidate)';
     const inCompanyGroup = segments[0] === '(company)';
+    const inAdminGroup = segments[0] === '(admin)';
     const inPublicRoute = PUBLIC_SEGMENTS.includes(segments[0] ?? '');
 
     if (!session && !inAuthGroup && !inPublicRoute) {
@@ -98,7 +99,10 @@ function AuthGate({ children }: { children: ReactNode }) {
       // itself, since that would race against this same effect: on a
       // mismatch the screen's own check could still be in flight while this
       // effect already navigated the user into the *other* persona's home.
-      if (signInIntent && signInIntent !== role) {
+      // Admin has no sign-in screen of its own — it signs in through either
+      // the candidate or company form, so signInIntent never equals 'admin'
+      // and this mismatch check is deliberately skipped for it.
+      if (role !== 'admin' && signInIntent && signInIntent !== role) {
         rejectingRef.current = true;
         router.replace(signInIntent === 'candidate' ? '/(auth)/candidate-signin' : '/(auth)/company-signin');
         setAuthError(
@@ -111,6 +115,18 @@ function AuthGate({ children }: { children: ReactNode }) {
         return;
       }
       setSignInIntent(null);
+      router.replace(role === 'candidate' ? '/(candidate)' : role === 'company' ? '/(company)' : '/(admin)');
+    } else if (session && role === 'admin' && (inCandidateGroup || inCompanyGroup)) {
+      // Admin never belongs in the candidate/company trees at all (no
+      // candidateId/companyId ever resolves for it) — straight to its own
+      // home rather than trying to preserve a leaf path that doesn't exist
+      // there.
+      router.replace('/(admin)');
+    } else if (session && role && role !== 'admin' && inAdminGroup) {
+      // The inverse: a non-admin who somehow lands on an admin route (typed
+      // URL, stale bookmark) goes back to their own home. api/admin-review.ts
+      // and friends are already independently email-gated server-side —
+      // this is just UX, not the real security boundary.
       router.replace(role === 'candidate' ? '/(candidate)' : '/(company)');
     } else if (
       session && role &&
@@ -273,6 +289,7 @@ function RootLayoutNav() {
                             <Stack.Screen name="(auth)" />
                             <Stack.Screen name="(candidate)" />
                             <Stack.Screen name="(company)" />
+                            <Stack.Screen name="(admin)" />
                           </Stack>
                         </AuthGate>
                       </View>

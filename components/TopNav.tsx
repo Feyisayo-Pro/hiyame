@@ -8,7 +8,6 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/useAuth';
 import { initials } from '@/lib/format';
 import AnimatedPressable from '@/components/AnimatedPressable';
-import { isAdminEmail } from '@/lib/adminEmails';
 
 // Persistent left sidebar for desktop web. The tab layouts render this beside
 // the screen content (flexDirection: row) and hide the bottom tab bar at this
@@ -40,6 +39,13 @@ const COMPANY: Item[] = [
   { label: 'Insights', route: '/(company)/analytics', screen: 'analytics', icon: 'stats-chart-outline' },
 ];
 
+const ADMIN: Item[] = [
+  { label: 'Overview', route: '/(admin)', screen: 'index', icon: 'home-outline' },
+  { label: 'Candidates', route: '/(admin)/candidates', screen: 'candidates', icon: 'person-outline' },
+  { label: 'Companies', route: '/(admin)/companies', screen: 'companies', icon: 'business-outline' },
+  { label: 'Interviews', route: '/(admin)/interviews', screen: 'interviews', icon: 'calendar-outline' },
+];
+
 export function useIsDesktopWeb(): boolean {
   const { width } = useWindowDimensions();
   return Platform.OS === 'web' && width >= DESKTOP_NAV_BREAKPOINT;
@@ -54,14 +60,13 @@ function filled(icon: string): AppIconName {
   return icon.replace('-outline', '') as AppIconName;
 }
 
-export default function SideNav({ role }: { role: 'candidate' | 'company' }) {
+export default function SideNav({ role }: { role: 'candidate' | 'company' | 'admin' }) {
   const T = useTheme();
   const st = useMemo(() => makeStyles(T), [T]);
   const { mode, toggleTheme } = useThemeToggle();
   const pathname = usePathname();
   const isDesktop = useIsDesktopWeb();
-  const { candidateId, companyId, session } = useAuth();
-  const isAdmin = isAdminEmail(session?.user?.email);
+  const { candidateId, companyId } = useAuth();
 
   const [identity, setIdentity] = useState<{ name: string; photoUrl: string | null } | null>(null);
 
@@ -91,10 +96,10 @@ export default function SideNav({ role }: { role: 'candidate' | 'company' }) {
 
   if (!isDesktop) return null;
 
-  const items = role === 'candidate' ? CANDIDATE : COMPANY;
-  const base = role === 'candidate' ? '/(candidate)' : '/(company)';
+  const items = role === 'candidate' ? CANDIDATE : role === 'company' ? COMPANY : ADMIN;
+  const base = role === 'candidate' ? '/(candidate)' : role === 'company' ? '/(company)' : '/(admin)';
   const last = pathname.replace(/\/+$/, '').split('/').pop() || '';
-  const activeScreen = last === '' || last === '(candidate)' || last === '(company)' ? 'index' : last;
+  const activeScreen = last === '' || last === '(candidate)' || last === '(company)' || last === '(admin)' ? 'index' : last;
 
   return (
     <View style={st.bar}>
@@ -124,37 +129,51 @@ export default function SideNav({ role }: { role: 'candidate' | 'company' }) {
         })}
       </View>
 
-      <AnimatedPressable
-        scaleTo={0.98}
-        style={({ pressed }: { pressed: boolean }) => [st.identityRow, pressed && st.linkPressed]}
-        onPress={() => router.navigate(`${base}/profile` as any)}
-        accessibilityRole="link"
-        accessibilityLabel="Your profile"
-      >
-        <View style={st.avatarWrap}>
-          {identity?.photoUrl ? (
-            <Image source={{ uri: identity.photoUrl }} style={st.avatarImage} resizeMode="cover" />
-          ) : (
-            <Text style={st.avatarInitials}>{initials(identity?.name || (role === 'candidate' ? 'You' : 'Co'))}</Text>
-          )}
+      {role === 'admin' ? (
+        <View style={st.identityRow}>
+          <View style={st.avatarWrap}>
+            <AppIcon name="shield-checkmark-outline" size={ICON.md} color={T.accentDim} />
+          </View>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text numberOfLines={1} style={st.identityName}>Hiyame Admin</Text>
+            <Text style={st.identityRole}>Account review</Text>
+          </View>
         </View>
-        <View style={{ flex: 1, minWidth: 0 }}>
-          <Text numberOfLines={1} style={st.identityName}>{identity?.name || (role === 'candidate' ? 'Your profile' : 'Your company')}</Text>
-          <Text style={st.identityRole}>{role === 'candidate' ? 'Candidate' : 'Company'}</Text>
-        </View>
-      </AnimatedPressable>
+      ) : (
+        <AnimatedPressable
+          scaleTo={0.98}
+          style={({ pressed }: { pressed: boolean }) => [st.identityRow, pressed && st.linkPressed]}
+          onPress={() => router.navigate(`${base}/profile` as any)}
+          accessibilityRole="link"
+          accessibilityLabel="Your profile"
+        >
+          <View style={st.avatarWrap}>
+            {identity?.photoUrl ? (
+              <Image source={{ uri: identity.photoUrl }} style={st.avatarImage} resizeMode="cover" />
+            ) : (
+              <Text style={st.avatarInitials}>{initials(identity?.name || (role === 'candidate' ? 'You' : 'Co'))}</Text>
+            )}
+          </View>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text numberOfLines={1} style={st.identityName}>{identity?.name || (role === 'candidate' ? 'Your profile' : 'Your company')}</Text>
+            <Text style={st.identityRole}>{role === 'candidate' ? 'Candidate' : 'Company'}</Text>
+          </View>
+        </AnimatedPressable>
+      )}
 
       <View style={st.footer}>
-        <AnimatedPressable
-          scaleTo={0.97}
-          style={({ pressed }: { pressed: boolean }) => [st.footRow, pressed && st.linkPressed]}
-          onPress={() => router.navigate(`${base}/notifications` as any)}
-          accessibilityRole="link"
-          accessibilityLabel="Notifications"
-        >
-          <AppIcon name="notifications-outline" size={ICON.md} color={T.textSecondary} />
-          <Text style={st.footText}>Notifications</Text>
-        </AnimatedPressable>
+        {role !== 'admin' && (
+          <AnimatedPressable
+            scaleTo={0.97}
+            style={({ pressed }: { pressed: boolean }) => [st.footRow, pressed && st.linkPressed]}
+            onPress={() => router.navigate(`${base}/notifications` as any)}
+            accessibilityRole="link"
+            accessibilityLabel="Notifications"
+          >
+            <AppIcon name="notifications-outline" size={ICON.md} color={T.textSecondary} />
+            <Text style={st.footText}>Notifications</Text>
+          </AnimatedPressable>
+        )}
         <AnimatedPressable
           scaleTo={0.97}
           style={({ pressed }: { pressed: boolean }) => [st.footRow, pressed && st.linkPressed]}
@@ -165,16 +184,18 @@ export default function SideNav({ role }: { role: 'candidate' | 'company' }) {
           <AppIcon name={mode === 'light' ? 'moon-outline' : 'sunny-outline'} size={ICON.md} color={T.textSecondary} />
           <Text style={st.footText}>{mode === 'light' ? 'Dark mode' : 'Light mode'}</Text>
         </AnimatedPressable>
-        <AnimatedPressable
-          scaleTo={0.97}
-          style={({ pressed }: { pressed: boolean }) => [st.footRow, pressed && st.linkPressed]}
-          onPress={() => router.navigate(`${base}/settings` as any)}
-          accessibilityRole="link"
-          accessibilityLabel="Settings"
-        >
-          <AppIcon name="settings-outline" size={ICON.md} color={T.textSecondary} />
-          <Text style={st.footText}>Settings</Text>
-        </AnimatedPressable>
+        {role !== 'admin' && (
+          <AnimatedPressable
+            scaleTo={0.97}
+            style={({ pressed }: { pressed: boolean }) => [st.footRow, pressed && st.linkPressed]}
+            onPress={() => router.navigate(`${base}/settings` as any)}
+            accessibilityRole="link"
+            accessibilityLabel="Settings"
+          >
+            <AppIcon name="settings-outline" size={ICON.md} color={T.textSecondary} />
+            <Text style={st.footText}>Settings</Text>
+          </AnimatedPressable>
+        )}
         <AnimatedPressable
           scaleTo={0.97}
           style={({ pressed }: { pressed: boolean }) => [st.footRow, pressed && st.linkPressed]}
@@ -185,18 +206,6 @@ export default function SideNav({ role }: { role: 'candidate' | 'company' }) {
           <AppIcon name="log-out-outline" size={ICON.md} color={T.danger} />
           <Text style={[st.footText, { color: T.danger }]}>Sign out</Text>
         </AnimatedPressable>
-        {isAdmin && (
-          <AnimatedPressable
-            scaleTo={0.97}
-            style={({ pressed }: { pressed: boolean }) => [st.footRow, pressed && st.linkPressed]}
-            onPress={() => router.navigate('/admin' as any)}
-            accessibilityRole="link"
-            accessibilityLabel="Admin review"
-          >
-            <AppIcon name="shield-checkmark-outline" size={ICON.md} color={T.textSecondary} />
-            <Text style={st.footText}>Admin</Text>
-          </AnimatedPressable>
-        )}
       </View>
     </View>
   );
