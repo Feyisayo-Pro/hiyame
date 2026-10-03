@@ -14,7 +14,7 @@ import {
 import { DefaultTheme, Stack, ThemeProvider, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useMemo, useRef, ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, View, StatusBar as RNStatusBar, Platform } from 'react-native';
+import { StyleSheet, Text, View, StatusBar as RNStatusBar, Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Toast from 'react-native-toast-message';
@@ -30,6 +30,7 @@ import { supabase } from '@/lib/supabase';
 import { useGlobalFocusRing } from '@/lib/focusRing';
 import { initSentry, Sentry } from '@/lib/sentry';
 import 'react-native-reanimated';
+import AnimatedPressable from '@/components/AnimatedPressable';
 
 // Runs once at module load, before the app tree mounts — the earliest point
 // crashes can be caught from.
@@ -140,10 +141,10 @@ export function ErrorBoundary({ error, retry }: { error: Error; retry: () => voi
       </View>
       <Text style={st.title}>Something went wrong</Text>
       <Text style={st.subtitle}>{error.message}</Text>
-      <Pressable style={st.retryButton} onPress={retry}>
+      <AnimatedPressable style={st.retryButton} onPress={retry}>
         <AppIcon name="refresh" size={18} color={T.textOnAccent} />
         <Text style={st.retryButtonText}>Try Again</Text>
-      </Pressable>
+      </AnimatedPressable>
     </View>
   );
 }

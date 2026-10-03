@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Animated, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { Text } from '@/components/Themed';
 import AppIcon from '@/components/AppIcon';
@@ -12,6 +12,7 @@ import GradientBlobBackground from '@/components/GradientBlobBackground';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import { DURATION, EASE } from '@/lib/motion';
 import PageHead from '@/components/PageHead';
+import AnimatedPressable from '@/components/AnimatedPressable';
 
 // Was a section embedded in app/(auth)/welcome.tsx (the home page), reached
 // only by scrolling down or via Pricing/About's persona tabs auto-scrolling
@@ -158,7 +159,7 @@ function AutoStepFlow({ mode, eyebrow, title, subhead, steps, st }: {
       <View style={st.stepTabsAuto}>
         {steps.map((step, i) => (
           <Fragment key={step.tab}>
-            <Pressable
+            <AnimatedPressable
               onPress={() => setActiveStep(i)}
               style={[st.stepTabAuto, i === activeStep && st.stepTabAutoActive]}
               accessibilityRole="button"
@@ -168,7 +169,7 @@ function AutoStepFlow({ mode, eyebrow, title, subhead, steps, st }: {
               <View style={st.timerTrack}>
                 {i === activeStep && <Animated.View style={[st.timerFill, { width: progressWidth }]} />}
               </View>
-            </Pressable>
+            </AnimatedPressable>
             {i < steps.length - 1 && <AppIcon name="arrow-forward" size={14} color={TEXT_MUTED} />}
           </Fragment>
         ))}

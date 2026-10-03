@@ -1,4 +1,4 @@
-import { Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, View } from 'react-native';
 import { useEffect, useMemo, useState } from 'react';
 import { Text } from '@/components/Themed';
 import AppIcon from '@/components/AppIcon';
@@ -23,6 +23,7 @@ import { formatNaira } from '@/lib/currency';
 import { FULL_VERIFICATION_THRESHOLD } from '@/lib/verification';
 import { usePersonaGuard } from '@/lib/usePersonaGuard';
 import PageHead from '@/components/PageHead';
+import AnimatedPressable from '@/components/AnimatedPressable';
 
 interface RealProfile {
   fullName: string;
@@ -130,9 +131,9 @@ export default function CandidateProfileScreen() {
         {/* ── Header ── */}
         <View style={st.header}>
           <Text style={st.headerTitle}>Profile</Text>
-          <Pressable onPress={() => router.push('/(candidate)/settings')} style={st.settingsBtn} hitSlop={4} accessibilityRole="button" accessibilityLabel="Settings">
+          <AnimatedPressable onPress={() => router.push('/(candidate)/settings')} style={st.settingsBtn} hitSlop={4} accessibilityRole="button" accessibilityLabel="Settings">
             <AppIcon name="settings-outline" size={20} color={T.textSecondary} />
-          </Pressable>
+          </AnimatedPressable>
         </View>
 
         {/* ── Personal Card ── */}
@@ -147,7 +148,7 @@ export default function CandidateProfileScreen() {
           </View>
         ) : (
           <View style={st.personalCard}>
-            <Pressable style={st.avatarWrap} onPress={handlePhotoPress} disabled={uploading} accessibilityRole="button" accessibilityLabel="Change profile photo">
+            <AnimatedPressable style={st.avatarWrap} onPress={handlePhotoPress} disabled={uploading} accessibilityRole="button" accessibilityLabel="Change profile photo">
               <View style={[st.avatar, isFullyVerified && st.avatarVerified]}>
                 {photoUrl ? (
                   <Image source={{ uri: photoUrl }} style={st.avatarImage} resizeMode="cover" />
@@ -169,7 +170,7 @@ export default function CandidateProfileScreen() {
                   <AppIcon name="decagram" size={22} color={T.emerald} />
                 </View>
               )}
-            </Pressable>
+            </AnimatedPressable>
 
             <Text style={st.name}>{displayName}</Text>
             <Text style={st.title}>{displayTitle}</Text>
@@ -246,10 +247,10 @@ export default function CandidateProfileScreen() {
         <View style={st.section}>
           <View style={st.sectionRow}>
             <Text style={st.sectionTitle}>Verification Status</Text>
-            <Pressable onPress={() => router.push('/(candidate)/verification')} style={st.seeAll}>
+            <AnimatedPressable onPress={() => router.push('/(candidate)/verification')} style={st.seeAll}>
               <Text style={st.seeAllText}>Manage</Text>
               <AppIcon name="arrow-forward" size={14} color={T.accent} />
-            </Pressable>
+            </AnimatedPressable>
           </View>
 
           {/* Progress bar */}
@@ -278,7 +279,7 @@ export default function CandidateProfileScreen() {
           {/* Checklist items */}
           <View style={st.checklistCard}>
             {checklistItems.map((item, i) => (
-              <Pressable
+              <AnimatedPressable
                 key={item.label}
                 style={[st.checkItem, i < checklistItems.length - 1 && st.checkItemBorder]}
                 onPress={() => router.push('/(candidate)/verification')}
@@ -296,7 +297,7 @@ export default function CandidateProfileScreen() {
                     {item.done ? 'Done' : item.optional ? 'Optional' : 'Pending'}
                   </Text>
                 </View>
-              </Pressable>
+              </AnimatedPressable>
             ))}
           </View>
         </View>
@@ -327,7 +328,7 @@ export default function CandidateProfileScreen() {
 
         {/* ── Account Actions ── */}
         <View style={st.section}>
-          <Pressable style={st.actionItem} onPress={() => setShowEdit(true)}>
+          <AnimatedPressable style={st.actionItem} onPress={() => setShowEdit(true)}>
             <View style={st.actionIconWrap}>
               <AppIcon name="create-outline" size={18} color={T.accent} />
             </View>
@@ -336,9 +337,9 @@ export default function CandidateProfileScreen() {
               <Text style={st.actionDesc}>Update name, summary, skills, rate</Text>
             </View>
             <AppIcon name="chevron-forward" size={18} color={T.textMuted} />
-          </Pressable>
+          </AnimatedPressable>
 
-          <Pressable style={st.actionItem} onPress={toggleTheme}>
+          <AnimatedPressable style={st.actionItem} onPress={toggleTheme}>
             <View style={st.actionIconWrap}>
               <AppIcon name={mode === 'light' ? 'sunny-outline' : 'moon-outline'} size={18} color={T.accent} />
             </View>
@@ -349,9 +350,9 @@ export default function CandidateProfileScreen() {
             <View style={{ width: 44, height: 26, borderRadius: 13, backgroundColor: mode === 'dark' ? T.accent : T.surface, justifyContent: 'center', paddingHorizontal: 2 }}>
               <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: T.white, alignSelf: mode === 'dark' ? 'flex-end' : 'flex-start' }} />
             </View>
-          </Pressable>
+          </AnimatedPressable>
 
-          <Pressable style={st.actionItem} onPress={() => router.push('/(candidate)/welcome-tour' as any)}>
+          <AnimatedPressable style={st.actionItem} onPress={() => router.push('/(candidate)/welcome-tour' as any)}>
             <View style={st.actionIconWrap}>
               <AppIcon name="help-buoy-outline" size={18} color={T.accent} />
             </View>
@@ -360,9 +361,9 @@ export default function CandidateProfileScreen() {
               <Text style={st.actionDesc}>Replay the welcome walkthrough</Text>
             </View>
             <AppIcon name="chevron-forward" size={18} color={T.textMuted} />
-          </Pressable>
+          </AnimatedPressable>
 
-          <Pressable style={st.actionItem} onPress={() => router.push('/(candidate)/settings')}>
+          <AnimatedPressable style={st.actionItem} onPress={() => router.push('/(candidate)/settings')}>
             <View style={st.actionIconWrap}>
               <AppIcon name="settings-outline" size={18} color={T.accent} />
             </View>
@@ -371,14 +372,14 @@ export default function CandidateProfileScreen() {
               <Text style={st.actionDesc}>Notifications, privacy, preferences</Text>
             </View>
             <AppIcon name="chevron-forward" size={18} color={T.textMuted} />
-          </Pressable>
+          </AnimatedPressable>
         </View>
 
         {/* ── Sign Out ── */}
-        <Pressable style={st.signOutBtn} onPress={() => supabase.auth.signOut()}>
+        <AnimatedPressable style={st.signOutBtn} onPress={() => supabase.auth.signOut()}>
           <AppIcon name="log-out-outline" size={18} color={T.danger} />
           <Text style={st.signOutText}>Sign Out</Text>
-        </Pressable>
+        </AnimatedPressable>
 
         <View style={{ height: 16 }} />
         </SwipeFadeContainer>

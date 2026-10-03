@@ -1,4 +1,4 @@
-import { StyleSheet, View, ScrollView, Pressable, Image } from 'react-native';
+import { StyleSheet, View, ScrollView, Image } from 'react-native';
 import { useEffect, useMemo, useState } from 'react';
 import { Text } from '@/components/Themed';
 import AppIcon from '@/components/AppIcon';
@@ -16,6 +16,7 @@ import { SkeletonBlock } from '@/components/Skeleton';
 import { notify } from '@/lib/notify';
 import { usePersonaGuard } from '@/lib/usePersonaGuard';
 import PageHead from '@/components/PageHead';
+import AnimatedPressable from '@/components/AnimatedPressable';
 
 interface RealCompany extends CompanyEditable {
   verifiedAt: string | null;
@@ -99,9 +100,9 @@ export default function CompanyProfileScreen() {
         {/* ── Header ── */}
         <View style={st.header}>
           <Text style={st.headerTitle}>Company Profile</Text>
-          <Pressable onPress={() => router.push('/(company)/settings')} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: T.surface, alignItems: 'center', justifyContent: 'center' }} hitSlop={4} accessibilityRole="button" accessibilityLabel="Settings">
+          <AnimatedPressable onPress={() => router.push('/(company)/settings')} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: T.surface, alignItems: 'center', justifyContent: 'center' }} hitSlop={4} accessibilityRole="button" accessibilityLabel="Settings">
             <AppIcon name="settings-outline" size={20} color={T.textSecondary} />
-          </Pressable>
+          </AnimatedPressable>
         </View>
 
         {/* ── Workspace Card ── */}
@@ -119,7 +120,7 @@ export default function CompanyProfileScreen() {
             </View>
           ) : (
             <View style={st.wsTop}>
-              <Pressable style={st.wsAvatarWrap} onPress={handleLogoPress} disabled={uploadingLogo} accessibilityRole="button" accessibilityLabel="Change company logo">
+              <AnimatedPressable style={st.wsAvatarWrap} onPress={handleLogoPress} disabled={uploadingLogo} accessibilityRole="button" accessibilityLabel="Change company logo">
                 <View style={st.wsAvatar}>
                   {real?.logoUrl ? (
                     <Image source={{ uri: real.logoUrl }} style={st.wsAvatarImage} resizeMode="cover" />
@@ -135,7 +136,7 @@ export default function CompanyProfileScreen() {
                 <View style={st.wsCameraOverlay}>
                   <AppIcon name="camera" size={12} color={T.white} />
                 </View>
-              </Pressable>
+              </AnimatedPressable>
               <View style={st.wsInfo}>
                 <Text style={st.wsName}>{displayName}</Text>
                 <Text style={st.wsIndustry}>{[real?.industry, real?.sizeRange].filter(Boolean).join(' · ') || 'Add your industry and size'}</Text>
@@ -238,7 +239,7 @@ export default function CompanyProfileScreen() {
         <View style={st.section}>
           <Text style={st.sectionTitle}>Account</Text>
 
-          <Pressable style={st.actionItem} onPress={() => setShowEdit(true)}>
+          <AnimatedPressable style={st.actionItem} onPress={() => setShowEdit(true)}>
             <View style={[st.actionIconWrap, { backgroundColor: T.accentBg }]}>
               <AppIcon name="create-outline" size={18} color={T.accent} />
             </View>
@@ -247,9 +248,9 @@ export default function CompanyProfileScreen() {
               <Text style={st.actionDesc}>Update company name, industry, description</Text>
             </View>
             <AppIcon name="chevron-forward" size={18} color={T.textMuted} />
-          </Pressable>
+          </AnimatedPressable>
 
-          <Pressable style={st.actionItem} onPress={() => router.push('/(company)/subscriptions')}>
+          <AnimatedPressable style={st.actionItem} onPress={() => router.push('/(company)/subscriptions')}>
             <View style={[st.actionIconWrap, { backgroundColor: T.accentBg }]}>
               <AppIcon name="card-outline" size={18} color={T.accent} />
             </View>
@@ -258,9 +259,9 @@ export default function CompanyProfileScreen() {
               <Text style={st.actionDesc}>Upgrade tier, billing, invoices</Text>
             </View>
             <AppIcon name="chevron-forward" size={18} color={T.textMuted} />
-          </Pressable>
+          </AnimatedPressable>
 
-          <Pressable style={st.actionItem} onPress={() => router.push('/(company)/team')}>
+          <AnimatedPressable style={st.actionItem} onPress={() => router.push('/(company)/team')}>
             <View style={[st.actionIconWrap, { backgroundColor: T.accentBg }]}>
               <AppIcon name="people-outline" size={18} color={T.accent} />
             </View>
@@ -269,9 +270,9 @@ export default function CompanyProfileScreen() {
               <Text style={st.actionDesc}>Manage hiring managers</Text>
             </View>
             <AppIcon name="chevron-forward" size={18} color={T.textMuted} />
-          </Pressable>
+          </AnimatedPressable>
 
-          <Pressable style={st.actionItem} onPress={toggleTheme}>
+          <AnimatedPressable style={st.actionItem} onPress={toggleTheme}>
             <View style={[st.actionIconWrap, { backgroundColor: T.accentBg }]}>
               <AppIcon name={mode === 'light' ? 'sunny-outline' : 'moon-outline'} size={18} color={T.accent} />
             </View>
@@ -282,9 +283,9 @@ export default function CompanyProfileScreen() {
             <View style={{ width: 44, height: 26, borderRadius: 13, backgroundColor: mode === 'dark' ? T.accent : T.surface, justifyContent: 'center', paddingHorizontal: 2 }}>
               <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: T.white, alignSelf: mode === 'dark' ? 'flex-end' : 'flex-start' }} />
             </View>
-          </Pressable>
+          </AnimatedPressable>
 
-          <Pressable style={st.actionItem} onPress={() => router.push('/(company)/settings')}>
+          <AnimatedPressable style={st.actionItem} onPress={() => router.push('/(company)/settings')}>
             <View style={[st.actionIconWrap, { backgroundColor: T.accentBg }]}>
               <AppIcon name="settings-outline" size={18} color={T.accent} />
             </View>
@@ -293,14 +294,14 @@ export default function CompanyProfileScreen() {
               <Text style={st.actionDesc}>Notifications, privacy, preferences</Text>
             </View>
             <AppIcon name="chevron-forward" size={18} color={T.textMuted} />
-          </Pressable>
+          </AnimatedPressable>
         </View>
 
         {/* ── Sign Out ── */}
-        <Pressable style={st.signOutBtn} onPress={() => supabase.auth.signOut()}>
+        <AnimatedPressable style={st.signOutBtn} onPress={() => supabase.auth.signOut()}>
           <AppIcon name="log-out-outline" size={18} color={T.danger} />
           <Text style={st.signOutText}>Sign Out</Text>
-        </Pressable>
+        </AnimatedPressable>
 
         <View style={{ height: 16 }} />
         </SwipeFadeContainer>

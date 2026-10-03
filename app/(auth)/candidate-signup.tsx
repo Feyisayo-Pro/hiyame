@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react';
 import {
   Animated,
-  Pressable,
   StyleSheet,
   TextInput,
   View,
@@ -26,6 +25,7 @@ import VerifyEmailModal from '@/components/VerifyEmailModal';
 import { INDUSTRIES, SKILLS_BY_INDUSTRY, DEFAULT_SKILL_SUGGESTIONS } from '@/lib/industrySkills';
 import { useShake } from '@/lib/useShake';
 import PageHead from '@/components/PageHead';
+import AnimatedPressable from '@/components/AnimatedPressable';
 
 export default function CandidateSignupScreen() {
   const T = useTheme();
@@ -187,9 +187,9 @@ export default function CandidateSignupScreen() {
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <Pressable style={st.backButton} onPress={() => goBack(router, '/(auth)/welcome')} hitSlop={2} accessibilityRole="button" accessibilityLabel="Go back">
+        <AnimatedPressable style={st.backButton} onPress={() => goBack(router, '/(auth)/welcome')} hitSlop={2} accessibilityRole="button" accessibilityLabel="Go back">
           <AppIcon name="arrow-back" size={20} color={T.textPrimary} />
-        </Pressable>
+        </AnimatedPressable>
 
         <ScrollView
           contentContainerStyle={st.scrollContent}
@@ -245,9 +245,9 @@ export default function CandidateSignupScreen() {
                     onFocus={onFocus}
                     onBlur={() => { onBlur(); validateField('password'); }}
                   />
-                  <Pressable onPress={() => setShowPassword(!showPassword)} hitSlop={8} accessibilityRole="button" accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}>
+                  <AnimatedPressable onPress={() => setShowPassword(!showPassword)} hitSlop={8} accessibilityRole="button" accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}>
                     <AppIcon name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color={T.textMuted} />
-                  </Pressable>
+                  </AnimatedPressable>
                 </>
               )}
             </FormField>
@@ -294,13 +294,13 @@ export default function CandidateSignupScreen() {
               {errors.industry ? <Text style={st.errorText}>{errors.industry}</Text> : null}
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 4 }}>
                 {INDUSTRIES.map((ind) => (
-                  <Pressable
+                  <AnimatedPressable
                     key={ind}
                     onPress={() => { setIndustry(ind); setErrors((e) => ({ ...e, industry: '' })); }}
                     style={[st.industryChip, industry === ind && st.industryChipActive]}
                   >
                     <Text style={[st.industryChipText, industry === ind && st.industryChipTextActive]}>{ind}</Text>
-                  </Pressable>
+                  </AnimatedPressable>
                 ))}
               </View>
               <Text style={st.industryHint}>Helps us suggest skills relevant to your field.</Text>
@@ -324,9 +324,9 @@ export default function CandidateSignupScreen() {
                       onBlur={onBlur}
                     />
                     {skillInput.trim().length > 0 && (
-                      <Pressable style={st.addSkillBtn} onPress={() => addSkill(skillInput)} hitSlop={8} accessibilityRole="button" accessibilityLabel="Add skill">
+                      <AnimatedPressable style={st.addSkillBtn} onPress={() => addSkill(skillInput)} hitSlop={8} accessibilityRole="button" accessibilityLabel="Add skill">
                         <AppIcon name="add" size={18} color={T.textOnAccent} />
-                      </Pressable>
+                      </AnimatedPressable>
                     )}
                   </>
                 )}
@@ -337,9 +337,9 @@ export default function CandidateSignupScreen() {
                   {coreSkills.map((skill) => (
                     <View key={skill} style={st.skillChip}>
                       <Text style={st.skillChipText}>{skill}</Text>
-                      <Pressable onPress={() => removeSkill(skill)} hitSlop={6} accessibilityRole="button" accessibilityLabel={`Remove ${skill}`}>
+                      <AnimatedPressable onPress={() => removeSkill(skill)} hitSlop={6} accessibilityRole="button" accessibilityLabel={`Remove ${skill}`}>
                         <AppIcon name="close" size={14} color={T.accent} />
-                      </Pressable>
+                      </AnimatedPressable>
                     </View>
                   ))}
                 </View>
@@ -351,10 +351,10 @@ export default function CandidateSignupScreen() {
                   <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                     <View style={st.suggestionsRow}>
                       {availableSuggestions.slice(0, 6).map((skill) => (
-                        <Pressable key={skill} style={st.suggestionChip} onPress={() => addSkill(skill)}>
+                        <AnimatedPressable key={skill} style={st.suggestionChip} onPress={() => addSkill(skill)}>
                           <AppIcon name="add" size={12} color={T.textSecondary} />
                           <Text style={st.suggestionText}>{skill}</Text>
-                        </Pressable>
+                        </AnimatedPressable>
                       ))}
                     </View>
                   </ScrollView>
@@ -400,14 +400,14 @@ export default function CandidateSignupScreen() {
                 <AppIcon name="alert-circle" size={16} color={T.danger} />
                 <Text style={st.generalErrorText}>{errors.general}</Text>
                 {isAlreadyRegistered(errors.general) && (
-                  <Pressable onPress={() => router.push('/(auth)/candidate-signin')}>
+                  <AnimatedPressable onPress={() => router.push('/(auth)/candidate-signin')}>
                     <Text style={st.generalErrorLink}>Sign in →</Text>
-                  </Pressable>
+                  </AnimatedPressable>
                 )}
               </Animated.View>
             ) : null}
 
-            <Pressable
+            <AnimatedPressable
               style={[st.submitButton, loading && st.submitButtonDisabled]}
               onPress={handleSubmit}
               disabled={loading}
@@ -420,7 +420,7 @@ export default function CandidateSignupScreen() {
                   <AppIcon name="arrow-forward" size={18} color={T.textOnAccent} />
                 </>
               )}
-            </Pressable>
+            </AnimatedPressable>
           </SwipeFadeContainer>
         </ScrollView>
       </KeyboardAvoidingView>

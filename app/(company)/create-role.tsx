@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Pressable, ScrollView, StyleSheet, TextInput, View, KeyboardAvoidingView, Platform } from 'react-native';
+import { ScrollView, StyleSheet, TextInput, View, KeyboardAvoidingView, Platform } from 'react-native';
 import { router } from 'expo-router';
 import { goBack } from '@/lib/goBack';
 import { Text } from '@/components/Themed';
@@ -165,9 +165,9 @@ export default function CreateRoleScreen() {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScreenFrame>
         <View style={st.header}>
-          <Pressable style={st.backButton} onPress={() => goBack(router, '/(company)')} hitSlop={2} accessibilityRole="button" accessibilityLabel="Go back">
+          <AnimatedPressable style={st.backButton} onPress={() => goBack(router, '/(company)')} hitSlop={2} accessibilityRole="button" accessibilityLabel="Go back">
             <AppIcon name="arrow-back" size={20} color={T.textPrimary} />
-          </Pressable>
+          </AnimatedPressable>
           <Text style={st.headerTitle}>Post a Role</Text>
         </View>
 
@@ -197,14 +197,14 @@ export default function CreateRoleScreen() {
                 const selected = tier === t;
                 const textColor = TIER_TEXT_COLOR[t] ?? cfg.accent;
                 return (
-                  <Pressable
+                  <AnimatedPressable
                     key={t}
                     style={[st.tierCard, selected && { borderColor: cfg.accent, backgroundColor: cfg.accent + '10' }]}
                     onPress={() => setTier(t)}
                   >
                     <AppIcon name={cfg.icon as AppIconName} size={18} color={selected ? textColor : T.textMuted} />
                     <Text style={[st.tierCardText, selected && { color: textColor, fontWeight: '700' }]}>{cfg.label}</Text>
-                  </Pressable>
+                  </AnimatedPressable>
                 );
               })}
             </View>
@@ -228,9 +228,9 @@ export default function CreateRoleScreen() {
               <Text style={st.label}>Experience</Text>
               <View style={st.chipRow}>
                 {EXPERIENCE_LEVELS.map((lvl) => (
-                  <Pressable key={lvl} style={[st.chip, experienceLevel === lvl && st.chipActive]} onPress={() => setExperienceLevel(experienceLevel === lvl ? null : lvl)}>
+                  <AnimatedPressable key={lvl} style={[st.chip, experienceLevel === lvl && st.chipActive]} onPress={() => setExperienceLevel(experienceLevel === lvl ? null : lvl)}>
                     <Text style={[st.chipText, experienceLevel === lvl && st.chipTextActive]}>{lvl}</Text>
-                  </Pressable>
+                  </AnimatedPressable>
                 ))}
               </View>
             </View>
@@ -241,9 +241,9 @@ export default function CreateRoleScreen() {
               <Text style={st.label}>Employment Type *</Text>
               <View style={st.chipRow}>
                 {EMPLOYMENT_TYPES.map((et) => (
-                  <Pressable key={et} style={[st.chip, employmentType === et && st.chipActive]} onPress={() => { setEmploymentType(et); setErrors((e) => ({ ...e, employmentType: '' })); }}>
+                  <AnimatedPressable key={et} style={[st.chip, employmentType === et && st.chipActive]} onPress={() => { setEmploymentType(et); setErrors((e) => ({ ...e, employmentType: '' })); }}>
                     <Text style={[st.chipText, employmentType === et && st.chipTextActive]}>{et === 'permanent' ? 'Permanent' : 'Contract'}</Text>
-                  </Pressable>
+                  </AnimatedPressable>
                 ))}
               </View>
               {errors.employmentType ? <Text style={st.errorText}>{errors.employmentType}</Text> : null}
@@ -253,9 +253,9 @@ export default function CreateRoleScreen() {
               <Text style={st.label}>Urgency</Text>
               <View style={st.chipRow}>
                 {URGENCY_LEVELS.map((u) => (
-                  <Pressable key={u} style={[st.chip, urgency === u && st.chipActive]} onPress={() => setUrgency(u)}>
+                  <AnimatedPressable key={u} style={[st.chip, urgency === u && st.chipActive]} onPress={() => setUrgency(u)}>
                     <Text style={[st.chipText, urgency === u && st.chipTextActive]}>{u === 'standard' ? 'Standard' : u === 'urgent' ? 'Urgent' : 'Immediate'}</Text>
-                  </Pressable>
+                  </AnimatedPressable>
                 ))}
               </View>
             </View>
@@ -290,9 +290,9 @@ export default function CreateRoleScreen() {
             <Text style={st.label}>Location</Text>
             <View style={st.chipRow}>
               {LOCATION_TYPES.map((lt) => (
-                <Pressable key={lt} style={[st.chip, locationType === lt && st.chipActive]} onPress={() => setLocationType(lt)}>
+                <AnimatedPressable key={lt} style={[st.chip, locationType === lt && st.chipActive]} onPress={() => setLocationType(lt)}>
                   <Text style={[st.chipText, locationType === lt && st.chipTextActive]}>{lt === 'on_site' ? 'On-site' : lt === 'hybrid' ? 'Hybrid' : 'Remote'}</Text>
-                </Pressable>
+                </AnimatedPressable>
               ))}
             </View>
             {locationType !== 'remote' && (
@@ -321,18 +321,18 @@ export default function CreateRoleScreen() {
             {(errors.rateMin || errors.rateMax) ? <Text style={st.errorText}>{errors.rateMin || errors.rateMax}</Text> : null}
             <View style={st.chipRow}>
               {RATE_TYPES.map((rt) => (
-                <Pressable key={rt} style={[st.chip, rateType === rt && st.chipActive]} onPress={() => setRateType(rt)}>
+                <AnimatedPressable key={rt} style={[st.chip, rateType === rt && st.chipActive]} onPress={() => setRateType(rt)}>
                   <Text style={[st.chipText, rateType === rt && st.chipTextActive]}>{rt}</Text>
-                </Pressable>
+                </AnimatedPressable>
               ))}
             </View>
           </View>
 
-          <Pressable style={st.moreDetailsToggle} onPress={() => setShowMore((v) => !v)} accessibilityRole="button" accessibilityLabel="Toggle more details">
+          <AnimatedPressable style={st.moreDetailsToggle} onPress={() => setShowMore((v) => !v)} accessibilityRole="button" accessibilityLabel="Toggle more details">
             <Text style={st.moreDetailsText}>More details</Text>
             <Text style={st.moreDetailsHint}>Start date</Text>
             <AppIcon name={showMore ? 'chevron-up' : 'chevron-down'} size={18} color={T.textSecondary} />
-          </Pressable>
+          </AnimatedPressable>
 
           {showMore && (
             <View style={st.fieldWrap}>
@@ -432,9 +432,9 @@ function TagField({ T, st, label, inputValue, onInputChange, tags, onAdd, onRemo
           returnKeyType="done"
         />
         {inputValue.trim().length > 0 && (
-          <Pressable style={st.addTagBtn} onPress={onAdd} hitSlop={8} accessibilityRole="button" accessibilityLabel={`Add ${label.toLowerCase()} "${inputValue.trim()}"`}>
+          <AnimatedPressable style={st.addTagBtn} onPress={onAdd} hitSlop={8} accessibilityRole="button" accessibilityLabel={`Add ${label.toLowerCase()} "${inputValue.trim()}"`}>
             <AppIcon name="add" size={18} color={T.textOnAccent} />
-          </Pressable>
+          </AnimatedPressable>
         )}
       </View>
       {tags.length > 0 && (
@@ -442,9 +442,9 @@ function TagField({ T, st, label, inputValue, onInputChange, tags, onAdd, onRemo
           {tags.map((tag) => (
             <View key={tag} style={st.tagChip}>
               <Text style={st.tagChipText}>{tag}</Text>
-              <Pressable onPress={() => onRemove(tag)} hitSlop={6} accessibilityRole="button" accessibilityLabel={`Remove ${tag}`}>
+              <AnimatedPressable onPress={() => onRemove(tag)} hitSlop={6} accessibilityRole="button" accessibilityLabel={`Remove ${tag}`}>
                 <AppIcon name="close" size={14} color={T.accent} />
-              </Pressable>
+              </AnimatedPressable>
             </View>
           ))}
         </View>

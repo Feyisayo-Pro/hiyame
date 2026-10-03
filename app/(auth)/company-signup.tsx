@@ -1,7 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
 import {
   Animated,
-  Pressable,
   StyleSheet,
   TextInput,
   View,
@@ -26,6 +25,7 @@ import VerifyEmailModal from '@/components/VerifyEmailModal';
 import { useShake } from '@/lib/useShake';
 import { DURATION } from '@/lib/motion';
 import PageHead from '@/components/PageHead';
+import AnimatedPressable from '@/components/AnimatedPressable';
 
 /* ── Constants ── */
 
@@ -116,7 +116,7 @@ function SelectChip({ label, selected, onPress, T }: {
   label: string; selected: boolean; onPress: () => void; T: ThemePalette;
 }) {
   return (
-    <Pressable
+    <AnimatedPressable
       onPress={onPress}
       style={{
         paddingHorizontal: 14, paddingVertical: 10, borderRadius: 10,
@@ -129,7 +129,7 @@ function SelectChip({ label, selected, onPress, T }: {
       <Text style={{ fontSize: 13, fontWeight: selected ? '700' : '500', color: selected ? T.accent : T.textSecondary }}>
         {label}
       </Text>
-    </Pressable>
+    </AnimatedPressable>
   );
 }
 
@@ -358,9 +358,9 @@ export default function CompanySignupScreen() {
               onFocus={onFocus}
               onBlur={() => { onBlur(); validateAccountField('password'); }}
             />
-            <Pressable onPress={() => setShowPassword(!showPassword)} hitSlop={8} accessibilityRole="button" accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}>
+            <AnimatedPressable onPress={() => setShowPassword(!showPassword)} hitSlop={8} accessibilityRole="button" accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}>
               <AppIcon name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color={T.textMuted} />
-            </Pressable>
+            </AnimatedPressable>
           </>
         )}
       </FormField>
@@ -471,7 +471,7 @@ export default function CompanySignupScreen() {
         {errors.companySize ? <Text style={st.errorText}>{errors.companySize}</Text> : null}
         <View style={{ gap: 8, marginTop: 4 }}>
           {COMPANY_SIZES.map((size) => (
-            <Pressable
+            <AnimatedPressable
               key={size}
               onPress={() => { setCompanySize(size); clearError('companySize'); }}
               style={{
@@ -495,7 +495,7 @@ export default function CompanySignupScreen() {
               <Text style={{ fontSize: 14, fontWeight: companySize === size ? '700' : '500', color: companySize === size ? T.accent : T.textPrimary }}>
                 {size}
               </Text>
-            </Pressable>
+            </AnimatedPressable>
           ))}
         </View>
       </View>
@@ -567,7 +567,7 @@ export default function CompanySignupScreen() {
         {PLANS.map((plan) => {
           const isSelected = selectedTier === plan.key;
           return (
-            <Pressable
+            <AnimatedPressable
               key={plan.key}
               onPress={() => setSelectedTier(plan.key)}
               style={{
@@ -609,7 +609,7 @@ export default function CompanySignupScreen() {
                   </View>
                 ))}
               </View>
-            </Pressable>
+            </AnimatedPressable>
           );
         })}
       </View>
@@ -643,9 +643,9 @@ export default function CompanySignupScreen() {
       >
         {/* Top Bar */}
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 8, paddingBottom: 4 }}>
-          <Pressable style={st.backButton} onPress={handleBack} hitSlop={2} accessibilityRole="button" accessibilityLabel="Go back">
+          <AnimatedPressable style={st.backButton} onPress={handleBack} hitSlop={2} accessibilityRole="button" accessibilityLabel="Go back">
             <AppIcon name="arrow-back" size={20} color={T.textPrimary} />
-          </Pressable>
+          </AnimatedPressable>
           <Text style={{ fontSize: 12, fontWeight: '600', color: T.textMuted }}>Step {step + 1} of {TOTAL_STEPS}</Text>
         </View>
 
@@ -676,16 +676,16 @@ export default function CompanySignupScreen() {
                   <AppIcon name="alert-circle" size={16} color={T.danger} />
                   <Text style={st.generalErrorText}>{errors.general}</Text>
                   {isAlreadyRegistered(errors.general) && (
-                    <Pressable onPress={() => router.push('/(auth)/company-signin')}>
+                    <AnimatedPressable onPress={() => router.push('/(auth)/company-signin')}>
                       <Text style={st.generalErrorLink}>Sign in →</Text>
-                    </Pressable>
+                    </AnimatedPressable>
                   )}
                 </View>
               ) : null}
 
               {/* Continue / Submit Button */}
               <View style={{ marginTop: 8 }}>
-                <Pressable
+                <AnimatedPressable
                   style={[st.continueButton, loading && st.continueDisabled]}
                   onPress={handleNext}
                   disabled={loading}
@@ -703,7 +703,7 @@ export default function CompanySignupScreen() {
                       <AppIcon name="rocket-outline" size={18} color={T.textOnAccent} />
                     </>
                   )}
-                </Pressable>
+                </AnimatedPressable>
               </View>
             </Animated.View>
           </SwipeFadeContainer>

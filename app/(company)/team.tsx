@@ -1,5 +1,5 @@
 import { useMemo, useState, useCallback, useEffect } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { goBack } from '@/lib/goBack';
@@ -16,6 +16,7 @@ import PageHead from '@/components/PageHead';
 import { notify } from '@/lib/notify';
 import { initials } from '@/lib/format';
 import { SkeletonRow } from '@/components/Skeleton';
+import AnimatedPressable from '@/components/AnimatedPressable';
 
 // The team roster is real: it reads and writes the company_users table
 // (scoped to the signed-in user's company via RLS). An "invite" is a
@@ -180,9 +181,9 @@ export default function TeamMembersScreen() {
       <PageHead title="Team" />
       <ScreenFrame>
       <View style={s.header}>
-        <Pressable style={s.backBtn} onPress={() => goBack(router, '/(company)')} hitSlop={4} accessibilityRole="button" accessibilityLabel="Go back">
+        <AnimatedPressable style={s.backBtn} onPress={() => goBack(router, '/(company)')} hitSlop={4} accessibilityRole="button" accessibilityLabel="Go back">
           <AppIcon name="arrow-back" size={20} color={T.textPrimary} />
-        </Pressable>
+        </AnimatedPressable>
         <Text style={s.headerTitle}>Team Members</Text>
         <View style={{ width: 36 }} />
       </View>
@@ -240,7 +241,7 @@ export default function TeamMembersScreen() {
                         <ActivityIndicator size="small" color={T.danger} />
                       </View>
                     ) : (
-                      <Pressable
+                      <AnimatedPressable
                         onPress={() => handleRemove(m)}
                         style={s.deleteBtn}
                         hitSlop={8}
@@ -248,7 +249,7 @@ export default function TeamMembersScreen() {
                         accessibilityLabel={`${m.status === 'pending' ? 'Cancel invite for' : 'Remove'} ${m.email ?? 'member'}`}
                       >
                         <AppIcon name="trash-outline" size={18} color={T.danger} />
-                      </Pressable>
+                      </AnimatedPressable>
                     )}
                   </View>
                 );
@@ -279,14 +280,14 @@ export default function TeamMembersScreen() {
               editable={!seatsFull && !inviting}
               style={[s.inviteInput, (seatsFull || inviting) && s.inviteInputDisabled]}
             />
-            <Pressable
+            <AnimatedPressable
               onPress={handleInvite}
               disabled={inviting}
               style={[s.inviteBtn, (seatsFull || inviting) && s.inviteBtnDisabled]}
             >
               <AppIcon name={seatsFull ? 'lock-closed' : 'person-add'} size={16} color={T.textOnAccent} />
               <Text style={s.inviteBtnText}>{inviting ? 'Inviting…' : 'Invite Member'}</Text>
-            </Pressable>
+            </AnimatedPressable>
             <Text style={s.inviteHint}>
               Adds a pending seat now. No email is sent yet; teammate sign-in is coming later.
             </Text>

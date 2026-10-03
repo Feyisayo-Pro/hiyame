@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo} from 'react';
-import { Animated, Pressable, ScrollView, StyleSheet, TextInput, View, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { Animated, ScrollView, StyleSheet, TextInput, View, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { router } from 'expo-router';
 import { goBack } from '@/lib/goBack';
 import { Text } from '@/components/Themed';
@@ -108,9 +108,9 @@ export default function CandidateSignInScreen() {
           bounces={false}
         >
           {/* Back */}
-          <Pressable style={st.backButton} onPress={() => goBack(router, '/(auth)/welcome')} hitSlop={2} accessibilityRole="button" accessibilityLabel="Go back">
+          <AnimatedPressable style={st.backButton} onPress={() => goBack(router, '/(auth)/welcome')} hitSlop={2} accessibilityRole="button" accessibilityLabel="Go back">
             <AppIcon name="arrow-back" size={20} color={T.textPrimary} />
-          </Pressable>
+          </AnimatedPressable>
 
           <Animated.View style={[st.content, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
             {/* Header */}
@@ -160,17 +160,17 @@ export default function CandidateSignInScreen() {
                     onFocus={onFocus}
                     onBlur={onBlur}
                   />
-                  <Pressable onPress={() => setShowPassword(!showPassword)} hitSlop={8} accessibilityRole="button" accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}>
+                  <AnimatedPressable onPress={() => setShowPassword(!showPassword)} hitSlop={8} accessibilityRole="button" accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}>
                     <AppIcon name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color={T.textMuted} />
-                  </Pressable>
+                  </AnimatedPressable>
                 </>
               )}
             </FormField>
 
             {/* Forgot Password */}
-            <Pressable style={st.forgotRow} onPress={() => setShowForgotPassword(true)}>
+            <AnimatedPressable style={st.forgotRow} onPress={() => setShowForgotPassword(true)}>
               <Text style={st.forgotText}>Forgot password?</Text>
-            </Pressable>
+            </AnimatedPressable>
 
             {errors.general && (
               <Animated.View style={[st.generalErrorBanner, shakeStyle]}>
@@ -201,10 +201,10 @@ export default function CandidateSignInScreen() {
 
           {/* Footer */}
           <View style={st.footer}>
-            <Pressable style={st.registerRow} onPress={() => router.push('/(auth)/register')}>
+            <AnimatedPressable style={st.registerRow} onPress={() => router.push('/(auth)/register')}>
               <Text style={st.registerLabel}>Don't have an account? </Text>
               <Text style={st.registerLink}>Create one</Text>
-            </Pressable>
+            </AnimatedPressable>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

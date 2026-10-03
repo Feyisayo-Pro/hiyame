@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import { Animated, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import AnimatedPressable from '@/components/AnimatedPressable';
 import AppIcon, { AppIconName } from '@/components/AppIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -126,9 +127,9 @@ export default function HelpCenterScreen({ persona }: { persona: Persona }) {
       <PageHead title="Help Center" />
       <ScreenFrame>
         <View style={st.header}>
-          <Pressable style={st.backBtn} onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Go back">
+          <AnimatedPressable style={st.backBtn} onPress={() => router.back()} hitSlop={2} accessibilityRole="button" accessibilityLabel="Go back">
             <AppIcon name="arrow-back" size={20} color={T.textPrimary} />
-          </Pressable>
+          </AnimatedPressable>
           <View>
             <Text style={st.headerTitle}>Help Center</Text>
             <Text style={st.headerSub}>Answers to common questions</Text>

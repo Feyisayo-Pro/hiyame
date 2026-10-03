@@ -28,6 +28,7 @@ import { Text } from '@/components/Themed';
 import { SkeletonRow } from '@/components/Skeleton';
 import PageHead from '@/components/PageHead';
 import { useAccountStatus } from '@/lib/useAccountStatus';
+import AnimatedPressable from '@/components/AnimatedPressable';
 
 // ── Helpers ──
 
@@ -89,9 +90,9 @@ function ConfigModal({ visible, onClose, T }: { visible: boolean; onClose: () =>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 12 }}>
               <Text style={{ fontSize: 20, fontWeight: '800', color: T.textPrimary }}>Settings</Text>
-              <Pressable onPress={onClose} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: T.surface, alignItems: 'center', justifyContent: 'center' }} hitSlop={4} accessibilityRole="button" accessibilityLabel="Close settings">
+              <AnimatedPressable onPress={onClose} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: T.surface, alignItems: 'center', justifyContent: 'center' }} hitSlop={4} accessibilityRole="button" accessibilityLabel="Close settings">
                 <AppIcon name="close" size={20} color={T.textPrimary} />
-              </Pressable>
+              </AnimatedPressable>
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
@@ -154,13 +155,13 @@ function ConfigModal({ visible, onClose, T }: { visible: boolean; onClose: () =>
                   else (TopNav, both profile screens, AccountSettings) —
                   onAuthStateChange picks up the cleared session and AuthGate
                   handles the redirect itself, no manual router call needed. */}
-              <Pressable
+              <AnimatedPressable
                 onPress={() => { onClose(); supabase.auth.signOut(); }}
                 style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 16, marginHorizontal: 20 }}
               >
                 <AppIcon name="log-out-outline" size={18} color={T.danger} />
                 <Text style={{ fontSize: 14, fontWeight: '600', color: T.danger }}>Sign Out</Text>
-              </Pressable>
+              </AnimatedPressable>
 
               <View style={{ alignItems: 'center', paddingTop: 8 }}>
                 <Text style={{ fontSize: 11, color: T.textMuted }}>hiyame v1.0.0</Text>
@@ -243,9 +244,9 @@ export default function CompanyDashboardScreen() {
                 <AppIcon name="crown-outline" size={14} color={T.accent} style={{ marginRight: 4 }} />
                 <Text style={styles.planBadgeText}>{config.name}</Text>
               </View>
-              <Pressable onPress={() => setShowConfig(true)} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: T.surface, alignItems: 'center', justifyContent: 'center' }} hitSlop={4} accessibilityRole="button" accessibilityLabel="Settings">
+              <AnimatedPressable onPress={() => setShowConfig(true)} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: T.surface, alignItems: 'center', justifyContent: 'center' }} hitSlop={4} accessibilityRole="button" accessibilityLabel="Settings">
                 <AppIcon name="settings-outline" size={20} color={T.textSecondary} />
-              </Pressable>
+              </AnimatedPressable>
             </View>
           </View>
         </SwipeFadeContainer>
@@ -258,9 +259,9 @@ export default function CompanyDashboardScreen() {
           <View style={styles.statsErrorBanner}>
             <AppIcon name="cloud-offline-outline" size={16} color={T.danger} />
             <Text style={styles.statsErrorText}>Couldn't load your latest stats</Text>
-            <Pressable onPress={() => refetchStats()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <AnimatedPressable onPress={() => refetchStats()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
               <Text style={styles.statsErrorRetry}>Retry</Text>
-            </Pressable>
+            </AnimatedPressable>
           </View>
         )}
 
@@ -404,7 +405,7 @@ export default function CompanyDashboardScreen() {
         {/* ATS / HRMS Integration & Developer Webhooks — Enterprise-gated */}
         <SwipeFadeContainer direction="left" triggerKey="ats-gate" delay={300}>
           <Text style={styles.sectionTitle}>Enterprise Tools</Text>
-          <Pressable
+          <AnimatedPressable
             disabled={tier === 'enterprise'}
             onPress={() => router.push('/(company)/subscriptions')}
             style={styles.atsGateWrap}
@@ -429,7 +430,7 @@ export default function CompanyDashboardScreen() {
                 <Text style={styles.enterpriseRibbonText}>ENTERPRISE TIER ONLY</Text>
               </View>
             )}
-          </Pressable>
+          </AnimatedPressable>
         </SwipeFadeContainer>
 
         {/* Enterprise tier extras */}

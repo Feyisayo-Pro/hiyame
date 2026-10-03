@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import AppIcon from '@/components/AppIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -9,6 +9,7 @@ import ScreenFrame from '@/components/ScreenFrame';
 import PageHead from '@/components/PageHead';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import { DURATION } from '@/lib/motion';
+import AnimatedPressable from '@/components/AnimatedPressable';
 
 const LAST_UPDATED = '11 September 2026';
 
@@ -57,9 +58,9 @@ export default function LegalScreen() {
       <PageHead title="Legal" />
       <ScreenFrame>
         <View style={st.header}>
-          <Pressable style={st.backBtn} onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Go back">
+          <AnimatedPressable style={st.backBtn} onPress={() => router.back()} hitSlop={2} accessibilityRole="button" accessibilityLabel="Go back">
             <AppIcon name="arrow-back" size={20} color={T.textPrimary} />
-          </Pressable>
+          </AnimatedPressable>
           <View>
             <Text style={st.headerTitle}>{tab === 'terms' ? 'Terms of Service' : 'Privacy Policy'}</Text>
             <Text style={st.headerSub}>Last updated {LAST_UPDATED}</Text>
@@ -67,12 +68,12 @@ export default function LegalScreen() {
         </View>
 
         <View style={st.tabRow}>
-          <Pressable style={[st.tabBtn, tab === 'terms' && st.tabBtnActive]} onPress={() => setTab('terms')}>
+          <AnimatedPressable style={[st.tabBtn, tab === 'terms' && st.tabBtnActive]} onPress={() => setTab('terms')}>
             <Text style={[st.tabText, tab === 'terms' && st.tabTextActive]}>Terms of Service</Text>
-          </Pressable>
-          <Pressable style={[st.tabBtn, tab === 'privacy' && st.tabBtnActive]} onPress={() => setTab('privacy')}>
+          </AnimatedPressable>
+          <AnimatedPressable style={[st.tabBtn, tab === 'privacy' && st.tabBtnActive]} onPress={() => setTab('privacy')}>
             <Text style={[st.tabText, tab === 'privacy' && st.tabTextActive]}>Privacy Policy</Text>
-          </Pressable>
+          </AnimatedPressable>
         </View>
 
         <ScrollView contentContainerStyle={st.scroll} showsVerticalScrollIndicator={false}>

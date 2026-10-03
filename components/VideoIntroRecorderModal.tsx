@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Modal, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Modal, StyleSheet, View } from 'react-native';
 import AppIcon from '@/components/AppIcon';
 import { Text } from '@/components/Themed';
 import { useTheme, ThemePalette } from '@/lib/theme';
 import { notify } from '@/lib/notify';
 import { uploadCandidateVideo } from '@/lib/uploadCandidateVideo';
+import AnimatedPressable from '@/components/AnimatedPressable';
 
 const MAX_SECONDS = 60;
 
@@ -216,18 +217,18 @@ export default function VideoIntroRecorderModal({ visible, onClose, onSubmitted 
         <View style={s.card}>
           <View style={s.headerRow}>
             <Text style={s.title}>Video Introduction</Text>
-            <Pressable onPress={close} hitSlop={11} disabled={status === 'uploading'} accessibilityRole="button" accessibilityLabel="Close">
+            <AnimatedPressable onPress={close} hitSlop={11} disabled={status === 'uploading'} accessibilityRole="button" accessibilityLabel="Close">
               <AppIcon name="close" size={22} color={T.textMuted} />
-            </Pressable>
+            </AnimatedPressable>
           </View>
 
           {status === 'error' ? (
             <View style={s.centerWrap}>
               <AppIcon name="warning-outline" size={32} color={T.amber} />
               <Text style={s.body}>{errorMessage}</Text>
-              <Pressable style={s.actionBtn} onPress={startCamera}>
+              <AnimatedPressable style={s.actionBtn} onPress={startCamera}>
                 <Text style={s.actionBtnText}>Try Again</Text>
-              </Pressable>
+              </AnimatedPressable>
             </View>
           ) : (
             <>
@@ -267,25 +268,25 @@ export default function VideoIntroRecorderModal({ visible, onClose, onSubmitted 
 
               <View style={s.controlsRow}>
                 {status === 'ready' && (
-                  <Pressable style={s.actionBtn} onPress={startRecording}>
+                  <AnimatedPressable style={s.actionBtn} onPress={startRecording}>
                     <AppIcon name="videocam-outline" size={18} color={T.textOnAccent} />
                     <Text style={s.actionBtnText}>Start Recording</Text>
-                  </Pressable>
+                  </AnimatedPressable>
                 )}
                 {status === 'recording' && (
-                  <Pressable style={[s.actionBtn, s.actionBtnDanger]} onPress={stopRecording}>
+                  <AnimatedPressable style={[s.actionBtn, s.actionBtnDanger]} onPress={stopRecording}>
                     <AppIcon name="stop-circle-outline" size={18} color={T.textOnAccent} />
                     <Text style={s.actionBtnText}>Stop</Text>
-                  </Pressable>
+                  </AnimatedPressable>
                 )}
                 {status === 'preview' && (
                   <>
-                    <Pressable style={s.secondaryBtn} onPress={reRecord}>
+                    <AnimatedPressable style={s.secondaryBtn} onPress={reRecord}>
                       <Text style={s.secondaryBtnText}>Re-record</Text>
-                    </Pressable>
-                    <Pressable style={s.actionBtn} onPress={submit}>
+                    </AnimatedPressable>
+                    <AnimatedPressable style={s.actionBtn} onPress={submit}>
                       <Text style={s.actionBtnText}>Submit</Text>
-                    </Pressable>
+                    </AnimatedPressable>
                   </>
                 )}
                 {status === 'uploading' && (

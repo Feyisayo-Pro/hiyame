@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { StyleSheet, View, useWindowDimensions } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AppIcon, { AppIconName } from '@/components/AppIcon';
@@ -8,6 +8,7 @@ import { useTheme, ThemePalette, DISPLAY_FONT_FAMILY } from '@/lib/theme';
 import { useAuth } from '@/lib/useAuth';
 import { supabase } from '@/lib/supabase';
 import PageHead from '@/components/PageHead';
+import AnimatedPressable from '@/components/AnimatedPressable';
 
 interface Step {
   icon: AppIconName;
@@ -72,9 +73,9 @@ export default function WelcomeTourScreen() {
               <View key={idx} style={[st.dot, idx === i && st.dotActive]} />
             ))}
           </View>
-          <Pressable onPress={finish} hitSlop={10} accessibilityRole="button" accessibilityLabel="Skip the tour">
+          <AnimatedPressable onPress={finish} hitSlop={10} accessibilityRole="button" accessibilityLabel="Skip the tour">
             <Text style={st.skip}>Skip</Text>
-          </Pressable>
+          </AnimatedPressable>
         </View>
 
         <View style={st.body}>
@@ -86,7 +87,7 @@ export default function WelcomeTourScreen() {
         </View>
 
         <View style={st.nav}>
-          <Pressable
+          <AnimatedPressable
             onPress={() => setI((n) => Math.max(0, n - 1))}
             disabled={i === 0}
             style={[st.backBtn, i === 0 && { opacity: 0 }]}
@@ -95,9 +96,9 @@ export default function WelcomeTourScreen() {
           >
             <AppIcon name="arrow-back" size={18} color={T.textSecondary} />
             <Text style={st.backText}>Back</Text>
-          </Pressable>
+          </AnimatedPressable>
 
-          <Pressable
+          <AnimatedPressable
             onPress={() => (last ? finish() : setI((n) => n + 1))}
             disabled={finishing}
             style={st.nextBtn}
@@ -106,7 +107,7 @@ export default function WelcomeTourScreen() {
           >
             <Text style={st.nextText}>{last ? 'Get started' : 'Next'}</Text>
             <AppIcon name="arrow-forward" size={18} color={T.textOnAccent} />
-          </Pressable>
+          </AnimatedPressable>
         </View>
       </View>
     </SafeAreaView>

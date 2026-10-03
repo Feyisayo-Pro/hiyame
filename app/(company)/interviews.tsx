@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, Modal, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { Text } from '@/components/Themed';
 import AppIcon from '@/components/AppIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -15,6 +15,7 @@ import { SkeletonRow } from '@/components/Skeleton';
 import { usePersonaGuard } from '@/lib/usePersonaGuard';
 import { useAccountStatus } from '@/lib/useAccountStatus';
 import PendingAccountBlock from '@/components/PendingAccountBlock';
+import AnimatedPressable from '@/components/AnimatedPressable';
 
 // Real interview scheduling — a company picks from candidates they already
 // have a real relationship with (any introduction), sets a time and a
@@ -113,10 +114,10 @@ export default function CompanyInterviewsScreen() {
             <Text style={st.headerSub}>{filtered.length} {tab.toLowerCase()}</Text>
           </View>
           {!companyBlocked && (
-            <Pressable style={st.scheduleBtn} onPress={() => setShowSchedule(true)}>
+            <AnimatedPressable style={st.scheduleBtn} onPress={() => setShowSchedule(true)}>
               <AppIcon name="add-circle-outline" size={18} color={T.textOnAccent} />
               <Text style={st.scheduleBtnText}>Schedule</Text>
-            </Pressable>
+            </AnimatedPressable>
           )}
         </View>
 
@@ -126,9 +127,9 @@ export default function CompanyInterviewsScreen() {
         <>
         <View style={st.tabRow}>
           {TABS.map((t) => (
-            <Pressable key={t} style={[st.tab, tab === t && st.tabActive]} onPress={() => setTab(t)}>
+            <AnimatedPressable key={t} style={[st.tab, tab === t && st.tabActive]} onPress={() => setTab(t)}>
               <Text style={[st.tabText, tab === t && st.tabTextActive]}>{t}</Text>
-            </Pressable>
+            </AnimatedPressable>
           ))}
         </View>
 
@@ -142,10 +143,10 @@ export default function CompanyInterviewsScreen() {
               <View style={st.emptyBlock}>
                 <AppIcon name="calendar-outline" size={28} color={T.textMuted} />
                 <Text style={st.emptyTitle}>No {tab.toLowerCase()} interviews</Text>
-                <Pressable style={st.scheduleBtn} onPress={() => setShowSchedule(true)}>
+                <AnimatedPressable style={st.scheduleBtn} onPress={() => setShowSchedule(true)}>
                   <AppIcon name="add-circle-outline" size={18} color={T.textOnAccent} />
                   <Text style={st.scheduleBtnText}>Schedule One</Text>
-                </Pressable>
+                </AnimatedPressable>
               </View>
             ) : (
               filtered.map((i) => (
@@ -162,16 +163,16 @@ export default function CompanyInterviewsScreen() {
                   {i.status === 'scheduled' ? (
                     <View style={st.rowActions}>
                       {i.meetingUrl && (
-                        <Pressable style={st.rowActionBtn} onPress={() => notify('Meeting link', i.meetingUrl!)} hitSlop={7} accessibilityRole="button" accessibilityLabel="View meeting link">
+                        <AnimatedPressable style={st.rowActionBtn} onPress={() => notify('Meeting link', i.meetingUrl!)} hitSlop={7} accessibilityRole="button" accessibilityLabel="View meeting link">
                           <AppIcon name="link" size={16} color={T.accent} />
-                        </Pressable>
+                        </AnimatedPressable>
                       )}
-                      <Pressable style={st.rowActionBtn} onPress={() => setStatus(i.id, 'completed')} hitSlop={7} accessibilityRole="button" accessibilityLabel="Mark interview completed">
+                      <AnimatedPressable style={st.rowActionBtn} onPress={() => setStatus(i.id, 'completed')} hitSlop={7} accessibilityRole="button" accessibilityLabel="Mark interview completed">
                         <AppIcon name="checkmark-circle-outline" size={16} color={T.emerald} />
-                      </Pressable>
-                      <Pressable style={st.rowActionBtn} onPress={() => setStatus(i.id, 'cancelled')} hitSlop={7} accessibilityRole="button" accessibilityLabel="Cancel interview">
+                      </AnimatedPressable>
+                      <AnimatedPressable style={st.rowActionBtn} onPress={() => setStatus(i.id, 'cancelled')} hitSlop={7} accessibilityRole="button" accessibilityLabel="Cancel interview">
                         <AppIcon name="close-circle-outline" size={16} color={T.danger} />
-                      </Pressable>
+                      </AnimatedPressable>
                     </View>
                   ) : (
                     <View style={[st.statusPill, { backgroundColor: i.status === 'completed' ? T.emeraldBg : T.surface }]}>
@@ -290,7 +291,7 @@ function ScheduleInterviewModal({ visible, companyId, onClose, onScheduled }: {
         <View style={s.card}>
           <View style={s.headerRow}>
             <Text style={s.title}>Schedule Interview</Text>
-            <Pressable onPress={close} hitSlop={11} accessibilityRole="button" accessibilityLabel="Close"><AppIcon name="close" size={22} color={T.textMuted} /></Pressable>
+            <AnimatedPressable onPress={close} hitSlop={11} accessibilityRole="button" accessibilityLabel="Close"><AppIcon name="close" size={22} color={T.textMuted} /></AnimatedPressable>
           </View>
           <ScrollView keyboardShouldPersistTaps="handled">
             <Text style={s.label}>Role</Text>
@@ -299,13 +300,13 @@ function ScheduleInterviewModal({ visible, companyId, onClose, onScheduled }: {
             ) : (
               <View style={s.roleRow}>
                 {roles.map((r) => (
-                  <Pressable
+                  <AnimatedPressable
                     key={r.id}
                     style={[s.roleBtn, selectedRoleId === r.id && s.roleBtnActive]}
                     onPress={() => setSelectedRoleId(r.id)}
                   >
                     <Text style={[s.roleBtnText, selectedRoleId === r.id && s.roleBtnTextActive]} numberOfLines={1}>{r.title}</Text>
-                  </Pressable>
+                  </AnimatedPressable>
                 ))}
               </View>
             )}
@@ -316,28 +317,28 @@ function ScheduleInterviewModal({ visible, companyId, onClose, onScheduled }: {
             ) : selected ? (
               <View style={s.selectedCandidate}>
                 <Text style={s.selectedCandidateText}>{selected.name}{selected.roleTitle ? ` · ${selected.roleTitle}` : ''}</Text>
-                <Pressable onPress={() => setSelected(null)} accessibilityRole="button" accessibilityLabel="Clear selected candidate"><AppIcon name="close" size={16} color={T.textMuted} /></Pressable>
+                <AnimatedPressable onPress={() => setSelected(null)} accessibilityRole="button" accessibilityLabel="Clear selected candidate"><AppIcon name="close" size={16} color={T.textMuted} /></AnimatedPressable>
               </View>
             ) : candidatesLoaded && candidates.length === 0 ? (
               <Text style={s.emptyHint}>No one has accepted an introduction for this role yet.</Text>
             ) : (
               candidates.map((c) => (
-                <Pressable key={c.id} style={s.candidateOption} onPress={() => setSelected(c)}>
+                <AnimatedPressable key={c.id} style={s.candidateOption} onPress={() => setSelected(c)}>
                   <Text style={s.candidateOptionText}>{c.name}</Text>
-                </Pressable>
+                </AnimatedPressable>
               ))
             )}
 
             <Text style={s.label}>Meeting Type</Text>
             <View style={s.typeRow}>
-              <Pressable style={[s.typeBtn, meetingType === 'link' && s.typeBtnActive]} onPress={() => setMeetingType('link')}>
+              <AnimatedPressable style={[s.typeBtn, meetingType === 'link' && s.typeBtnActive]} onPress={() => setMeetingType('link')}>
                 <AppIcon name="link" size={16} color={meetingType === 'link' ? T.textOnAccent : T.textSecondary} />
                 <Text style={[s.typeBtnText, meetingType === 'link' && s.typeBtnTextActive]}>Meeting Link</Text>
-              </Pressable>
-              <Pressable style={[s.typeBtn, meetingType === 'google_meet' && s.typeBtnActive]} onPress={() => setMeetingType('google_meet')}>
+              </AnimatedPressable>
+              <AnimatedPressable style={[s.typeBtn, meetingType === 'google_meet' && s.typeBtnActive]} onPress={() => setMeetingType('google_meet')}>
                 <AppIcon name="videocam-outline" size={16} color={meetingType === 'google_meet' ? T.textOnAccent : T.textSecondary} />
                 <Text style={[s.typeBtnText, meetingType === 'google_meet' && s.typeBtnTextActive]}>Google Meet</Text>
-              </Pressable>
+              </AnimatedPressable>
             </View>
 
             <View style={{ flexDirection: 'row', gap: 10 }}>
@@ -361,9 +362,9 @@ function ScheduleInterviewModal({ visible, companyId, onClose, onScheduled }: {
               autoCapitalize="none"
             />
 
-            <Pressable style={[s.submitBtn, saving && { opacity: 0.7 }]} onPress={submit} disabled={saving}>
+            <AnimatedPressable style={[s.submitBtn, saving && { opacity: 0.7 }]} onPress={submit} disabled={saving}>
               {saving ? <ActivityIndicator color={T.textOnAccent} /> : <Text style={s.submitBtnText}>Schedule Interview</Text>}
-            </Pressable>
+            </AnimatedPressable>
           </ScrollView>
         </View>
       </View>

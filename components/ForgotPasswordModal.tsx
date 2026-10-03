@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, Modal, StyleSheet, TextInput, View } from 'react-native';
 import AppIcon from '@/components/AppIcon';
 import { Text } from '@/components/Themed';
 import { useTheme, ThemePalette } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
+import AnimatedPressable from '@/components/AnimatedPressable';
 
 // "Forgot password?" on both sign-in screens was a dead link (no onPress at
 // all) — this closes that gap. Same visual language as VerifyEmailModal:
@@ -64,9 +65,9 @@ export default function ForgotPasswordModal({ visible, initialEmail = '', onClos
                 If an account exists for{'\n'}
                 <Text style={s.email}>{email.trim()}</Text>, a reset link is on its way.
               </Text>
-              <Pressable style={s.verifyBtn} onPress={onClose}>
+              <AnimatedPressable style={s.verifyBtn} onPress={onClose}>
                 <Text style={s.verifyBtnText}>Done</Text>
-              </Pressable>
+              </AnimatedPressable>
             </>
           ) : (
             <>
@@ -91,15 +92,15 @@ export default function ForgotPasswordModal({ visible, initialEmail = '', onClos
               />
               {error ? <Text style={s.error}>{error}</Text> : null}
 
-              <Pressable style={[s.verifyBtn, sending && s.verifyBtnDisabled]} onPress={send} disabled={sending}>
+              <AnimatedPressable style={[s.verifyBtn, sending && s.verifyBtnDisabled]} onPress={send} disabled={sending}>
                 {sending ? <ActivityIndicator color={T.textOnAccent} /> : <Text style={s.verifyBtnText}>Send reset link</Text>}
-              </Pressable>
+              </AnimatedPressable>
             </>
           )}
 
-          <Pressable onPress={onClose} hitSlop={8} style={{ marginTop: 14 }}>
+          <AnimatedPressable onPress={onClose} hitSlop={8} style={{ marginTop: 14 }}>
             <Text style={s.closeText}>Cancel</Text>
-          </Pressable>
+          </AnimatedPressable>
         </View>
       </View>
     </Modal>

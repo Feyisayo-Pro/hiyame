@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, TextInput, View, StyleSheet } from 'react-native';
+import { TextInput, View, StyleSheet } from 'react-native';
 import AppIcon from '@/components/AppIcon';
 import { Text } from '@/components/Themed';
 import { useTheme, ThemePalette } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
 import { notify } from '@/lib/notify';
+import AnimatedPressable from '@/components/AnimatedPressable';
 
 // Education — part of the CV-format candidate profile, backed by
 // candidate_education (RLS: candidate manages their own; a company with an
@@ -133,7 +134,7 @@ export default function EducationSection({ candidateId }: { candidateId: string 
         </View>
       ) : (
         items.map((item) => (
-          <Pressable key={item.id} style={st.card} onPress={() => openEdit(item)} accessibilityRole="button" accessibilityLabel={`Edit ${item.qualification}`}>
+          <AnimatedPressable key={item.id} style={st.card} onPress={() => openEdit(item)} accessibilityRole="button" accessibilityLabel={`Edit ${item.qualification}`}>
             <View style={{ flex: 1 }}>
               <Text style={st.cardTitle}>{item.qualification}</Text>
               <Text style={st.cardSub}>{item.institution}{item.fieldOfStudy ? ` · ${item.fieldOfStudy}` : ''}</Text>
@@ -141,10 +142,10 @@ export default function EducationSection({ candidateId }: { candidateId: string 
                 <Text style={st.cardMeta}>{year(item.startDate)} — {year(item.endDate) || 'Present'}</Text>
               )}
             </View>
-            <Pressable onPress={(e) => { e.stopPropagation(); handleRemove(item.id); }} hitSlop={8} accessibilityRole="button" accessibilityLabel={`Remove ${item.qualification}`}>
+            <AnimatedPressable onPress={(e) => { e.stopPropagation(); handleRemove(item.id); }} hitSlop={8} accessibilityRole="button" accessibilityLabel={`Remove ${item.qualification}`}>
               <AppIcon name="close" size={16} color={T.textMuted} />
-            </Pressable>
-          </Pressable>
+            </AnimatedPressable>
+          </AnimatedPressable>
         ))
       )}
 
@@ -158,19 +159,19 @@ export default function EducationSection({ candidateId }: { candidateId: string 
             <TextInput style={[st.input, { flex: 1 }]} placeholder="End (YYYY-MM-DD)" placeholderTextColor={T.textMuted} value={endDate} onChangeText={setEndDate} />
           </View>
           <View style={st.addFormRow}>
-            <Pressable style={st.cancelBtn} onPress={closeForm}>
+            <AnimatedPressable style={st.cancelBtn} onPress={closeForm}>
               <Text style={st.cancelBtnText}>Cancel</Text>
-            </Pressable>
-            <Pressable style={[st.saveBtn, (!institution.trim() || !qualification.trim() || saving) && st.saveBtnDisabled]} onPress={handleSave} disabled={!institution.trim() || !qualification.trim() || saving}>
+            </AnimatedPressable>
+            <AnimatedPressable style={[st.saveBtn, (!institution.trim() || !qualification.trim() || saving) && st.saveBtnDisabled]} onPress={handleSave} disabled={!institution.trim() || !qualification.trim() || saving}>
               <Text style={st.saveBtnText}>{saving ? 'Saving…' : editingId ? 'Save Changes' : 'Save'}</Text>
-            </Pressable>
+            </AnimatedPressable>
           </View>
         </View>
       ) : (
-        <Pressable style={st.addRow} onPress={openAdd}>
+        <AnimatedPressable style={st.addRow} onPress={openAdd}>
           <AppIcon name="add" size={16} color={T.accent} />
           <Text style={st.addRowText}>Add education</Text>
-        </Pressable>
+        </AnimatedPressable>
       )}
     </View>
   );

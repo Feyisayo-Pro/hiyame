@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, TextInput, View, StyleSheet } from 'react-native';
+import { TextInput, View, StyleSheet } from 'react-native';
 import AppIcon from '@/components/AppIcon';
 import { Text } from '@/components/Themed';
 import { useTheme, ThemePalette } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
 import { notify } from '@/lib/notify';
+import AnimatedPressable from '@/components/AnimatedPressable';
 
 // Candidate portfolio — architecture doc §5.1 ("up to 5 [items] per
 // candidate"), backed by the real portfolio_items table (RLS: a candidate
@@ -90,9 +91,9 @@ export default function PortfolioSection({ candidateId }: { candidateId: string 
               <Text style={st.cardTitle}>{item.title}</Text>
               {item.description ? <Text style={st.cardDesc}>{item.description}</Text> : null}
             </View>
-            <Pressable onPress={() => handleRemove(item.id)} hitSlop={8} accessibilityRole="button" accessibilityLabel={`Remove ${item.title}`}>
+            <AnimatedPressable onPress={() => handleRemove(item.id)} hitSlop={8} accessibilityRole="button" accessibilityLabel={`Remove ${item.title}`}>
               <AppIcon name="close" size={16} color={T.textMuted} />
-            </Pressable>
+            </AnimatedPressable>
           </View>
         ))
       )}
@@ -102,19 +103,19 @@ export default function PortfolioSection({ candidateId }: { candidateId: string 
           <TextInput style={st.input} placeholder="Title (Payroll dashboard rebuild)" placeholderTextColor={T.textMuted} value={title} onChangeText={setTitle} />
           <TextInput style={[st.input, st.textArea]} placeholder="Short description (optional)" placeholderTextColor={T.textMuted} value={description} onChangeText={setDescription} multiline numberOfLines={3} />
           <View style={st.addFormRow}>
-            <Pressable style={st.cancelBtn} onPress={() => { setAdding(false); setTitle(''); setDescription(''); }}>
+            <AnimatedPressable style={st.cancelBtn} onPress={() => { setAdding(false); setTitle(''); setDescription(''); }}>
               <Text style={st.cancelBtnText}>Cancel</Text>
-            </Pressable>
-            <Pressable style={[st.saveBtn, (!title.trim() || saving) && st.saveBtnDisabled]} onPress={handleAdd} disabled={!title.trim() || saving}>
+            </AnimatedPressable>
+            <AnimatedPressable style={[st.saveBtn, (!title.trim() || saving) && st.saveBtnDisabled]} onPress={handleAdd} disabled={!title.trim() || saving}>
               <Text style={st.saveBtnText}>{saving ? 'Saving…' : 'Save'}</Text>
-            </Pressable>
+            </AnimatedPressable>
           </View>
         </View>
       ) : items.length < MAX_ITEMS ? (
-        <Pressable style={st.addRow} onPress={() => setAdding(true)}>
+        <AnimatedPressable style={st.addRow} onPress={() => setAdding(true)}>
           <AppIcon name="add" size={16} color={T.accent} />
           <Text style={st.addRowText}>Add portfolio item</Text>
-        </Pressable>
+        </AnimatedPressable>
       ) : null}
     </View>
   );

@@ -7,7 +7,7 @@
  * none of those are tracked anywhere.
  */
 import { useMemo } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { Text } from '@/components/Themed';
 import AppIcon, { AppIconName } from '@/components/AppIcon';
@@ -20,6 +20,7 @@ import ScreenFrame from '@/components/ScreenFrame';
 import { SkeletonBlock, SkeletonCard } from '@/components/Skeleton';
 import { FULL_VERIFICATION_THRESHOLD } from '@/lib/verification';
 import PageHead from '@/components/PageHead';
+import AnimatedPressable from '@/components/AnimatedPressable';
 
 type Persona = 'company' | 'candidate';
 
@@ -229,9 +230,9 @@ export default function AnalyticsScreen({ persona = 'company' }: { persona?: Per
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32, gap: 12 }}>
           <AppIcon name="cloud-offline-outline" size={28} color={T.textMuted} />
           <Text style={{ fontSize: 14, color: T.textSecondary, textAlign: 'center' }}>Couldn't load your insights.</Text>
-          <Pressable onPress={() => retry()} style={{ backgroundColor: T.accent, paddingHorizontal: 20, paddingVertical: 10, borderRadius: 10 }}>
+          <AnimatedPressable onPress={() => retry()} style={{ backgroundColor: T.accent, paddingHorizontal: 20, paddingVertical: 10, borderRadius: 10 }}>
             <Text style={{ color: T.textOnAccent, fontWeight: '700', fontSize: 13 }}>Retry</Text>
-          </Pressable>
+          </AnimatedPressable>
         </View>
       ) : !ready ? (
         <AnalyticsSkeleton />

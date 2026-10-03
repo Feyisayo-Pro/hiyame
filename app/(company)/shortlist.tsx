@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, View, ActivityIndicator } from 'react-native';
+import { Image, ScrollView, StyleSheet, View, ActivityIndicator } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { goBack } from '@/lib/goBack';
 import { Text } from '@/components/Themed';
@@ -211,9 +211,9 @@ export default function ShortlistScreen() {
       <PageHead title="Shortlist" />
       <ScreenFrame>
       <View style={st.header}>
-        <Pressable style={st.backButton} onPress={() => goBack(router, '/(company)/roles')} hitSlop={2} accessibilityRole="button" accessibilityLabel="Go back">
+        <AnimatedPressable style={st.backButton} onPress={() => goBack(router, '/(company)/roles')} hitSlop={2} accessibilityRole="button" accessibilityLabel="Go back">
           <AppIcon name="arrow-back" size={20} color={T.textPrimary} />
-        </Pressable>
+        </AnimatedPressable>
         <View style={{ flex: 1 }}>
           <Text style={st.headerTitle} numberOfLines={1}>{roleTitle ?? 'Shortlist'}</Text>
           {cfg && (
@@ -222,7 +222,7 @@ export default function ShortlistScreen() {
             </View>
           )}
         </View>
-        <Pressable
+        <AnimatedPressable
           style={st.rerunButton}
           onPress={runMatching}
           disabled={running}
@@ -234,7 +234,7 @@ export default function ShortlistScreen() {
           ) : (
             <AppIcon name="refresh" size={18} color={T.accent} />
           )}
-        </Pressable>
+        </AnimatedPressable>
       </View>
 
       {companyStatus === 'pending' || companyStatus === 'rejected' ? (
@@ -271,10 +271,10 @@ export default function ShortlistScreen() {
               <AppIcon name="search" size={28} color={T.textMuted} />
               <Text style={st.emptyTitle}>No candidates matched yet</Text>
               <Text style={st.emptySub}>No one in the pool cleared the bar for this role. Widening the skills or rate range, then re-running, may surface more.</Text>
-              <Pressable style={st.rerunPill} onPress={runMatching}>
+              <AnimatedPressable style={st.rerunPill} onPress={runMatching}>
                 <AppIcon name="refresh" size={15} color={T.textOnAccent} />
                 <Text style={st.rerunPillText}>Re-run matching</Text>
-              </Pressable>
+              </AnimatedPressable>
             </View>
           )}
 

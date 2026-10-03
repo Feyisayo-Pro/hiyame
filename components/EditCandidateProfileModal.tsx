@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, Modal, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import AppIcon from '@/components/AppIcon';
 import { Text } from '@/components/Themed';
 import { useTheme, ThemePalette } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
 import { notify } from '@/lib/notify';
+import AnimatedPressable from '@/components/AnimatedPressable';
 
 export interface CandidateEditable {
   fullName: string;
@@ -97,9 +98,9 @@ export default function EditCandidateProfileModal({ visible, candidateId, initia
         <View style={s.card}>
           <View style={s.headerRow}>
             <Text style={s.title}>Edit Profile</Text>
-            <Pressable onPress={close} hitSlop={11} accessibilityRole="button" accessibilityLabel="Close">
+            <AnimatedPressable onPress={close} hitSlop={11} accessibilityRole="button" accessibilityLabel="Close">
               <AppIcon name="close" size={22} color={T.textMuted} />
-            </Pressable>
+            </AnimatedPressable>
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
@@ -139,9 +140,9 @@ export default function EditCandidateProfileModal({ visible, candidateId, initia
                 returnKeyType="done"
               />
               {skillInput.trim().length > 0 && (
-                <Pressable style={s.addBtn} onPress={() => addSkill(skillInput)} hitSlop={8} accessibilityRole="button" accessibilityLabel="Add skill">
+                <AnimatedPressable style={s.addBtn} onPress={() => addSkill(skillInput)} hitSlop={8} accessibilityRole="button" accessibilityLabel="Add skill">
                   <AppIcon name="add" size={18} color={T.textOnAccent} />
-                </Pressable>
+                </AnimatedPressable>
               )}
             </View>
             {skills.length > 0 && (
@@ -149,18 +150,18 @@ export default function EditCandidateProfileModal({ visible, candidateId, initia
                 {skills.map((skill) => (
                   <View key={skill} style={s.chip}>
                     <Text style={s.chipText}>{skill}</Text>
-                    <Pressable onPress={() => removeSkill(skill)} hitSlop={6} accessibilityRole="button" accessibilityLabel={`Remove ${skill}`}>
+                    <AnimatedPressable onPress={() => removeSkill(skill)} hitSlop={6} accessibilityRole="button" accessibilityLabel={`Remove ${skill}`}>
                       <AppIcon name="close" size={13} color={T.accent} />
-                    </Pressable>
+                    </AnimatedPressable>
                   </View>
                 ))}
               </View>
             )}
           </ScrollView>
 
-          <Pressable style={[s.saveBtn, saving && s.saveBtnDisabled]} onPress={save} disabled={saving}>
+          <AnimatedPressable style={[s.saveBtn, saving && s.saveBtnDisabled]} onPress={save} disabled={saving}>
             {saving ? <ActivityIndicator color={T.textOnAccent} /> : <Text style={s.saveBtnText}>Save Changes</Text>}
-          </Pressable>
+          </AnimatedPressable>
         </View>
       </View>
     </Modal>

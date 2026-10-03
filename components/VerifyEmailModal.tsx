@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, Modal, StyleSheet, TextInput, View } from 'react-native';
 import AppIcon from '@/components/AppIcon';
 import { Text } from '@/components/Themed';
 import { useTheme, ThemePalette } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
+import AnimatedPressable from '@/components/AnimatedPressable';
 
 // Real OTP-code email verification, in-page — no leaving the site to click a
 // link. Supabase's "Confirm signup" email carries a 6-digit code (via
@@ -113,19 +114,19 @@ export default function VerifyEmailModal({ visible, email, onClose, onVerified }
           />
           {error ? <Text style={s.error}>{error}</Text> : null}
 
-          <Pressable style={[s.verifyBtn, verifying && s.verifyBtnDisabled]} onPress={verify} disabled={verifying}>
+          <AnimatedPressable style={[s.verifyBtn, verifying && s.verifyBtnDisabled]} onPress={verify} disabled={verifying}>
             {verifying ? <ActivityIndicator color={T.textOnAccent} /> : <Text style={s.verifyBtnText}>Verify Email</Text>}
-          </Pressable>
+          </AnimatedPressable>
 
-          <Pressable onPress={resend} disabled={cooldown > 0 || resending} hitSlop={8} style={s.resendRow}>
+          <AnimatedPressable onPress={resend} disabled={cooldown > 0 || resending} hitSlop={8} style={s.resendRow}>
             <Text style={[s.resendText, cooldown > 0 && s.resendTextDisabled]}>
               {resending ? 'Sending…' : cooldown > 0 ? `Resend code in ${cooldown}s` : "Didn't get it? Resend code"}
             </Text>
-          </Pressable>
+          </AnimatedPressable>
 
-          <Pressable onPress={onClose} hitSlop={8} style={{ marginTop: 4 }}>
+          <AnimatedPressable onPress={onClose} hitSlop={8} style={{ marginTop: 4 }}>
             <Text style={s.closeText}>Use a different email</Text>
-          </Pressable>
+          </AnimatedPressable>
         </View>
       </View>
     </Modal>

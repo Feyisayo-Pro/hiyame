@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Pressable, StyleSheet, TextInput, View, KeyboardAvoidingView, Platform } from 'react-native';
+import { StyleSheet, TextInput, View, KeyboardAvoidingView, Platform } from 'react-native';
 import { router } from 'expo-router';
 import { Text } from '@/components/Themed';
 import AppIcon from '@/components/AppIcon';
@@ -8,6 +8,7 @@ import { useTheme, ThemePalette, DISPLAY_FONT_FAMILY } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
 import ScreenFrame from '@/components/ScreenFrame';
 import PageHead from '@/components/PageHead';
+import AnimatedPressable from '@/components/AnimatedPressable';
 
 // Lands here from a Supabase invite email's magic link — the user is already
 // authenticated (in a "needs a password" state) via that link. Sets a real
@@ -92,14 +93,14 @@ export default function ClaimAccountScreen() {
                 value={password}
                 onChangeText={(t) => { setPassword(t); setError(''); }}
               />
-              <Pressable onPress={() => setShowPassword(!showPassword)} hitSlop={8} accessibilityRole="button" accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}>
+              <AnimatedPressable onPress={() => setShowPassword(!showPassword)} hitSlop={8} accessibilityRole="button" accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}>
                 <AppIcon name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color={T.textMuted} />
-              </Pressable>
+              </AnimatedPressable>
             </View>
             {error ? <Text style={st.errorText}>{error}</Text> : null}
           </View>
 
-          <Pressable style={[st.button, loading && st.buttonDisabled]} onPress={handleClaim} disabled={loading}>
+          <AnimatedPressable style={[st.button, loading && st.buttonDisabled]} onPress={handleClaim} disabled={loading}>
             {loading ? (
               <Text style={st.buttonText}>Finishing up…</Text>
             ) : (
@@ -108,7 +109,7 @@ export default function ClaimAccountScreen() {
                 <AppIcon name="arrow-forward" size={18} color={T.textOnAccent} />
               </>
             )}
-          </Pressable>
+          </AnimatedPressable>
         </View>
       </KeyboardAvoidingView>
       </ScreenFrame>

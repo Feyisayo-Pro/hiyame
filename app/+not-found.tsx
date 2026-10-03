@@ -1,10 +1,11 @@
 import { Link, Stack } from 'expo-router';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Text } from '@/components/Themed';
 import AppIcon from '@/components/AppIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, ThemePalette, DISPLAY_FONT_FAMILY } from '@/lib/theme';
 import { useMemo } from 'react';
+import AnimatedPressable from '@/components/AnimatedPressable';
 
 export default function NotFoundScreen() {
   const T = useTheme();
@@ -20,10 +21,10 @@ export default function NotFoundScreen() {
         <Text style={st.title}>Page not found</Text>
         <Text style={st.subtitle}>The screen you're looking for doesn't exist or may have moved.</Text>
         <Link href="/" asChild>
-          <Pressable style={st.homeButton}>
+          <AnimatedPressable style={st.homeButton}>
             <AppIcon name="home-outline" size={18} color={T.textOnAccent} />
             <Text style={st.homeButtonText}>Go to Home</Text>
-          </Pressable>
+          </AnimatedPressable>
         </Link>
       </SafeAreaView>
     </>

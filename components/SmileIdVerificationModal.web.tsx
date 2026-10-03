@@ -4,11 +4,12 @@
 // render time), so it can't even be imported here, only on native (see the
 // sibling SmileIdVerificationModal.tsx, which Metro picks for iOS/Android).
 import { useMemo } from 'react';
-import { Modal, Pressable, StyleSheet, View } from 'react-native';
+import { Modal, StyleSheet, View } from 'react-native';
 import AppIcon from '@/components/AppIcon';
 
 import { Text } from '@/components/Themed';
 import { useTheme, ThemePalette } from '@/lib/theme';
+import AnimatedPressable from '@/components/AnimatedPressable';
 
 interface Props {
   visible: boolean;
@@ -32,9 +33,9 @@ export default function SmileIdVerificationModal({ visible, onClose }: Props) {
             Identity verification uses native camera and liveness capture, so it only runs in the
             mobile app — not on the web.
           </Text>
-          <Pressable style={s.actionBtn} onPress={onClose}>
+          <AnimatedPressable style={s.actionBtn} onPress={onClose}>
             <Text style={s.actionBtnText}>Close</Text>
-          </Pressable>
+          </AnimatedPressable>
         </View>
       </View>
     </Modal>

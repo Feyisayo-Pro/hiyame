@@ -1,9 +1,10 @@
 import { useMemo } from 'react';
-import { Image, Linking, Pressable, StyleSheet, View } from 'react-native';
+import { Image, Linking, StyleSheet, View } from 'react-native';
 import AppIcon, { AppIconName } from '@/components/AppIcon';
 import { Text } from '@/components/Themed';
 import { useTheme, ThemePalette } from '@/lib/theme';
 import type { IntroductionContact } from '@/lib/introductionContact';
+import AnimatedPressable from '@/components/AnimatedPressable';
 
 // The revealed-contact card shown on an accepted introduction (architecture
 // doc §7.4). `viewer` decides which side's details are shown: a candidate sees
@@ -89,10 +90,10 @@ function Row({ icon, label, onPress, st, T }: {
   T: ThemePalette;
 }) {
   return (
-    <Pressable style={st.linkRow} onPress={onPress} accessibilityRole="link">
+    <AnimatedPressable style={st.linkRow} onPress={onPress} accessibilityRole="link">
       <AppIcon name={icon} size={14} color={T.accent} />
       <Text style={st.linkText} numberOfLines={1}>{label}</Text>
-    </Pressable>
+    </AnimatedPressable>
   );
 }
 

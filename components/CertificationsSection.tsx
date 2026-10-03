@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, TextInput, View, StyleSheet } from 'react-native';
+import { TextInput, View, StyleSheet } from 'react-native';
 import AppIcon from '@/components/AppIcon';
 import { Text } from '@/components/Themed';
 import { useTheme, ThemePalette } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
 import { notify } from '@/lib/notify';
+import AnimatedPressable from '@/components/AnimatedPressable';
 
 // Certifications — part of the CV-format candidate profile, backed by
 // candidate_certifications (RLS: candidate manages their own; a company with
@@ -130,16 +131,16 @@ export default function CertificationsSection({ candidateId }: { candidateId: st
         </View>
       ) : (
         items.map((item) => (
-          <Pressable key={item.id} style={st.card} onPress={() => openEdit(item)} accessibilityRole="button" accessibilityLabel={`Edit ${item.name}`}>
+          <AnimatedPressable key={item.id} style={st.card} onPress={() => openEdit(item)} accessibilityRole="button" accessibilityLabel={`Edit ${item.name}`}>
             <View style={{ flex: 1 }}>
               <Text style={st.cardTitle}>{item.name}</Text>
               {item.issuingOrganization ? <Text style={st.cardSub}>{item.issuingOrganization}</Text> : null}
               {item.issueDate ? <Text style={st.cardMeta}>Issued {year(item.issueDate)}</Text> : null}
             </View>
-            <Pressable onPress={(e) => { e.stopPropagation(); handleRemove(item.id); }} hitSlop={8} accessibilityRole="button" accessibilityLabel={`Remove ${item.name}`}>
+            <AnimatedPressable onPress={(e) => { e.stopPropagation(); handleRemove(item.id); }} hitSlop={8} accessibilityRole="button" accessibilityLabel={`Remove ${item.name}`}>
               <AppIcon name="close" size={16} color={T.textMuted} />
-            </Pressable>
-          </Pressable>
+            </AnimatedPressable>
+          </AnimatedPressable>
         ))
       )}
 
@@ -150,19 +151,19 @@ export default function CertificationsSection({ candidateId }: { candidateId: st
           <TextInput style={st.input} placeholder="Issue date (YYYY-MM-DD)" placeholderTextColor={T.textMuted} value={issueDate} onChangeText={setIssueDate} />
           <TextInput style={st.input} placeholder="Credential URL (optional)" placeholderTextColor={T.textMuted} value={credentialUrl} onChangeText={setCredentialUrl} autoCapitalize="none" />
           <View style={st.addFormRow}>
-            <Pressable style={st.cancelBtn} onPress={closeForm}>
+            <AnimatedPressable style={st.cancelBtn} onPress={closeForm}>
               <Text style={st.cancelBtnText}>Cancel</Text>
-            </Pressable>
-            <Pressable style={[st.saveBtn, (!name.trim() || saving) && st.saveBtnDisabled]} onPress={handleSave} disabled={!name.trim() || saving}>
+            </AnimatedPressable>
+            <AnimatedPressable style={[st.saveBtn, (!name.trim() || saving) && st.saveBtnDisabled]} onPress={handleSave} disabled={!name.trim() || saving}>
               <Text style={st.saveBtnText}>{saving ? 'Saving…' : editingId ? 'Save Changes' : 'Save'}</Text>
-            </Pressable>
+            </AnimatedPressable>
           </View>
         </View>
       ) : (
-        <Pressable style={st.addRow} onPress={openAdd}>
+        <AnimatedPressable style={st.addRow} onPress={openAdd}>
           <AppIcon name="add" size={16} color={T.accent} />
           <Text style={st.addRowText}>Add certification</Text>
-        </Pressable>
+        </AnimatedPressable>
       )}
     </View>
   );

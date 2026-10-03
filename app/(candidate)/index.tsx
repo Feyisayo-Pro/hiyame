@@ -1,5 +1,5 @@
 import { useCallback, useState, useMemo, useEffect } from 'react';
-import { ActivityIndicator, Image, Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Image, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import { Text } from '@/components/Themed';
 import AppIcon, { AppIconName } from '@/components/AppIcon';
@@ -16,6 +16,7 @@ import { FULL_VERIFICATION_THRESHOLD, TOTAL_VERIFICATION_COMPONENTS } from '@/li
 import { SkeletonRow } from '@/components/Skeleton';
 import PageHead from '@/components/PageHead';
 import { useAccountStatus } from '@/lib/useAccountStatus';
+import AnimatedPressable from '@/components/AnimatedPressable';
 
 const VERIFY_COMPONENTS: { key: string; label: string; icon: AppIconName }[] = [
   { key: 'identity', label: 'Identity Check', icon: 'id-card-outline' },
@@ -123,12 +124,12 @@ export default function CandidateHomeScreen() {
               </View>
               {!isDesktop && (
                 <View style={st.headerActions}>
-                  <Pressable style={st.iconBtn} onPress={toggleTheme} accessibilityRole="button" accessibilityLabel="Toggle theme">
+                  <AnimatedPressable style={st.iconBtn} onPress={toggleTheme} accessibilityRole="button" accessibilityLabel="Toggle theme">
                     <AppIcon name={mode === 'light' ? 'sunny-outline' : 'moon-outline'} size={20} color={T.textSecondary} />
-                  </Pressable>
-                  <Pressable style={st.iconBtn} onPress={() => supabase.auth.signOut()} accessibilityRole="button" accessibilityLabel="Sign out">
+                  </AnimatedPressable>
+                  <AnimatedPressable style={st.iconBtn} onPress={() => supabase.auth.signOut()} accessibilityRole="button" accessibilityLabel="Sign out">
                     <AppIcon name="log-out-outline" size={20} color={T.textSecondary} />
-                  </Pressable>
+                  </AnimatedPressable>
                 </View>
               )}
             </View>
@@ -141,9 +142,9 @@ export default function CandidateHomeScreen() {
             <View style={st.errorBanner}>
               <AppIcon name="cloud-offline-outline" size={16} color={T.danger} />
               <Text style={st.errorBannerText}>Couldn't load your latest stats</Text>
-              <Pressable onPress={load} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <AnimatedPressable onPress={load} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                 <Text style={st.errorBannerRetry}>Retry</Text>
-              </Pressable>
+              </AnimatedPressable>
             </View>
           )}
 
@@ -188,11 +189,11 @@ export default function CandidateHomeScreen() {
             </View>
 
             {!isFullyVerified && (
-              <Pressable style={st.verifyLink} onPress={() => router.push('/(candidate)/verification')}>
+              <AnimatedPressable style={st.verifyLink} onPress={() => router.push('/(candidate)/verification')}>
                 <AppIcon name="shield-checkmark-outline" size={16} color={T.accent} />
                 <Text style={st.verifyLinkText}>Continue Verification</Text>
                 <AppIcon name="arrow-forward" size={14} color={T.accent} />
-              </Pressable>
+              </AnimatedPressable>
             )}
           </View>
 
@@ -225,10 +226,10 @@ export default function CandidateHomeScreen() {
           <View style={st.section}>
             <View style={st.sectionRow}>
               <Text style={st.sectionTitle}>Verification Checklist</Text>
-              <Pressable onPress={() => router.push('/(candidate)/verification')} style={st.seeAll}>
+              <AnimatedPressable onPress={() => router.push('/(candidate)/verification')} style={st.seeAll}>
                 <Text style={st.seeAllText}>View All</Text>
                 <AppIcon name="arrow-forward" size={14} color={T.accent} />
-              </Pressable>
+              </AnimatedPressable>
             </View>
 
             {VERIFY_COMPONENTS.map((item) => {
@@ -253,10 +254,10 @@ export default function CandidateHomeScreen() {
           <View style={st.section}>
             <View style={st.sectionRow}>
               <Text style={st.sectionTitle}>Your Introductions</Text>
-              <Pressable onPress={() => router.push('/(candidate)/opportunities')} style={st.seeAll}>
+              <AnimatedPressable onPress={() => router.push('/(candidate)/opportunities')} style={st.seeAll}>
                 <Text style={st.seeAllText}>View All</Text>
                 <AppIcon name="arrow-forward" size={14} color={T.accent} />
-              </Pressable>
+              </AnimatedPressable>
             </View>
 
             {stats === null ? (
@@ -279,7 +280,7 @@ export default function CandidateHomeScreen() {
                 const meta = introStatusMeta(intro.status, T);
                 const cfg = TIER_CONFIG[intro.roleTier];
                 return (
-                  <Pressable key={intro.id} style={st.introRow} onPress={() => router.push('/(candidate)/opportunities')}>
+                  <AnimatedPressable key={intro.id} style={st.introRow} onPress={() => router.push('/(candidate)/opportunities')}>
                     <View style={[st.introIcon, { backgroundColor: cfg.accent + '18' }]}>
                       <AppIcon name={cfg.icon as AppIconName} size={16} color={cfg.accent} />
                     </View>
@@ -292,7 +293,7 @@ export default function CandidateHomeScreen() {
                     <View style={[st.introBadge, { backgroundColor: meta.bg }]}>
                       <Text style={[st.introBadgeText, { color: meta.color }]}>{meta.label}</Text>
                     </View>
-                  </Pressable>
+                  </AnimatedPressable>
                 );
               })
             )}

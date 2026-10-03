@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from '@/components/Themed';
 import AppIcon from '@/components/AppIcon';
@@ -7,6 +7,7 @@ import { useTheme, ThemePalette, DISPLAY_FONT_FAMILY } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
 import { notify } from '@/lib/notify';
 import PageHead from '@/components/PageHead';
+import AnimatedPressable from '@/components/AnimatedPressable';
 
 // Minimal admin review screen for the lightweight account-vetting gate
 // (2026-10-02) — not a new persona/auth system, deliberately: sign in as
@@ -123,13 +124,13 @@ export default function AdminReviewScreen() {
                 <Text style={st.cardSub}>{[c.industry, c.size_range].filter(Boolean).join(' · ') || 'No details yet'}</Text>
               </View>
               <View style={st.actions}>
-                <Pressable style={[st.actionBtn, st.rejectBtn]} onPress={() => decide('company', c.id, 'rejected')} disabled={busyId === c.id} hitSlop={4} accessibilityRole="button" accessibilityLabel={`Reject ${c.trading_name || c.legal_name}`}>
+                <AnimatedPressable style={[st.actionBtn, st.rejectBtn]} onPress={() => decide('company', c.id, 'rejected')} disabled={busyId === c.id} hitSlop={4} accessibilityRole="button" accessibilityLabel={`Reject ${c.trading_name || c.legal_name}`}>
                   <AppIcon name="close" size={16} color={T.danger} />
-                </Pressable>
-                <Pressable style={[st.actionBtn, st.approveBtn]} onPress={() => decide('company', c.id, 'approved')} disabled={busyId === c.id}>
+                </AnimatedPressable>
+                <AnimatedPressable style={[st.actionBtn, st.approveBtn]} onPress={() => decide('company', c.id, 'approved')} disabled={busyId === c.id}>
                   <AppIcon name="checkmark" size={16} color={T.emerald} />
                   <Text style={st.approveText}>Approve</Text>
-                </Pressable>
+                </AnimatedPressable>
               </View>
             </View>
           ))
@@ -148,13 +149,13 @@ export default function AdminReviewScreen() {
                 </Text>
               </View>
               <View style={st.actions}>
-                <Pressable style={[st.actionBtn, st.rejectBtn]} onPress={() => decide('candidate', c.id, 'rejected')} disabled={busyId === c.id} hitSlop={4} accessibilityRole="button" accessibilityLabel={`Reject ${c.full_name}`}>
+                <AnimatedPressable style={[st.actionBtn, st.rejectBtn]} onPress={() => decide('candidate', c.id, 'rejected')} disabled={busyId === c.id} hitSlop={4} accessibilityRole="button" accessibilityLabel={`Reject ${c.full_name}`}>
                   <AppIcon name="close" size={16} color={T.danger} />
-                </Pressable>
-                <Pressable style={[st.actionBtn, st.approveBtn]} onPress={() => decide('candidate', c.id, 'approved')} disabled={busyId === c.id}>
+                </AnimatedPressable>
+                <AnimatedPressable style={[st.actionBtn, st.approveBtn]} onPress={() => decide('candidate', c.id, 'approved')} disabled={busyId === c.id}>
                   <AppIcon name="checkmark" size={16} color={T.emerald} />
                   <Text style={st.approveText}>Approve</Text>
-                </Pressable>
+                </AnimatedPressable>
               </View>
             </View>
           ))
@@ -173,13 +174,13 @@ export default function AdminReviewScreen() {
                 </Text>
               </View>
               <View style={st.actions}>
-                <Pressable style={[st.actionBtn, st.rejectBtn]} onPress={() => decide('assessment', c.id, 'rejected')} disabled={busyId === c.id} hitSlop={4} accessibilityRole="button" accessibilityLabel={`Mark ${c.fullName}'s assessment failed`}>
+                <AnimatedPressable style={[st.actionBtn, st.rejectBtn]} onPress={() => decide('assessment', c.id, 'rejected')} disabled={busyId === c.id} hitSlop={4} accessibilityRole="button" accessibilityLabel={`Mark ${c.fullName}'s assessment failed`}>
                   <AppIcon name="close" size={16} color={T.danger} />
-                </Pressable>
-                <Pressable style={[st.actionBtn, st.approveBtn]} onPress={() => decide('assessment', c.id, 'approved')} disabled={busyId === c.id}>
+                </AnimatedPressable>
+                <AnimatedPressable style={[st.actionBtn, st.approveBtn]} onPress={() => decide('assessment', c.id, 'approved')} disabled={busyId === c.id}>
                   <AppIcon name="checkmark" size={16} color={T.emerald} />
                   <Text style={st.approveText}>Passed</Text>
-                </Pressable>
+                </AnimatedPressable>
               </View>
             </View>
           ))

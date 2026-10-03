@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/Themed';
 import AppIcon from '@/components/AppIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -14,6 +14,7 @@ import { SkeletonRow } from '@/components/Skeleton';
 import { usePersonaGuard } from '@/lib/usePersonaGuard';
 import { useAccountStatus } from '@/lib/useAccountStatus';
 import PendingAccountBlock from '@/components/PendingAccountBlock';
+import AnimatedPressable from '@/components/AnimatedPressable';
 
 // Read-only: scheduling is a company action (app/(company)/interviews.tsx),
 // same "company drives, candidate responds" shape as introductions.
@@ -102,9 +103,9 @@ export default function CandidateInterviewsScreen() {
                       </Text>
                     </View>
                     {i.meetingUrl && (
-                      <Pressable style={st.joinBtn} onPress={() => notify('Meeting link', i.meetingUrl!)}>
+                      <AnimatedPressable style={st.joinBtn} onPress={() => notify('Meeting link', i.meetingUrl!)}>
                         <Text style={st.joinBtnText}>View Link</Text>
-                      </Pressable>
+                      </AnimatedPressable>
                     )}
                   </View>
                 ))}

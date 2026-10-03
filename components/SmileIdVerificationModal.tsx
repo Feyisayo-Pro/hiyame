@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Modal, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Modal, StyleSheet, View } from 'react-native';
 import AppIcon from '@/components/AppIcon';
 import { SmileIDDocumentVerificationView } from '@smile_identity/react-native-expo';
 import type { DocumentVerificationParams } from '@smile_identity/react-native-expo';
@@ -7,6 +7,7 @@ import type { DocumentVerificationParams } from '@smile_identity/react-native-ex
 import { Text } from '@/components/Themed';
 import { useTheme, ThemePalette } from '@/lib/theme';
 import { initializeSmileId, isSmileIdConfigured } from '@/lib/smileId';
+import AnimatedPressable from '@/components/AnimatedPressable';
 
 interface Props {
   visible: boolean;
@@ -64,9 +65,9 @@ export default function SmileIdVerificationModal({ visible, onClose, onVerified,
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <View style={{ flex: 1, backgroundColor: T.bg }}>
         <View style={s.header}>
-          <Pressable onPress={onClose} style={s.backBtn} hitSlop={4} accessibilityRole="button" accessibilityLabel="Close">
+          <AnimatedPressable onPress={onClose} style={s.backBtn} hitSlop={4} accessibilityRole="button" accessibilityLabel="Close">
             <AppIcon name="close" size={22} color={T.textPrimary} />
-          </Pressable>
+          </AnimatedPressable>
           <Text style={s.headerTitle}>Identity Verification</Text>
           <View style={{ width: 36 }} />
         </View>
@@ -79,9 +80,9 @@ export default function SmileIdVerificationModal({ visible, onClose, onVerified,
               Smile ID needs EXPO_PUBLIC_SMILE_PARTNER_ID, EXPO_PUBLIC_SMILE_AUTH_TOKEN, EXPO_PUBLIC_SMILE_PROD_URL,
               and EXPO_PUBLIC_SMILE_TEST_URL set in .env (see .env.example).
             </Text>
-            <Pressable style={s.actionBtn} onPress={onClose}>
+            <AnimatedPressable style={s.actionBtn} onPress={onClose}>
               <Text style={s.actionBtnText}>Close</Text>
-            </Pressable>
+            </AnimatedPressable>
           </View>
         ) : status === 'initializing' ? (
           <View style={s.centerWrap}>
@@ -92,9 +93,9 @@ export default function SmileIdVerificationModal({ visible, onClose, onVerified,
           <View style={s.centerWrap}>
             <AppIcon name="alert-circle-outline" size={32} color={T.danger} />
             <Text style={s.body}>{errorMessage}</Text>
-            <Pressable style={s.actionBtn} onPress={() => setStatus('capturing')}>
+            <AnimatedPressable style={s.actionBtn} onPress={() => setStatus('capturing')}>
               <Text style={s.actionBtnText}>Retry</Text>
-            </Pressable>
+            </AnimatedPressable>
           </View>
         ) : status === 'processing' ? (
           <View style={s.centerWrap}>

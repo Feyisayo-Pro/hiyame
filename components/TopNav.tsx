@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Image, Platform, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Image, Platform, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { router, usePathname } from 'expo-router';
 import AppIcon, { AppIconName } from '@/components/AppIcon';
 import { Text } from '@/components/Themed';
@@ -98,12 +98,12 @@ export default function SideNav({ role }: { role: 'candidate' | 'company' }) {
 
   return (
     <View style={st.bar}>
-      <Pressable style={st.brand} onPress={() => router.navigate(items[0].route as any)} accessibilityRole="link">
+      <AnimatedPressable style={st.brand} onPress={() => router.navigate(items[0].route as any)} accessibilityRole="link">
         <View style={st.brandDot}>
           <Image source={require('@/assets/images/icon.png')} style={st.brandMark} resizeMode="cover" />
         </View>
         <Text style={st.brandText}>Hiyame</Text>
-      </Pressable>
+      </AnimatedPressable>
 
       <View style={st.links}>
         {items.map((it) => {

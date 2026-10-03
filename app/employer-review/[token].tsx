@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { Text } from '@/components/Themed';
 import AppIcon from '@/components/AppIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, ThemePalette, DISPLAY_FONT_FAMILY } from '@/lib/theme';
 import PageHead from '@/components/PageHead';
+import AnimatedPressable from '@/components/AnimatedPressable';
 
 // Public, unauthenticated route — reached only via the emailed link
 // api/request-employer-review.ts sends. No sign-in, no Hiyame account: the
@@ -22,9 +23,9 @@ function StarRow({ value, onChange, label }: { value: number; onChange: (n: numb
       <Text style={s.label}>{label}</Text>
       <View style={s.starRow}>
         {[1, 2, 3, 4, 5].map((n) => (
-          <Pressable key={n} onPress={() => onChange(n)} hitSlop={6} accessibilityRole="button" accessibilityLabel={`Rate ${n} of 5 stars`}>
+          <AnimatedPressable key={n} onPress={() => onChange(n)} hitSlop={6} accessibilityRole="button" accessibilityLabel={`Rate ${n} of 5 stars`}>
             <AppIcon name={n <= value ? 'star' : 'star-outline'} size={28} color={n <= value ? T.amber : T.textMuted} />
-          </Pressable>
+          </AnimatedPressable>
         ))}
       </View>
     </View>
@@ -107,12 +108,12 @@ export default function EmployerReviewScreen() {
         <View style={s.fieldWrap}>
           <Text style={s.label}>Would you work with them again?</Text>
           <View style={s.rehireRow}>
-            <Pressable style={[s.rehireBtn, wouldRehire === true && s.rehireBtnActive]} onPress={() => setWouldRehire(true)}>
+            <AnimatedPressable style={[s.rehireBtn, wouldRehire === true && s.rehireBtnActive]} onPress={() => setWouldRehire(true)}>
               <Text style={[s.rehireBtnText, wouldRehire === true && s.rehireBtnTextActive]}>Yes</Text>
-            </Pressable>
-            <Pressable style={[s.rehireBtn, wouldRehire === false && s.rehireBtnActive]} onPress={() => setWouldRehire(false)}>
+            </AnimatedPressable>
+            <AnimatedPressable style={[s.rehireBtn, wouldRehire === false && s.rehireBtnActive]} onPress={() => setWouldRehire(false)}>
               <Text style={[s.rehireBtnText, wouldRehire === false && s.rehireBtnTextActive]}>No</Text>
-            </Pressable>
+            </AnimatedPressable>
           </View>
         </View>
 
@@ -131,9 +132,9 @@ export default function EmployerReviewScreen() {
 
         {error ? <Text style={s.errorText}>{error}</Text> : null}
 
-        <Pressable style={[s.submitBtn, !canSubmit && s.submitBtnDisabled]} onPress={submit} disabled={!canSubmit}>
+        <AnimatedPressable style={[s.submitBtn, !canSubmit && s.submitBtnDisabled]} onPress={submit} disabled={!canSubmit}>
           {submitting ? <ActivityIndicator color={T.textOnAccent} /> : <Text style={s.submitBtnText}>Submit Review</Text>}
-        </Pressable>
+        </AnimatedPressable>
       </ScrollView>
     </SafeAreaView>
   );

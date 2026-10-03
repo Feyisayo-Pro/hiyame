@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Pressable, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Animated, ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { router } from 'expo-router';
 import { Text } from '@/components/Themed';
 import AppIcon from '@/components/AppIcon';
@@ -13,6 +13,7 @@ import GradientBlobBackground from '@/components/GradientBlobBackground';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import { DURATION, EASE, SPRING } from '@/lib/motion';
 import PageHead from '@/components/PageHead';
+import AnimatedPressable from '@/components/AnimatedPressable';
 
 // The landing screen — folds the old two-step welcome-carousel → register
 // flow into one decisive screen (per the redesign brief: Viamatch's whole
@@ -217,7 +218,7 @@ export default function WelcomeScreen() {
         <SwipeFadeContainer axis="y" offset={20} duration={DURATION.entrance} delay={180} style={st.panelsFadeWrap}>
         <View style={[st.panelsRow, stacked && st.panelsColumn]}>
           <Animated.View style={[st.panel, st.panelCompany, stacked && st.panelStacked, { flex: companyFlex, backgroundColor: companyBg, transform: [{ scale: companyPress }] }]}>
-            <Pressable
+            <AnimatedPressable
               style={StyleSheet.absoluteFill}
               onHoverIn={() => focusPanel('company')}
               onHoverOut={resetFocus}
@@ -262,11 +263,11 @@ export default function WelcomeScreen() {
                   </Animated.View>
                 )}
               </View>
-            </Pressable>
+            </AnimatedPressable>
           </Animated.View>
 
           <Animated.View style={[st.panel, stacked && st.panelStacked, { flex: candidateFlex, backgroundColor: candidateBg, transform: [{ scale: candidatePress }] }]}>
-            <Pressable
+            <AnimatedPressable
               style={StyleSheet.absoluteFill}
               onHoverIn={() => focusPanel('candidate')}
               onHoverOut={resetFocus}
@@ -303,7 +304,7 @@ export default function WelcomeScreen() {
                   </Animated.View>
                 )}
               </View>
-            </Pressable>
+            </AnimatedPressable>
           </Animated.View>
         </View>
         </SwipeFadeContainer>
@@ -311,10 +312,10 @@ export default function WelcomeScreen() {
         {/* "How it works" link — the discoverable path to its own page now
             that it's no longer a section on this one. */}
         <SwipeFadeContainer axis="y" offset={12} duration={DURATION.entrance} delay={260}>
-          <Pressable style={st.howLink} onPress={() => router.push('/(auth)/how-it-works')}>
+          <AnimatedPressable style={st.howLink} onPress={() => router.push('/(auth)/how-it-works')}>
             <Text style={st.howLinkText}>See exactly how it works</Text>
             <AppIcon name="arrow-forward" size={14} color={CANDIDATE_COLOR} />
-          </Pressable>
+          </AnimatedPressable>
         </SwipeFadeContainer>
         
         <SwipeFadeContainer axis="y" offset={12} duration={420} delay={320}>
@@ -347,13 +348,13 @@ export default function WelcomeScreen() {
                 : 'Join the companies and professionals already on Hiyame.'}
             </Text>
             <View style={st.closingCtaButtons}>
-              <Pressable style={st.closingCtaPrimary} onPress={goCompany}>
+              <AnimatedPressable style={st.closingCtaPrimary} onPress={goCompany}>
                 <Text style={st.closingCtaPrimaryText}>Post a role</Text>
                 <AppIcon name="arrow-forward" size={15} color="#FFFFFF" />
-              </Pressable>
-              <Pressable style={st.closingCtaSecondary} onPress={goCandidate}>
+              </AnimatedPressable>
+              <AnimatedPressable style={st.closingCtaSecondary} onPress={goCandidate}>
                 <Text style={st.closingCtaSecondaryText}>Get verified</Text>
-              </Pressable>
+              </AnimatedPressable>
             </View>
           </View>
         </SwipeFadeContainer>

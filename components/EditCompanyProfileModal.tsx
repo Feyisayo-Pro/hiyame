@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, Modal, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import AppIcon from '@/components/AppIcon';
 import { Text } from '@/components/Themed';
 import { useTheme, ThemePalette } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
 import { notify } from '@/lib/notify';
+import AnimatedPressable from '@/components/AnimatedPressable';
 
 const INDUSTRIES = [
   'Technology', 'Financial Services', 'Healthcare', 'Education',
@@ -105,9 +106,9 @@ export default function EditCompanyProfileModal({ visible, companyId, initial, o
         <View style={s.card}>
           <View style={s.headerRow}>
             <Text style={s.title}>Edit Company Profile</Text>
-            <Pressable onPress={close} hitSlop={11} accessibilityRole="button" accessibilityLabel="Close">
+            <AnimatedPressable onPress={close} hitSlop={11} accessibilityRole="button" accessibilityLabel="Close">
               <AppIcon name="close" size={22} color={T.textMuted} />
-            </Pressable>
+            </AnimatedPressable>
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
@@ -120,18 +121,18 @@ export default function EditCompanyProfileModal({ visible, companyId, initial, o
             <Text style={s.label}>Industry</Text>
             <View style={s.chipsWrap}>
               {INDUSTRIES.map((ind) => (
-                <Pressable key={ind} style={[s.chip, industry === ind && s.chipActive]} onPress={() => setIndustry(ind)}>
+                <AnimatedPressable key={ind} style={[s.chip, industry === ind && s.chipActive]} onPress={() => setIndustry(ind)}>
                   <Text style={[s.chipText, industry === ind && s.chipTextActive]}>{ind}</Text>
-                </Pressable>
+                </AnimatedPressable>
               ))}
             </View>
 
             <Text style={s.label}>Company size</Text>
             <View style={s.chipsWrap}>
               {COMPANY_SIZES.map((size) => (
-                <Pressable key={size} style={[s.chip, sizeRange === size && s.chipActive]} onPress={() => setSizeRange(size)}>
+                <AnimatedPressable key={size} style={[s.chip, sizeRange === size && s.chipActive]} onPress={() => setSizeRange(size)}>
                   <Text style={[s.chipText, sizeRange === size && s.chipTextActive]}>{size}</Text>
-                </Pressable>
+                </AnimatedPressable>
               ))}
             </View>
 
@@ -153,9 +154,9 @@ export default function EditCompanyProfileModal({ visible, companyId, initial, o
             />
           </ScrollView>
 
-          <Pressable style={[s.saveBtn, saving && s.saveBtnDisabled]} onPress={save} disabled={saving}>
+          <AnimatedPressable style={[s.saveBtn, saving && s.saveBtnDisabled]} onPress={save} disabled={saving}>
             {saving ? <ActivityIndicator color={T.textOnAccent} /> : <Text style={s.saveBtnText}>Save Changes</Text>}
-          </Pressable>
+          </AnimatedPressable>
         </View>
       </View>
     </Modal>

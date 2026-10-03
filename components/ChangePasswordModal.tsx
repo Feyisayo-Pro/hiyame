@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
-import { ActivityIndicator, Modal, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, Modal, StyleSheet, TextInput, View } from 'react-native';
 import AppIcon from '@/components/AppIcon';
 import { Text } from '@/components/Themed';
 import { useTheme, ThemePalette } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
 import { notify } from '@/lib/notify';
+import AnimatedPressable from '@/components/AnimatedPressable';
 
 // Real password change — supabase.auth.updateUser() only needs the current
 // (already authenticated) session, no separate "current password" re-entry.
@@ -54,9 +55,9 @@ export default function ChangePasswordModal({ visible, onClose }: { visible: boo
         <View style={s.card}>
           <View style={s.headerRow}>
             <Text style={s.title}>Change Password</Text>
-            <Pressable onPress={close} hitSlop={11} accessibilityRole="button" accessibilityLabel="Close">
+            <AnimatedPressable onPress={close} hitSlop={11} accessibilityRole="button" accessibilityLabel="Close">
               <AppIcon name="close" size={22} color={T.textMuted} />
-            </Pressable>
+            </AnimatedPressable>
           </View>
 
           <Text style={s.label}>New password</Text>
@@ -81,9 +82,9 @@ export default function ChangePasswordModal({ visible, onClose }: { visible: boo
             onSubmitEditing={save}
           />
 
-          <Pressable style={[s.saveBtn, saving && s.saveBtnDisabled]} onPress={save} disabled={saving}>
+          <AnimatedPressable style={[s.saveBtn, saving && s.saveBtnDisabled]} onPress={save} disabled={saving}>
             {saving ? <ActivityIndicator color={T.textOnAccent} /> : <Text style={s.saveBtnText}>Update Password</Text>}
-          </Pressable>
+          </AnimatedPressable>
         </View>
       </View>
     </Modal>

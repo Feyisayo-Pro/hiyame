@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, TextInput, View, StyleSheet, Switch } from 'react-native';
+import { TextInput, View, StyleSheet, Switch } from 'react-native';
 import AppIcon from '@/components/AppIcon';
 import { Text } from '@/components/Themed';
 import { useTheme, ThemePalette } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
 import { notify } from '@/lib/notify';
+import AnimatedPressable from '@/components/AnimatedPressable';
 
 // Job Experience — part of the CV-format candidate profile, backed by
 // candidate_experience (RLS: candidate manages their own; a company with an
@@ -142,7 +143,7 @@ export default function ExperienceSection({ candidateId }: { candidateId: string
         </View>
       ) : (
         items.map((item) => (
-          <Pressable key={item.id} style={st.card} onPress={() => openEdit(item)} accessibilityRole="button" accessibilityLabel={`Edit ${item.jobTitle}`}>
+          <AnimatedPressable key={item.id} style={st.card} onPress={() => openEdit(item)} accessibilityRole="button" accessibilityLabel={`Edit ${item.jobTitle}`}>
             <View style={{ flex: 1 }}>
               <Text style={st.cardTitle}>{item.jobTitle}</Text>
               <Text style={st.cardSub}>{item.companyName}</Text>
@@ -151,10 +152,10 @@ export default function ExperienceSection({ candidateId }: { candidateId: string
               </Text>
               {item.description ? <Text style={st.cardDesc}>{item.description}</Text> : null}
             </View>
-            <Pressable onPress={(e) => { e.stopPropagation(); handleRemove(item.id); }} hitSlop={8} accessibilityRole="button" accessibilityLabel={`Remove ${item.jobTitle}`}>
+            <AnimatedPressable onPress={(e) => { e.stopPropagation(); handleRemove(item.id); }} hitSlop={8} accessibilityRole="button" accessibilityLabel={`Remove ${item.jobTitle}`}>
               <AppIcon name="close" size={16} color={T.textMuted} />
-            </Pressable>
-          </Pressable>
+            </AnimatedPressable>
+          </AnimatedPressable>
         ))
       )}
 
@@ -174,19 +175,19 @@ export default function ExperienceSection({ candidateId }: { candidateId: string
           </View>
           <TextInput style={[st.input, st.textArea]} placeholder="What you did (optional)" placeholderTextColor={T.textMuted} value={description} onChangeText={setDescription} multiline numberOfLines={3} />
           <View style={st.addFormRow}>
-            <Pressable style={st.cancelBtn} onPress={closeForm}>
+            <AnimatedPressable style={st.cancelBtn} onPress={closeForm}>
               <Text style={st.cancelBtnText}>Cancel</Text>
-            </Pressable>
-            <Pressable style={[st.saveBtn, (!jobTitle.trim() || !companyName.trim() || saving) && st.saveBtnDisabled]} onPress={handleSave} disabled={!jobTitle.trim() || !companyName.trim() || saving}>
+            </AnimatedPressable>
+            <AnimatedPressable style={[st.saveBtn, (!jobTitle.trim() || !companyName.trim() || saving) && st.saveBtnDisabled]} onPress={handleSave} disabled={!jobTitle.trim() || !companyName.trim() || saving}>
               <Text style={st.saveBtnText}>{saving ? 'Saving…' : editingId ? 'Save Changes' : 'Save'}</Text>
-            </Pressable>
+            </AnimatedPressable>
           </View>
         </View>
       ) : (
-        <Pressable style={st.addRow} onPress={openAdd}>
+        <AnimatedPressable style={st.addRow} onPress={openAdd}>
           <AppIcon name="add" size={16} color={T.accent} />
           <Text style={st.addRowText}>Add experience</Text>
-        </Pressable>
+        </AnimatedPressable>
       )}
     </View>
   );

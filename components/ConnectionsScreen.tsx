@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import { SkeletonCard } from '@/components/Skeleton';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -14,6 +14,7 @@ import ContactReveal from '@/components/ContactReveal';
 import ScreenFrame from '@/components/ScreenFrame';
 import PageHead from '@/components/PageHead';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
+import AnimatedPressable from '@/components/AnimatedPressable';
 
 interface ShortlistedRow {
   roleId: string;
@@ -190,12 +191,12 @@ export default function ConnectionsScreen({ persona }: { persona: 'candidate' | 
 
       {persona === 'company' && (
         <View style={st.tabRow}>
-          <Pressable style={[st.tab, activeTab === 'accepted' && st.tabActive]} onPress={() => setActiveTab('accepted')}>
+          <AnimatedPressable style={[st.tab, activeTab === 'accepted' && st.tabActive]} onPress={() => setActiveTab('accepted')}>
             <Text style={[st.tabText, activeTab === 'accepted' && st.tabTextActive]}>Accepted ({connections?.length ?? 0})</Text>
-          </Pressable>
-          <Pressable style={[st.tab, activeTab === 'shortlisted' && st.tabActive]} onPress={() => setActiveTab('shortlisted')}>
+          </AnimatedPressable>
+          <AnimatedPressable style={[st.tab, activeTab === 'shortlisted' && st.tabActive]} onPress={() => setActiveTab('shortlisted')}>
             <Text style={[st.tabText, activeTab === 'shortlisted' && st.tabTextActive]}>Shortlisted ({shortlisted?.length ?? 0})</Text>
-          </Pressable>
+          </AnimatedPressable>
         </View>
       )}
 
@@ -223,7 +224,7 @@ export default function ConnectionsScreen({ persona }: { persona: 'candidate' | 
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={st.hScroll}>
                     {group.items.map((s, i) => (
                       <SwipeFadeContainer key={`${s.roleId}-${s.candidateName}-${i}`} axis="x" offset={14} duration={240} delay={Math.min(i, 8) * 40} style={st.hCard}>
-                        <Pressable style={st.block} onPress={() => router.push({ pathname: '/(company)/shortlist', params: { roleId: s.roleId } })}>
+                        <AnimatedPressable style={st.block} onPress={() => router.push({ pathname: '/(company)/shortlist', params: { roleId: s.roleId } })}>
                           <View style={st.blockHead}>
                             <Text style={st.roleTitle} numberOfLines={1}>{s.candidateName}</Text>
                             <View style={[st.tierPill, { backgroundColor: T.accent + '14' }]}>
@@ -231,7 +232,7 @@ export default function ConnectionsScreen({ persona }: { persona: 'candidate' | 
                             </View>
                           </View>
                           <Text style={st.pendingText} numberOfLines={2}>{s.summary}</Text>
-                        </Pressable>
+                        </AnimatedPressable>
                       </SwipeFadeContainer>
                     ))}
                   </ScrollView>
