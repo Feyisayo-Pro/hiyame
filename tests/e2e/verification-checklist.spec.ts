@@ -113,8 +113,11 @@ test('candidate uploads a CV, admin approval marks it passed; portfolio link sav
   const chooser = await chooserPromise;
   await chooser.setFiles(TEST_CV);
 
-  await expect(page.locator('text=CV submitted')).toBeVisible({ timeout: 15_000 });
-  await expect(page.locator('text=CV submitted — awaiting review from the Hiyame team')).toBeVisible({ timeout: 10_000 });
+  // The toast ("CV submitted") and the step's own pending-state text both
+  // contain "CV submitted" — assert the more specific one only, the same
+  // way the skills-assessment test above checks its own pending state
+  // rather than the toast.
+  await expect(page.locator('text=CV submitted — awaiting review from the Hiyame team')).toBeVisible({ timeout: 15_000 });
 
   const { data: cand } = await admin.from('candidates').select('cv_url').eq('id', candidate.candidateId).single();
   expect(cand?.cv_url).toContain('candidate-cvs');
