@@ -281,32 +281,32 @@ export default function ShortlistScreen() {
           {active.length > 0 && (
             <>
               <Text style={st.sectionLabel}>SHORTLIST</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={st.hScroll}>
+              <View style={st.grid}>
                 {active.map((c, i) => (
-                  <View key={c.matchScoreId} style={st.hCard}>
-                    <SwipeFadeContainer axis="x" offset={18} duration={DURATION.stagger} delay={Math.min(i, 8) * 45}>
+                  <View key={c.matchScoreId} style={[st.gridItem, gridItemStyle]}>
+                    <SwipeFadeContainer axis="y" offset={16} duration={DURATION.stagger} delay={Math.min(i, 8) * 45}>
                       <CandidateCardView T={T} st={st} card={c} busy={busyId === c.matchScoreId}
                         onAccept={() => handleAccept(c)} onSkip={() => handleAction(c, 'skipped')} onSave={() => handleAction(c, 'saved')} />
                     </SwipeFadeContainer>
                   </View>
                 ))}
-              </ScrollView>
+              </View>
             </>
           )}
 
           {alternates.length > 0 && (
             <>
               <Text style={st.sectionLabel}>ALTERNATES</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={st.hScroll}>
+              <View style={st.grid}>
                 {alternates.map((c, i) => (
-                  <View key={c.matchScoreId} style={st.hCard}>
-                    <SwipeFadeContainer axis="x" offset={18} duration={DURATION.stagger} delay={Math.min(i, 8) * 45}>
+                  <View key={c.matchScoreId} style={[st.gridItem, gridItemStyle]}>
+                    <SwipeFadeContainer axis="y" offset={16} duration={DURATION.stagger} delay={Math.min(i, 8) * 45}>
                       <CandidateCardView T={T} st={st} card={c} busy={busyId === c.matchScoreId}
                         onAccept={() => handleAccept(c)} onSkip={() => handleAction(c, 'skipped')} onSave={() => handleAction(c, 'saved')} />
                     </SwipeFadeContainer>
                   </View>
                 ))}
-              </ScrollView>
+              </View>
             </>
           )}
 
@@ -422,13 +422,11 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   emptySub: { fontSize: 13, color: T.textSecondary, textAlign: 'center', lineHeight: 19 },
   rerunPill: { flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: T.accent, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 50, marginTop: 16 },
   rerunPillText: { fontSize: 13, fontWeight: '700', color: T.textOnAccent },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 14 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 14, marginBottom: 4 },
   gridItem: { width: '100%' },
   gridItemHalf: { width: '48.5%' },
   gridItemThird: { width: '32%' },
-  hScroll: { gap: 14, paddingRight: 20, paddingBottom: 4 },
-  hCard: { width: 300 },
-  card: { flex: 1, backgroundColor: T.card, borderRadius: RADIUS.card, padding: 18, marginBottom: 0, borderWidth: 1, borderColor: T.border, ...ELEVATION.card },
+  card: { flex: 1, backgroundColor: T.card, borderRadius: RADIUS.card, padding: 18, borderWidth: 1, borderColor: T.border, ...ELEVATION.card },
   profileRow: { flexDirection: 'row', gap: 16, marginBottom: 16 },
   photo: { width: 108, height: 108, borderRadius: 26, backgroundColor: T.surface },
   photoFallback: { alignItems: 'center', justifyContent: 'center' },

@@ -6,7 +6,7 @@ import { Text } from '@/components/Themed';
 import AppIcon from '@/components/AppIcon';
 import AnimatedPressable from '@/components/AnimatedPressable';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
-import { useTheme, ThemePalette, DISPLAY_FONT_FAMILY } from '@/lib/theme';
+import { useTheme, ThemePalette, DISPLAY_FONT_FAMILY, ELEVATION } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
 import { notify } from '@/lib/notify';
 import { initials } from '@/lib/format';
@@ -201,18 +201,18 @@ function CompanyRow({ T, st, company: c, expanded, onToggle, busy, onApprove, on
 
           <View style={st.detailActions}>
             <AnimatedPressable style={[st.actionBtn, st.rejectBtn]} onPress={onReject} disabled={busy} accessibilityRole="button" accessibilityLabel={`Reject ${name}`}>
-              {busy ? <ActivityIndicator size="small" color={T.danger} /> : (
+              {busy ? <ActivityIndicator size="small" color={T.white} /> : (
                 <>
-                  <AppIcon name="close" size={16} color={T.danger} />
-                  <Text style={[st.actionBtnText, { color: T.danger }]}>Reject</Text>
+                  <AppIcon name="close" size={17} color={T.white} />
+                  <Text style={st.actionBtnText}>Reject</Text>
                 </>
               )}
             </AnimatedPressable>
             <AnimatedPressable style={[st.actionBtn, st.approveBtn]} onPress={onApprove} disabled={busy} accessibilityRole="button" accessibilityLabel={`Approve ${name}`}>
-              {busy ? <ActivityIndicator size="small" color={T.emerald} /> : (
+              {busy ? <ActivityIndicator size="small" color={T.white} /> : (
                 <>
-                  <AppIcon name="checkmark" size={16} color={T.emerald} />
-                  <Text style={[st.actionBtnText, { color: T.emerald }]}>Approve</Text>
+                  <AppIcon name="checkmark" size={17} color={T.white} />
+                  <Text style={st.actionBtnText}>Approve</Text>
                 </>
               )}
             </AnimatedPressable>
@@ -274,10 +274,10 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   teamRole: { fontSize: 11, color: T.textMuted, textTransform: 'capitalize' },
 
   detailActions: { flexDirection: 'row', gap: 10 },
-  actionBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, height: 38, borderRadius: 10, borderWidth: 1.5 },
-  rejectBtn: { backgroundColor: T.dangerBg, borderColor: T.danger },
-  approveBtn: { backgroundColor: T.emeraldBg, borderColor: T.emerald },
-  actionBtnText: { fontSize: 13, fontWeight: '700' },
+  actionBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, height: 44, borderRadius: 10, ...ELEVATION.card },
+  rejectBtn: { backgroundColor: T.danger },
+  approveBtn: { backgroundColor: T.emerald },
+  actionBtnText: { fontSize: 13.5, fontWeight: '700', color: T.white },
 
   pagination: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 16, marginTop: 10 },
   pageBtn: { width: 32, height: 32, borderRadius: 10, backgroundColor: T.surface, borderWidth: 1, borderColor: T.border, alignItems: 'center', justifyContent: 'center' },
