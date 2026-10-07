@@ -21,6 +21,12 @@ export default function RememberMeCheckbox({ checked, onToggle }: { checked: boo
       accessibilityRole="checkbox"
       accessibilityState={{ checked }}
       accessibilityLabel="Remember me"
+      // react-native-web doesn't reliably map accessibilityState.checked to
+      // aria-checked for a Pressable-based role="checkbox" (confirmed via
+      // axe-core: role lands, aria-checked doesn't) — aria-* props pass
+      // straight through to the DOM on web, so this is a direct, explicit
+      // fallback rather than relying on RNW's automatic mapping for this case.
+      {...{ 'aria-checked': checked }}
     >
       <View style={[s.box, checked && s.boxChecked]}>
         {checked && <AppIcon name="checkmark" size={12} color={T.textOnAccent} />}

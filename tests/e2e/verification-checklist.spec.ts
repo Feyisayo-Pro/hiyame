@@ -52,6 +52,13 @@ test('candidate requests a skills assessment, admin approval marks it passed', a
   await signIn(page, 'candidate', candidate.email, candidate.password);
   await page.goto('/(candidate)/verification', { waitUntil: 'networkidle' });
 
+  // The assessment gate reads candidates.cv_url/video_intro_url/portfolio_url
+  // via the page's own fetch, separate from (and not guaranteed to finish
+  // before) Playwright's networkidle — wait for the seeded portfolio link to
+  // actually render before clicking, so the gate sees the same state we just
+  // wrote rather than racing it.
+  await expect(page.getByPlaceholder('Portfolio link (optional)')).toHaveValue('https://example.com/seeded-portfolio', { timeout: 10_000 });
+
   await page.locator('text=Request Assessment').click();
   await expect(page.locator('text=Request sent')).toBeVisible({ timeout: 10_000 });
   await expect(page.locator('text=Awaiting review from the Hiyame team')).toBeVisible({ timeout: 10_000 });
