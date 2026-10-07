@@ -18,6 +18,9 @@ import { usePersonaGuard } from '@/lib/usePersonaGuard';
 import { useAccountStatus } from '@/lib/useAccountStatus';
 import PendingAccountBlock from '@/components/PendingAccountBlock';
 import AnimatedPressable from '@/components/AnimatedPressable';
+import RescheduleInterviewModal from '@/components/RescheduleInterviewModal';
+
+const MAX_RESCHEDULES = 2;
 
 // Real interview scheduling — a company picks from candidates they already
 // have a real relationship with (any introduction), sets a time and a
@@ -36,6 +39,7 @@ interface Interview {
   meetingType: 'link' | 'google_meet';
   meetingUrl: string | null;
   status: 'scheduled' | 'completed' | 'cancelled' | 'rescheduled' | 'no_show';
+  companyRescheduleCount: number;
 }
 
 interface CandidateOption {
@@ -64,12 +68,13 @@ export default function CompanyInterviewsScreen() {
   const [tab, setTab] = useState<Tab>('Upcoming');
   const [interviews, setInterviews] = useState<Interview[] | null>(null);
   const [showSchedule, setShowSchedule] = useState(false);
+  const [rescheduleTarget, setRescheduleTarget] = useState<Interview | null>(null);
 
   const load = useCallback(async () => {
     if (!companyId) { setInterviews([]); return; }
     const { data, error } = await supabase
       .from('interviews')
-      .select('id, candidate_id, scheduled_at, duration_minutes, meeting_type, meeting_url, status, candidates(full_name), roles(title)')
+      .select('id, candidate_id, scheduled_at, duration_minutes, meeting_type, meeting_url, status, company_reschedule_count, candidates(full_name), roles(title)')
       .eq('company_id', companyId)
       .order('scheduled_at', { ascending: true });
     if (error) {
@@ -87,6 +92,7 @@ export default function CompanyInterviewsScreen() {
       meetingType: r.meeting_type,
       meetingUrl: r.meeting_url,
       status: r.status,
+      companyRescheduleCount: r.company_reschedule_count ?? 0,
     })));
   }, [companyId]);
 
@@ -169,6 +175,11 @@ export default function CompanyInterviewsScreen() {
                           <AppIcon name="link" size={16} color={T.accent} />
                         </AnimatedPressable>
                       )}
+                      {i.companyRescheduleCount < MAX_RESCHEDULES && (
+                        <AnimatedPressable style={st.rowActionBtn} onPress={() => setRescheduleTarget(i)} hitSlop={7} accessibilityRole="button" accessibilityLabel="Reschedule interview">
+                          <AppIcon name="time-outline" size={16} color={T.amber} />
+                        </AnimatedPressable>
+                      )}
                       <AnimatedPressable style={st.rowActionBtn} onPress={() => setStatus(i.id, 'completed')} hitSlop={7} accessibilityRole="button" accessibilityLabel="Mark interview completed">
                         <AppIcon name="checkmark-circle-outline" size={16} color={T.emerald} />
                       </AnimatedPressable>
@@ -195,6 +206,14 @@ export default function CompanyInterviewsScreen() {
         companyId={companyId}
         onClose={() => setShowSchedule(false)}
         onScheduled={() => { setShowSchedule(false); load(); }}
+      />
+
+      <RescheduleInterviewModal
+        visible={rescheduleTarget != null}
+        interviewId={rescheduleTarget?.id ?? null}
+        remaining={MAX_RESCHEDULES - (rescheduleTarget?.companyRescheduleCount ?? 0)}
+        onClose={() => setRescheduleTarget(null)}
+        onRescheduled={() => { setRescheduleTarget(null); load(); }}
       />
     </SafeAreaView>
   );

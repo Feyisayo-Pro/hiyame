@@ -38,6 +38,16 @@ test('candidate requests a skills assessment, admin approval marks it passed', a
 
   // Known starting state — a retake-safe test, not reliant on a clean DB.
   await admin.from('verification_records').delete().eq('candidate_id', candidate.candidateId).eq('component', 'skills_assessment');
+  // Requesting an assessment is gated on having submitted a video, CV, and
+  // portfolio link first (2026-10-07) — seeded directly here since the
+  // upload mechanics themselves are already covered by the video-intro and
+  // CV-upload tests below; this test's focus is the assessment request/
+  // approval round trip, not re-proving uploads work.
+  await admin.from('candidates').update({
+    video_intro_url: 'https://example.com/seeded-video.webm',
+    cv_url: 'https://example.com/seeded-cv.pdf',
+    portfolio_url: 'https://example.com/seeded-portfolio',
+  }).eq('id', candidate.candidateId);
 
   await signIn(page, 'candidate', candidate.email, candidate.password);
   await page.goto('/(candidate)/verification', { waitUntil: 'networkidle' });
@@ -83,18 +93,30 @@ test('candidate can record and submit a video introduction', async ({ page }) =>
   await expect(page.locator('text="Submit"')).toBeVisible({ timeout: 10_000 });
   await page.locator('text="Submit"').click();
 
-  await expect(page.locator('text=Video submitted')).toBeVisible({ timeout: 20_000 });
+  // Video intro used to auto-pass the moment a file existed; now Hiyame's
+  // team reviews it first (2026-10-07), same shape as skills assessment/CV.
+  await expect(page.locator('text=Video submitted — awaiting review from the Hiyame team')).toBeVisible({ timeout: 20_000 });
 
   const admin = adminClient();
   const { data: cand } = await admin.from('candidates').select('video_intro_url').eq('id', candidate.candidateId).single();
   expect(cand?.video_intro_url).toContain('candidate-videos');
-  const { data: vr } = await admin
+  const { data: afterUpload } = await admin
     .from('verification_records')
     .select('status')
     .eq('candidate_id', candidate.candidateId)
     .eq('component', 'video_intro')
     .maybeSingle();
-  expect(vr?.status).toBe('passed');
+  expect(afterUpload?.status).toBe('pending');
+
+  const { error: approveErr } = await admin
+    .from('verification_records')
+    .update({ status: 'passed' })
+    .eq('candidate_id', candidate.candidateId)
+    .eq('component', 'video_intro');
+  expect(approveErr).toBeNull();
+
+  await page.reload({ waitUntil: 'networkidle' });
+  await expect(page.locator('text=Video submitted — awaiting review from the Hiyame team')).toHaveCount(0);
 });
 
 test('candidate uploads a CV, admin approval marks it passed; portfolio link saves independently', async ({ page }) => {

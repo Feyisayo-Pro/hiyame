@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Linking, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Text } from '@/components/Themed';
@@ -12,6 +12,7 @@ import { notify } from '@/lib/notify';
 import { initials } from '@/lib/format';
 import { formatNaira } from '@/lib/currency';
 import { DURATION } from '@/lib/motion';
+import { openInNewTab } from '@/lib/openLink';
 import PageHead from '@/components/PageHead';
 
 type StatusFilter = 'pending' | 'approved' | 'rejected' | 'all';
@@ -28,6 +29,7 @@ const COMPONENT_LABEL: Record<string, string> = {
 const PENDING_COMPONENT_TITLE: Record<string, string> = {
   skills_assessment: 'Skills Assessment Requests',
   cv_review: 'CV Review Requests',
+  video_intro: 'Video Review Requests',
 };
 
 interface VerificationRow { component: string; status: string }
@@ -38,7 +40,7 @@ interface Candidate {
   tier_preferences: string[] | null; rate_min: number | null; rate_preferred: number | null; rate_max: number | null;
   availability_date: string | null; reliability_score: number | null;
   status: 'pending' | 'approved' | 'rejected'; created_at: string; photo_url: string | null;
-  cv_url: string | null; portfolio_url: string | null;
+  cv_url: string | null; portfolio_url: string | null; video_intro_url: string | null;
   verification: VerificationRow[];
 }
 
@@ -59,7 +61,7 @@ export default function AdminCandidatesScreen() {
   // their account status. A candidate can be long-since approved and still
   // have a pending CV review, so the account-status filter below can't
   // find these at all.
-  const pendingComponent = params.component === 'skills_assessment' || params.component === 'cv_review' ? params.component : null;
+  const pendingComponent = params.component === 'skills_assessment' || params.component === 'cv_review' || params.component === 'video_intro' ? params.component : null;
 
   const [status, setStatus] = useState<StatusFilter>((params.status as StatusFilter) ?? 'pending');
   const [searchInput, setSearchInput] = useState('');
@@ -90,7 +92,7 @@ export default function AdminCandidatesScreen() {
   useEffect(() => { setCandidates(null); load(); }, [load]);
   useEffect(() => { setPage(1); }, [status, search, pendingComponent]);
 
-  const decide = async (type: 'candidate' | 'assessment' | 'cv_review', id: string, decision: 'approved' | 'rejected') => {
+  const decide = async (type: 'candidate' | 'assessment' | 'cv_review' | 'video_review', id: string, decision: 'approved' | 'rejected') => {
     setBusyId(id);
     const resp = await authedFetch('/api/admin-review', {
       method: 'POST',
@@ -111,7 +113,11 @@ export default function AdminCandidatesScreen() {
   };
 
   const totalPages = Math.max(1, Math.ceil(total / 20));
-  const decideType: 'candidate' | 'assessment' | 'cv_review' = pendingComponent === 'skills_assessment' ? 'assessment' : pendingComponent === 'cv_review' ? 'cv_review' : 'candidate';
+  const decideType: 'candidate' | 'assessment' | 'cv_review' | 'video_review' =
+    pendingComponent === 'skills_assessment' ? 'assessment'
+    : pendingComponent === 'cv_review' ? 'cv_review'
+    : pendingComponent === 'video_intro' ? 'video_review'
+    : 'candidate';
 
   return (
     <SafeAreaView style={st.container} edges={['top', 'left', 'right']}>
@@ -200,7 +206,7 @@ export default function AdminCandidatesScreen() {
 }
 
 function CandidateRow({ T, st, candidate: c, pendingComponent, expanded, onToggle, busy, onApprove, onReject }: {
-  T: ThemePalette; st: ReturnType<typeof makeStyles>; candidate: Candidate; pendingComponent: 'skills_assessment' | 'cv_review' | null;
+  T: ThemePalette; st: ReturnType<typeof makeStyles>; candidate: Candidate; pendingComponent: 'skills_assessment' | 'cv_review' | 'video_intro' | null;
   expanded: boolean; onToggle: () => void; busy: boolean; onApprove: () => void; onReject: () => void;
 }) {
   const passed = new Set(c.verification.filter((v) => v.status === 'passed').map((v) => v.component));
@@ -274,6 +280,11 @@ function CandidateRow({ T, st, candidate: c, pendingComponent, expanded, onToggl
           <DetailRow T={T} label="Availability" value={c.availability_date} />
           <DetailRow T={T} label="Reliability score" value={c.reliability_score != null ? `${c.reliability_score}/100` : null} />
           <DetailRow T={T} label="Signed up" value={new Date(c.created_at).toLocaleDateString()} />
+          {c.video_intro_url ? (
+            <DetailLinkRow T={T} label="Video Intro" url={c.video_intro_url} display="Watch video" />
+          ) : (
+            <DetailRow T={T} label="Video Intro" value={null} />
+          )}
           {c.cv_url ? (
             <DetailLinkRow T={T} label="CV" url={c.cv_url} display="View PDF" />
           ) : (
@@ -334,7 +345,7 @@ function DetailLinkRow({ T, label, url, display }: { T: ThemePalette; label: str
   return (
     <View style={{ flexDirection: 'row', paddingVertical: 5, alignItems: 'center' }}>
       <Text style={{ width: 130, fontSize: 12, fontWeight: '600', color: T.textMuted }}>{label}</Text>
-      <AnimatedPressable onPress={() => Linking.openURL(url)} style={{ flex: 1 }}>
+      <AnimatedPressable onPress={() => openInNewTab(url)} style={{ flex: 1 }}>
         <Text style={{ fontSize: 12.5, color: T.accent, fontWeight: '600' }} numberOfLines={1}>{display}</Text>
       </AnimatedPressable>
     </View>

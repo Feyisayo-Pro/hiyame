@@ -198,6 +198,31 @@ export function interviewScheduledEmail(p: {
   };
 }
 
+// Admin copy of interviewScheduledEmail above — same event, told from the
+// ops side (which candidate + which company, not "you") so admin has
+// visibility into every interview getting booked without needing to check
+// the dashboard proactively.
+export function interviewScheduledAdminEmail(p: {
+  candidateName: string;
+  companyName: string;
+  roleTitle: string | null;
+  scheduledAt: string;
+  durationMinutes: number;
+}): { subject: string; html: string } {
+  const when = new Date(p.scheduledAt).toLocaleString('en-US', {
+    weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit',
+  });
+  return {
+    subject: `Interview booked: ${p.candidateName} × ${p.companyName}${p.roleTitle ? ` (${p.roleTitle})` : ''}`,
+    html: shell(
+      'An interview was scheduled',
+      `<p style="margin:0 0 12px"><b>${esc(p.companyName)}</b> booked an interview with <b>${esc(p.candidateName)}</b>${p.roleTitle ? ` for <b>${esc(p.roleTitle)}</b>` : ''}.</p>
+       <p style="margin:0">${esc(when)} &middot; ${p.durationMinutes} min</p>`,
+      { label: 'View in Admin', href: `${APP_URL}/interviews` },
+    ),
+  };
+}
+
 // Introduction accepted — to the candidate. Company + hiring contact revealed.
 export function introductionAcceptedCandidateEmail(p: {
   roleTitle: string;

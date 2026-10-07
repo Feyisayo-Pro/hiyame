@@ -19,10 +19,10 @@ import { createClient } from '@supabase/supabase-js';
 //   it, bytes never touch this function, then calls back with 'complete'.
 // action: 'complete' — confirms the upload actually landed (never trusts
 //   the client's say-so), stamps the right candidates column, and upserts
-//   verification_records. Video intro marks itself 'passed' immediately —
-//   "passed" means "a real video exists", not an automated content review,
-//   companies watch it themselves. CV marks 'pending' instead — it
-//   genuinely needs an admin to open the document before it counts.
+//   verification_records as 'pending' either way (2026-10-07 — video used
+//   to auto-pass the moment a file existed; now Hiyame's internal team
+//   reviews both video and CV from /(admin)/candidates before either counts
+//   toward verification, same shape).
 //
 // Auth: caller sends their Supabase bearer token for both actions; the
 // token's auth user must own the candidate row. Env: SUPABASE_URL,
@@ -40,7 +40,10 @@ const KIND_CONFIG = {
     defaultMime: 'video/webm',
     column: 'video_intro_url',
     component: 'video_intro',
-    finalStatus: 'passed' as const,
+    // Was 'passed' (auto-passed the moment a file existed) — now reviewed
+    // by Hiyame's internal team same as CV (2026-10-07), so this step
+    // actually gets watched by a person before counting toward verification.
+    finalStatus: 'pending' as const,
     notFoundMessage: 'No uploaded video found for this account. Upload it first.',
   },
   cv: {

@@ -1,13 +1,15 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
-import { sendEmail, interviewScheduledEmail } from '../lib/email';
+import { sendEmail, interviewScheduledEmail, interviewScheduledAdminEmail } from '../lib/email';
 import { sendPushToUser } from '../lib/webPushSend';
+import { ADMIN_EMAILS } from '../lib/adminEmails';
 
 // Sends the "interview scheduled" notification (email via Resend + in-app
-// push) to the candidate. Called fire-and-forget by the app right after a
-// company schedules an interview. Idempotent: stamps
-// interviews.notified_scheduled_at and won't resend. Mirrors
-// api/notify-introduction.ts's shape.
+// push) to the candidate, and a copy to every admin in lib/adminEmails.ts
+// so an interview getting booked is visible without checking the dashboard.
+// Called fire-and-forget by the app right after a company schedules an
+// interview. Idempotent: stamps interviews.notified_scheduled_at and won't
+// resend. Mirrors api/notify-introduction.ts's shape.
 //
 // Auth: caller sends their Supabase bearer token; must be a company_user of
 // the interview's company. Env: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
@@ -85,6 +87,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       url: '/(candidate)/interviews',
     });
   }
+
+  const adminMail = interviewScheduledAdminEmail({
+    candidateName: candidate?.full_name ?? 'A candidate',
+    companyName,
+    roleTitle: role?.title ?? null,
+    scheduledAt: interview.scheduled_at,
+    durationMinutes: interview.duration_minutes,
+  });
+  results.adminEmails = await Promise.all(
+    ADMIN_EMAILS.map((to) => sendEmail({ to, ...adminMail }))
+  );
 
   await admin.from('interviews').update({ notified_scheduled_at: new Date().toISOString() }).eq('id', interview.id);
   return res.status(200).json({ ok: true, results });

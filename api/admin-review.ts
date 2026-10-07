@@ -13,19 +13,22 @@ import { isAdminEmail } from '../lib/adminEmails';
 //
 // GET  ?view=overview                              — pending/approved/rejected counts
 // GET  ?view=candidates&status=&search=&page=       — paginated candidate directory
-// GET  ?view=candidates&component=skills_assessment|cv_review&page= — candidates
-//      with a PENDING verification request for that component, independent
-//      of their account status (a candidate can be long since approved and
-//      still have a pending CV review, so the account-status filter above
-//      can't find these — the Overview screen's two request cards link here).
+// GET  ?view=candidates&component=skills_assessment|cv_review|video_intro&page= —
+//      candidates with a PENDING verification request for that component,
+//      independent of their account status (a candidate can be long since
+//      approved and still have a pending CV/video review, so the
+//      account-status filter above can't find these — the Overview
+//      screen's request cards link here).
 // GET  ?view=companies&status=&search=&page=        — paginated company directory
-// POST { type: 'company'|'candidate'|'assessment'|'cv_review', id, decision } — approve/reject
-//   'assessment' and 'cv_review' update a verification_records component
-//   (skills_assessment / cv_review) rather than the account's own status.
+// POST { type: 'company'|'candidate'|'assessment'|'cv_review'|'video_review', id, decision } — approve/reject
+//   'assessment', 'cv_review' and 'video_review' update a verification_records
+//   component (skills_assessment / cv_review / video_intro) rather than the
+//   account's own status.
 
 const REVIEW_COMPONENT: Record<string, string> = {
   assessment: 'skills_assessment',
   cv_review: 'cv_review',
+  video_review: 'video_intro',
 };
 
 const SUPABASE_URL = process.env.SUPABASE_URL ?? process.env.EXPO_PUBLIC_SUPABASE_URL;
@@ -55,7 +58,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const [
         { count: candPending }, { count: candApproved }, { count: candRejected },
         { count: coPending }, { count: coApproved }, { count: coRejected },
-        { count: assessmentPending }, { count: cvReviewPending },
+        { count: assessmentPending }, { count: cvReviewPending }, { count: videoReviewPending },
       ] = await Promise.all([
         admin.from('candidates').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
         admin.from('candidates').select('*', { count: 'exact', head: true }).eq('status', 'approved'),
@@ -65,12 +68,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         admin.from('companies').select('*', { count: 'exact', head: true }).eq('status', 'rejected'),
         admin.from('verification_records').select('*', { count: 'exact', head: true }).eq('component', 'skills_assessment').eq('status', 'pending'),
         admin.from('verification_records').select('*', { count: 'exact', head: true }).eq('component', 'cv_review').eq('status', 'pending'),
+        admin.from('verification_records').select('*', { count: 'exact', head: true }).eq('component', 'video_intro').eq('status', 'pending'),
       ]);
       return res.status(200).json({
         candidates: { pending: candPending ?? 0, approved: candApproved ?? 0, rejected: candRejected ?? 0 },
         companies: { pending: coPending ?? 0, approved: coApproved ?? 0, rejected: coRejected ?? 0 },
         assessmentRequests: assessmentPending ?? 0,
         cvReviewRequests: cvReviewPending ?? 0,
+        videoReviewRequests: videoReviewPending ?? 0,
       });
     }
 
@@ -83,7 +88,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (view === 'candidates') {
       const component = String(req.query.component ?? '').trim();
 
-      if (component === 'skills_assessment' || component === 'cv_review') {
+      if (component === 'skills_assessment' || component === 'cv_review' || component === 'video_intro') {
         // Independent of account status — see this file's own top comment.
         const { data: vrRows, count, error: vrErr } = await admin
           .from('verification_records')
@@ -164,8 +169,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const type: unknown = body?.type;
     const id: unknown = body?.id;
     const decision: unknown = body?.decision;
-    if (type !== 'company' && type !== 'candidate' && type !== 'assessment' && type !== 'cv_review') {
-      return res.status(400).json({ error: 'type must be "company", "candidate", "assessment", or "cv_review".' });
+    if (type !== 'company' && type !== 'candidate' && type !== 'assessment' && type !== 'cv_review' && type !== 'video_review') {
+      return res.status(400).json({ error: 'type must be "company", "candidate", "assessment", "cv_review", or "video_review".' });
     }
     if (typeof id !== 'string' || id.length < 10) return res.status(400).json({ error: 'id is required.' });
     if (decision !== 'approved' && decision !== 'rejected') return res.status(400).json({ error: 'decision must be "approved" or "rejected".' });

@@ -16,9 +16,16 @@ import { usePersonaGuard } from '@/lib/usePersonaGuard';
 import { useAccountStatus } from '@/lib/useAccountStatus';
 import PendingAccountBlock from '@/components/PendingAccountBlock';
 import AnimatedPressable from '@/components/AnimatedPressable';
+import RescheduleInterviewModal from '@/components/RescheduleInterviewModal';
 
-// Read-only: scheduling is a company action (app/(company)/interviews.tsx),
-// same "company drives, candidate responds" shape as introductions.
+const MAX_RESCHEDULES = 2;
+
+// Scheduling itself is still a company action (app/(company)/interviews.tsx)
+// — a candidate can't book a brand-new interview — but can reschedule an
+// existing one (up to MAX_RESCHEDULES times, tracked independently from
+// the company's own count) via the reschedule_interview RPC, same "company
+// drives, candidate responds" shape introductions already have, just with
+// one more action than pure read-only.
 
 interface Interview {
   id: string;
@@ -29,6 +36,7 @@ interface Interview {
   meetingType: 'link' | 'google_meet';
   meetingUrl: string | null;
   status: 'scheduled' | 'completed' | 'cancelled' | 'rescheduled' | 'no_show';
+  candidateRescheduleCount: number;
 }
 
 export default function CandidateInterviewsScreen() {
@@ -38,12 +46,13 @@ export default function CandidateInterviewsScreen() {
   const { candidateId } = useAuth();
   const candidateStatus = useAccountStatus('candidates', candidateId);
   const [interviews, setInterviews] = useState<Interview[] | null>(null);
+  const [rescheduleTarget, setRescheduleTarget] = useState<Interview | null>(null);
 
   const load = useCallback(async () => {
     if (!candidateId) { setInterviews([]); return; }
     const { data, error } = await supabase
       .from('interviews')
-      .select('id, scheduled_at, duration_minutes, meeting_type, meeting_url, status, companies(trading_name, legal_name), roles(title)')
+      .select('id, scheduled_at, duration_minutes, meeting_type, meeting_url, status, candidate_reschedule_count, companies(trading_name, legal_name), roles(title)')
       .eq('candidate_id', candidateId)
       .order('scheduled_at', { ascending: true });
     if (error) {
@@ -60,6 +69,7 @@ export default function CandidateInterviewsScreen() {
       meetingType: r.meeting_type,
       meetingUrl: r.meeting_url,
       status: r.status,
+      candidateRescheduleCount: r.candidate_reschedule_count ?? 0,
     })));
   }, [candidateId]);
 
@@ -103,11 +113,18 @@ export default function CandidateInterviewsScreen() {
                         {i.roleTitle ? `${i.roleTitle} · ` : ''}{formatInterviewTime(i.scheduledAt)} · {i.durationMinutes}min
                       </Text>
                     </View>
-                    {i.meetingUrl && (
-                      <AnimatedPressable style={st.joinBtn} onPress={() => openInNewTab(i.meetingUrl!)} accessibilityRole="button" accessibilityLabel="Open meeting link in a new tab">
-                        <Text style={st.joinBtnText}>View Link</Text>
-                      </AnimatedPressable>
-                    )}
+                    <View style={{ flexDirection: 'row', gap: 6 }}>
+                      {i.candidateRescheduleCount < MAX_RESCHEDULES && (
+                        <AnimatedPressable style={st.rescheduleBtn} onPress={() => setRescheduleTarget(i)} hitSlop={6} accessibilityRole="button" accessibilityLabel="Reschedule interview">
+                          <AppIcon name="time-outline" size={16} color={T.amber} />
+                        </AnimatedPressable>
+                      )}
+                      {i.meetingUrl && (
+                        <AnimatedPressable style={st.joinBtn} onPress={() => openInNewTab(i.meetingUrl!)} accessibilityRole="button" accessibilityLabel="Open meeting link in a new tab">
+                          <Text style={st.joinBtnText}>View Link</Text>
+                        </AnimatedPressable>
+                      )}
+                    </View>
                   </View>
                 ))}
                 {past.length > 0 && (
@@ -135,6 +152,14 @@ export default function CandidateInterviewsScreen() {
         </ScrollView>
         )}
       </ScreenFrame>
+
+      <RescheduleInterviewModal
+        visible={rescheduleTarget != null}
+        interviewId={rescheduleTarget?.id ?? null}
+        remaining={MAX_RESCHEDULES - (rescheduleTarget?.candidateRescheduleCount ?? 0)}
+        onClose={() => setRescheduleTarget(null)}
+        onRescheduled={() => { setRescheduleTarget(null); load(); }}
+      />
     </SafeAreaView>
   );
 }
@@ -154,6 +179,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   rowIconWrap: { width: 36, height: 36, borderRadius: 10, backgroundColor: T.accentBg, alignItems: 'center', justifyContent: 'center' },
   rowName: { fontSize: 14, fontWeight: '700', color: T.textPrimary },
   rowMeta: { fontSize: 12, color: T.textMuted, marginTop: 2 },
+  rescheduleBtn: { width: 34, height: 34, borderRadius: 8, backgroundColor: T.surface, alignItems: 'center', justifyContent: 'center' },
   joinBtn: { backgroundColor: T.accentSolid, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 },
   joinBtnText: { color: T.textOnAccent, fontWeight: '700', fontSize: 12 },
   statusPill: { backgroundColor: T.surface, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },

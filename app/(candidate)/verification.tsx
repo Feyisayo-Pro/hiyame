@@ -53,14 +53,7 @@ const STEPS: VerificationStep[] = [
     title: 'Video Introduction',
     subtitle: '60-Second Professional Pitch',
     icon: 'videocam-outline',
-    description: 'Record a short video introducing yourself, your expertise, and what you bring to the table. Companies use this to assess communication skills.',
-  },
-  {
-    key: 'assessment',
-    title: 'Skills Assessment',
-    subtitle: 'Reviewed by the Hiyame Team',
-    icon: 'shield-checkmark-outline',
-    description: "Request a skills assessment in your primary domain. Hiyame's internal team runs it directly with you and marks it as a verified badge on your profile once complete.",
+    description: "Record or upload a short video introducing yourself, your expertise, and what you bring to the table. Reviewed by Hiyame's internal team before it counts toward verification.",
   },
   {
     key: 'cv',
@@ -68,6 +61,13 @@ const STEPS: VerificationStep[] = [
     subtitle: 'CV required, portfolio link optional',
     icon: 'document-text-outline',
     description: "Upload your CV as a PDF — required. You can also add a portfolio link. Hiyame's internal team reviews your CV before it counts toward verification.",
+  },
+  {
+    key: 'assessment',
+    title: 'Skills Assessment',
+    subtitle: 'Reviewed by the Hiyame Team',
+    icon: 'shield-checkmark-outline',
+    description: "Request a skills assessment in your primary domain. Hiyame's internal team runs it directly with you and marks it as a verified badge on your profile once complete. Requires a submitted video, CV, and portfolio link first.",
   },
 ];
 
@@ -91,6 +91,10 @@ export default function VerificationScreen() {
   // it to passed/failed once the team has actually assessed them.
   const [assessmentPending, setAssessmentPending] = useState(false);
   const [requestingAssessment, setRequestingAssessment] = useState(false);
+  // Video intro used to auto-pass the moment a file existed; now it's
+  // reviewed by Hiyame's team same as CV (2026-10-07), so it needs the same
+  // pending-state tracking cv_review already has.
+  const [videoPending, setVideoPending] = useState(false);
 
   const refetchRecords = useCallback(() => {
     if (!candidateId) return;
@@ -98,6 +102,7 @@ export default function VerificationScreen() {
       setPassedComponents(new Set((data ?? []).filter((v) => v.status === 'passed').map((v) => v.component)));
       setAssessmentPending((data ?? []).some((v) => v.component === 'skills_assessment' && v.status === 'pending'));
       setCvPending((data ?? []).some((v) => v.component === 'cv_review' && v.status === 'pending'));
+      setVideoPending((data ?? []).some((v) => v.component === 'video_intro' && v.status === 'pending'));
     });
   }, [candidateId]);
 
@@ -117,11 +122,21 @@ export default function VerificationScreen() {
   const [portfolioInput, setPortfolioInput] = useState('');
   const [savingPortfolio, setSavingPortfolio] = useState(false);
 
+  // Tracked separately from passedComponents (which only means "approved")
+  // — requestAssessment below gates on *submitted*, not approved, matching
+  // "submit video + CV + portfolio before requesting assessment" rather
+  // than requiring Hiyame's team to have already reviewed them first, which
+  // would create a review-ordering deadlock.
+  const [cvUrl, setCvUrl] = useState<string | null>(null);
+  const [videoIntroUrl, setVideoIntroUrl] = useState<string | null>(null);
+
   const refetchCandidateLinks = useCallback(() => {
     if (!candidateId) return;
-    supabase.from('candidates').select('portfolio_url').eq('id', candidateId).maybeSingle().then(({ data }) => {
+    supabase.from('candidates').select('portfolio_url, cv_url, video_intro_url').eq('id', candidateId).maybeSingle().then(({ data }) => {
       setPortfolioUrl(data?.portfolio_url ?? '');
       setPortfolioInput(data?.portfolio_url ?? '');
+      setCvUrl(data?.cv_url ?? null);
+      setVideoIntroUrl(data?.video_intro_url ?? null);
     });
   }, [candidateId]);
 
@@ -130,6 +145,14 @@ export default function VerificationScreen() {
   }, [refetchCandidateLinks]);
 
   const requestAssessment = useCallback(async () => {
+    const missing: string[] = [];
+    if (!videoIntroUrl) missing.push('a video introduction');
+    if (!cvUrl) missing.push('your CV');
+    if (!portfolioUrl) missing.push('a portfolio link');
+    if (missing.length > 0) {
+      notify('Complete these first', `Submit ${missing.join(', ')} before requesting a skills assessment.`);
+      return;
+    }
     setRequestingAssessment(true);
     try {
       const { data } = await supabase.auth.getSession();
@@ -148,7 +171,7 @@ export default function VerificationScreen() {
     } finally {
       setRequestingAssessment(false);
     }
-  }, [refetchRecords]);
+  }, [refetchRecords, videoIntroUrl, cvUrl, portfolioUrl]);
 
   const uploadCV = useCallback(() => {
     const input = document.createElement('input');
@@ -166,6 +189,7 @@ export default function VerificationScreen() {
         await uploadCandidateCV(file);
         notify('CV submitted', "Hiyame's team will review your CV.");
         refetchRecords();
+        refetchCandidateLinks();
       } catch (e: any) {
         notify('Could not upload CV', e?.message || 'Something went wrong. Please try again.');
       } finally {
@@ -173,7 +197,7 @@ export default function VerificationScreen() {
       }
     };
     input.click();
-  }, [refetchRecords]);
+  }, [refetchRecords, refetchCandidateLinks]);
 
   const toggleStep = useCallback((key: string) => {
     if (key === 'identity') {
@@ -373,6 +397,12 @@ export default function VerificationScreen() {
                 <Text style={st.stepDescription}>{step.description}</Text>
               </View>
 
+              {step.key === 'assessment' && !isDone && (!videoIntroUrl || !cvUrl || !portfolioUrl) && (
+                <Text style={st.stepHint}>
+                  Still needed: {[!videoIntroUrl && 'video introduction', !cvUrl && 'CV', !portfolioUrl && 'portfolio link'].filter(Boolean).join(', ')}
+                </Text>
+              )}
+
               {/* Action area — differs per step now that all 4 are real:
                   identity re-verifies, video can always be re-recorded, a
                   passed assessment/cv just shows Verified with nothing to
@@ -390,6 +420,13 @@ export default function VerificationScreen() {
                   <AppIcon name="time-outline" size={18} color={T.textMuted} />
                   <Text style={[st.stepButtonText, st.stepButtonTextDone]} numberOfLines={1}>
                     CV submitted — awaiting review from the Hiyame team
+                  </Text>
+                </View>
+              ) : step.key === 'video' && !isDone && videoPending ? (
+                <View style={[st.stepButton, st.stepButtonDone]}>
+                  <AppIcon name="time-outline" size={18} color={T.textMuted} />
+                  <Text style={[st.stepButtonText, st.stepButtonTextDone]} numberOfLines={1}>
+                    Video submitted — awaiting review from the Hiyame team
                   </Text>
                 </View>
               ) : isDone && (step.key === 'assessment' || step.key === 'cv') ? null : (
@@ -462,7 +499,7 @@ export default function VerificationScreen() {
       <VideoIntroRecorderModal
         visible={showVideoModal}
         onClose={() => setShowVideoModal(false)}
-        onSubmitted={() => refetchRecords()}
+        onSubmitted={() => { refetchRecords(); refetchCandidateLinks(); }}
       />
     </SafeAreaView>
   );
@@ -591,6 +628,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   },
   stepIconWrapDone: { backgroundColor: T.emeraldBg, borderColor: T.emerald },
   stepDescription: { flex: 1, fontSize: 13, color: T.textSecondary, lineHeight: 18 },
+  stepHint: { fontSize: 12, color: T.amber, fontWeight: '600', marginTop: -4, marginBottom: 10 },
 
   /* Step Button */
   stepButton: {

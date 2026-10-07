@@ -15,6 +15,7 @@ interface Overview {
   companies: { pending: number; approved: number; rejected: number };
   assessmentRequests: number;
   cvReviewRequests: number;
+  videoReviewRequests: number;
 }
 
 async function authedFetch(path: string) {
@@ -47,7 +48,7 @@ export default function AdminOverviewScreen() {
     );
   }
 
-  const totalPending = (overview?.candidates.pending ?? 0) + (overview?.companies.pending ?? 0) + (overview?.assessmentRequests ?? 0) + (overview?.cvReviewRequests ?? 0);
+  const totalPending = (overview?.candidates.pending ?? 0) + (overview?.companies.pending ?? 0) + (overview?.assessmentRequests ?? 0) + (overview?.cvReviewRequests ?? 0) + (overview?.videoReviewRequests ?? 0);
 
   return (
     <SafeAreaView style={st.container} edges={['top', 'left', 'right']}>
@@ -100,6 +101,19 @@ export default function AdminOverviewScreen() {
             <View style={{ flex: 1 }}>
               <Text style={st.statTitle}>CV Review Requests</Text>
               <Text style={st.statMeta}>{overview?.cvReviewRequests ?? 0} awaiting internal review</Text>
+            </View>
+            <AppIcon name="chevron-forward" size={18} color={T.textMuted} />
+          </AnimatedPressable>
+          <AnimatedPressable
+            style={st.assessmentCard}
+            onPress={() => router.push({ pathname: '/(admin)/candidates', params: { component: 'video_intro' } })}
+          >
+            <View style={[st.statIconWrap, { backgroundColor: T.accentBg }]}>
+              <AppIcon name="videocam-outline" size={18} color={T.accent} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={st.statTitle}>Video Review Requests</Text>
+              <Text style={st.statMeta}>{overview?.videoReviewRequests ?? 0} awaiting internal review</Text>
             </View>
             <AppIcon name="chevron-forward" size={18} color={T.textMuted} />
           </AnimatedPressable>
