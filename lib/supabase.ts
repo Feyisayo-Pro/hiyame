@@ -10,21 +10,49 @@ const secureStoreAdapter = {
   removeItem: (key: string) => SecureStore.deleteItemAsync(key),
 };
 
+// "Remember me" (web only — the checkbox on candidate/company sign-in)
+// — a plain, non-sensitive flag that itself always lives in localStorage
+// (it has to survive the very decision it's recording), read here to
+// decide WHERE the real session token goes: localStorage (survives closing
+// the browser) when remembered, sessionStorage (gone the moment the tab
+// closes) when not. Defaults to remembered — true — when unset, which
+// matches this app's behavior before this flag existed, so nobody already
+// signed in gets silently logged out by this shipping.
+const REMEMBER_ME_KEY = 'hiyame-remember-me';
+
+export function setRememberMe(remember: boolean) {
+  if (typeof window !== 'undefined') {
+    window.localStorage.setItem(REMEMBER_ME_KEY, remember ? '1' : '0');
+  }
+}
+
+function rememberMe(): boolean {
+  if (typeof window === 'undefined') return true;
+  return window.localStorage.getItem(REMEMBER_ME_KEY) !== '0';
+}
+
 // Web fallback — SecureStore is not available on web
 const webStorageAdapter = {
   getItem: (key: string) => {
     if (typeof window === 'undefined') return null;
-    return window.localStorage.getItem(key);
+    // Only one of the two ever actually holds it (setItem below writes to
+    // exactly one and clears the other), so checking both is safe either way.
+    return window.sessionStorage.getItem(key) ?? window.localStorage.getItem(key);
   },
   setItem: (key: string, value: string) => {
-    if (typeof window !== 'undefined') {
+    if (typeof window === 'undefined') return;
+    if (rememberMe()) {
       window.localStorage.setItem(key, value);
+      window.sessionStorage.removeItem(key);
+    } else {
+      window.sessionStorage.setItem(key, value);
+      window.localStorage.removeItem(key);
     }
   },
   removeItem: (key: string) => {
-    if (typeof window !== 'undefined') {
-      window.localStorage.removeItem(key);
-    }
+    if (typeof window === 'undefined') return;
+    window.localStorage.removeItem(key);
+    window.sessionStorage.removeItem(key);
   },
 };
 

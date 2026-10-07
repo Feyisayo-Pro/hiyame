@@ -8,6 +8,8 @@ import { useAuth } from '@/lib/useAuth';
 import { supabase } from '@/lib/supabase';
 import { notify } from '@/lib/notify';
 import { notifyInterviewScheduled } from '@/lib/requestNotify';
+import { formatInterviewTime } from '@/lib/format';
+import { openInNewTab } from '@/lib/openLink';
 import ScreenFrame from '@/components/ScreenFrame';
 import PageHead from '@/components/PageHead';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
@@ -157,13 +159,13 @@ export default function CompanyInterviewsScreen() {
                   <View style={{ flex: 1 }}>
                     <Text style={st.rowName}>{i.candidateName}</Text>
                     <Text style={st.rowMeta}>
-                      {i.roleTitle ? `${i.roleTitle} · ` : ''}{new Date(i.scheduledAt).toLocaleString()} · {i.durationMinutes}min
+                      {i.roleTitle ? `${i.roleTitle} · ` : ''}{formatInterviewTime(i.scheduledAt)} · {i.durationMinutes}min
                     </Text>
                   </View>
                   {i.status === 'scheduled' ? (
                     <View style={st.rowActions}>
                       {i.meetingUrl && (
-                        <AnimatedPressable style={st.rowActionBtn} onPress={() => notify('Meeting link', i.meetingUrl!)} hitSlop={7} accessibilityRole="button" accessibilityLabel="View meeting link">
+                        <AnimatedPressable style={st.rowActionBtn} onPress={() => openInNewTab(i.meetingUrl!)} hitSlop={7} accessibilityRole="button" accessibilityLabel="Open meeting link in a new tab">
                           <AppIcon name="link" size={16} color={T.accent} />
                         </AnimatedPressable>
                       )}
@@ -279,7 +281,7 @@ function ScheduleInterviewModal({ visible, companyId, onClose, onScheduled }: {
     }).select('id').single();
     setSaving(false);
     if (error) { notify('Could not schedule', error.message); return; }
-    notify('Interview scheduled', `${selected.name} — ${scheduledAt.toLocaleString()}`);
+    notify('Interview scheduled', `${selected.name} — ${formatInterviewTime(scheduledAt)}`);
     if (data?.id) void notifyInterviewScheduled(data.id);
     reset();
     onScheduled();

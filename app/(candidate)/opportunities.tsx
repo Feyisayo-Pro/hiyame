@@ -220,12 +220,12 @@ export default function OpportunitiesScreen() {
                     </View>
                     <Text style={st.deadlineText}>{deadlineText}</Text>
                     <View style={st.actionsRow}>
-                      <AnimatedPressable style={[st.actionBtn, st.declineBtn]} onPress={() => respond(intro.introductionId, 'declined')} disabled={busyId === intro.introductionId}>
-                        <AppIcon name="close" size={18} color={T.danger} />
+                      <AnimatedPressable style={[st.actionBtn, st.declineBtn]} onPress={() => respond(intro.introductionId, 'declined')} disabled={busyId === intro.introductionId} accessibilityRole="button" accessibilityLabel={`Decline introduction for ${intro.roleTitle}`}>
+                        <AppIcon name="close" size={17} color={T.textSecondary} />
                         <Text style={st.declineText}>Decline</Text>
                       </AnimatedPressable>
-                      <AnimatedPressable style={[st.actionBtn, st.acceptBtn]} onPress={() => respond(intro.introductionId, 'accepted')} disabled={busyId === intro.introductionId}>
-                        <AppIcon name="checkmark" size={18} color={T.emerald} />
+                      <AnimatedPressable style={[st.actionBtn, st.acceptBtn]} onPress={() => respond(intro.introductionId, 'accepted')} disabled={busyId === intro.introductionId} accessibilityRole="button" accessibilityLabel={`Accept introduction for ${intro.roleTitle}`}>
+                        <AppIcon name="checkmark" size={18} color={T.textOnAccent} />
                         <Text style={st.acceptText}>Accept</Text>
                       </AnimatedPressable>
                     </View>
@@ -298,9 +298,12 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   metaText: { fontSize: 12, color: T.textSecondary },
   actionsRow: { flexDirection: 'row', gap: 10 },
-  actionBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, height: 46, borderRadius: 12, borderWidth: 1.5 },
-  declineBtn: { backgroundColor: T.dangerBg, borderColor: T.danger },
-  declineText: { fontSize: 14, fontWeight: '700', color: T.danger },
-  acceptBtn: { backgroundColor: T.emeraldBg, borderColor: T.emerald },
-  acceptText: { fontSize: 14, fontWeight: '700', color: T.emerald },
+  actionBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, height: 48, borderRadius: 12 },
+  // Decline reads as the secondary option (ghost outline, muted text) so
+  // Accept — the one the business wants taken — is the clear primary CTA
+  // (solid fill) instead of the two looking like equally-weighted choices.
+  declineBtn: { backgroundColor: T.surface, borderWidth: 1.5, borderColor: T.border },
+  declineText: { fontSize: 14, fontWeight: '700', color: T.textSecondary },
+  acceptBtn: { backgroundColor: T.emerald, ...ELEVATION.card },
+  acceptText: { fontSize: 14, fontWeight: '700', color: T.textOnAccent },
 });

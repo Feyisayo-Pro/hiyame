@@ -6,7 +6,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, ThemePalette, DISPLAY_FONT_FAMILY } from '@/lib/theme';
 import { useAuth } from '@/lib/useAuth';
 import { supabase } from '@/lib/supabase';
-import { notify } from '@/lib/notify';
+import { formatInterviewTime } from '@/lib/format';
+import { openInNewTab } from '@/lib/openLink';
 import ScreenFrame from '@/components/ScreenFrame';
 import PageHead from '@/components/PageHead';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
@@ -99,11 +100,11 @@ export default function CandidateInterviewsScreen() {
                     <View style={{ flex: 1 }}>
                       <Text style={st.rowName}>{i.companyName}</Text>
                       <Text style={st.rowMeta}>
-                        {i.roleTitle ? `${i.roleTitle} · ` : ''}{new Date(i.scheduledAt).toLocaleString()} · {i.durationMinutes}min
+                        {i.roleTitle ? `${i.roleTitle} · ` : ''}{formatInterviewTime(i.scheduledAt)} · {i.durationMinutes}min
                       </Text>
                     </View>
                     {i.meetingUrl && (
-                      <AnimatedPressable style={st.joinBtn} onPress={() => notify('Meeting link', i.meetingUrl!)}>
+                      <AnimatedPressable style={st.joinBtn} onPress={() => openInNewTab(i.meetingUrl!)} accessibilityRole="button" accessibilityLabel="Open meeting link in a new tab">
                         <Text style={st.joinBtnText}>View Link</Text>
                       </AnimatedPressable>
                     )}
@@ -119,7 +120,7 @@ export default function CandidateInterviewsScreen() {
                         </View>
                         <View style={{ flex: 1 }}>
                           <Text style={st.rowName}>{i.companyName}</Text>
-                          <Text style={st.rowMeta}>{new Date(i.scheduledAt).toLocaleString()}</Text>
+                          <Text style={st.rowMeta}>{formatInterviewTime(i.scheduledAt)}</Text>
                         </View>
                         <View style={st.statusPill}>
                           <Text style={st.statusPillText}>{i.status}</Text>

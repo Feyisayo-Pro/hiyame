@@ -6,11 +6,12 @@ import { Text } from '@/components/Themed';
 import AppIcon from '@/components/AppIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, ThemePalette, DISPLAY_FONT_FAMILY } from '@/lib/theme';
-import { supabase } from '@/lib/supabase';
+import { supabase, setRememberMe } from '@/lib/supabase';
 import { useAuth } from '@/lib/useAuth';
 import AnimatedPressable from '@/components/AnimatedPressable';
 import ScreenFrame from '@/components/ScreenFrame';
 import ForgotPasswordModal from '@/components/ForgotPasswordModal';
+import RememberMeCheckbox from '@/components/RememberMeCheckbox';
 import { useShake } from '@/lib/useShake';
 import FormField, { NO_NATIVE_OUTLINE } from '@/components/FormField';
 import { DURATION, EASE } from '@/lib/motion';
@@ -26,6 +27,7 @@ export default function CompanySignInScreen() {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string; general?: string }>({});
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [rememberMe, setRememberMeState] = useState(true);
   const { shake, shakeStyle } = useShake();
   const { setSignInIntent, authError, setAuthError } = useAuth();
 
@@ -74,6 +76,7 @@ export default function CompanySignInScreen() {
     setLoading(true);
     setErrors((e) => ({ ...e, general: undefined }));
     setSignInIntent('company');
+    setRememberMe(rememberMe);
 
     const { error } = await supabase.auth.signInWithPassword({
       email: email.trim(),
@@ -167,10 +170,13 @@ export default function CompanySignInScreen() {
               )}
             </FormField>
 
-            {/* Forgot Password */}
-            <AnimatedPressable style={st.forgotRow} onPress={() => setShowForgotPassword(true)}>
-              <Text style={st.forgotText}>Forgot password?</Text>
-            </AnimatedPressable>
+            {/* Remember me + Forgot Password */}
+            <View style={st.rememberForgotRow}>
+              <RememberMeCheckbox checked={rememberMe} onToggle={() => setRememberMeState((v) => !v)} />
+              <AnimatedPressable onPress={() => setShowForgotPassword(true)}>
+                <Text style={st.forgotText}>Forgot password?</Text>
+              </AnimatedPressable>
+            </View>
 
             {errors.general && (
               <Animated.View style={[st.generalErrorBanner, shakeStyle]}>
@@ -257,7 +263,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   errorText: { fontSize: 12, color: T.danger, fontWeight: '500', marginTop: 6, marginLeft: 4 },
 
   /* Forgot */
-  forgotRow: { alignSelf: 'flex-end', marginTop: 4, marginBottom: 8 },
+  rememberForgotRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4, marginBottom: 8 },
   forgotText: { fontSize: 13, fontWeight: '600', color: T.accentDim },
 
   /* Spacer */
