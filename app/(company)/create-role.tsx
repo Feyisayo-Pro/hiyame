@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { ScrollView, StyleSheet, TextInput, View, KeyboardAvoidingView, Platform } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, TextInput, View, KeyboardAvoidingView, Platform } from 'react-native';
 import { router } from 'expo-router';
 import { goBack } from '@/lib/goBack';
 import { Text } from '@/components/Themed';
@@ -15,6 +15,8 @@ import { TIER_CONFIG, Tier } from '@/lib/mock-data';
 import PageHead from '@/components/PageHead';
 import { useAccountStatus } from '@/lib/useAccountStatus';
 import PendingAccountBlock from '@/components/PendingAccountBlock';
+import { DateField } from '@/components/DateTimeFields';
+import { draftJobDescription } from '@/lib/aiAssist';
 
 // Only Corporate/Short-Term are postable here — Gig stays a Phase 3 stub
 // (permanently waitlisted regardless of scoring, per the matching engine's
@@ -66,9 +68,30 @@ export default function CreateRoleScreen() {
   const [requirements, setRequirements] = useState('');
 
   const [loading, setLoading] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showMore, setShowMore] = useState(false);
   const companyStatus = useAccountStatus('companies', companyId);
+
+  const handleWriteWithAi = async () => {
+    if (!companyId) return;
+    setAiLoading(true);
+    try {
+      const draft = await draftJobDescription({
+        companyId, title, tier, roleFunction, mustHave, niceToHave,
+        experienceLevel, employmentType, locationType, locationCity, locationCountry,
+        rateMin, rateMax, rateType, contractLength,
+      });
+      setOverview(draft.overview);
+      setResponsibilities(draft.responsibilities);
+      setRequirements(draft.requirements);
+      setErrors((e) => ({ ...e, overview: '', responsibilities: '', requirements: '' }));
+    } catch (err) {
+      notify('Could not generate a draft', err instanceof Error ? err.message : 'Please try again.');
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   const addTag = (value: string, list: string[], setList: (s: string[]) => void, clear: () => void) => {
     const trimmed = value.trim();
@@ -337,11 +360,27 @@ export default function CreateRoleScreen() {
           {showMore && (
             <View style={st.fieldWrap}>
               <Text style={st.label}>Start Date</Text>
-              <View style={[st.inputWrap, errors.startDate ? st.inputError : null]}>
-                <TextInput style={st.input} placeholder="YYYY-MM-DD" placeholderTextColor={T.textMuted} value={startDate} onChangeText={(t) => { setStartDate(t); setErrors((e) => ({ ...e, startDate: '' })); }} />
-              </View>
+              <DateField value={startDate} onChange={(t) => { setStartDate(t); setErrors((e) => ({ ...e, startDate: '' })); }} T={T} />
               {errors.startDate ? <Text style={st.errorText}>{errors.startDate}</Text> : null}
             </View>
+          )}
+
+          <AnimatedPressable
+            style={[st.aiButton, (aiLoading || !title.trim() || mustHave.length === 0) && st.aiButtonDisabled]}
+            onPress={handleWriteWithAi}
+            disabled={aiLoading || !title.trim() || mustHave.length === 0}
+            accessibilityRole="button"
+            accessibilityLabel="Write overview, responsibilities and requirements with AI"
+          >
+            {aiLoading ? (
+              <ActivityIndicator color={T.accent} size="small" />
+            ) : (
+              <AppIcon name="sparkles-outline" size={16} color={T.accent} />
+            )}
+            <Text style={st.aiButtonText}>{aiLoading ? 'Writing…' : 'Write with AI'}</Text>
+          </AnimatedPressable>
+          {(!title.trim() || mustHave.length === 0) && (
+            <Text style={st.aiButtonHint}>Add a title and at least one must-have skill to use AI drafting.</Text>
           )}
 
           <View style={st.fieldWrap}>
@@ -493,6 +532,14 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
     shadowOpacity: 0.3, shadowRadius: 16, elevation: 4,
   },
   submitButtonDisabled: { opacity: 0.7 },
+  aiButton: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    backgroundColor: T.accentBg, borderWidth: 1.5, borderColor: T.accent + '40',
+    borderRadius: 14, paddingVertical: 13, marginBottom: 8,
+  },
+  aiButtonDisabled: { opacity: 0.5 },
+  aiButtonText: { fontSize: 14, fontWeight: '700', color: T.accentDim },
+  aiButtonHint: { fontSize: 12, color: T.textMuted, textAlign: 'center', marginBottom: 18, marginTop: -2 },
   moreDetailsToggle: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
     paddingVertical: 12, paddingHorizontal: 4, marginBottom: 8,

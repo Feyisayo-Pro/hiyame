@@ -11,6 +11,7 @@ import { TIER_CONFIG, Tier, RESPONSE_WINDOW_HOURS } from '@/lib/mock-data';
 import { initials } from '@/lib/format';
 import { notify } from '@/lib/notify';
 import { requestMatching } from '@/lib/requestMatching';
+import { getRoleBoostSuggestions } from '@/lib/aiAssist';
 import { getIntroductionContact, IntroductionContact } from '@/lib/introductionContact';
 import ContactReveal from '@/components/ContactReveal';
 import ScreenFrame from '@/components/ScreenFrame';
@@ -83,7 +84,22 @@ export default function ShortlistScreen() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [detailCard, setDetailCard] = useState<CandidateCard | null>(null);
   const [matchingState, setMatchingState] = useState<MatchingState>('idle');
+  const [boostSuggestions, setBoostSuggestions] = useState<string[] | null>(null);
+  const [boostLoading, setBoostLoading] = useState(false);
   const autoTriggeredFor = useRef<string | null>(null);
+
+  const handleGetAiSuggestions = async () => {
+    if (!roleId) return;
+    setBoostLoading(true);
+    try {
+      const suggestions = await getRoleBoostSuggestions(roleId);
+      setBoostSuggestions(suggestions);
+    } catch (err) {
+      notify('Could not get suggestions', err instanceof Error ? err.message : 'Please try again.');
+    } finally {
+      setBoostLoading(false);
+    }
+  };
 
   const load = useCallback(async () => {
     if (!roleId) return;
@@ -332,6 +348,37 @@ export default function ShortlistScreen() {
           )}
         </AnimatedPressable>
       </View>
+
+      {companyStatus !== 'pending' && companyStatus !== 'rejected' && roleId && (
+        boostSuggestions === null ? (
+          <AnimatedPressable style={st.boostButton} onPress={handleGetAiSuggestions} disabled={boostLoading} accessibilityRole="button" accessibilityLabel="Get AI suggestions to boost this role">
+            {boostLoading ? (
+              <ActivityIndicator size="small" color={T.accent} />
+            ) : (
+              <AppIcon name="sparkles-outline" size={16} color={T.accent} />
+            )}
+            <Text style={st.boostButtonText}>{boostLoading ? 'Thinking…' : 'Get AI Suggestions to Boost This Role'}</Text>
+          </AnimatedPressable>
+        ) : (
+          <View style={st.boostCard}>
+            <View style={st.boostCardHeader}>
+              <View style={st.boostCardHeaderLeft}>
+                <AppIcon name="sparkles-outline" size={16} color={T.accent} />
+                <Text style={st.boostCardTitle}>AI Suggestions to Boost This Role</Text>
+              </View>
+              <AnimatedPressable onPress={() => setBoostSuggestions(null)} hitSlop={8} accessibilityRole="button" accessibilityLabel="Dismiss suggestions">
+                <AppIcon name="close" size={16} color={T.textMuted} />
+              </AnimatedPressable>
+            </View>
+            {boostSuggestions.map((s, i) => (
+              <View key={i} style={st.boostSuggestionRow}>
+                <View style={st.boostSuggestionDot} />
+                <Text style={st.boostSuggestionText}>{s}</Text>
+              </View>
+            ))}
+          </View>
+        )
+      )}
 
       {companyStatus === 'pending' || companyStatus === 'rejected' ? (
         <PendingAccountBlock status={companyStatus} action="view your shortlist" />
@@ -706,6 +753,22 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   emptySub: { fontSize: 13, color: T.textSecondary, textAlign: 'center', lineHeight: 19 },
   rerunPill: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: T.accent, paddingHorizontal: 16, paddingVertical: 10, borderRadius: RADIUS.pill, marginTop: 16 },
   rerunPillText: { fontSize: 13, fontWeight: '700', color: T.textOnAccent },
+  boostButton: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    backgroundColor: T.accentBg, borderWidth: 1, borderColor: T.accent + '40',
+    borderRadius: RADIUS.card, paddingVertical: 12, marginHorizontal: 20, marginBottom: 16,
+  },
+  boostButtonText: { fontSize: 13, fontWeight: '700', color: T.accentDim },
+  boostCard: {
+    backgroundColor: T.card, borderWidth: 1, borderColor: T.border, borderRadius: RADIUS.card,
+    padding: 16, marginHorizontal: 20, marginBottom: 16, ...ELEVATION.card,
+  },
+  boostCardHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
+  boostCardHeaderLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  boostCardTitle: { fontSize: 14, fontWeight: '700', color: T.textPrimary },
+  boostSuggestionRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: 10 },
+  boostSuggestionDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: T.accent, marginTop: 7 },
+  boostSuggestionText: { flex: 1, fontSize: 13, color: T.textSecondary, lineHeight: 19 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 14, marginBottom: 4 },
   gridItem: { width: '100%' },
   gridItemHalf: { width: '48.5%' },
