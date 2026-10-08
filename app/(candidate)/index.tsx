@@ -11,7 +11,7 @@ import { TIER_CONFIG } from '@/lib/mock-data';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import ScreenFrame from '@/components/ScreenFrame';
 import { useIsDesktopWeb } from '@/components/TopNav';
-import { useTheme, useThemeToggle, ThemePalette, ELEVATION, DISPLAY_FONT_FAMILY } from '@/lib/theme';
+import { useTheme, useThemeToggle, ThemePalette, ELEVATION, DISPLAY_FONT_FAMILY, RADIUS } from '@/lib/theme';
 import { FULL_VERIFICATION_THRESHOLD, TOTAL_VERIFICATION_COMPONENTS } from '@/lib/verification';
 import { SkeletonRow } from '@/components/Skeleton';
 import PageHead from '@/components/PageHead';
@@ -321,12 +321,12 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   headerActions: { flexDirection: 'row', gap: 8 },
   iconBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: T.surface, borderWidth: 1, borderColor: T.border, alignItems: 'center', justifyContent: 'center' },
 
-  errorBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: 20, marginBottom: 20, backgroundColor: T.dangerBg, borderRadius: 14, borderWidth: 1, borderColor: T.danger + '30', paddingHorizontal: 16, paddingVertical: 12 },
+  errorBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: 20, marginBottom: 20, backgroundColor: T.dangerBg, borderRadius: RADIUS.card, borderWidth: 1, borderColor: T.danger + '30', paddingHorizontal: 16, paddingVertical: 12 },
   errorBannerText: { flex: 1, fontSize: 13, color: T.textPrimary, fontWeight: '600' },
   errorBannerRetry: { fontSize: 13, color: T.danger, fontWeight: '700' },
-  statusBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: 20, marginBottom: 20, backgroundColor: T.amberBg, borderRadius: 14, borderWidth: 1, borderColor: T.amber, paddingHorizontal: 16, paddingVertical: 12 },
+  statusBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: 20, marginBottom: 20, backgroundColor: T.amberBg, borderRadius: RADIUS.card, borderWidth: 1, borderColor: T.amber, paddingHorizontal: 16, paddingVertical: 12 },
   statusBannerText: { flex: 1, fontSize: 13, color: T.textPrimary, fontWeight: '600', lineHeight: 18 },
-  statusBannerDanger: { flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: 20, marginBottom: 20, backgroundColor: T.dangerBg, borderRadius: 14, borderWidth: 1, borderColor: T.danger, paddingHorizontal: 16, paddingVertical: 12 },
+  statusBannerDanger: { flexDirection: 'row', alignItems: 'center', gap: 8, marginHorizontal: 20, marginBottom: 20, backgroundColor: T.dangerBg, borderRadius: RADIUS.card, borderWidth: 1, borderColor: T.danger, paddingHorizontal: 16, paddingVertical: 12 },
   statusBannerDangerText: { flex: 1, fontSize: 13, color: T.textPrimary, fontWeight: '600', lineHeight: 18 },
 
   scoreCard: { marginHorizontal: 20, marginBottom: 20, padding: 20, borderRadius: 16, backgroundColor: T.card, borderWidth: 1, borderColor: T.border, ...ELEVATION.card },
@@ -344,7 +344,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   verifyLinkText: { fontSize: 13, fontWeight: '700', color: T.accentDim },
 
   statsRow: { flexDirection: 'row', gap: 10, paddingHorizontal: 20, marginBottom: 24 },
-  statCard: { flex: 1, backgroundColor: T.card, borderRadius: 14, borderWidth: 1, borderColor: T.border, padding: 14, alignItems: 'center' },
+  statCard: { flex: 1, backgroundColor: T.card, borderRadius: RADIUS.card, borderWidth: 1, borderColor: T.border, padding: 14, alignItems: 'center', ...ELEVATION.card },
   statIconWrap: { width: 32, height: 32, borderRadius: 8, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
   statValue: { fontSize: 22, fontWeight: '800', color: T.textPrimary, marginBottom: 2 },
   statLabel: { fontSize: 11, color: T.textMuted, fontWeight: '600' },
@@ -356,7 +356,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   seeAllText: { fontSize: 13, fontWeight: '600', color: T.accentDim },
 
   checkItem: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: T.border },
-  checkIconWrap: { width: 36, height: 36, borderRadius: 10, backgroundColor: T.surface, borderWidth: 1, borderColor: T.border, alignItems: 'center', justifyContent: 'center' },
+  checkIconWrap: { width: 36, height: 36, borderRadius: RADIUS.control, backgroundColor: T.surface, borderWidth: 1, borderColor: T.border, alignItems: 'center', justifyContent: 'center' },
   checkIconDone: { backgroundColor: T.emeraldBg, borderColor: T.emerald },
   checkLabel: { flex: 1, fontSize: 14, fontWeight: '600', color: T.textPrimary },
   checkLabelDone: { color: T.emerald },
@@ -367,12 +367,12 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   checkStatusPending: { backgroundColor: T.accentBg },
   checkStatusTextPending: { color: T.accentDim },
 
-  introEmpty: { alignItems: 'center', gap: 8, paddingVertical: 28, backgroundColor: T.card, borderRadius: 14, borderWidth: 1, borderColor: T.border, paddingHorizontal: 20 },
+  introEmpty: { alignItems: 'center', gap: 8, paddingVertical: 28, backgroundColor: T.card, borderRadius: RADIUS.card, borderWidth: 1, borderColor: T.border, paddingHorizontal: 20, ...ELEVATION.card },
   introEmptyText: { fontSize: 13, color: T.textMuted, textAlign: 'center', lineHeight: 18 },
-  introRow: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: T.card, borderRadius: 14, borderWidth: 1, borderColor: T.border, padding: 12, marginBottom: 10 },
-  introIcon: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  introRow: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: T.card, borderRadius: RADIUS.card, borderWidth: 1, borderColor: T.border, padding: 12, marginBottom: 10, ...ELEVATION.card },
+  introIcon: { width: 36, height: 36, borderRadius: RADIUS.control, alignItems: 'center', justifyContent: 'center' },
   introTitle: { fontSize: 14, fontWeight: '600', color: T.textPrimary },
   introSub: { fontSize: 12, color: T.textSecondary, marginTop: 1 },
-  introBadge: { paddingHorizontal: 9, paddingVertical: 4, borderRadius: 8 },
+  introBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
   introBadgeText: { fontSize: 10, fontWeight: '700', letterSpacing: 0.3 },
 });

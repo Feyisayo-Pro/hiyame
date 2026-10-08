@@ -704,7 +704,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   emptyBlock: { alignItems: 'center', paddingTop: 60, paddingHorizontal: 20, gap: 4 },
   emptyTitle: { fontSize: 17, fontWeight: '800', color: T.textPrimary, marginTop: 12, marginBottom: 6 },
   emptySub: { fontSize: 13, color: T.textSecondary, textAlign: 'center', lineHeight: 19 },
-  rerunPill: { flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: T.accent, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 50, marginTop: 16 },
+  rerunPill: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: T.accent, paddingHorizontal: 16, paddingVertical: 10, borderRadius: RADIUS.pill, marginTop: 16 },
   rerunPillText: { fontSize: 13, fontWeight: '700', color: T.textOnAccent },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 14, marginBottom: 4 },
   gridItem: { width: '100%' },

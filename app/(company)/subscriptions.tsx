@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import AnimatedPressable from '@/components/AnimatedPressable';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -7,7 +7,7 @@ import { goBack } from '@/lib/goBack';
 import AppIcon from '@/components/AppIcon';
 
 import { Text } from '@/components/Themed';
-import { useTheme, ThemePalette } from '@/lib/theme';
+import { useTheme, ThemePalette, ELEVATION } from '@/lib/theme';
 import { useSubscription, SubscriptionTier, PricingPlan, PLANS } from '@/lib/subscriptionStore';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import ScreenFrame from '@/components/ScreenFrame';
@@ -83,19 +83,15 @@ function PricingCard({
         ))}
       </View>
 
-      <Pressable
+      <AnimatedPressable
         disabled={isCurrent}
         onPress={onSelect}
-        style={({ pressed }) => [
-          s.ctaBtn,
-          isCurrent && s.ctaBtnCurrent,
-          pressed && !isCurrent && { opacity: 0.85 },
-        ]}
+        style={[s.ctaBtn, isCurrent && s.ctaBtnCurrent]}
       >
         <Text style={[s.ctaBtnText, isCurrent && s.ctaBtnTextCurrent]}>
           {isCurrent ? 'Current Plan' : 'Select Package'}
         </Text>
-      </Pressable>
+      </AnimatedPressable>
     </View>
   );
 }
@@ -185,7 +181,7 @@ const makeCardStyles = (T: ThemePalette) => StyleSheet.create({
   card: {
     backgroundColor: T.card, borderRadius: 20, borderWidth: 1, borderColor: T.border,
     padding: 20, marginBottom: 16,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.06, shadowRadius: 12, elevation: 2,
+    ...ELEVATION.raised,
   },
   cardHighlight: { borderWidth: 2, borderColor: T.accent },
   popularBadge: {

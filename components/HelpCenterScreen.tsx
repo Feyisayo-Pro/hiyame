@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
-import { Animated, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Animated, ScrollView, StyleSheet, View } from 'react-native';
 import AnimatedPressable from '@/components/AnimatedPressable';
 import AppIcon, { AppIconName } from '@/components/AppIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -93,12 +93,9 @@ function AccordionItem({ item, T }: { item: Faq; T: ThemePalette }) {
 
   return (
     <View style={{ borderBottomWidth: 1, borderBottomColor: T.border }}>
-      <Pressable
+      <AnimatedPressable
         onPress={toggle}
-        style={({ pressed }) => [
-          { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14 },
-          pressed && { opacity: 0.7 },
-        ]}
+        style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14 }}
         accessibilityRole="button"
         accessibilityState={{ expanded: open }}
       >
@@ -106,7 +103,7 @@ function AccordionItem({ item, T }: { item: Faq; T: ThemePalette }) {
         <Animated.View style={{ transform: [{ rotate: spin }] }}>
           <AppIcon name="chevron-down" size={18} color={T.textMuted} />
         </Animated.View>
-      </Pressable>
+      </AnimatedPressable>
       {open && (
         <Animated.View style={{ opacity: fade, paddingBottom: 16 }}>
           <Text style={{ fontSize: 13, color: T.textSecondary, lineHeight: 19 }}>{item.a}</Text>

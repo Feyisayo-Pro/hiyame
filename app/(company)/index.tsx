@@ -3,7 +3,6 @@ import {
   StyleSheet,
   View,
   ScrollView,
-  TouchableOpacity,
   Pressable,
   Modal,
   Switch,
@@ -15,7 +14,7 @@ import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import AppIcon from '@/components/AppIcon';
 
-import { useTheme, useThemeToggle, ThemePalette, ELEVATION, DISPLAY_FONT_FAMILY } from '@/lib/theme';
+import { useTheme, useThemeToggle, ThemePalette, ELEVATION, DISPLAY_FONT_FAMILY, TYPE, SPACING, RADIUS } from '@/lib/theme';
 import { useSubscription } from '@/lib/subscriptionStore';
 import { useAuth } from '@/lib/useAuth';
 import { supabase } from '@/lib/supabase';
@@ -53,10 +52,59 @@ function getIntroStatusMeta(status: string, T: ThemePalette): StatusMeta {
 
 // ── Config Modal ──
 
+function makeConfigModalStyles(T: ThemePalette) {
+  return StyleSheet.create({
+    backdrop: { flex: 1, backgroundColor: T.overlay },
+    dismiss: { height: 60 },
+    sheet: { flex: 1, backgroundColor: T.bg, borderTopLeftRadius: RADIUS.sheet, borderTopRightRadius: RADIUS.sheet },
+    safe: { flex: 1 },
+    handleWrap: { alignItems: 'center', paddingTop: SPACING.sm, paddingBottom: SPACING.xs },
+    handle: { width: 36, height: 4, borderRadius: 2, backgroundColor: T.border },
+    header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: SPACING.xl, paddingVertical: SPACING.md },
+    headerTitle: { ...TYPE.title, color: T.textPrimary },
+    closeBtn: { width: 36, height: 36, borderRadius: RADIUS.control, backgroundColor: T.surface, alignItems: 'center', justifyContent: 'center' },
+    scrollContent: { paddingBottom: SPACING.xxxl + SPACING.sm },
+
+    planBanner: {
+      marginHorizontal: SPACING.xl, backgroundColor: T.accentBg, borderRadius: RADIUS.card,
+      padding: SPACING.lg, marginBottom: SPACING.xl, borderWidth: 1, borderColor: T.accent + '30',
+    },
+    planBannerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    planBannerLeft: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
+    planName: { ...TYPE.heading, fontWeight: '800', color: T.accentDim },
+    planBadge: { backgroundColor: T.accent, paddingHorizontal: SPACING.md, paddingVertical: SPACING.xs, borderRadius: RADIUS.chip },
+    planBadgeText: { ...TYPE.caption, fontWeight: '800', color: T.textOnAccent },
+
+    themeRowWrap: { marginHorizontal: SPACING.xl, marginBottom: SPACING.xl },
+    themeRow: {
+      flexDirection: 'row', alignItems: 'center', gap: SPACING.md, backgroundColor: T.card,
+      borderRadius: RADIUS.card, padding: SPACING.lg, borderWidth: 1, borderColor: T.border, ...ELEVATION.card,
+    },
+    themeRowLabel: { flex: 1, ...TYPE.bodyStrong, color: T.textPrimary },
+
+    section: { marginBottom: SPACING.xl },
+    sectionTitle: { ...TYPE.overline, color: T.textMuted, paddingHorizontal: SPACING.xl, marginBottom: SPACING.sm },
+    sectionBody: { backgroundColor: T.card, borderTopWidth: 1, borderBottomWidth: 1, borderColor: T.border },
+    row: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, paddingVertical: SPACING.md, paddingHorizontal: SPACING.lg },
+    rowDivider: { borderBottomWidth: 1, borderBottomColor: T.border },
+    rowPressed: { backgroundColor: T.surfaceHover },
+    rowText: { flex: 1 },
+    rowLabel: { ...TYPE.bodyStrong, color: T.textPrimary },
+    rowDesc: { ...TYPE.caption, color: T.textSecondary, marginTop: 1 },
+
+    signOut: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: SPACING.sm, paddingVertical: SPACING.lg, marginHorizontal: SPACING.xl },
+    signOutText: { ...TYPE.bodyStrong, color: T.danger },
+
+    versionWrap: { alignItems: 'center', paddingTop: SPACING.sm },
+    versionText: { ...TYPE.caption, color: T.textMuted },
+  });
+}
+
 function ConfigModal({ visible, onClose, T }: { visible: boolean; onClose: () => void; T: ThemePalette }) {
   const { mode, toggleTheme } = useThemeToggle();
   const { config, tier } = useSubscription();
   const router = useRouter();
+  const cs = useMemo(() => makeConfigModalStyles(T), [T]);
 
   const sections = [
     {
@@ -80,68 +128,62 @@ function ConfigModal({ visible, onClose, T }: { visible: boolean; onClose: () =>
 
   return (
     <Modal visible={visible} animationType="slide" transparent>
-      <View style={{ flex: 1, backgroundColor: T.overlay }}>
-        <Pressable style={{ height: 60 }} onPress={onClose} />
-        <View style={{ flex: 1, backgroundColor: T.bg, borderTopLeftRadius: 24, borderTopRightRadius: 24 }}>
-          <SafeAreaView style={{ flex: 1 }} edges={['bottom']}>
+      <View style={cs.backdrop}>
+        <Pressable style={cs.dismiss} onPress={onClose} />
+        <View style={cs.sheet}>
+          <SafeAreaView style={cs.safe} edges={['bottom']}>
             {/* Handle + Header */}
-            <View style={{ alignItems: 'center', paddingTop: 8, paddingBottom: 4 }}>
-              <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: T.border }} />
+            <View style={cs.handleWrap}>
+              <View style={cs.handle} />
             </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 12 }}>
-              <Text style={{ fontSize: 20, fontWeight: '800', color: T.textPrimary }}>Settings</Text>
-              <AnimatedPressable onPress={onClose} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: T.surface, alignItems: 'center', justifyContent: 'center' }} hitSlop={4} accessibilityRole="button" accessibilityLabel="Close settings">
+            <View style={cs.header}>
+              <Text style={cs.headerTitle}>Settings</Text>
+              <AnimatedPressable onPress={onClose} style={cs.closeBtn} hitSlop={4} accessibilityRole="button" accessibilityLabel="Close settings">
                 <AppIcon name="close" size={20} color={T.textPrimary} />
               </AnimatedPressable>
             </View>
 
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={cs.scrollContent}>
               {/* Current Plan Banner */}
-              <View style={{ marginHorizontal: 20, backgroundColor: T.accentBg, borderRadius: 16, padding: 16, marginBottom: 20, borderWidth: 1, borderColor: T.accent + '30' }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <View style={cs.planBanner}>
+                <View style={cs.planBannerRow}>
+                  <View style={cs.planBannerLeft}>
                     <AppIcon name="crown-outline" size={18} color={T.accent} />
-                    <Text style={{ fontSize: 16, fontWeight: '800', color: T.accentDim }}>{config.name} Plan</Text>
+                    <Text style={cs.planName}>{config.name} Plan</Text>
                   </View>
-                  <View style={{ backgroundColor: T.accent, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6 }}>
-                    <Text style={{ fontSize: 10, fontWeight: '800', color: T.textOnAccent }}>ACTIVE</Text>
+                  <View style={cs.planBadge}>
+                    <Text style={cs.planBadgeText}>ACTIVE</Text>
                   </View>
                 </View>
               </View>
 
               {/* Theme Toggle */}
-              <View style={{ marginHorizontal: 20, marginBottom: 20 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: T.card, borderRadius: 14, padding: 16, borderWidth: 1, borderColor: T.border, ...ELEVATION.card }}>
+              <View style={cs.themeRowWrap}>
+                <View style={cs.themeRow}>
                   <AppIcon name={mode === 'light' ? 'sunny-outline' : 'moon-outline'} size={20} color={T.textSecondary} />
-                  <Text style={{ flex: 1, fontSize: 14, fontWeight: '600', color: T.textPrimary }}>Dark Mode</Text>
+                  <Text style={cs.themeRowLabel}>Dark Mode</Text>
                   <Switch value={mode === 'dark'} onValueChange={toggleTheme} trackColor={{ false: T.surface, true: T.accent }} thumbColor={T.white} />
                 </View>
               </View>
 
               {/* Sections */}
               {sections.map((section) => (
-                <View key={section.title} style={{ marginBottom: 20 }}>
-                  <Text style={{ fontSize: 12, fontWeight: '700', color: T.textMuted, paddingHorizontal: 20, marginBottom: 8, letterSpacing: 0.3 }}>{section.title}</Text>
-                  <View style={{ backgroundColor: T.card, borderTopWidth: 1, borderBottomWidth: 1, borderColor: T.border }}>
+                <View key={section.title} style={cs.section}>
+                  <Text style={cs.sectionTitle}>{section.title}</Text>
+                  <View style={cs.sectionBody}>
                     {section.items.map((item, i) => (
-                      <Pressable
+                      <AnimatedPressable
                         key={item.label}
                         onPress={item.onPress}
-                        style={({ pressed }) => ({
-                          flexDirection: 'row', alignItems: 'center', gap: 12,
-                          paddingVertical: 14, paddingHorizontal: 16,
-                          backgroundColor: pressed ? T.surfaceHover : 'transparent',
-                          borderBottomWidth: i < section.items.length - 1 ? 1 : 0,
-                          borderBottomColor: T.border,
-                        })}
+                        style={(state) => [cs.row, i < section.items.length - 1 && cs.rowDivider, state.pressed && cs.rowPressed]}
                       >
                         <AppIcon name={item.icon as any} size={20} color={T.textSecondary} />
-                        <View style={{ flex: 1 }}>
-                          <Text style={{ fontSize: 14, fontWeight: '600', color: T.textPrimary }}>{item.label}</Text>
-                          {'desc' in item && item.desc ? <Text style={{ fontSize: 12, color: T.textSecondary, marginTop: 1 }}>{item.desc}</Text> : null}
+                        <View style={cs.rowText}>
+                          <Text style={cs.rowLabel}>{item.label}</Text>
+                          {'desc' in item && item.desc ? <Text style={cs.rowDesc}>{item.desc}</Text> : null}
                         </View>
                         <AppIcon name="chevron-forward" size={16} color={T.textMuted} />
-                      </Pressable>
+                      </AnimatedPressable>
                     ))}
                   </View>
                 </View>
@@ -155,16 +197,13 @@ function ConfigModal({ visible, onClose, T }: { visible: boolean; onClose: () =>
                   else (TopNav, both profile screens, AccountSettings) —
                   onAuthStateChange picks up the cleared session and AuthGate
                   handles the redirect itself, no manual router call needed. */}
-              <AnimatedPressable
-                onPress={() => { onClose(); supabase.auth.signOut(); }}
-                style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 16, marginHorizontal: 20 }}
-              >
+              <AnimatedPressable onPress={() => { onClose(); supabase.auth.signOut(); }} style={cs.signOut}>
                 <AppIcon name="log-out-outline" size={18} color={T.danger} />
-                <Text style={{ fontSize: 14, fontWeight: '600', color: T.danger }}>Sign Out</Text>
+                <Text style={cs.signOutText}>Sign Out</Text>
               </AnimatedPressable>
 
-              <View style={{ alignItems: 'center', paddingTop: 8 }}>
-                <Text style={{ fontSize: 11, color: T.textMuted }}>hiyame v1.0.0</Text>
+              <View style={cs.versionWrap}>
+                <Text style={cs.versionText}>hiyame v1.0.0</Text>
               </View>
             </ScrollView>
           </SafeAreaView>
@@ -282,8 +321,8 @@ export default function CompanyDashboardScreen() {
 
         {/* Active plan banner */}
         <SwipeFadeContainer direction="left" triggerKey="planBanner" delay={150}>
-          <Pressable
-            style={({ pressed }) => [styles.planBanner, pressed && styles.planBannerPressed]}
+          <AnimatedPressable
+            style={(state) => [styles.planBanner, state.pressed && styles.planBannerPressed]}
             onPress={() => router.push('/(company)/subscriptions')}
           >
             <View style={styles.planBannerIconWrap}>
@@ -294,7 +333,7 @@ export default function CompanyDashboardScreen() {
               <Text style={styles.planBannerSubtitle}>Tap to view or upgrade your subscription</Text>
             </View>
             <AppIcon name="chevron-forward" size={18} color={T.accent} />
-          </Pressable>
+          </AnimatedPressable>
         </SwipeFadeContainer>
 
         {/* Subscription status bar */}
@@ -307,9 +346,9 @@ export default function CompanyDashboardScreen() {
                   {trialDaysLeft > 0 ? trialDaysLeft + ' day' + (trialDaysLeft === 1 ? '' : 's') + ' left in trial' : 'Trial ended'}
                 </Text>
               </View>
-              <TouchableOpacity onPress={() => { setShowConfig(true); }} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <AnimatedPressable onPress={() => { setShowConfig(true); }} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                 <Text style={styles.upgradeLink}>Upgrade</Text>
-              </TouchableOpacity>
+              </AnimatedPressable>
             </View>
           </SwipeFadeContainer>
         )}
@@ -333,9 +372,9 @@ export default function CompanyDashboardScreen() {
         <SwipeFadeContainer direction="left" triggerKey="matches" delay={240}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Recent Introductions</Text>
-            <TouchableOpacity onPress={() => router.push('/(company)/roles')}>
+            <AnimatedPressable onPress={() => router.push('/(company)/roles')}>
               <Text style={styles.sectionLink}>My roles</Text>
-            </TouchableOpacity>
+            </AnimatedPressable>
           </View>
 
           <View style={styles.matchesList}>
@@ -355,9 +394,9 @@ export default function CompanyDashboardScreen() {
                 const statusMeta = getIntroStatusMeta(intro.status, T);
                 const cfg = TIER_CONFIG[intro.roleTier];
                 return (
-                  <Pressable
+                  <AnimatedPressable
                     key={intro.id}
-                    style={({ pressed }) => [styles.matchRow, pressed && styles.matchRowPressed]}
+                    style={(state) => [styles.matchRow, state.pressed && styles.matchRowPressed]}
                     onPress={() => router.push('/(company)/roles')}
                   >
                     <View style={styles.avatarCircle}>
@@ -373,7 +412,7 @@ export default function CompanyDashboardScreen() {
                       </View>
                       <Text style={styles.matchTime}>{relativeTime(intro.at)}</Text>
                     </View>
-                  </Pressable>
+                  </AnimatedPressable>
                 );
               })
             )}
@@ -384,21 +423,21 @@ export default function CompanyDashboardScreen() {
         <SwipeFadeContainer direction="left" triggerKey="actions" delay={270}>
           <Text style={styles.sectionTitle}>Quick Actions</Text>
           <View style={styles.quickActionsRow}>
-            <TouchableOpacity style={styles.quickActionCard} onPress={() => router.push('/(company)/create-role')} activeOpacity={0.85}>
+            <AnimatedPressable style={styles.quickActionCard} onPress={() => router.push('/(company)/create-role')}>
               <View style={[styles.quickActionIconWrap, { backgroundColor: T.accentBg }]}>
                 <AppIcon name="add-circle-outline" size={22} color={T.accent} />
               </View>
               <Text style={styles.quickActionTitle}>Post a Role</Text>
               <Text style={styles.quickActionSubtitle}>Start a new shortlist</Text>
-            </TouchableOpacity>
+            </AnimatedPressable>
 
-            <TouchableOpacity style={styles.quickActionCard} onPress={() => router.push('/(company)/messages')} activeOpacity={0.85}>
+            <AnimatedPressable style={styles.quickActionCard} onPress={() => router.push('/(company)/messages')}>
               <View style={[styles.quickActionIconWrap, { backgroundColor: T.indigoBg }]}>
                 <AppIcon name="people-outline" size={22} color={T.indigo} />
               </View>
               <Text style={styles.quickActionTitle}>Connections</Text>
               <Text style={styles.quickActionSubtitle}>Accepted introductions</Text>
-            </TouchableOpacity>
+            </AnimatedPressable>
           </View>
         </SwipeFadeContainer>
 
@@ -436,7 +475,7 @@ export default function CompanyDashboardScreen() {
         {/* Enterprise tier extras */}
         {tier === 'enterprise' && (
           <SwipeFadeContainer direction="left" triggerKey="scale-extras" delay={330}>
-            <TouchableOpacity style={styles.talentPoolsCard} activeOpacity={0.85}>
+            <AnimatedPressable style={styles.talentPoolsCard}>
               <View style={[styles.quickActionIconWrap, { backgroundColor: T.amberBg }]}>
                 <AppIcon name="account-group-outline" size={22} color={T.amber} />
               </View>
@@ -445,7 +484,7 @@ export default function CompanyDashboardScreen() {
                 <Text style={styles.quickActionSubtitle}>Organize candidates into custom hiring pools</Text>
               </View>
               <AppIcon name="chevron-forward" size={18} color={T.textMuted} />
-            </TouchableOpacity>
+            </AnimatedPressable>
           </SwipeFadeContainer>
         )}
 
@@ -468,7 +507,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 },
   headerIdentity: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
   logoWrap: {
-    width: 44, height: 44, borderRadius: 14, backgroundColor: T.accentBg,
+    width: 44, height: 44, borderRadius: RADIUS.card, backgroundColor: T.accentBg,
     borderWidth: 1, borderColor: T.accentBg20,
     alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
   },
@@ -481,19 +520,19 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   planBadgeText: { fontSize: 12, fontWeight: '700', color: T.accentDim },
   planBanner: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: T.accentBg, borderRadius: 16, borderWidth: 1, borderColor: T.accent + '30', padding: 14, marginBottom: 16 },
   planBannerPressed: { backgroundColor: T.accentBg20 },
-  planBannerIconWrap: { width: 36, height: 36, borderRadius: 12, backgroundColor: T.card, alignItems: 'center', justifyContent: 'center' },
+  planBannerIconWrap: { width: 36, height: 36, borderRadius: RADIUS.control, backgroundColor: T.card, alignItems: 'center', justifyContent: 'center' },
   planBannerTitle: { fontSize: 14, fontWeight: '700', color: T.textPrimary },
   planBannerSubtitle: { fontSize: 12, color: T.textSecondary, marginTop: 2 },
-  statusBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: T.accentBg, borderRadius: 14, borderWidth: 1, borderColor: T.accent + '30', paddingHorizontal: 16, paddingVertical: 12, marginBottom: 20 },
+  statusBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: T.accentBg, borderRadius: RADIUS.card, borderWidth: 1, borderColor: T.accent + '30', paddingHorizontal: 16, paddingVertical: 12, marginBottom: 20 },
   statusBarLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   statusBarText: { fontSize: 13, color: T.textPrimary, fontWeight: '600', marginLeft: 6 },
   upgradeLink: { fontSize: 13, color: T.accentDim, fontWeight: '700' },
-  statsErrorBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: T.dangerBg, borderRadius: 14, borderWidth: 1, borderColor: T.danger + '30', paddingHorizontal: 16, paddingVertical: 12, marginBottom: 20 },
+  statsErrorBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: T.dangerBg, borderRadius: RADIUS.card, borderWidth: 1, borderColor: T.danger + '30', paddingHorizontal: 16, paddingVertical: 12, marginBottom: 20 },
   statsErrorText: { flex: 1, fontSize: 13, color: T.textPrimary, fontWeight: '600' },
   statsErrorRetry: { fontSize: 13, color: T.danger, fontWeight: '700' },
-  statusBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: T.amberBg, borderRadius: 14, borderWidth: 1, borderColor: T.amber, paddingHorizontal: 16, paddingVertical: 12, marginBottom: 20 },
+  statusBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: T.amberBg, borderRadius: RADIUS.card, borderWidth: 1, borderColor: T.amber, paddingHorizontal: 16, paddingVertical: 12, marginBottom: 20 },
   statusBannerText: { flex: 1, fontSize: 13, color: T.textPrimary, fontWeight: '600', lineHeight: 18 },
-  statusBannerDanger: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: T.dangerBg, borderRadius: 14, borderWidth: 1, borderColor: T.danger, paddingHorizontal: 16, paddingVertical: 12, marginBottom: 20 },
+  statusBannerDanger: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: T.dangerBg, borderRadius: RADIUS.card, borderWidth: 1, borderColor: T.danger, paddingHorizontal: 16, paddingVertical: 12, marginBottom: 20 },
   statusBannerDangerText: { flex: 1, fontSize: 13, color: T.textPrimary, fontWeight: '600', lineHeight: 18 },
   metricsGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginBottom: 24 },
   metricCard: { width: '48%', backgroundColor: T.card, borderRadius: 16, borderWidth: 1, borderColor: T.border, padding: 16, marginBottom: 12 },
@@ -504,7 +543,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   sectionTitle: { fontSize: 17, fontWeight: '700', color: T.textPrimary, marginBottom: 12 },
   sectionLink: { fontSize: 13, fontWeight: '600', color: T.accentDim },
   matchesList: { marginBottom: 24 },
-  matchRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: T.card, borderRadius: 14, borderWidth: 1, borderColor: T.border, padding: 12, marginBottom: 10 },
+  matchRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: T.card, borderRadius: RADIUS.card, borderWidth: 1, borderColor: T.border, padding: 12, marginBottom: 10, ...ELEVATION.card },
   matchRowPressed: { backgroundColor: T.cardElevated },
   avatarCircle: { width: 44, height: 44, borderRadius: 22, backgroundColor: T.surface, alignItems: 'center', justifyContent: 'center', marginRight: 12, borderWidth: 1, borderColor: T.border },
   avatarInitials: { fontSize: 14, fontWeight: '700', color: T.accentDim },
@@ -515,7 +554,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   statusBadge: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, marginBottom: 6 },
   statusBadgeText: { fontSize: 10, fontWeight: '700', letterSpacing: 0.3 },
   matchTime: { fontSize: 11, color: T.textMuted },
-  emptyState: { alignItems: 'center', justifyContent: 'center', paddingVertical: 32, backgroundColor: T.card, borderRadius: 14, borderWidth: 1, borderColor: T.border, ...ELEVATION.card },
+  emptyState: { alignItems: 'center', justifyContent: 'center', paddingVertical: 32, backgroundColor: T.card, borderRadius: RADIUS.card, borderWidth: 1, borderColor: T.border, ...ELEVATION.card },
   emptyStateText: { marginTop: 8, fontSize: 13, color: T.textMuted },
   quickActionsRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 24 },
   quickActionCard: { width: '48%', backgroundColor: T.card, borderRadius: 16, borderWidth: 1, borderColor: T.border, padding: 16 },
@@ -523,11 +562,11 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   quickActionTitle: { fontSize: 14, fontWeight: '700', color: T.textPrimary, marginBottom: 4 },
   quickActionSubtitle: { fontSize: 12, color: T.textSecondary },
   atsGateWrap: { position: 'relative', marginBottom: 12 },
-  atsRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: T.card, borderRadius: 14, borderWidth: 1, borderColor: T.border, padding: 14, marginBottom: 0 },
+  atsRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: T.card, borderRadius: RADIUS.card, borderWidth: 1, borderColor: T.border, padding: 16, marginBottom: 0, ...ELEVATION.card },
   atsRowLocked: { opacity: 0.4 },
-  enterpriseRibbon: { position: 'absolute', top: -8, right: 12, flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: T.accent, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
+  enterpriseRibbon: { position: 'absolute', top: -8, right: 12, flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: T.accent, paddingHorizontal: 8, paddingVertical: 4, borderRadius: RADIUS.chip },
   enterpriseRibbonText: { fontSize: 9, fontWeight: '800', color: T.textOnAccent, letterSpacing: 0.3 },
-  atsIconWrap: { width: 36, height: 36, borderRadius: 10, backgroundColor: T.emeraldBg, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
+  atsIconWrap: { width: 36, height: 36, borderRadius: RADIUS.control, backgroundColor: T.emeraldBg, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
   atsTextBlock: { flex: 1 },
   atsTitle: { fontSize: 14, fontWeight: '600', color: T.textPrimary, marginBottom: 2 },
   atsSubtitle: { fontSize: 12, color: T.textSecondary },

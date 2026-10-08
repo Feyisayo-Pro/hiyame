@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useMemo} from 'react';
-import { ActivityIndicator, StyleSheet, View, ScrollView, TextInput, TouchableOpacity, Pressable } from 'react-native';
+import { ActivityIndicator, StyleSheet, View, ScrollView, TextInput } from 'react-native';
 import { Text } from '@/components/Themed';
 import AppIcon, { AppIconName } from '@/components/AppIcon';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -12,6 +12,7 @@ import ScreenFrame from '@/components/ScreenFrame';
 import PageHead from '@/components/PageHead';
 import SmileIdVerificationModal from '@/components/SmileIdVerificationModal';
 import VideoIntroRecorderModal from '@/components/VideoIntroRecorderModal';
+import AnimatedPressable from '@/components/AnimatedPressable';
 import { uploadCandidateCV } from '@/lib/uploadCandidateCV';
 import { notify } from '@/lib/notify';
 import { useTheme, ThemePalette, DISPLAY_FONT_FAMILY } from '@/lib/theme';
@@ -430,10 +431,9 @@ export default function VerificationScreen() {
                   </Text>
                 </View>
               ) : isDone && (step.key === 'assessment' || step.key === 'cv') ? null : (
-                <TouchableOpacity
+                <AnimatedPressable
                   style={[st.stepButton, isDone && st.stepButtonDone]}
                   onPress={() => toggleStep(step.key)}
-                  activeOpacity={0.7}
                   disabled={(step.key === 'assessment' && requestingAssessment) || (step.key === 'cv' && uploadingCV)}
                 >
                   {(step.key === 'assessment' && requestingAssessment) || (step.key === 'cv' && uploadingCV) ? (
@@ -454,7 +454,7 @@ export default function VerificationScreen() {
                       ? 'Request Assessment'
                       : (isDone ? 'Replace CV' : 'Upload CV (required)')}
                   </Text>
-                </TouchableOpacity>
+                </AnimatedPressable>
               )}
 
               {/* Portfolio link — optional, independent of CV review, so it
@@ -472,9 +472,9 @@ export default function VerificationScreen() {
                     spellCheck={false}
                   />
                   {portfolioInput.trim() !== portfolioUrl && (
-                    <TouchableOpacity style={st.portfolioSaveBtn} onPress={savePortfolioLink} disabled={savingPortfolio}>
+                    <AnimatedPressable style={st.portfolioSaveBtn} onPress={savePortfolioLink} disabled={savingPortfolio}>
                       {savingPortfolio ? <ActivityIndicator color={T.textOnAccent} size="small" /> : <Text style={st.portfolioSaveBtnText}>Save</Text>}
-                    </TouchableOpacity>
+                    </AnimatedPressable>
                   )}
                 </View>
               )}

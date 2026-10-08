@@ -3,9 +3,10 @@
  * Shared component for both candidate and company personas.
  */
 import { useEffect, useState } from 'react';
-import { Linking, Pressable, ScrollView, Switch, View } from 'react-native';
+import { Linking, ScrollView, Switch, View } from 'react-native';
 import { Text } from '@/components/Themed';
 import AppIcon from '@/components/AppIcon';
+import AnimatedPressable from '@/components/AnimatedPressable';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useTheme, useThemeToggle, ThemePalette, DISPLAY_FONT_FAMILY } from '@/lib/theme';
@@ -28,12 +29,12 @@ function SettingsRow({ icon, label, value, onPress, T, danger }: {
   icon: string; label: string; value?: string; onPress?: () => void; T: ThemePalette; danger?: boolean;
 }) {
   return (
-    <Pressable
+    <AnimatedPressable
       onPress={onPress}
-      style={({ pressed }) => ({
+      style={(state) => ({
         flexDirection: 'row', alignItems: 'center', gap: 12,
         paddingVertical: 14, paddingHorizontal: 16,
-        backgroundColor: pressed ? T.surfaceHover : 'transparent',
+        backgroundColor: state.pressed ? T.surfaceHover : 'transparent',
         borderBottomWidth: 1, borderBottomColor: T.border,
       })}
     >
@@ -41,7 +42,7 @@ function SettingsRow({ icon, label, value, onPress, T, danger }: {
       <Text style={{ flex: 1, fontSize: 14, fontWeight: '500', color: danger ? T.danger : T.textPrimary }}>{label}</Text>
       {value && <Text style={{ fontSize: 13, color: T.textSecondary }}>{value}</Text>}
       {onPress && <AppIcon name="chevron-forward" size={16} color={T.textMuted} />}
-    </Pressable>
+    </AnimatedPressable>
   );
 }
 
