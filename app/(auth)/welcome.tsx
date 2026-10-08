@@ -438,7 +438,10 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   mockCardName: { fontSize: 14, fontWeight: '700', color: COMPANY_COLOR },
   mockCardMeta: { fontSize: 11, color: '#616C7A', marginTop: 1 },
   mockScoreBadge: { backgroundColor: 'rgba(23,167,91,0.12)', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
-  mockScoreText: { fontSize: 11, fontWeight: '800', color: '#117C43' },
+  // '#117C43' measured 4.42:1 on mockScoreBadge's tint — short of WCAG AA's
+  // 4.5:1. Same darker emerald how-it-works.tsx's identical mock card
+  // already uses for the same reason; this file's copy was left unfixed.
+  mockScoreText: { fontSize: 11, fontWeight: '800', color: '#047857' },
   mockChipRow: { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginTop: 8 },
   mockChip: { backgroundColor: '#EEF0F3', borderRadius: 7, paddingHorizontal: 8, paddingVertical: 4 },
   mockChipText: { fontSize: 10, fontWeight: '600', color: '#5B6875' },

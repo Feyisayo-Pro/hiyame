@@ -16,15 +16,15 @@ import AnimatedPressable from '@/components/AnimatedPressable';
 // silently does nothing would be worse than not having them — this file's
 // standing "no fabricated content" rule, unchanged.
 //
-// Dark palette (matches welcome.tsx's hero, now that Pricing/About/How-it-
-// works all commit to the same dark ground instead of one dark page and
-// three light ones — the light/dark split that used to exist between them
-// was never a deliberate choice, just an artifact of the hero redesign
-// landing on this one page first).
+// Light palette, matching the white ground welcome/about/pricing/how-it-
+// works all share. This file used to carry a dark-ground palette from when
+// those pages were dark — they moved back to white together and this one
+// was missed, leaving every footer link rendering near-white-on-white
+// (illegible, caught via a live screenshot during a premium-polish pass).
 const CANDIDATE_COLOR = '#1DA1F2';
-const TEXT_PRIMARY = '#F8FAFC';
-const TEXT_MUTED = '#94A3B8';
-const BORDER = 'rgba(148,163,184,0.16)';
+const TEXT_PRIMARY = '#0F1419';
+const TEXT_MUTED = '#5B6875';
+const BORDER = '#E6E9ED';
 
 interface LinkItem { label: string; onPress: () => void }
 
@@ -106,7 +106,7 @@ const st = StyleSheet.create({
   col: { minWidth: 120, gap: 4 },
   colTitle: { fontSize: 12, fontWeight: '800', letterSpacing: 0.5, color: TEXT_MUTED, marginBottom: 10, textTransform: 'uppercase' },
   linkRow: { paddingVertical: 6 },
-  linkText: { fontSize: 14, fontWeight: '600', color: '#CBD5E1' },
+  linkText: { fontSize: 14, fontWeight: '600', color: TEXT_PRIMARY },
   linkTextHover: { color: CANDIDATE_COLOR },
 
   bottomBar: { borderTopWidth: 1, borderTopColor: BORDER, paddingTop: 20, alignItems: 'center' },
