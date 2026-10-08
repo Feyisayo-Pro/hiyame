@@ -1,22 +1,34 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import {
   sendEmail,
   introductionSentEmail,
   applicationReceivedEmail,
   introductionAcceptedCompanyEmail,
   introductionAcceptedCandidateEmail,
+  interviewScheduledEmail,
+  interviewScheduledAdminEmail,
 } from '../lib/email';
 import { sendPushToUser } from '../lib/webPushSend';
+import { ADMIN_EMAILS } from '../lib/adminEmails';
 
 // Sends the introduction-lifecycle emails (architecture doc §7.4) via Resend.
 // Called fire-and-forget by the app after it creates an introduction
 // (event: 'sent') and after the candidate accepts (event: 'accepted').
 // Idempotent: each event stamps introductions.notified_*_at and won't resend.
 //
+// Also handles interview-scheduled notifications (kind: 'interview') — folded
+// in here rather than kept as its own api/notify-interview.ts file: Vercel's
+// Hobby plan caps a deployment at 12 serverless functions, and this project
+// hit that cap again even at exactly 12 files (same thing video-intro.ts's
+// own comment already documented once before — the real margin is tighter
+// than the raw count suggests). Was nearly identical in shape already
+// ("Mirrors api/notify-introduction.ts's shape" was its own old comment).
+//
 // Auth: caller sends their Supabase bearer token; must be a party to the
-// introduction. Env: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, RESEND_API_KEY,
-// EMAIL_FROM.
+// introduction (kind: 'introduction', default) or a company_user of the
+// interview's company (kind: 'interview'). Env: SUPABASE_URL,
+// SUPABASE_SERVICE_ROLE_KEY, RESEND_API_KEY, EMAIL_FROM.
 
 const SUPABASE_URL = process.env.SUPABASE_URL ?? process.env.EXPO_PUBLIC_SUPABASE_URL;
 const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -34,6 +46,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!token) return res.status(401).json({ error: 'Missing access token.' });
 
   const body = typeof req.body === 'string' ? safeJson(req.body) : req.body;
+
+  const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } });
+
+  if (body?.kind === 'interview') {
+    return handleInterviewNotify(admin, token, body, res);
+  }
+
   const introductionId: unknown = body?.introductionId;
   const event: unknown = body?.event;
   if (typeof introductionId !== 'string' || introductionId.length < 10) {
@@ -42,8 +61,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (event !== 'sent' && event !== 'accepted') {
     return res.status(400).json({ error: "event must be 'sent' or 'accepted'." });
   }
-
-  const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 
   const { data: userData, error: userErr } = await admin.auth.getUser(token);
   if (userErr || !userData?.user) return res.status(401).json({ error: 'Invalid or expired session.' });
@@ -202,6 +219,85 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   await admin.from('introductions').update({ notified_accepted_at: new Date().toISOString() }).eq('id', intro.id);
+  return res.status(200).json({ ok: true, results });
+}
+
+// Moved from the old api/notify-interview.ts verbatim (see the folding note
+// at the top of this file) — just takes the already-created admin client
+// and parsed body instead of parsing them again.
+async function handleInterviewNotify(
+  admin: SupabaseClient,
+  token: string,
+  body: any,
+  res: VercelResponse
+) {
+  const interviewId: unknown = body?.interviewId;
+  if (typeof interviewId !== 'string' || interviewId.length < 10) {
+    return res.status(400).json({ error: 'interviewId is required.' });
+  }
+
+  const { data: userData, error: userErr } = await admin.auth.getUser(token);
+  if (userErr || !userData?.user) return res.status(401).json({ error: 'Invalid or expired session.' });
+  const authUserId = userData.user.id;
+
+  const { data: interview, error: interviewErr } = await admin
+    .from('interviews')
+    .select('id, company_id, candidate_id, role_id, scheduled_at, duration_minutes, meeting_url, notified_scheduled_at')
+    .eq('id', interviewId)
+    .maybeSingle();
+  if (interviewErr) return res.status(500).json({ error: interviewErr.message });
+  if (!interview) return res.status(404).json({ error: 'Interview not found.' });
+  if (interview.notified_scheduled_at) return res.status(200).json({ skipped: 'already notified' });
+
+  const { data: membership } = await admin
+    .from('company_users')
+    .select('id')
+    .eq('company_id', interview.company_id)
+    .eq('auth_user_id', authUserId)
+    .maybeSingle();
+  if (!membership) return res.status(403).json({ error: 'Not authorised for this interview.' });
+
+  const [{ data: candidate }, { data: company }, { data: role }] = await Promise.all([
+    admin.from('candidates').select('full_name, email, auth_user_id').eq('id', interview.candidate_id).maybeSingle(),
+    admin.from('companies').select('legal_name, trading_name').eq('id', interview.company_id).maybeSingle(),
+    interview.role_id
+      ? admin.from('roles').select('title').eq('id', interview.role_id).maybeSingle()
+      : Promise.resolve({ data: null }),
+  ]);
+
+  const companyName = company?.trading_name || company?.legal_name || 'the company';
+  const results: Record<string, unknown> = {};
+
+  if (candidate?.email) {
+    const mail = interviewScheduledEmail({
+      companyName,
+      roleTitle: role?.title ?? null,
+      scheduledAt: interview.scheduled_at,
+      durationMinutes: interview.duration_minutes,
+      meetingUrl: interview.meeting_url,
+    });
+    results.email = await sendEmail({ to: candidate.email, ...mail });
+  }
+  if (candidate?.auth_user_id) {
+    results.push = await sendPushToUser(admin, candidate.auth_user_id, {
+      title: 'Interview scheduled',
+      body: `${companyName} booked an interview with you${role?.title ? ` for ${role.title}` : ''}.`,
+      url: '/(candidate)/interviews',
+    });
+  }
+
+  const adminMail = interviewScheduledAdminEmail({
+    candidateName: candidate?.full_name ?? 'A candidate',
+    companyName,
+    roleTitle: role?.title ?? null,
+    scheduledAt: interview.scheduled_at,
+    durationMinutes: interview.duration_minutes,
+  });
+  results.adminEmails = await Promise.all(
+    ADMIN_EMAILS.map((to) => sendEmail({ to, ...adminMail }))
+  );
+
+  await admin.from('interviews').update({ notified_scheduled_at: new Date().toISOString() }).eq('id', interview.id);
   return res.status(200).json({ ok: true, results });
 }
 

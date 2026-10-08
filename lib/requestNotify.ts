@@ -22,18 +22,19 @@ export async function notifyIntroduction(
   }
 }
 
-// Fire-and-forget call to /api/notify-interview, which emails + pushes the
-// candidate when a company schedules an interview. Same silent-no-op
-// behavior as notifyIntroduction above.
+// Fire-and-forget call to /api/notify-introduction (kind: 'interview' —
+// folded in there, see that file's own comment on why), which emails +
+// pushes the candidate when a company schedules an interview. Same
+// silent-no-op behavior as notifyIntroduction above.
 export async function notifyInterviewScheduled(interviewId: string): Promise<void> {
   try {
     const { data } = await supabase.auth.getSession();
     const token = data.session?.access_token;
     if (!token) return;
-    await fetch('/api/notify-interview', {
+    await fetch('/api/notify-introduction', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ interviewId }),
+      body: JSON.stringify({ kind: 'interview', interviewId }),
     });
   } catch {
     // swallow — a failed notification must not affect the flow
