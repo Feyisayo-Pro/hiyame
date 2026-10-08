@@ -629,10 +629,47 @@ const VERIFICATION_LABELS: { key: keyof VerificationDetail; label: string }[] = 
 // scannable, the full picture (every skill, bio, availability, per-
 // component verification) is opt-in here rather than crammed into every
 // card in the grid.
+interface ExperiencePreview { id: string; jobTitle: string; startDate: string | null; endDate: string | null; isCurrent: boolean; description: string | null }
+interface EducationPreview { id: string; institution: string; qualification: string; fieldOfStudy: string | null; startDate: string | null; endDate: string | null }
+interface CertificationPreview { id: string; name: string; issuingOrganization: string | null; issueDate: string | null; expiryDate: string | null }
+
+function yearOf(d: string | null): string {
+  if (!d) return '';
+  const date = new Date(d);
+  return isNaN(date.getTime()) ? '' : String(date.getFullYear());
+}
+
 function CandidateDetailModal({ T, st, card, busy, onClose, onAccept, onSkip, onSave }: {
   T: ThemePalette; st: ReturnType<typeof makeStyles>; card: CandidateCard | null; busy: boolean;
   onClose: () => void; onAccept: () => void; onSkip: () => void; onSave: () => void;
 }) {
+  const [cvLoading, setCvLoading] = useState(false);
+  const [experience, setExperience] = useState<ExperiencePreview[]>([]);
+  const [education, setEducation] = useState<EducationPreview[]>([]);
+  const [certifications, setCertifications] = useState<CertificationPreview[]>([]);
+
+  useEffect(() => {
+    if (!card) {
+      setExperience([]); setEducation([]); setCertifications([]);
+      return;
+    }
+    let alive = true;
+    setCvLoading(true);
+    (async () => {
+      const [expRes, eduRes, certRes] = await Promise.all([
+        supabase.rpc('get_candidate_experience_preview', { p_candidate_id: card.candidateId }),
+        supabase.from('candidate_education').select('id, institution, qualification, field_of_study, start_date, end_date').eq('candidate_id', card.candidateId).order('start_date', { ascending: false }),
+        supabase.rpc('get_candidate_certifications_preview', { p_candidate_id: card.candidateId }),
+      ]);
+      if (!alive) return;
+      setExperience((expRes.data ?? []).map((r: any) => ({ id: r.id, jobTitle: r.job_title, startDate: r.start_date, endDate: r.end_date, isCurrent: r.is_current, description: r.description })));
+      setEducation((eduRes.data ?? []).map((r: any) => ({ id: r.id, institution: r.institution, qualification: r.qualification, fieldOfStudy: r.field_of_study, startDate: r.start_date, endDate: r.end_date })));
+      setCertifications((certRes.data ?? []).map((r: any) => ({ id: r.id, name: r.name, issuingOrganization: r.issuing_organization, issueDate: r.issue_date, expiryDate: r.expiry_date })));
+      setCvLoading(false);
+    })();
+    return () => { alive = false; };
+  }, [card?.candidateId]);
+
   return (
     <Modal visible={card != null} animationType="slide" transparent onRequestClose={onClose}>
       <View style={st.detailOverlay}>
@@ -703,6 +740,51 @@ function CandidateDetailModal({ T, st, card, busy, onClose, onAccept, onSkip, on
                     <Text style={st.detailEmptyText}>Not available until matching next re-runs for this role.</Text>
                   )}
                 </View>
+
+                <Text style={st.detailSectionLabel}>WORK EXPERIENCE</Text>
+                {cvLoading ? (
+                  <ActivityIndicator size="small" color={T.textMuted} />
+                ) : experience.length === 0 ? (
+                  <Text style={st.detailEmptyText}>No experience listed yet.</Text>
+                ) : (
+                  experience.map((e) => (
+                    <View key={e.id} style={st.cvEntry}>
+                      <Text style={st.cvEntryTitle}>{e.jobTitle}</Text>
+                      <Text style={st.cvEntryMeta}>
+                        Previous employer · {yearOf(e.startDate) || '?'}–{e.isCurrent ? 'Present' : (yearOf(e.endDate) || '?')}
+                      </Text>
+                      {e.description && <Text style={st.cvEntryDesc}>{e.description}</Text>}
+                    </View>
+                  ))
+                )}
+
+                <Text style={st.detailSectionLabel}>EDUCATION</Text>
+                {cvLoading ? (
+                  <ActivityIndicator size="small" color={T.textMuted} />
+                ) : education.length === 0 ? (
+                  <Text style={st.detailEmptyText}>No education listed yet.</Text>
+                ) : (
+                  education.map((e) => (
+                    <View key={e.id} style={st.cvEntry}>
+                      <Text style={st.cvEntryTitle}>{e.qualification}{e.fieldOfStudy ? ` · ${e.fieldOfStudy}` : ''}</Text>
+                      <Text style={st.cvEntryMeta}>{e.institution} · {yearOf(e.startDate) || '?'}–{yearOf(e.endDate) || '?'}</Text>
+                    </View>
+                  ))
+                )}
+
+                <Text style={st.detailSectionLabel}>CERTIFICATIONS</Text>
+                {cvLoading ? (
+                  <ActivityIndicator size="small" color={T.textMuted} />
+                ) : certifications.length === 0 ? (
+                  <Text style={st.detailEmptyText}>No certifications listed yet.</Text>
+                ) : (
+                  certifications.map((c) => (
+                    <View key={c.id} style={st.cvEntry}>
+                      <Text style={st.cvEntryTitle}>{c.name}</Text>
+                      <Text style={st.cvEntryMeta}>{c.issuingOrganization ?? 'Issuer not specified'}{c.issueDate ? ` · ${yearOf(c.issueDate)}` : ''}</Text>
+                    </View>
+                  ))
+                )}
               </ScrollView>
 
               <View style={[st.actionsRow, { marginTop: 16 }]}>
@@ -819,4 +901,8 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   detailFactText: { fontSize: 13, color: T.textSecondary, fontWeight: '500', flexShrink: 1 },
   detailSectionLabel: { fontSize: 11, fontWeight: '700', color: T.textMuted, textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 8 },
   detailEmptyText: { fontSize: 12.5, color: T.textMuted },
+  cvEntry: { marginBottom: 12 },
+  cvEntryTitle: { fontSize: 13.5, fontWeight: '700', color: T.textPrimary, marginBottom: 2 },
+  cvEntryMeta: { fontSize: 12, color: T.textMuted, marginBottom: 4 },
+  cvEntryDesc: { fontSize: 12.5, color: T.textSecondary, lineHeight: 18 },
 });

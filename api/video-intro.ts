@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { extractCvData } from '../lib/ai';
 
 // Both candidate self-upload flows that need a signed Storage URL (too
 // large for Vercel's ~4.5MB JSON body cap the way upload-candidate-photo's
@@ -146,7 +147,68 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     );
   if (vrErr) return res.status(500).json({ error: vrErr.message });
 
+  // Best-effort AI extraction — never lets a failure here fail the upload
+  // the candidate is waiting on. Only fills fields currently empty; never
+  // overwrites anything the candidate already filled in themselves.
+  if (kindKey === 'cv') {
+    try {
+      await extractAndFillFromCv(admin, candidate.id, kind.bucket, uploaded.name);
+    } catch (e) {
+      console.error('CV extraction failed:', e instanceof Error ? e.message : e);
+    }
+  }
+
   return res.status(200).json({ url });
+}
+
+async function extractAndFillFromCv(admin: SupabaseClient, candidateId: string, bucket: string, fileName: string): Promise<void> {
+  const { data: fileBlob, error: downloadErr } = await admin.storage.from(bucket).download(fileName);
+  if (downloadErr || !fileBlob) return;
+
+  const arrayBuffer = await fileBlob.arrayBuffer();
+  const pdfBase64 = Buffer.from(arrayBuffer).toString('base64');
+
+  const result = await extractCvData(pdfBase64);
+  if (!result.ok || !result.data) return;
+  const extracted = result.data;
+
+  const { data: existing } = await admin
+    .from('candidates')
+    .select('summary, skill_tags, experience_level')
+    .eq('id', candidateId)
+    .maybeSingle();
+
+  const fieldUpdates: Record<string, unknown> = {};
+  if (!existing?.summary && extracted.summary) fieldUpdates.summary = extracted.summary;
+  if ((!existing?.skill_tags || existing.skill_tags.length === 0) && extracted.skillTags.length > 0) {
+    fieldUpdates.skill_tags = extracted.skillTags;
+  }
+  if (!existing?.experience_level && extracted.experienceLevel) fieldUpdates.experience_level = extracted.experienceLevel;
+  if (Object.keys(fieldUpdates).length > 0) {
+    await admin.from('candidates').update(fieldUpdates).eq('id', candidateId);
+  }
+
+  const sectionInserts: Array<[string, unknown[], () => Record<string, unknown>[]]> = [
+    ['candidate_experience', extracted.experience, () => extracted.experience.map((e) => ({
+      candidate_id: candidateId, job_title: e.jobTitle, company_name: e.companyName ?? 'Not specified',
+      start_date: e.startDate, end_date: e.endDate, is_current: e.isCurrent, description: e.description,
+    }))],
+    ['candidate_education', extracted.education, () => extracted.education.map((e) => ({
+      candidate_id: candidateId, institution: e.institution, qualification: e.qualification,
+      field_of_study: e.fieldOfStudy, start_date: e.startDate, end_date: e.endDate,
+    }))],
+    ['candidate_certifications', extracted.certifications, () => extracted.certifications.map((c) => ({
+      candidate_id: candidateId, name: c.name, issuing_organization: c.issuingOrganization,
+      issue_date: c.issueDate, expiry_date: c.expiryDate,
+    }))],
+  ];
+
+  for (const [table, items, buildRows] of sectionInserts) {
+    if (items.length === 0) continue;
+    const { count } = await admin.from(table).select('id', { count: 'exact', head: true }).eq('candidate_id', candidateId);
+    if ((count ?? 0) > 0) continue; // candidate already has entries here — leave them alone entirely
+    await admin.from(table).insert(buildRows());
+  }
 }
 
 function safeJson(s: string): any {
