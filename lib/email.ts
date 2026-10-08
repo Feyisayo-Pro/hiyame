@@ -99,6 +99,26 @@ export function introductionSentEmail(p: {
   };
 }
 
+// A candidate applied directly to a role (2026-10-08) — the mirror of
+// introductionSentEmail above, but the other direction: that one tells a
+// candidate a company is interested (identity masked); this tells a
+// company a candidate applied (nothing masked — the candidate chose this
+// company, the company should see who they are right away, same as if the
+// application were already accepted).
+export function applicationReceivedEmail(p: {
+  roleTitle: string;
+  candidateName: string;
+}): { subject: string; html: string } {
+  return {
+    subject: `New applicant: ${p.roleTitle}`,
+    html: shell(
+      'A candidate applied to your role',
+      `<p style="margin:0"><b>${esc(p.candidateName)}</b> applied to <b>${esc(p.roleTitle)}</b>.</p>`,
+      { label: 'Review the applicant', href: `${APP_URL}/shortlist` },
+    ),
+  };
+}
+
 // Introduction accepted — to the company. Candidate contact revealed.
 export function introductionAcceptedCompanyEmail(p: {
   roleTitle: string;

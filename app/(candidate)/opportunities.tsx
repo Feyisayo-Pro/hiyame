@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useState, useMemo } from 'react';
-import { Pressable, RefreshControl, ScrollView, StyleSheet, View, ActivityIndicator } from 'react-native';
+import { Image, RefreshControl, ScrollView, StyleSheet, View, ActivityIndicator } from 'react-native';
 import { Text } from '@/components/Themed';
 import AppIcon from '@/components/AppIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTheme, ThemePalette, ELEVATION, DISPLAY_FONT_FAMILY } from '@/lib/theme';
+import { useTheme, ThemePalette, ELEVATION, DISPLAY_FONT_FAMILY, RADIUS } from '@/lib/theme';
 import { useAuth } from '@/lib/useAuth';
 import { supabase } from '@/lib/supabase';
-import { TIER_CONFIG, Tier } from '@/lib/mock-data';
+import { TIER_CONFIG, Tier, RESPONSE_WINDOW_HOURS } from '@/lib/mock-data';
 import { notify } from '@/lib/notify';
+import { initials } from '@/lib/format';
+import { formatNaira } from '@/lib/currency';
 import { getIntroductionContact, IntroductionContact } from '@/lib/introductionContact';
 import ContactReveal from '@/components/ContactReveal';
 import ScreenFrame from '@/components/ScreenFrame';
@@ -20,12 +22,14 @@ import { useIsDesktopWeb, useIsWideDesktopWeb } from '@/components/TopNav';
 import { useAccountStatus } from '@/lib/useAccountStatus';
 import PendingAccountBlock from '@/components/PendingAccountBlock';
 
-// Replaces the old Tinder-style swipe deck over mock roles. Under the real
-// architecture, candidates don't browse and swipe an open pool — a company's
-// shortlist Accept creates an "introduction", and this screen is that inbox.
-// Company identity stays hidden (industry + size band only) until the
-// candidate accepts — enforced server-side by get_introduction_preview(),
-// not by anything client-side here.
+// Two ways into an introduction now (2026-10-08): a company's shortlist
+// Accept creates one (company-initiated — this screen's original purpose,
+// below), or a candidate applies directly to an open role (this screen's
+// new "Open Roles" section, top). Blind matching (company identity hidden
+// until accept) applies ONLY to the company-initiated path — enforced
+// server-side by get_introduction_preview(), not by anything client-side
+// here. A candidate's own application shows the real company throughout:
+// they chose it, there's nothing to hide from them.
 
 interface PendingIntro {
   introductionId: string;
@@ -63,6 +67,31 @@ interface AcceptedIntro {
   contact: IntroductionContact | null;
 }
 
+interface OpenRole {
+  id: string;
+  title: string;
+  tier: Tier;
+  mustHaveSkills: string[];
+  locationType: string | null;
+  rateMin: number | null;
+  rateMax: number | null;
+  companyName: string;
+  companyLogoUrl: string | null;
+}
+
+// A candidate's own application, awaiting the company's decision — distinct
+// from PendingIntro (company-initiated, blind, candidate decides) even
+// though both currently sit at status 'sent': this one shows the real
+// company since the candidate already knows it, and there's no
+// accept/decline action — the company is the one deciding.
+interface MyApplication {
+  introductionId: string;
+  roleTitle: string;
+  roleTier: Tier;
+  companyName: string;
+  sentAt: string;
+}
+
 export default function OpportunitiesScreen() {
   const T = useTheme();
   const st = useMemo(() => makeStyles(T), [T]);
@@ -74,28 +103,80 @@ export default function OpportunitiesScreen() {
 
   const [pending, setPending] = useState<PendingIntro[] | null>(null);
   const [accepted, setAccepted] = useState<AcceptedIntro[]>([]);
+  const [myApplications, setMyApplications] = useState<MyApplication[]>([]);
+  const [openRoles, setOpenRoles] = useState<OpenRole[] | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [applyingId, setApplyingId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!candidateId) {
       setPending([]);
+      setOpenRoles([]);
       return;
     }
 
     const { data: intros, error } = await supabase
       .from('introductions')
-      .select('id, status, sent_at, response_window_hours')
+      .select('id, role_id, status, sent_at, response_window_hours, initiated_by')
       .eq('candidate_id', candidateId)
       .order('sent_at', { ascending: false });
     if (error) {
       console.warn('Failed to load introductions:', error.message);
       setPending([]);
+      setOpenRoles([]);
       return;
     }
 
-    const sentRows = (intros ?? []).filter((i) => i.status === 'sent');
+    // Applied roles are excluded from the Open Roles browse list below
+    // regardless of status — already sent, accepted, or declined, none of
+    // those should show as "apply again".
+    const appliedRoleIds = new Set((intros ?? []).map((i) => i.role_id));
+
+    // Company-initiated 'sent' rows go through the blind preview (the
+    // candidate doesn't know who this is yet, decides accept/decline here).
+    // Candidate-initiated 'sent' rows are the candidate's own applications —
+    // they already know the company, there's nothing to decide, the
+    // company is the one reviewing. Same 'sent' status, different meaning
+    // by origin — see this file's own top comment.
+    const sentRows = (intros ?? []).filter((i) => i.status === 'sent' && i.initiated_by === 'company');
+    const appliedRows = (intros ?? []).filter((i) => i.status === 'sent' && i.initiated_by === 'candidate');
     const acceptedRows = (intros ?? []).filter((i) => i.status === 'accepted');
+
+    const applications: MyApplication[] = [];
+    for (const row of appliedRows) {
+      const { data: role } = await supabase.from('roles').select('title, tier, company_id').eq('id', row.role_id).maybeSingle();
+      if (!role) continue;
+      const { data: company } = await supabase.from('companies').select('legal_name, trading_name').eq('id', role.company_id).maybeSingle();
+      applications.push({
+        introductionId: row.id,
+        roleTitle: role.title,
+        roleTier: role.tier as Tier,
+        companyName: company?.trading_name || company?.legal_name || 'Company',
+        sentAt: row.sent_at,
+      });
+    }
+    setMyApplications(applications);
+
+    const { data: liveRoles } = await supabase
+      .from('roles')
+      .select('id, title, tier, required_skills, location_type, rate_min, rate_max, companies(legal_name, trading_name, logo_url)')
+      .order('created_at', { ascending: false });
+    setOpenRoles(
+      (liveRoles ?? [])
+        .filter((r: any) => !appliedRoleIds.has(r.id))
+        .map((r: any) => ({
+          id: r.id,
+          title: r.title,
+          tier: r.tier as Tier,
+          mustHaveSkills: r.required_skills?.must_have ?? [],
+          locationType: r.location_type,
+          rateMin: r.rate_min,
+          rateMax: r.rate_max,
+          companyName: r.companies?.trading_name || r.companies?.legal_name || 'Company',
+          companyLogoUrl: r.companies?.logo_url ?? null,
+        }))
+    );
 
     const previews: PendingIntro[] = [];
     for (const row of sentRows) {
@@ -167,18 +248,41 @@ export default function OpportunitiesScreen() {
     await load();
   };
 
+  const apply = async (role: OpenRole) => {
+    if (!candidateId) return;
+    setApplyingId(role.id);
+    const { data: created, error } = await supabase
+      .from('introductions')
+      .insert({
+        role_id: role.id,
+        candidate_id: candidateId,
+        initiated_by: 'candidate',
+        response_window_hours: RESPONSE_WINDOW_HOURS[role.tier],
+      })
+      .select('id')
+      .single();
+    setApplyingId(null);
+    if (error) {
+      notify('Could not apply', error.message);
+      return;
+    }
+    notify('Application sent', `${role.companyName} will review your application for ${role.title}.`);
+    if (created?.id) void notifyIntroduction(created.id, 'sent');
+    await load();
+  };
+
   return (
     <SafeAreaView style={st.container} edges={['top', 'left', 'right']}>
-      <PageHead title="Introductions" />
+      <PageHead title="Jobs" />
       <ScreenFrame>
       <View style={st.header}>
-        <Text style={st.headerTitle}>Introductions</Text>
-        <Text style={st.headerSub}>Companies interested in working with you</Text>
+        <Text style={st.headerTitle}>Jobs</Text>
+        <Text style={st.headerSub}>Apply directly, or respond to introductions from companies</Text>
       </View>
 
       {candidateStatus === 'pending' || candidateStatus === 'rejected' ? (
-        <PendingAccountBlock status={candidateStatus} action="see introductions from companies" />
-      ) : pending === null ? (
+        <PendingAccountBlock status={candidateStatus} action="browse and apply to roles" />
+      ) : pending === null || openRoles === null ? (
         <View style={st.centerFill}>
           <ActivityIndicator color={T.accent} />
         </View>
@@ -187,16 +291,104 @@ export default function OpportunitiesScreen() {
           contentContainerStyle={st.scroll}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={T.accent} colors={[T.accent]} />}
         >
-          {pending.length === 0 && accepted.length === 0 && (
+          {pending.length === 0 && accepted.length === 0 && openRoles.length === 0 && myApplications.length === 0 && (
             <View style={st.emptyBlock}>
               <AppIcon name="mail-outline" size={28} color={T.textMuted} />
-              <Text style={st.emptyTitle}>No introductions yet</Text>
+              <Text style={st.emptyTitle}>Nothing here yet</Text>
               <Text style={st.emptySub}>
-                When a company wants to connect, it'll show up here. Complete verification to become eligible for matching.
+                Open roles you can apply to, and introductions companies send you, both show up here. Complete verification to become eligible for matching.
               </Text>
             </View>
           )}
 
+          {openRoles.length > 0 && (
+            <>
+              <Text style={st.sectionLabel}>OPEN ROLES</Text>
+              <View style={st.grid}>
+                {openRoles.map((role, i) => {
+                  const cfg = TIER_CONFIG[role.tier];
+                  const rate = role.rateMin || role.rateMax
+                    ? [role.rateMin && `from ${formatNaira(role.rateMin)}`, role.rateMax && `up to ${formatNaira(role.rateMax)}`].filter(Boolean).join(' · ')
+                    : null;
+                  return (
+                    <SwipeFadeContainer key={role.id} axis="y" offset={16} duration={DURATION.stagger} delay={Math.min(i, 8) * 40} style={[st.gridItem, gridItemStyle]}>
+                      <View style={st.card}>
+                        <View style={st.companyRow}>
+                          {role.companyLogoUrl ? (
+                            <Image source={{ uri: role.companyLogoUrl }} style={st.companyLogo} resizeMode="cover" />
+                          ) : (
+                            <View style={[st.companyLogo, st.companyLogoFallback]}>
+                              <Text style={st.companyLogoInitials}>{initials(role.companyName)}</Text>
+                            </View>
+                          )}
+                          <Text style={st.companyName} numberOfLines={1}>{role.companyName}</Text>
+                        </View>
+                        <Text style={st.roleTitle}>{role.title}</Text>
+                        <View style={[st.tierPill, { backgroundColor: cfg.accent + '14' }]}>
+                          <Text style={[st.tierText, { color: cfg.accent }]}>{cfg.label.toUpperCase()}</Text>
+                        </View>
+                        {role.mustHaveSkills.length > 0 && (
+                          <View style={st.skillsRow}>
+                            {role.mustHaveSkills.slice(0, 4).map((s) => (
+                              <View key={s} style={st.skillChip}>
+                                <Text style={st.skillText}>{s}</Text>
+                              </View>
+                            ))}
+                          </View>
+                        )}
+                        <Text style={st.metaText}>
+                          {[role.locationType, rate].filter(Boolean).join('  ·  ')}
+                        </Text>
+                        <AnimatedPressable
+                          style={[st.applyBtn, applyingId === role.id && { opacity: 0.7 }]}
+                          onPress={() => apply(role)}
+                          disabled={applyingId === role.id}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Apply to ${role.title} at ${role.companyName}`}
+                        >
+                          {applyingId === role.id ? (
+                            <ActivityIndicator color={T.textOnAccent} size="small" />
+                          ) : (
+                            <Text style={st.applyBtnText}>Apply</Text>
+                          )}
+                        </AnimatedPressable>
+                      </View>
+                    </SwipeFadeContainer>
+                  );
+                })}
+              </View>
+            </>
+          )}
+
+          {myApplications.length > 0 && (
+            <>
+              <Text style={st.sectionLabel}>MY APPLICATIONS</Text>
+              <View style={st.grid}>
+                {myApplications.map((a) => {
+                  const cfg = TIER_CONFIG[a.roleTier];
+                  return (
+                    <View key={a.introductionId} style={[st.gridItem, gridItemStyle]}>
+                      <View style={st.card}>
+                        <View style={[st.tierPill, { backgroundColor: cfg.accent + '14', alignSelf: 'flex-start', marginBottom: 8 }]}>
+                          <Text style={[st.tierText, { color: cfg.accent }]}>{cfg.label.toUpperCase()}</Text>
+                        </View>
+                        <Text style={st.roleTitle}>{a.roleTitle}</Text>
+                        <View style={st.metaRow}>
+                          <AppIcon name="business-outline" size={14} color={T.textSecondary} />
+                          <Text style={st.metaText}>{a.companyName}</Text>
+                        </View>
+                        <View style={st.statusPill}>
+                          <Text style={st.statusPillText}>Awaiting response</Text>
+                        </View>
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            </>
+          )}
+
+          {pending.filter((p) => !p.expired).length > 0 && <Text style={st.sectionLabel}>INTRODUCTIONS</Text>}
           <View style={st.grid}>
             {pending.filter((p) => !p.expired).map((intro, i) => {
               const cfg = TIER_CONFIG[intro.roleTier];
@@ -306,4 +498,17 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   declineText: { fontSize: 14, fontWeight: '700', color: T.textSecondary },
   acceptBtn: { backgroundColor: T.emerald, ...ELEVATION.card },
   acceptText: { fontSize: 14, fontWeight: '700', color: T.textOnAccent },
+
+  companyRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 },
+  companyLogo: { width: 32, height: 32, borderRadius: 10, backgroundColor: T.surface },
+  companyLogoFallback: { alignItems: 'center', justifyContent: 'center' },
+  companyLogoInitials: { fontSize: 12, fontWeight: '800', color: T.accentDim },
+  companyName: { flex: 1, fontSize: 13, fontWeight: '700', color: T.textSecondary },
+  skillsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 10 },
+  skillChip: { backgroundColor: T.surface, paddingHorizontal: 9, paddingVertical: 4, borderRadius: RADIUS.chip },
+  skillText: { fontSize: 11, color: T.textSecondary, fontWeight: '600' },
+  applyBtn: { backgroundColor: T.accentSolid, borderRadius: 12, height: 44, alignItems: 'center', justifyContent: 'center', marginTop: 14 },
+  applyBtnText: { fontSize: 14, fontWeight: '700', color: T.textOnAccent },
+  statusPill: { alignSelf: 'flex-start', backgroundColor: T.amberBg, paddingHorizontal: 9, paddingVertical: 4, borderRadius: RADIUS.chip, marginTop: 8 },
+  statusPillText: { fontSize: 11, fontWeight: '700', color: T.amber },
 });

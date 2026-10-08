@@ -15,3 +15,13 @@ export const TIER_CONFIG: Record<Tier, {
   short_term:  { label: 'Short-Term',   color: '#E0E7FF', accent: '#4F46E5', icon: 'time' },
   gig:         { label: 'Gig',          color: '#F1F5F9', accent: '#64748B', icon: 'flash' },
 };
+
+// Response-window hours per tier (architecture doc §7.4) — how long the
+// receiving side has to respond before an introduction expires. Used by
+// both who can send one: app/(company)/shortlist.tsx (company → candidate)
+// and app/(candidate)/opportunities.tsx (candidate → company, applying).
+export const RESPONSE_WINDOW_HOURS: Record<Tier, number> = {
+  corporate: 72,
+  short_term: 48,
+  gig: 24,
+};

@@ -7,7 +7,7 @@ import AppIcon, { AppIconName } from '@/components/AppIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, ThemePalette, RADIUS, ELEVATION, ICON } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
-import { TIER_CONFIG, Tier } from '@/lib/mock-data';
+import { TIER_CONFIG, Tier, RESPONSE_WINDOW_HOURS } from '@/lib/mock-data';
 import { initials } from '@/lib/format';
 import { notify } from '@/lib/notify';
 import { requestMatching } from '@/lib/requestMatching';
@@ -26,18 +26,17 @@ import { useAuth } from '@/lib/useAuth';
 import { useAccountStatus } from '@/lib/useAccountStatus';
 import PendingAccountBlock from '@/components/PendingAccountBlock';
 
-// Response-window hours per tier (architecture doc §7.4).
-const RESPONSE_WINDOW_HOURS: Record<Tier, number> = {
-  corporate: 72,
-  short_term: 48,
-  gig: 24,
-};
 
 interface VerificationDetail { identity: boolean; video: boolean; cv: boolean; assessment: boolean }
 interface CandidateCard {
+  // Opaque unique id used for the React key + busy-tracking only — a
+  // match_scores.id for matched/alternate cards, an introductions.id for
+  // applicant cards (see introductionId below, which the accept/reject
+  // handlers actually act on for those).
   matchScoreId: string;
   candidateId: string;
-  score: number;
+  introductionId: string | null;
+  score: number | null;
   isAlternate: boolean;
   verified: boolean | null;
   verificationDetail: VerificationDetail | null;
@@ -79,6 +78,7 @@ export default function ShortlistScreen() {
   const [roleTier, setRoleTier] = useState<Tier | null>(null);
   const [matchingRanAt, setMatchingRanAt] = useState<string | null>(null);
   const [cards, setCards] = useState<CandidateCard[] | null>(null);
+  const [applicants, setApplicants] = useState<CandidateCard[]>([]);
   const [introduced, setIntroduced] = useState<IntroducedCard[]>([]);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [detailCard, setDetailCard] = useState<CandidateCard | null>(null);
@@ -99,11 +99,21 @@ export default function ShortlistScreen() {
 
     const { data: intros } = await supabase
       .from('introductions')
-      .select('id, candidate_id, status, candidates(full_name)')
+      .select('id, candidate_id, status, initiated_by, candidates(full_name)')
       .eq('role_id', roleId);
+    // Disqualifies a candidate from the algorithmic shortlist either way —
+    // already applied, or already sent an intro, no need to show them twice.
     const introducedIds = new Set((intros ?? []).map((i) => i.candidate_id));
     const introducedCards: IntroducedCard[] = [];
+    // Company-initiated rows only — a candidate-initiated 'sent' row (an
+    // application still awaiting the company's decision) belongs in the
+    // dedicated APPLICANTS section below instead, with its own richer card
+    // and accept/reject actions, not this flat name+status row. Once
+    // accepted, either origin reads identically from here on (contact
+    // reveal doesn't care how the connection started), so this only needs
+    // to exclude the 'sent'-and-candidate-initiated case specifically.
     for (const i of (intros ?? []) as any[]) {
+      if (i.status === 'sent' && i.initiated_by === 'candidate') continue;
       const contact = i.status === 'accepted' ? await getIntroductionContact(i.id) : null;
       introducedCards.push({
         introductionId: i.id,
@@ -132,6 +142,7 @@ export default function ShortlistScreen() {
       .map((s: any) => ({
         matchScoreId: s.id,
         candidateId: s.candidate_id,
+        introductionId: null,
         score: s.score,
         isAlternate: s.is_alternate,
         verified: typeof s.score_breakdown?.verified === 'boolean' ? s.score_breakdown.verified : null,
@@ -149,6 +160,61 @@ export default function ShortlistScreen() {
         availabilityDate: s.candidates?.availability_date ?? null,
       }));
     setCards(rows);
+
+    // Applicants — candidates who applied directly to this role rather
+    // than being matched. No match_scores row exists for these (they never
+    // went through the pipeline), so verification detail is built from
+    // verification_records directly (readable here via the new
+    // verification_records_select_via_company_applicant policy) instead of
+    // the pre-computed score_breakdown.verificationDetail matched cards use.
+    const { data: applications } = await supabase
+      .from('introductions')
+      .select('id, candidate_id, candidates(full_name, photo_url, skill_tags, summary, location, remote_preference, experience_level, rate_min, rate_preferred, rate_max, availability_date)')
+      .eq('role_id', roleId)
+      .eq('initiated_by', 'candidate')
+      .eq('status', 'sent');
+
+    const applicationRows = applications ?? [];
+    const applicantIds = applicationRows.map((a: any) => a.candidate_id);
+    const { data: vrecs } = applicantIds.length
+      ? await supabase.from('verification_records').select('candidate_id, component, status').in('candidate_id', applicantIds)
+      : { data: [] as any[] };
+    const vrByCandidate = new Map<string, Set<string>>();
+    for (const v of vrecs ?? []) {
+      if (v.status !== 'passed') continue;
+      const set = vrByCandidate.get(v.candidate_id) ?? new Set<string>();
+      set.add(v.component);
+      vrByCandidate.set(v.candidate_id, set);
+    }
+
+    setApplicants(applicationRows.map((a: any) => {
+      const passed = vrByCandidate.get(a.candidate_id) ?? new Set<string>();
+      return {
+        matchScoreId: a.id,
+        candidateId: a.candidate_id,
+        introductionId: a.id,
+        score: null,
+        isAlternate: false,
+        verified: null,
+        verificationDetail: {
+          identity: passed.has('identity'),
+          video: passed.has('video_intro'),
+          cv: passed.has('cv_review'),
+          assessment: passed.has('skills_assessment'),
+        },
+        fullName: a.candidates?.full_name ?? 'Candidate',
+        photoUrl: a.candidates?.photo_url ?? null,
+        skillTags: a.candidates?.skill_tags ?? [],
+        summary: a.candidates?.summary ?? null,
+        location: a.candidates?.location ?? null,
+        remotePreference: a.candidates?.remote_preference ?? null,
+        experienceLevel: a.candidates?.experience_level ?? null,
+        rateMin: a.candidates?.rate_min ?? null,
+        ratePreferred: a.candidates?.rate_preferred ?? null,
+        rateMax: a.candidates?.rate_max ?? null,
+        availabilityDate: a.candidates?.availability_date ?? null,
+      };
+    }));
   }, [roleId]);
 
   const runMatching = useCallback(async () => {
@@ -211,6 +277,22 @@ export default function ShortlistScreen() {
       notify('Something went wrong', error.message);
       return;
     }
+    await load();
+  };
+
+  const handleApplicantDecision = async (card: CandidateCard, decision: 'accepted' | 'declined') => {
+    if (!card.introductionId) return;
+    setBusyId(card.matchScoreId);
+    const { error } = await supabase
+      .from('introductions')
+      .update({ status: decision, responded_at: new Date().toISOString() })
+      .eq('id', card.introductionId);
+    setBusyId(null);
+    if (error) {
+      notify('Something went wrong', error.message);
+      return;
+    }
+    if (decision === 'accepted') void notifyIntroduction(card.introductionId, 'accepted');
     await load();
   };
 
@@ -292,6 +374,22 @@ export default function ShortlistScreen() {
             </View>
           )}
 
+          {applicants.length > 0 && (
+            <>
+              <Text style={st.sectionLabel}>APPLICANTS</Text>
+              <View style={st.grid}>
+                {applicants.map((c, i) => (
+                  <View key={c.matchScoreId} style={[st.gridItem, gridItemStyle]}>
+                    <SwipeFadeContainer axis="y" offset={16} duration={DURATION.stagger} delay={Math.min(i, 8) * 45}>
+                      <CandidateCardView T={T} st={st} card={c} busy={busyId === c.matchScoreId}
+                        onAccept={() => handleApplicantDecision(c, 'accepted')} onSkip={() => handleApplicantDecision(c, 'declined')} onSave={() => {}} onOpenDetail={() => setDetailCard(c)} />
+                    </SwipeFadeContainer>
+                  </View>
+                ))}
+              </View>
+            </>
+          )}
+
           {active.length > 0 && (
             <>
               <Text style={st.sectionLabel}>SHORTLIST</Text>
@@ -350,9 +448,19 @@ export default function ShortlistScreen() {
         card={detailCard}
         busy={detailCard != null && busyId === detailCard.matchScoreId}
         onClose={() => setDetailCard(null)}
-        onAccept={() => { if (detailCard) { handleAccept(detailCard); setDetailCard(null); } }}
-        onSkip={() => { if (detailCard) { handleAction(detailCard, 'skipped'); setDetailCard(null); } }}
-        onSave={() => { if (detailCard) { handleAction(detailCard, 'saved'); setDetailCard(null); } }}
+        onAccept={() => {
+          if (!detailCard) return;
+          if (detailCard.introductionId) handleApplicantDecision(detailCard, 'accepted');
+          else handleAccept(detailCard);
+          setDetailCard(null);
+        }}
+        onSkip={() => {
+          if (!detailCard) return;
+          if (detailCard.introductionId) handleApplicantDecision(detailCard, 'declined');
+          else handleAction(detailCard, 'skipped');
+          setDetailCard(null);
+        }}
+        onSave={() => { if (detailCard && !detailCard.introductionId) { handleAction(detailCard, 'saved'); setDetailCard(null); } }}
       />
     </SafeAreaView>
   );
@@ -397,9 +505,15 @@ function CandidateCardView({ T, st, card, busy, onAccept, onSkip, onSave, onOpen
         <View style={st.profileBody}>
           <View style={st.nameRow}>
             <Text style={st.candidateName} numberOfLines={1}>{card.fullName}</Text>
-            <View style={st.scoreRing}>
-              <Text style={st.scoreText}>{card.score}%</Text>
-            </View>
+            {card.score !== null ? (
+              <View style={st.scoreRing}>
+                <Text style={st.scoreText}>{card.score}%</Text>
+              </View>
+            ) : (
+              <View style={st.appliedPill}>
+                <Text style={st.appliedPillText}>Applied</Text>
+              </View>
+            )}
           </View>
 
           <View style={st.badgeRow}>
@@ -439,13 +553,15 @@ function CandidateCardView({ T, st, card, busy, onAccept, onSkip, onSave, onOpen
       </AnimatedPressable>
 
       <View style={st.actionsRow}>
-        <AnimatedPressable style={[st.actionBtn, st.skipBtn]} onPress={onSkip} disabled={busy} accessibilityRole="button" accessibilityLabel={`Skip ${card.fullName}`}>
+        <AnimatedPressable style={[st.actionBtn, st.skipBtn]} onPress={onSkip} disabled={busy} accessibilityRole="button" accessibilityLabel={card.score !== null ? `Skip ${card.fullName}` : `Reject ${card.fullName}'s application`}>
           <AppIcon name="close" size={ICON.md} color={T.danger} />
         </AnimatedPressable>
-        <AnimatedPressable style={[st.actionBtn, st.saveBtn]} onPress={onSave} disabled={busy} accessibilityRole="button" accessibilityLabel={`Save ${card.fullName}`}>
-          <AppIcon name="bookmark-outline" size={ICON.sm} color={T.accent} />
-        </AnimatedPressable>
-        <AnimatedPressable style={[st.actionBtn, st.acceptBtn]} onPress={onAccept} disabled={busy} accessibilityRole="button" accessibilityLabel={`Accept ${card.fullName}`}>
+        {card.score !== null && (
+          <AnimatedPressable style={[st.actionBtn, st.saveBtn]} onPress={onSave} disabled={busy} accessibilityRole="button" accessibilityLabel={`Save ${card.fullName}`}>
+            <AppIcon name="bookmark-outline" size={ICON.sm} color={T.accent} />
+          </AnimatedPressable>
+        )}
+        <AnimatedPressable style={[st.actionBtn, st.acceptBtn]} onPress={onAccept} disabled={busy} accessibilityRole="button" accessibilityLabel={card.score !== null ? `Accept ${card.fullName}` : `Accept ${card.fullName}'s application`}>
           <AppIcon name="checkmark" size={ICON.md} color={T.white} />
           <Text style={st.acceptText}>Accept</Text>
         </AnimatedPressable>
@@ -493,9 +609,15 @@ function CandidateDetailModal({ T, st, card, busy, onClose, onAccept, onSkip, on
                   )}
                   <View style={{ flex: 1, minWidth: 0 }}>
                     <Text style={st.detailName} numberOfLines={1}>{card.fullName}</Text>
-                    <View style={st.detailScoreRing}>
-                      <Text style={st.scoreText}>{card.score}% match</Text>
-                    </View>
+                    {card.score !== null ? (
+                      <View style={st.detailScoreRing}>
+                        <Text style={st.scoreText}>{card.score}% match</Text>
+                      </View>
+                    ) : (
+                      <View style={st.appliedPill}>
+                        <Text style={st.appliedPillText}>Applied directly</Text>
+                      </View>
+                    )}
                   </View>
                 </View>
 
@@ -537,13 +659,15 @@ function CandidateDetailModal({ T, st, card, busy, onClose, onAccept, onSkip, on
               </ScrollView>
 
               <View style={[st.actionsRow, { marginTop: 16 }]}>
-                <AnimatedPressable style={[st.actionBtn, st.skipBtn]} onPress={onSkip} disabled={busy} accessibilityRole="button" accessibilityLabel={`Skip ${card.fullName}`}>
+                <AnimatedPressable style={[st.actionBtn, st.skipBtn]} onPress={onSkip} disabled={busy} accessibilityRole="button" accessibilityLabel={card.score !== null ? `Skip ${card.fullName}` : `Reject ${card.fullName}'s application`}>
                   <AppIcon name="close" size={ICON.md} color={T.danger} />
                 </AnimatedPressable>
-                <AnimatedPressable style={[st.actionBtn, st.saveBtn]} onPress={onSave} disabled={busy} accessibilityRole="button" accessibilityLabel={`Save ${card.fullName}`}>
-                  <AppIcon name="bookmark-outline" size={ICON.sm} color={T.accent} />
-                </AnimatedPressable>
-                <AnimatedPressable style={[st.actionBtn, st.acceptBtn]} onPress={onAccept} disabled={busy} accessibilityRole="button" accessibilityLabel={`Accept ${card.fullName}`}>
+                {card.score !== null && (
+                  <AnimatedPressable style={[st.actionBtn, st.saveBtn]} onPress={onSave} disabled={busy} accessibilityRole="button" accessibilityLabel={`Save ${card.fullName}`}>
+                    <AppIcon name="bookmark-outline" size={ICON.sm} color={T.accent} />
+                  </AnimatedPressable>
+                )}
+                <AnimatedPressable style={[st.actionBtn, st.acceptBtn]} onPress={onAccept} disabled={busy} accessibilityRole="button" accessibilityLabel={card.score !== null ? `Accept ${card.fullName}` : `Accept ${card.fullName}'s application`}>
                   <AppIcon name="checkmark" size={ICON.md} color={T.white} />
                   <Text style={st.acceptText}>Accept</Text>
                 </AnimatedPressable>
@@ -595,6 +719,8 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   candidateName: { flex: 1, fontSize: 17, fontWeight: '800', color: T.textPrimary, letterSpacing: -0.3 },
   scoreRing: { minWidth: 46, height: 26, borderRadius: RADIUS.chip, backgroundColor: T.emeraldBg, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8 },
+  appliedPill: { minHeight: 26, borderRadius: RADIUS.chip, backgroundColor: T.indigoBg, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 10 },
+  appliedPillText: { fontSize: 11, fontWeight: '800', color: T.indigo, letterSpacing: -0.1 },
   scoreText: { fontSize: 12, fontWeight: '800', color: T.emerald, letterSpacing: -0.2 },
   badgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   badge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 3, borderRadius: RADIUS.chip },

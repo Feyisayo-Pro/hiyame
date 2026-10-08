@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import {
   sendEmail,
   introductionSentEmail,
+  applicationReceivedEmail,
   introductionAcceptedCompanyEmail,
   introductionAcceptedCandidateEmail,
 } from '../lib/email';
@@ -50,7 +51,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const { data: intro, error: introErr } = await admin
     .from('introductions')
-    .select('id, role_id, candidate_id, status, response_window_hours, notified_sent_at, notified_accepted_at')
+    .select('id, role_id, candidate_id, status, response_window_hours, initiated_by, notified_sent_at, notified_accepted_at')
     .eq('id', introductionId)
     .maybeSingle();
   if (introErr) return res.status(500).json({ error: introErr.message });
@@ -79,9 +80,42 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const isParty = membership || (candidate?.auth_user_id && candidate.auth_user_id === authUserId);
   if (!isParty) return res.status(403).json({ error: 'Not authorised for this introduction.' });
 
-  // ── sent → notify the candidate (company identity masked) ──
+  // ── sent → who gets notified depends on who sent it. Company-initiated
+  // (the original case): notify the candidate, identity masked. Candidate-
+  // initiated (applied directly, 2026-10-08): the direction flips — notify
+  // the company's hiring contact instead, nothing masked (the candidate
+  // chose this company; the company should see who applied right away).
   if (event === 'sent') {
     if (intro.notified_sent_at) return res.status(200).json({ skipped: 'already notified' });
+
+    if (intro.initiated_by === 'candidate') {
+      const { data: hiring } = await admin
+        .from('company_users')
+        .select('full_name, email, auth_user_id')
+        .eq('company_id', role.company_id)
+        .eq('status', 'active')
+        .order('created_at')
+        .limit(1)
+        .maybeSingle();
+      if (!hiring?.email) return res.status(200).json({ skipped: 'company has no hiring contact email' });
+
+      const mail = applicationReceivedEmail({
+        roleTitle: role.title,
+        candidateName: candidate?.full_name ?? 'A candidate',
+      });
+      const r = await sendEmail({ to: hiring.email, ...mail });
+      if (!r.ok && !r.skipped) return res.status(502).json({ error: r.error });
+      if (hiring.auth_user_id) {
+        await sendPushToUser(admin, hiring.auth_user_id, {
+          title: 'New applicant',
+          body: `${candidate?.full_name ?? 'A candidate'} applied to ${role.title}.`,
+          url: '/(company)/shortlist',
+        });
+      }
+      await admin.from('introductions').update({ notified_sent_at: new Date().toISOString() }).eq('id', intro.id);
+      return res.status(200).json({ sent: r.ok, skipped: r.skipped ?? false });
+    }
+
     if (!candidate?.email) return res.status(200).json({ skipped: 'candidate has no email' });
 
     const { data: company } = await admin
