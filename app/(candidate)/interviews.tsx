@@ -3,7 +3,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/Themed';
 import AppIcon from '@/components/AppIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTheme, ThemePalette, DISPLAY_FONT_FAMILY } from '@/lib/theme';
+import { useTheme, ThemePalette, DISPLAY_FONT_FAMILY, RADIUS } from '@/lib/theme';
 import { useAuth } from '@/lib/useAuth';
 import { supabase } from '@/lib/supabase';
 import { formatInterviewTime } from '@/lib/format';
@@ -174,9 +174,9 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   emptyTitle: { fontSize: 15, fontWeight: '700', color: T.textSecondary },
   emptySub: { fontSize: 13, color: T.textMuted, textAlign: 'center', maxWidth: 280 },
   sectionLabel: { fontSize: 12, fontWeight: '700', color: T.textMuted, marginTop: 8, marginBottom: 10, letterSpacing: 0.3 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: T.card, borderRadius: 14, borderWidth: 1, borderColor: T.border, padding: 14, marginBottom: 10 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: T.card, borderRadius: RADIUS.card, borderWidth: 1, borderColor: T.border, padding: 14, marginBottom: 10 },
   rowUpcoming: { borderColor: T.accent },
-  rowIconWrap: { width: 36, height: 36, borderRadius: 10, backgroundColor: T.accentBg, alignItems: 'center', justifyContent: 'center' },
+  rowIconWrap: { width: 36, height: 36, borderRadius: RADIUS.control, backgroundColor: T.accentBg, alignItems: 'center', justifyContent: 'center' },
   rowName: { fontSize: 14, fontWeight: '700', color: T.textPrimary },
   rowMeta: { fontSize: 12, color: T.textMuted, marginTop: 2 },
   rescheduleBtn: { width: 34, height: 34, borderRadius: 8, backgroundColor: T.surface, alignItems: 'center', justifyContent: 'center' },

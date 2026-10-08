@@ -7,7 +7,7 @@ import { router } from 'expo-router';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import ScreenFrame from '@/components/ScreenFrame';
 import EditCompanyProfileModal, { CompanyEditable } from '@/components/EditCompanyProfileModal';
-import { useTheme, useThemeToggle, ThemePalette, DISPLAY_FONT_FAMILY } from '@/lib/theme';
+import { useTheme, useThemeToggle, ThemePalette, DISPLAY_FONT_FAMILY, RADIUS } from '@/lib/theme';
 import { useAuth } from '@/lib/useAuth';
 import { useSubscription } from '@/lib/subscriptionStore';
 import { supabase } from '@/lib/supabase';
@@ -391,7 +391,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   },
   fieldRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 14, padding: 16 },
   fieldIconWrap: {
-    width: 36, height: 36, borderRadius: 10, backgroundColor: T.accentBg,
+    width: 36, height: 36, borderRadius: RADIUS.control, backgroundColor: T.accentBg,
     alignItems: 'center', justifyContent: 'center', marginTop: 2,
   },
   fieldContent: {},
@@ -408,8 +408,8 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   slotHint: { fontSize: 11, color: T.textMuted, marginTop: 6 },
 
   /* Actions */
-  actionItem: { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: T.card, borderRadius: 14, padding: 16, marginBottom: 8, borderWidth: 1, borderColor: T.border },
-  actionIconWrap: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  actionItem: { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: T.card, borderRadius: RADIUS.card, padding: 16, marginBottom: 8, borderWidth: 1, borderColor: T.border },
+  actionIconWrap: { width: 36, height: 36, borderRadius: RADIUS.control, alignItems: 'center', justifyContent: 'center' },
   actionContent: { flex: 1 },
   actionLabel: { fontSize: 15, fontWeight: '700', color: T.textPrimary },
   actionDesc: { fontSize: 12, color: T.textSecondary, marginTop: 2 },
@@ -424,6 +424,6 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   versionText: { fontSize: 11, color: T.textMuted, textAlign: 'center', marginTop: 8, marginBottom: 20 },
 
   /* Talent Pools */
-  talentPoolsCard: { backgroundColor: T.card, borderRadius: 14, padding: 16, marginBottom: 8, borderWidth: 1, borderColor: T.border },
+  talentPoolsCard: { backgroundColor: T.card, borderRadius: RADIUS.card, padding: 16, marginBottom: 8, borderWidth: 1, borderColor: T.border },
   talentPoolsTextBlock: { marginTop: 8 },
 });

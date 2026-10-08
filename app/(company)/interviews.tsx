@@ -3,7 +3,7 @@ import { ActivityIndicator, Modal, ScrollView, StyleSheet, TextInput, View } fro
 import { Text } from '@/components/Themed';
 import AppIcon from '@/components/AppIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTheme, ThemePalette, DISPLAY_FONT_FAMILY } from '@/lib/theme';
+import { useTheme, ThemePalette, DISPLAY_FONT_FAMILY, RADIUS } from '@/lib/theme';
 import { useAuth } from '@/lib/useAuth';
 import { supabase } from '@/lib/supabase';
 import { notify } from '@/lib/notify';
@@ -398,7 +398,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingTop: 12, paddingBottom: 16 },
   headerTitle: { fontSize: 24, fontWeight: '800', color: T.textPrimary, fontFamily: DISPLAY_FONT_FAMILY },
   headerSub: { fontSize: 13, color: T.textMuted, marginTop: 2 },
-  scheduleBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: T.accentSolid, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10 },
+  scheduleBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: T.accentSolid, paddingHorizontal: 16, paddingVertical: 10, borderRadius: RADIUS.control },
   scheduleBtnText: { color: T.textOnAccent, fontWeight: '700', fontSize: 13 },
   tabRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 20, paddingBottom: 16, flexWrap: 'wrap' },
   tab: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999, backgroundColor: T.surface, borderWidth: 1, borderColor: T.border },
@@ -408,8 +408,8 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   scroll: { paddingHorizontal: 20, paddingBottom: 32 },
   emptyBlock: { alignItems: 'center', gap: 14, paddingVertical: 48 },
   emptyTitle: { fontSize: 15, fontWeight: '700', color: T.textSecondary },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: T.card, borderRadius: 14, borderWidth: 1, borderColor: T.border, padding: 14, marginBottom: 10 },
-  rowIconWrap: { width: 36, height: 36, borderRadius: 10, backgroundColor: T.accentBg, alignItems: 'center', justifyContent: 'center' },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: T.card, borderRadius: RADIUS.card, borderWidth: 1, borderColor: T.border, padding: 14, marginBottom: 10 },
+  rowIconWrap: { width: 36, height: 36, borderRadius: RADIUS.control, backgroundColor: T.accentBg, alignItems: 'center', justifyContent: 'center' },
   rowName: { fontSize: 14, fontWeight: '700', color: T.textPrimary },
   rowMeta: { fontSize: 12, color: T.textMuted, marginTop: 2 },
   rowActions: { flexDirection: 'row', gap: 6 },
@@ -422,19 +422,19 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 },
   title: { fontSize: 17, fontWeight: '800', color: T.textPrimary },
   label: { fontSize: 12, fontWeight: '700', color: T.textSecondary, marginBottom: 8, marginTop: 14, textTransform: 'uppercase', letterSpacing: 0.3 },
-  input: { borderWidth: 1.5, borderColor: T.border, backgroundColor: T.surface, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: T.textPrimary },
-  selectedCandidate: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: T.accentBg, borderRadius: 10, padding: 12, borderWidth: 1, borderColor: T.accent },
+  input: { borderWidth: 1.5, borderColor: T.border, backgroundColor: T.surface, borderRadius: RADIUS.control, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: T.textPrimary },
+  selectedCandidate: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: T.accentBg, borderRadius: RADIUS.control, padding: 12, borderWidth: 1, borderColor: T.accent },
   selectedCandidateText: { fontSize: 14, fontWeight: '600', color: T.accentDim },
   candidateOption: { padding: 12, borderBottomWidth: 1, borderBottomColor: T.border },
   candidateOptionText: { fontSize: 14, color: T.textPrimary },
   typeRow: { flexDirection: 'row', gap: 10 },
-  typeBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 12, borderRadius: 10, backgroundColor: T.surface, borderWidth: 1, borderColor: T.border },
+  typeBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 12, borderRadius: RADIUS.control, backgroundColor: T.surface, borderWidth: 1, borderColor: T.border },
   typeBtnActive: { backgroundColor: T.accentSolid, borderColor: T.accentSolid },
   typeBtnText: { fontSize: 13, fontWeight: '700', color: T.textSecondary },
   typeBtnTextActive: { color: T.textOnAccent },
   emptyHint: { fontSize: 13, color: T.textMuted, lineHeight: 18, paddingVertical: 4 },
   roleRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  roleBtn: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 10, backgroundColor: T.surface, borderWidth: 1, borderColor: T.border, maxWidth: '100%' },
+  roleBtn: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: RADIUS.control, backgroundColor: T.surface, borderWidth: 1, borderColor: T.border, maxWidth: '100%' },
   roleBtnActive: { backgroundColor: T.accentSolid, borderColor: T.accentSolid },
   roleBtnText: { fontSize: 13, fontWeight: '700', color: T.textSecondary },
   roleBtnTextActive: { color: T.textOnAccent },

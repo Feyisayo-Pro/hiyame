@@ -16,7 +16,7 @@ import PortfolioSection from '@/components/PortfolioSection';
 import ExperienceSection from '@/components/ExperienceSection';
 import EducationSection from '@/components/EducationSection';
 import CertificationsSection from '@/components/CertificationsSection';
-import { useTheme, useThemeToggle, ThemePalette, DISPLAY_FONT_FAMILY } from '@/lib/theme';
+import { useTheme, useThemeToggle, ThemePalette, DISPLAY_FONT_FAMILY, RADIUS } from '@/lib/theme';
 import { SkeletonBlock } from '@/components/Skeleton';
 import { notify } from '@/lib/notify';
 import { formatNaira } from '@/lib/currency';
@@ -454,7 +454,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   skillCount: { backgroundColor: T.accent, borderRadius: 10, minWidth: 22, height: 22, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 },
   skillCountText: { fontSize: 11, fontWeight: '700', color: T.textOnAccent },
   skillsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  skillChip: { backgroundColor: T.accentBg, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10, borderWidth: 1, borderColor: T.accentBg20 },
+  skillChip: { backgroundColor: T.accentBg, paddingHorizontal: 14, paddingVertical: 8, borderRadius: RADIUS.chip, borderWidth: 1, borderColor: T.accentBg20 },
   skillText: { fontSize: 13, fontWeight: '600', color: T.accentDim },
   emptySkills: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: T.surface, borderRadius: 12, padding: 16, borderWidth: 1, borderColor: T.border },
   emptySkillsText: { fontSize: 13, color: T.textMuted, fontWeight: '500' },
@@ -468,10 +468,10 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   progressBarFill: { height: 6, borderRadius: 3 },
 
   /* Checklist */
-  checklistCard: { borderRadius: 14, backgroundColor: T.card, borderWidth: 1, borderColor: T.border, overflow: 'hidden' },
+  checklistCard: { borderRadius: RADIUS.card, backgroundColor: T.card, borderWidth: 1, borderColor: T.border, overflow: 'hidden' },
   checkItem: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 14 },
   checkItemBorder: { borderBottomWidth: 1, borderBottomColor: T.border },
-  checkIconWrap: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  checkIconWrap: { width: 36, height: 36, borderRadius: RADIUS.control, alignItems: 'center', justifyContent: 'center' },
   checkIconDone: { backgroundColor: T.emeraldBg },
   checkIconPending: { backgroundColor: T.accentBg },
   checkLabel: { flex: 1, fontSize: 14, fontWeight: '600', color: T.textPrimary },
@@ -485,14 +485,14 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
 
   /* Stats */
   statsRow: { flexDirection: 'row', gap: 10, paddingHorizontal: 20, marginBottom: 24 },
-  statCard: { flex: 1, backgroundColor: T.card, borderRadius: 14, borderWidth: 1, borderColor: T.border, padding: 14, alignItems: 'center' },
+  statCard: { flex: 1, backgroundColor: T.card, borderRadius: RADIUS.card, borderWidth: 1, borderColor: T.border, padding: 14, alignItems: 'center' },
   statIconWrap: { width: 32, height: 32, borderRadius: 8, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
   statValue: { fontSize: 22, fontWeight: '800', color: T.textPrimary, marginBottom: 2 },
   statLabel: { fontSize: 11, color: T.textMuted, fontWeight: '600' },
 
   /* Actions */
-  actionItem: { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: T.card, borderRadius: 14, padding: 16, marginBottom: 8, borderWidth: 1, borderColor: T.border },
-  actionIconWrap: { width: 36, height: 36, borderRadius: 10, backgroundColor: T.accentBg, alignItems: 'center', justifyContent: 'center' },
+  actionItem: { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: T.card, borderRadius: RADIUS.card, padding: 16, marginBottom: 8, borderWidth: 1, borderColor: T.border },
+  actionIconWrap: { width: 36, height: 36, borderRadius: RADIUS.control, backgroundColor: T.accentBg, alignItems: 'center', justifyContent: 'center' },
   actionContent: { flex: 1 },
   actionLabel: { fontSize: 15, fontWeight: '700', color: T.textPrimary },
   actionDesc: { fontSize: 12, color: T.textSecondary, marginTop: 2 },

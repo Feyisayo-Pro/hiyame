@@ -7,7 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import ScreenFrame from '@/components/ScreenFrame';
 import AnimatedPressable from '@/components/AnimatedPressable';
-import { useTheme, ThemePalette } from '@/lib/theme';
+import { useTheme, ThemePalette, RADIUS } from '@/lib/theme';
 import { useAuth } from '@/lib/useAuth';
 import { getCompanyFeed, FeedItem, relativeTime } from '@/lib/dashboardStats';
 import { useIsDesktopWeb, useIsWideDesktopWeb } from '@/components/TopNav';
@@ -128,9 +128,9 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   gridItem: { width: '100%' },
   gridItemHalf: { width: '48.5%' },
   gridItemThird: { width: '32%' },
-  card: { borderRadius: 14, borderLeftWidth: 3, padding: 16, borderWidth: 1, borderColor: T.border },
+  card: { borderRadius: RADIUS.card, borderLeftWidth: 3, padding: 16, borderWidth: 1, borderColor: T.border },
   row: { flexDirection: 'row', gap: 12 },
-  iconWrap: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  iconWrap: { width: 36, height: 36, borderRadius: RADIUS.control, alignItems: 'center', justifyContent: 'center' },
   title: { fontSize: 14, fontWeight: '700', color: T.textPrimary, marginBottom: 4 },
   body: { fontSize: 13, color: T.textSecondary, lineHeight: 18, marginBottom: 6 },
   time: { fontSize: 11, color: T.textMuted },
