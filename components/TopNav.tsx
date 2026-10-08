@@ -223,7 +223,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
     paddingHorizontal: 14,
   },
   brand: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 10, marginBottom: 26 },
-  brandDot: { width: 30, height: 30, borderRadius: 9, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
+  brandDot: { width: 30, height: 30, borderRadius: RADIUS.chip, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
   brandMark: { width: '100%', height: '100%' },
   brandText: { fontSize: 18, fontWeight: '800', color: T.textPrimary, letterSpacing: -0.3 },
   links: { gap: 3, flex: 1 },
@@ -244,7 +244,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
     backgroundColor: T.surface, borderWidth: 1, borderColor: T.border,
   },
   avatarWrap: {
-    width: 34, height: 34, borderRadius: 11, backgroundColor: T.accentBg,
+    width: 34, height: 34, borderRadius: RADIUS.control, backgroundColor: T.accentBg,
     borderWidth: 1, borderColor: T.accentBg20,
     alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
   },

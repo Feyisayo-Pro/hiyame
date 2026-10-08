@@ -6,7 +6,7 @@ import { Text } from '@/components/Themed';
 import AppIcon from '@/components/AppIcon';
 import AnimatedPressable from '@/components/AnimatedPressable';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
-import { useTheme, ThemePalette, DISPLAY_FONT_FAMILY, ELEVATION } from '@/lib/theme';
+import { useTheme, ThemePalette, DISPLAY_FONT_FAMILY, ELEVATION, RADIUS } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
 import { notify } from '@/lib/notify';
 import { initials } from '@/lib/format';
@@ -361,7 +361,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   headerSub: { fontSize: 13, color: T.textMuted, marginTop: 2 },
 
   filterRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 20, marginTop: 8 },
-  filterChip: { paddingHorizontal: 12, paddingVertical: 7, borderRadius: 9, backgroundColor: T.surface, borderWidth: 1, borderColor: T.border },
+  filterChip: { paddingHorizontal: 12, paddingVertical: 7, borderRadius: RADIUS.chip, backgroundColor: T.surface, borderWidth: 1, borderColor: T.border },
   filterChipActive: { backgroundColor: T.accentBg, borderColor: T.accentBg20 },
   filterChipText: { fontSize: 12.5, fontWeight: '600', color: T.textSecondary },
   filterChipTextActive: { color: T.accentDim, fontWeight: '700' },
@@ -369,29 +369,29 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   searchWrap: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
     marginHorizontal: 20, marginTop: 12, marginBottom: 4,
-    backgroundColor: T.surface, borderRadius: 10, borderWidth: 1, borderColor: T.border,
+    backgroundColor: T.surface, borderRadius: RADIUS.control, borderWidth: 1, borderColor: T.border,
     paddingHorizontal: 12, height: 40,
   },
   searchInput: { flex: 1, fontSize: 13.5, color: T.textPrimary },
 
   scroll: { padding: 20, paddingTop: 14 },
   centerFill: { paddingVertical: 60, alignItems: 'center' },
-  emptyBlock: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: T.surface, borderRadius: 14, borderWidth: 1, borderColor: T.border, padding: 16 },
+  emptyBlock: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: T.surface, borderRadius: RADIUS.card, borderWidth: 1, borderColor: T.border, padding: 16 },
   emptyText: { fontSize: 13, color: T.textMuted, flex: 1 },
 
-  card: { backgroundColor: T.card, borderRadius: 14, borderWidth: 1, borderColor: T.border, marginBottom: 10, overflow: 'hidden' },
+  card: { backgroundColor: T.card, borderRadius: RADIUS.card, borderWidth: 1, borderColor: T.border, marginBottom: 10, overflow: 'hidden', ...ELEVATION.card },
   cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 },
-  avatarWrap: { width: 38, height: 38, borderRadius: 13, backgroundColor: T.accentBg, borderWidth: 1, borderColor: T.accentBg20, alignItems: 'center', justifyContent: 'center' },
+  avatarWrap: { width: 38, height: 38, borderRadius: RADIUS.control, backgroundColor: T.accentBg, borderWidth: 1, borderColor: T.accentBg20, alignItems: 'center', justifyContent: 'center' },
   avatarText: { fontSize: 13, fontWeight: '800', color: T.accentDim },
   cardTitle: { fontSize: 14, fontWeight: '700', color: T.textPrimary },
   cardSub: { fontSize: 12, color: T.textSecondary, marginTop: 2 },
-  statusPill: { paddingHorizontal: 9, paddingVertical: 4, borderRadius: 8 },
+  statusPill: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: RADIUS.chip },
   statusPillText: { fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.3 },
 
   detail: { paddingHorizontal: 14, paddingBottom: 16, borderTopWidth: 1, borderTopColor: T.border, paddingTop: 12 },
   detailLabel: { fontSize: 11, fontWeight: '700', color: T.textMuted, textTransform: 'uppercase', letterSpacing: 0.4, marginTop: 10, marginBottom: 8 },
   verificationRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 14 },
-  verificationChip: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 9, paddingVertical: 5, borderRadius: 8, backgroundColor: T.surface, borderWidth: 1, borderColor: T.border },
+  verificationChip: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 5, borderRadius: RADIUS.chip, backgroundColor: T.surface, borderWidth: 1, borderColor: T.border },
   verificationChipDone: { backgroundColor: T.emeraldBg, borderColor: T.emerald },
   verificationChipText: { fontSize: 11, fontWeight: '600', color: T.textMuted },
   verificationChipTextDone: { color: T.emerald },
@@ -400,13 +400,13 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   // Solid fill, not the old pale tinted-outline — a review decision should
   // read as decisive, and two equally pale buttons sitting side by side
   // looked flat and indecisive rather than like a real verdict.
-  actionBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, height: 44, borderRadius: 10, ...ELEVATION.card },
+  actionBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, height: 44, borderRadius: RADIUS.control, ...ELEVATION.card },
   rejectBtn: { backgroundColor: T.danger },
   approveBtn: { backgroundColor: T.emerald },
   actionBtnText: { fontSize: 13.5, fontWeight: '700', color: T.white },
 
   pagination: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 16, marginTop: 10 },
-  pageBtn: { width: 32, height: 32, borderRadius: 10, backgroundColor: T.surface, borderWidth: 1, borderColor: T.border, alignItems: 'center', justifyContent: 'center' },
+  pageBtn: { width: 32, height: 32, borderRadius: RADIUS.control, backgroundColor: T.surface, borderWidth: 1, borderColor: T.border, alignItems: 'center', justifyContent: 'center' },
   pageBtnDisabled: { opacity: 0.4 },
   pageText: { fontSize: 12.5, fontWeight: '600', color: T.textSecondary },
 });
