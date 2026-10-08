@@ -19,13 +19,13 @@ interface Step {
 const STEPS: Step[] = [
   {
     icon: 'paper-plane-outline',
-    title: 'Companies come to you',
-    body: "You don't send applications on Hiyame. When a company wants to work with you, you receive an introduction, and you choose whether to accept or decline it.",
+    title: 'Get hired two ways',
+    body: "Apply directly to open roles you can see, or let companies come to you — when one wants to work with you, you receive an introduction and choose whether to accept or decline it.",
   },
   {
     icon: 'shield-checkmark-outline',
     title: 'Get verified first',
-    body: 'Only verified profiles are matched to roles. Finish the 4-step checklist on your Home screen: identity, video intro, skills assessment, and an employer review.',
+    body: 'Only verified profiles are matched to roles. Finish the checklist on your Home screen: identity check, video introduction, CV/portfolio, and a skills assessment.',
   },
   {
     icon: 'home-outline',
@@ -35,7 +35,7 @@ const STEPS: Step[] = [
   {
     icon: 'briefcase-outline',
     title: 'Jobs',
-    body: 'Every introduction lands here. The company stays anonymous (you only see the industry and size) until you accept. Then the full role and their contact details are revealed.',
+    body: "Open roles are real — you see the company before you apply. Introductions work differently: the company stays anonymous (you only see the industry and size) until you accept, then the full role and their contact details are revealed.",
   },
   {
     icon: 'people-outline',
