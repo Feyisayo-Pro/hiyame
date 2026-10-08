@@ -5,7 +5,7 @@ import { goBack } from '@/lib/goBack';
 import { Text } from '@/components/Themed';
 import AppIcon, { AppIconName } from '@/components/AppIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTheme, ThemePalette, DISPLAY_FONT_FAMILY } from '@/lib/theme';
+import { useTheme, ThemePalette, DISPLAY_FONT_FAMILY, RADIUS } from '@/lib/theme';
 import ScreenFrame from '@/components/ScreenFrame';
 import AnimatedPressable from '@/components/AnimatedPressable';
 import { DURATION, EASE } from '@/lib/motion';
@@ -151,7 +151,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   /* Header */
   headerWrap: { marginBottom: 32 },
   logoMark: {
-    width: 44, height: 44, borderRadius: 14,
+    width: 44, height: 44, borderRadius: RADIUS.card,
     backgroundColor: T.accent,
     alignItems: 'center', justifyContent: 'center',
     marginBottom: 20,

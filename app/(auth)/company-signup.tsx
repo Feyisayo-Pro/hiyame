@@ -14,7 +14,7 @@ import { Text } from '@/components/Themed';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import AppIcon from '@/components/AppIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTheme, ThemePalette, DISPLAY_FONT_FAMILY } from '@/lib/theme';
+import { useTheme, ThemePalette, DISPLAY_FONT_FAMILY, RADIUS } from '@/lib/theme';
 import ScreenFrame from '@/components/ScreenFrame';
 import { SubscriptionTier } from '@/lib/subscriptionStore';
 import { supabase } from '@/lib/supabase';
@@ -119,7 +119,7 @@ function SelectChip({ label, selected, onPress, T }: {
     <AnimatedPressable
       onPress={onPress}
       style={{
-        paddingHorizontal: 14, paddingVertical: 10, borderRadius: 10,
+        paddingHorizontal: 14, paddingVertical: 10, borderRadius: RADIUS.chip,
         borderWidth: 1.5,
         borderColor: selected ? T.accent : T.border,
         backgroundColor: selected ? T.accentBg : T.surface,
@@ -747,7 +747,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   hintText: { fontSize: 11, color: T.textMuted, marginTop: 4, marginLeft: 4 },
   infoCard: {
     flexDirection: 'row', alignItems: 'flex-start', gap: 10,
-    backgroundColor: T.accentBg, borderRadius: 14,
+    backgroundColor: T.accentBg, borderRadius: RADIUS.card,
     padding: 16, marginBottom: 16,
     borderWidth: 1, borderColor: T.accentBg20,
   },
