@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
-import { Image, ScrollView, StyleSheet, View, ActivityIndicator } from 'react-native';
+import { Image, Modal, ScrollView, StyleSheet, View, ActivityIndicator } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { goBack } from '@/lib/goBack';
 import { Text } from '@/components/Themed';
-import AppIcon from '@/components/AppIcon';
+import AppIcon, { AppIconName } from '@/components/AppIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme, ThemePalette, RADIUS, ELEVATION, ICON } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
@@ -33,18 +33,25 @@ const RESPONSE_WINDOW_HOURS: Record<Tier, number> = {
   gig: 24,
 };
 
+interface VerificationDetail { identity: boolean; video: boolean; cv: boolean; assessment: boolean }
 interface CandidateCard {
   matchScoreId: string;
   candidateId: string;
   score: number;
   isAlternate: boolean;
   verified: boolean | null;
+  verificationDetail: VerificationDetail | null;
   fullName: string;
   photoUrl: string | null;
   skillTags: string[];
+  summary: string | null;
   location: string | null;
+  remotePreference: string | null;
   experienceLevel: string | null;
   rateMin: number | null;
+  ratePreferred: number | null;
+  rateMax: number | null;
+  availabilityDate: string | null;
 }
 
 
@@ -74,6 +81,7 @@ export default function ShortlistScreen() {
   const [cards, setCards] = useState<CandidateCard[] | null>(null);
   const [introduced, setIntroduced] = useState<IntroducedCard[]>([]);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [detailCard, setDetailCard] = useState<CandidateCard | null>(null);
   const [matchingState, setMatchingState] = useState<MatchingState>('idle');
   const autoTriggeredFor = useRef<string | null>(null);
 
@@ -109,7 +117,7 @@ export default function ShortlistScreen() {
 
     const { data: scores, error } = await supabase
       .from('match_scores')
-      .select('id, candidate_id, score, is_alternate, company_action, score_breakdown, candidates(full_name, photo_url, skill_tags, location, experience_level, rate_min)')
+      .select('id, candidate_id, score, is_alternate, company_action, score_breakdown, candidates(full_name, photo_url, skill_tags, summary, location, remote_preference, experience_level, rate_min, rate_preferred, rate_max, availability_date)')
       .eq('role_id', roleId)
       .eq('excluded', false)
       .order('score', { ascending: false });
@@ -127,12 +135,18 @@ export default function ShortlistScreen() {
         score: s.score,
         isAlternate: s.is_alternate,
         verified: typeof s.score_breakdown?.verified === 'boolean' ? s.score_breakdown.verified : null,
+        verificationDetail: s.score_breakdown?.verificationDetail ?? null,
         fullName: s.candidates?.full_name ?? 'Candidate',
         photoUrl: s.candidates?.photo_url ?? null,
         skillTags: s.candidates?.skill_tags ?? [],
+        summary: s.candidates?.summary ?? null,
         location: s.candidates?.location ?? null,
+        remotePreference: s.candidates?.remote_preference ?? null,
         experienceLevel: s.candidates?.experience_level ?? null,
         rateMin: s.candidates?.rate_min ?? null,
+        ratePreferred: s.candidates?.rate_preferred ?? null,
+        rateMax: s.candidates?.rate_max ?? null,
+        availabilityDate: s.candidates?.availability_date ?? null,
       }));
     setCards(rows);
   }, [roleId]);
@@ -286,7 +300,7 @@ export default function ShortlistScreen() {
                   <View key={c.matchScoreId} style={[st.gridItem, gridItemStyle]}>
                     <SwipeFadeContainer axis="y" offset={16} duration={DURATION.stagger} delay={Math.min(i, 8) * 45}>
                       <CandidateCardView T={T} st={st} card={c} busy={busyId === c.matchScoreId}
-                        onAccept={() => handleAccept(c)} onSkip={() => handleAction(c, 'skipped')} onSave={() => handleAction(c, 'saved')} />
+                        onAccept={() => handleAccept(c)} onSkip={() => handleAction(c, 'skipped')} onSave={() => handleAction(c, 'saved')} onOpenDetail={() => setDetailCard(c)} />
                     </SwipeFadeContainer>
                   </View>
                 ))}
@@ -302,7 +316,7 @@ export default function ShortlistScreen() {
                   <View key={c.matchScoreId} style={[st.gridItem, gridItemStyle]}>
                     <SwipeFadeContainer axis="y" offset={16} duration={DURATION.stagger} delay={Math.min(i, 8) * 45}>
                       <CandidateCardView T={T} st={st} card={c} busy={busyId === c.matchScoreId}
-                        onAccept={() => handleAccept(c)} onSkip={() => handleAction(c, 'skipped')} onSave={() => handleAction(c, 'saved')} />
+                        onAccept={() => handleAccept(c)} onSkip={() => handleAction(c, 'skipped')} onSave={() => handleAction(c, 'saved')} onOpenDetail={() => setDetailCard(c)} />
                     </SwipeFadeContainer>
                   </View>
                 ))}
@@ -330,23 +344,48 @@ export default function ShortlistScreen() {
         </ScrollView>
       )}
       </ScreenFrame>
+
+      <CandidateDetailModal
+        T={T} st={st}
+        card={detailCard}
+        busy={detailCard != null && busyId === detailCard.matchScoreId}
+        onClose={() => setDetailCard(null)}
+        onAccept={() => { if (detailCard) { handleAccept(detailCard); setDetailCard(null); } }}
+        onSkip={() => { if (detailCard) { handleAction(detailCard, 'skipped'); setDetailCard(null); } }}
+        onSave={() => { if (detailCard) { handleAction(detailCard, 'saved'); setDetailCard(null); } }}
+      />
     </SafeAreaView>
   );
 }
 
-function CandidateCardView({ T, st, card, busy, onAccept, onSkip, onSave }: {
+function rateRangeText(card: CandidateCard): string | null {
+  const { rateMin, ratePreferred, rateMax } = card;
+  const low = ratePreferred ?? rateMin;
+  const high = rateMax && rateMax !== low ? rateMax : null;
+  if (low && high) return `${formatNaira(low)}–${formatNaira(high)}`;
+  if (low) return `from ${formatNaira(low)}`;
+  return null;
+}
+
+function verifiedCount(detail: VerificationDetail | null): number | null {
+  if (!detail) return null;
+  return [detail.identity, detail.video, detail.cv, detail.assessment].filter(Boolean).length;
+}
+
+function CandidateCardView({ T, st, card, busy, onAccept, onSkip, onSave, onOpenDetail }: {
   T: ThemePalette; st: ReturnType<typeof makeStyles>; card: CandidateCard; busy: boolean;
-  onAccept: () => void; onSkip: () => void; onSave: () => void;
+  onAccept: () => void; onSkip: () => void; onSave: () => void; onOpenDetail: () => void;
 }) {
   const meta = [
     card.experienceLevel,
     card.location,
-    card.rateMin ? `from ${formatNaira(card.rateMin)}` : null,
+    rateRangeText(card),
   ].filter(Boolean).join('  ·  ');
+  const vCount = verifiedCount(card.verificationDetail);
 
   return (
     <View style={st.card}>
-      <View style={st.profileRow}>
+      <AnimatedPressable style={st.profileRow} onPress={onOpenDetail} accessibilityRole="button" accessibilityLabel={`View ${card.fullName}'s full profile`}>
         {card.photoUrl ? (
           <Image source={{ uri: card.photoUrl }} style={st.photo} resizeMode="cover" />
         ) : (
@@ -364,31 +403,40 @@ function CandidateCardView({ T, st, card, busy, onAccept, onSkip, onSave }: {
           </View>
 
           <View style={st.badgeRow}>
-            {card.verified === true && (
+            {vCount !== null ? (
+              <View style={[st.badge, vCount === 4 ? st.badgeVerified : st.badgeUnverified]}>
+                <AppIcon name={vCount === 4 ? 'shield-checkmark' : 'shield-outline'} size={ICON.xs} color={vCount === 4 ? T.emerald : T.textMuted} />
+                <Text style={[st.badgeText, { color: vCount === 4 ? T.emerald : T.textMuted }]}>{vCount}/4 verified</Text>
+              </View>
+            ) : card.verified === true ? (
               <View style={[st.badge, st.badgeVerified]}>
                 <AppIcon name="shield-checkmark" size={ICON.xs} color={T.emerald} />
                 <Text style={[st.badgeText, { color: T.emerald }]}>Verified</Text>
               </View>
-            )}
-            {card.verified === false && (
+            ) : card.verified === false ? (
               <View style={[st.badge, st.badgeUnverified]}>
                 <AppIcon name="shield-outline" size={ICON.xs} color={T.textMuted} />
                 <Text style={[st.badgeText, { color: T.textMuted }]}>Not yet verified</Text>
               </View>
-            )}
+            ) : null}
           </View>
 
           {meta ? <Text style={st.metaText} numberOfLines={1}>{meta}</Text> : null}
         </View>
-      </View>
+      </AnimatedPressable>
 
-      <View style={st.skillsRow}>
+      <AnimatedPressable style={st.skillsRow} onPress={onOpenDetail} accessibilityRole="button" accessibilityLabel={`View ${card.fullName}'s full profile`}>
         {card.skillTags.slice(0, 5).map((s) => (
           <View key={s} style={st.skillChip}>
             <Text style={st.skillText}>{s}</Text>
           </View>
         ))}
-      </View>
+        {card.skillTags.length > 5 && (
+          <View style={st.skillChip}>
+            <Text style={st.skillText}>+{card.skillTags.length - 5}</Text>
+          </View>
+        )}
+      </AnimatedPressable>
 
       <View style={st.actionsRow}>
         <AnimatedPressable style={[st.actionBtn, st.skipBtn]} onPress={onSkip} disabled={busy} accessibilityRole="button" accessibilityLabel={`Skip ${card.fullName}`}>
@@ -402,6 +450,118 @@ function CandidateCardView({ T, st, card, busy, onAccept, onSkip, onSave }: {
           <Text style={st.acceptText}>Accept</Text>
         </AnimatedPressable>
       </View>
+    </View>
+  );
+}
+
+const VERIFICATION_LABELS: { key: keyof VerificationDetail; label: string }[] = [
+  { key: 'identity', label: 'Identity' },
+  { key: 'video', label: 'Video Intro' },
+  { key: 'cv', label: 'CV / Portfolio' },
+  { key: 'assessment', label: 'Skills Assessment' },
+];
+
+// Tap-to-expand detail behind the compact grid card — "prevents client
+// overwhelm" was explicit in the request that drove this: the grid stays
+// scannable, the full picture (every skill, bio, availability, per-
+// component verification) is opt-in here rather than crammed into every
+// card in the grid.
+function CandidateDetailModal({ T, st, card, busy, onClose, onAccept, onSkip, onSave }: {
+  T: ThemePalette; st: ReturnType<typeof makeStyles>; card: CandidateCard | null; busy: boolean;
+  onClose: () => void; onAccept: () => void; onSkip: () => void; onSave: () => void;
+}) {
+  return (
+    <Modal visible={card != null} animationType="slide" transparent onRequestClose={onClose}>
+      <View style={st.detailOverlay}>
+        <View style={st.detailCard}>
+          {card && (
+            <>
+              <ScrollView showsVerticalScrollIndicator={false}>
+                <View style={st.detailHeaderRow}>
+                  <AnimatedPressable onPress={onClose} hitSlop={11} accessibilityRole="button" accessibilityLabel="Close">
+                    <AppIcon name="close" size={22} color={T.textMuted} />
+                  </AnimatedPressable>
+                </View>
+
+                <View style={st.detailProfileRow}>
+                  {card.photoUrl ? (
+                    <Image source={{ uri: card.photoUrl }} style={st.detailPhoto} resizeMode="cover" />
+                  ) : (
+                    <View style={[st.detailPhoto, st.photoFallback]}>
+                      <Text style={st.detailPhotoInitials}>{initials(card.fullName)}</Text>
+                    </View>
+                  )}
+                  <View style={{ flex: 1, minWidth: 0 }}>
+                    <Text style={st.detailName} numberOfLines={1}>{card.fullName}</Text>
+                    <View style={st.detailScoreRing}>
+                      <Text style={st.scoreText}>{card.score}% match</Text>
+                    </View>
+                  </View>
+                </View>
+
+                {card.summary && <Text style={st.detailSummary}>{card.summary}</Text>}
+
+                <View style={st.detailFactRow}>
+                  <DetailFact T={T} st={st} icon="briefcase-outline" label="Experience" value={card.experienceLevel} />
+                  <DetailFact T={T} st={st} icon="location-outline" label="Location" value={card.location} />
+                  <DetailFact T={T} st={st} icon="globe-outline" label="Remote preference" value={card.remotePreference} />
+                  <DetailFact T={T} st={st} icon="cash-outline" label="Rate" value={rateRangeText(card)} />
+                  <DetailFact T={T} st={st} icon="calendar-outline" label="Availability" value={card.availabilityDate ? new Date(card.availabilityDate).toLocaleDateString() : null} />
+                </View>
+
+                <Text style={st.detailSectionLabel}>SKILLS</Text>
+                <View style={st.skillsRow}>
+                  {card.skillTags.map((s) => (
+                    <View key={s} style={st.skillChip}>
+                      <Text style={st.skillText}>{s}</Text>
+                    </View>
+                  ))}
+                  {card.skillTags.length === 0 && <Text style={st.detailEmptyText}>No skills listed.</Text>}
+                </View>
+
+                <Text style={st.detailSectionLabel}>VERIFICATION</Text>
+                <View style={st.skillsRow}>
+                  {VERIFICATION_LABELS.map(({ key, label }) => {
+                    const passed = card.verificationDetail?.[key] === true;
+                    return (
+                      <View key={key} style={[st.badge, passed ? st.badgeVerified : st.badgeUnverified]}>
+                        {passed && <AppIcon name="checkmark" size={ICON.xs} color={T.emerald} />}
+                        <Text style={[st.badgeText, { color: passed ? T.emerald : T.textMuted }]}>{label}</Text>
+                      </View>
+                    );
+                  })}
+                  {!card.verificationDetail && (
+                    <Text style={st.detailEmptyText}>Not available until matching next re-runs for this role.</Text>
+                  )}
+                </View>
+              </ScrollView>
+
+              <View style={[st.actionsRow, { marginTop: 16 }]}>
+                <AnimatedPressable style={[st.actionBtn, st.skipBtn]} onPress={onSkip} disabled={busy} accessibilityRole="button" accessibilityLabel={`Skip ${card.fullName}`}>
+                  <AppIcon name="close" size={ICON.md} color={T.danger} />
+                </AnimatedPressable>
+                <AnimatedPressable style={[st.actionBtn, st.saveBtn]} onPress={onSave} disabled={busy} accessibilityRole="button" accessibilityLabel={`Save ${card.fullName}`}>
+                  <AppIcon name="bookmark-outline" size={ICON.sm} color={T.accent} />
+                </AnimatedPressable>
+                <AnimatedPressable style={[st.actionBtn, st.acceptBtn]} onPress={onAccept} disabled={busy} accessibilityRole="button" accessibilityLabel={`Accept ${card.fullName}`}>
+                  <AppIcon name="checkmark" size={ICON.md} color={T.white} />
+                  <Text style={st.acceptText}>Accept</Text>
+                </AnimatedPressable>
+              </View>
+            </>
+          )}
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+function DetailFact({ T, st, icon, label, value }: { T: ThemePalette; st: ReturnType<typeof makeStyles>; icon: AppIconName; label: string; value: string | null }) {
+  if (!value) return null;
+  return (
+    <View style={st.detailFact} accessibilityLabel={`${label}: ${value}`}>
+      <AppIcon name={icon} size={14} color={T.textMuted} />
+      <Text style={st.detailFactText} numberOfLines={1}>{value}</Text>
     </View>
   );
 }
@@ -455,4 +615,19 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   introducedCard: { marginBottom: 12 },
   introducedName: { fontSize: 14, fontWeight: '600', color: T.textPrimary },
   introducedStatus: { fontSize: 12, color: T.textMuted, fontWeight: '600', textTransform: 'capitalize' },
+
+  detailOverlay: { flex: 1, backgroundColor: T.overlay, alignItems: 'center', justifyContent: 'center', padding: 24 },
+  detailCard: { width: '100%', maxWidth: 480, maxHeight: '86%', backgroundColor: T.card, borderRadius: 20, padding: 20 },
+  detailHeaderRow: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 4 },
+  detailProfileRow: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 14 },
+  detailPhoto: { width: 76, height: 76, borderRadius: 20, backgroundColor: T.surface },
+  detailPhotoInitials: { fontSize: 24, fontWeight: '800', color: T.accentDim, letterSpacing: -0.5 },
+  detailName: { fontSize: 19, fontWeight: '800', color: T.textPrimary, letterSpacing: -0.3, marginBottom: 6 },
+  detailScoreRing: { alignSelf: 'flex-start', minHeight: 26, borderRadius: RADIUS.chip, backgroundColor: T.emeraldBg, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 10 },
+  detailSummary: { fontSize: 13.5, color: T.textSecondary, lineHeight: 20, marginBottom: 16 },
+  detailFactRow: { gap: 8, marginBottom: 18 },
+  detailFact: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  detailFactText: { fontSize: 13, color: T.textSecondary, fontWeight: '500', flexShrink: 1 },
+  detailSectionLabel: { fontSize: 11, fontWeight: '700', color: T.textMuted, textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 8 },
+  detailEmptyText: { fontSize: 12.5, color: T.textMuted },
 });

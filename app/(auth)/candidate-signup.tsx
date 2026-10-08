@@ -391,7 +391,7 @@ export default function CandidateSignupScreen() {
             <View style={st.infoCard}>
               <AppIcon name="time-outline" size={18} color={T.accent} />
               <Text style={st.infoText}>
-                Hiyame reviews every new candidate account before matching begins — this usually takes under a day.
+                Hiyame reviews every new candidate account before matching begins. You'll be notified as soon as yours is reviewed.
               </Text>
             </View>
 

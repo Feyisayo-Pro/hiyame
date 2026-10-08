@@ -624,7 +624,7 @@ export default function CompanySignupScreen() {
       <View style={st.infoCard}>
         <AppIcon name="shield-checkmark-outline" size={18} color={T.accent} />
         <Text style={st.infoText}>
-          Hiyame reviews every new company account before it can post roles — this usually takes under a day. You'll be notified as soon as yours is approved.
+          Hiyame reviews every new company account before it can post roles. You'll be notified as soon as yours is approved.
         </Text>
       </View>
     </>

@@ -162,19 +162,37 @@ export async function runMatchingForRole(
   // the shortlist screen only shows these two tiers anyway.
   const scoredEntries = [...shortlist, ...alternates];
   if (scoredEntries.length > 0) {
-    const rows = scoredEntries.map((e) => ({
-      role_id: roleId,
-      candidate_id: e.candidateId,
-      score: e.result.score,
-      excluded: false,
-      exclusion_reason: null,
-      is_alternate: alternateIds.has(e.candidateId),
-      score_breakdown: {
-        ...e.result.breakdown,
-        verified: e.result.verified ?? null,
-        rateFlag: e.result.rateFlag ?? false,
-      },
-    }));
+    const rows = scoredEntries.map((e) => {
+      // Per-component detail (not just the single tier-relative `verified`
+      // flag above) for the shortlist card's expanded profile view — a
+      // company has no RLS read access to another candidate's raw
+      // verification_records (by design, see that table's own RLS policy),
+      // so this is the sanctioned path: the pipeline already has the real
+      // records in `recordsByCandidate` (fetched once, above) and bakes a
+      // shareable summary into score_breakdown, same as `verified` already
+      // did — no new table access, no new policy needed.
+      const records = recordsByCandidate.get(e.candidateId) ?? [];
+      const passed = new Set(records.filter((r) => r.status === 'passed').map((r) => r.component));
+      return {
+        role_id: roleId,
+        candidate_id: e.candidateId,
+        score: e.result.score,
+        excluded: false,
+        exclusion_reason: null,
+        is_alternate: alternateIds.has(e.candidateId),
+        score_breakdown: {
+          ...e.result.breakdown,
+          verified: e.result.verified ?? null,
+          rateFlag: e.result.rateFlag ?? false,
+          verificationDetail: {
+            identity: passed.has('identity'),
+            video: passed.has('video_intro'),
+            cv: passed.has('cv_review'),
+            assessment: passed.has('skills_assessment'),
+          },
+        },
+      };
+    });
     const { error: upsertError } = await supabase
       .from('match_scores')
       .upsert(rows, { onConflict: 'role_id,candidate_id' });
