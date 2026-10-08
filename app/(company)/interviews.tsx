@@ -18,6 +18,7 @@ import { usePersonaGuard } from '@/lib/usePersonaGuard';
 import { useAccountStatus } from '@/lib/useAccountStatus';
 import PendingAccountBlock from '@/components/PendingAccountBlock';
 import AnimatedPressable from '@/components/AnimatedPressable';
+import { DateField, TimeField } from '@/components/DateTimeFields';
 import RescheduleInterviewModal from '@/components/RescheduleInterviewModal';
 
 const MAX_RESCHEDULES = 2;
@@ -365,11 +366,11 @@ function ScheduleInterviewModal({ visible, companyId, onClose, onScheduled }: {
             <View style={{ flexDirection: 'row', gap: 10 }}>
               <View style={{ flex: 1 }}>
                 <Text style={s.label}>Date</Text>
-                <TextInput style={s.input} value={date} onChangeText={setDate} placeholder="YYYY-MM-DD" placeholderTextColor={T.textMuted} />
+                <DateField value={date} onChange={setDate} T={T} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={s.label}>Time</Text>
-                <TextInput style={s.input} value={time} onChangeText={setTime} placeholder="HH:MM" placeholderTextColor={T.textMuted} />
+                <TimeField value={time} onChange={setTime} T={T} />
               </View>
             </View>
 

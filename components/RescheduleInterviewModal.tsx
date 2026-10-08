@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Modal, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, Modal, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/Themed';
 import AppIcon from '@/components/AppIcon';
-import { useTheme, ThemePalette } from '@/lib/theme';
+import { useTheme, ThemePalette, RADIUS } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
 import { notify } from '@/lib/notify';
 import { formatInterviewTime } from '@/lib/format';
 import AnimatedPressable from '@/components/AnimatedPressable';
+import { DateField, TimeField } from '@/components/DateTimeFields';
 
 // Shared by app/(company)/interviews.tsx and app/(candidate)/interviews.tsx
 // — same date/time picker shape as ScheduleInterviewModal (company
@@ -73,11 +74,11 @@ export default function RescheduleInterviewModal({ visible, interviewId, remaini
           <View style={{ flexDirection: 'row', gap: 10, marginTop: 14 }}>
             <View style={{ flex: 1 }}>
               <Text style={s.label}>New Date</Text>
-              <TextInput style={s.input} value={date} onChangeText={setDate} placeholder="YYYY-MM-DD" placeholderTextColor={T.textMuted} />
+              <DateField value={date} onChange={setDate} T={T} />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={s.label}>New Time</Text>
-              <TextInput style={s.input} value={time} onChangeText={setTime} placeholder="HH:MM" placeholderTextColor={T.textMuted} />
+              <TimeField value={time} onChange={setTime} T={T} />
             </View>
           </View>
 
@@ -92,12 +93,11 @@ export default function RescheduleInterviewModal({ visible, interviewId, remaini
 
 const makeStyles = (T: ThemePalette) => StyleSheet.create({
   overlay: { flex: 1, backgroundColor: T.overlay, alignItems: 'center', justifyContent: 'center', padding: 24 },
-  card: { width: '100%', maxWidth: 420, backgroundColor: T.card, borderRadius: 20, padding: 20 },
+  card: { width: '100%', maxWidth: 420, backgroundColor: T.card, borderRadius: RADIUS.sheet, padding: 20 },
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   title: { fontSize: 17, fontWeight: '800', color: T.textPrimary },
   hint: { fontSize: 12.5, color: T.textMuted, marginTop: 10 },
   label: { fontSize: 12, fontWeight: '700', color: T.textSecondary, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.3 },
-  input: { borderWidth: 1.5, borderColor: T.border, backgroundColor: T.surface, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: T.textPrimary },
-  submitBtn: { backgroundColor: T.accentSolid, borderRadius: 12, paddingVertical: 14, alignItems: 'center', marginTop: 20 },
+  submitBtn: { backgroundColor: T.accentSolid, borderRadius: RADIUS.control, paddingVertical: 14, alignItems: 'center', marginTop: 20 },
   submitBtnText: { color: T.textOnAccent, fontWeight: '700', fontSize: 15 },
 });
