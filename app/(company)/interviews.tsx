@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Modal, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
 import { Text } from '@/components/Themed';
 import AppIcon from '@/components/AppIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -65,11 +66,19 @@ export default function CompanyInterviewsScreen() {
   const { companyId } = useAuth();
   const companyStatus = useAccountStatus('companies', companyId);
   const companyBlocked = companyStatus === 'pending' || companyStatus === 'rejected';
+  // "Set Interview Now" on Connections deep-links here with both ids so the
+  // modal opens straight to a filled-in form instead of an empty one the
+  // company has to re-select the same candidate/role into.
+  const params = useLocalSearchParams<{ candidateId?: string; roleId?: string }>();
 
   const [tab, setTab] = useState<Tab>('Upcoming');
   const [interviews, setInterviews] = useState<Interview[] | null>(null);
   const [showSchedule, setShowSchedule] = useState(false);
   const [rescheduleTarget, setRescheduleTarget] = useState<Interview | null>(null);
+
+  useEffect(() => {
+    if (params.candidateId && params.roleId) setShowSchedule(true);
+  }, [params.candidateId, params.roleId]);
 
   const load = useCallback(async () => {
     if (!companyId) { setInterviews([]); return; }
@@ -209,6 +218,8 @@ export default function CompanyInterviewsScreen() {
       <ScheduleInterviewModal
         visible={showSchedule}
         companyId={companyId}
+        initialCandidateId={params.candidateId ?? null}
+        initialRoleId={params.roleId ?? null}
         onClose={() => setShowSchedule(false)}
         onScheduled={() => { setShowSchedule(false); load(); }}
       />
@@ -224,8 +235,9 @@ export default function CompanyInterviewsScreen() {
   );
 }
 
-function ScheduleInterviewModal({ visible, companyId, onClose, onScheduled }: {
-  visible: boolean; companyId: string | null; onClose: () => void; onScheduled: () => void;
+function ScheduleInterviewModal({ visible, companyId, initialCandidateId, initialRoleId, onClose, onScheduled }: {
+  visible: boolean; companyId: string | null; initialCandidateId?: string | null; initialRoleId?: string | null;
+  onClose: () => void; onScheduled: () => void;
 }) {
   const T = useTheme();
   const s = useMemo(() => makeStyles(T), [T]);
@@ -254,9 +266,10 @@ function ScheduleInterviewModal({ visible, companyId, onClose, onScheduled }: {
       .then(({ data }) => {
         const list = (data ?? []) as RoleOption[];
         setRoles(list);
-        if (list.length === 1) setSelectedRoleId(list[0].id);
+        if (initialRoleId && list.some((r) => r.id === initialRoleId)) setSelectedRoleId(initialRoleId);
+        else if (list.length === 1) setSelectedRoleId(list[0].id);
       });
-  }, [visible, companyId]);
+  }, [visible, companyId, initialRoleId]);
 
   // Candidate dropdown — only candidates with an *accepted* introduction for
   // the selected role. Scoping by role_id (already known to belong to this
@@ -281,8 +294,12 @@ function ScheduleInterviewModal({ visible, companyId, onClose, onScheduled }: {
           .map((row) => ({ id: row.candidate_id, name: row.candidates.full_name, roleId: selectedRoleId, roleTitle }));
         setCandidates(opts);
         setCandidatesLoaded(true);
+        if (initialCandidateId) {
+          const match = opts.find((c) => c.id === initialCandidateId);
+          if (match) setSelected(match);
+        }
       });
-  }, [selectedRoleId, roles]);
+  }, [selectedRoleId, roles, initialCandidateId]);
 
   const reset = () => {
     setSelectedRoleId(null); setSelected(null); setMeetingType('link'); setDate(''); setTime(''); setMeetingUrl('');

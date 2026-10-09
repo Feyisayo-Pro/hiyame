@@ -18,11 +18,14 @@ import PageHead from '@/components/PageHead';
 import { useAccountStatus } from '@/lib/useAccountStatus';
 import AnimatedPressable from '@/components/AnimatedPressable';
 
-const VERIFY_COMPONENTS: { key: string; label: string; icon: AppIconName }[] = [
-  { key: 'identity', label: 'Identity Check', icon: 'id-card-outline' },
-  { key: 'video_intro', label: 'Video Introduction', icon: 'videocam-outline' },
-  { key: 'skills_assessment', label: 'Skills Assessment', icon: 'shield-checkmark-outline' },
-  { key: 'cv_review', label: 'CV / Portfolio', icon: 'document-text-outline' },
+// focusStep maps this component's DB-shaped keys to verification.tsx's own
+// short step keys, so tapping an incomplete item here can deep-link straight
+// into the real action (upload/record/request) instead of a static page.
+const VERIFY_COMPONENTS: { key: string; label: string; icon: AppIconName; focusStep: string }[] = [
+  { key: 'identity', label: 'Identity Check', icon: 'id-card-outline', focusStep: 'identity' },
+  { key: 'video_intro', label: 'Video Introduction', icon: 'videocam-outline', focusStep: 'video' },
+  { key: 'skills_assessment', label: 'Skills Assessment', icon: 'shield-checkmark-outline', focusStep: 'assessment' },
+  { key: 'cv_review', label: 'CV / Portfolio', icon: 'document-text-outline', focusStep: 'cv' },
 ];
 
 function greeting(): string {
@@ -232,22 +235,30 @@ export default function CandidateHomeScreen() {
               </AnimatedPressable>
             </View>
 
-            {VERIFY_COMPONENTS.map((item) => {
-              const done = passedComponents.has(item.key);
-              return (
-                <View key={item.key} style={st.checkItem}>
-                  <View style={[st.checkIconWrap, done && st.checkIconDone]}>
-                    <AppIcon name={item.icon} size={18} color={done ? T.emerald : T.accent} />
-                  </View>
-                  <Text style={[st.checkLabel, done && st.checkLabelDone]}>{item.label}</Text>
-                  <View style={[st.checkStatus, done ? st.checkStatusDone : st.checkStatusPending]}>
-                    <Text style={[st.checkStatusText, done ? st.checkStatusTextDone : st.checkStatusTextPending]}>
-                      {done ? 'Done' : 'Pending'}
-                    </Text>
-                  </View>
-                </View>
-              );
-            })}
+            <View style={st.checkGrid}>
+              {VERIFY_COMPONENTS.map((item) => {
+                const done = passedComponents.has(item.key);
+                return (
+                  <AnimatedPressable
+                    key={item.key}
+                    style={st.checkItem}
+                    onPress={() => router.push({ pathname: '/(candidate)/verification', params: done ? {} : { focusStep: item.focusStep } })}
+                    accessibilityRole="button"
+                    accessibilityLabel={done ? `${item.label}, done` : `${item.label}, pending — tap to complete`}
+                  >
+                    <View style={[st.checkIconWrap, done && st.checkIconDone]}>
+                      <AppIcon name={item.icon} size={18} color={done ? T.emerald : T.accent} />
+                    </View>
+                    <Text style={[st.checkLabel, done && st.checkLabelDone]} numberOfLines={1}>{item.label}</Text>
+                    <View style={[st.checkStatus, done ? st.checkStatusDone : st.checkStatusPending]}>
+                      <Text style={[st.checkStatusText, done ? st.checkStatusTextDone : st.checkStatusTextPending]}>
+                        {done ? 'Done' : 'Pending'}
+                      </Text>
+                    </View>
+                  </AnimatedPressable>
+                );
+              })}
+            </View>
           </View>
 
           {/* Your introductions — real */}
@@ -355,12 +366,16 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   seeAll: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   seeAllText: { fontSize: 13, fontWeight: '600', color: T.accentDim },
 
-  checkItem: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: T.border },
-  checkIconWrap: { width: 36, height: 36, borderRadius: RADIUS.control, backgroundColor: T.surface, borderWidth: 1, borderColor: T.border, alignItems: 'center', justifyContent: 'center' },
+  checkGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  checkItem: {
+    width: '48%', backgroundColor: T.card, borderRadius: RADIUS.card, borderWidth: 1, borderColor: T.border,
+    padding: 12, gap: 8, ...ELEVATION.card,
+  },
+  checkIconWrap: { width: 32, height: 32, borderRadius: RADIUS.control, backgroundColor: T.surface, borderWidth: 1, borderColor: T.border, alignItems: 'center', justifyContent: 'center' },
   checkIconDone: { backgroundColor: T.emeraldBg, borderColor: T.emerald },
-  checkLabel: { flex: 1, fontSize: 14, fontWeight: '600', color: T.textPrimary },
+  checkLabel: { fontSize: 13, fontWeight: '600', color: T.textPrimary },
   checkLabelDone: { color: T.emerald },
-  checkStatus: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
+  checkStatus: { alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: RADIUS.chip },
   checkStatusDone: { backgroundColor: T.emeraldBg },
   checkStatusText: { fontSize: 11, fontWeight: '700', color: T.textMuted },
   checkStatusTextDone: { color: T.emerald },

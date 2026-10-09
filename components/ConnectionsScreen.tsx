@@ -5,16 +5,16 @@ import { SkeletonCard } from '@/components/Skeleton';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AppIcon from '@/components/AppIcon';
 import { Text } from '@/components/Themed';
-import { useTheme, ThemePalette, ELEVATION, DISPLAY_FONT_FAMILY } from '@/lib/theme';
+import { useTheme, ThemePalette, ELEVATION, DISPLAY_FONT_FAMILY, RADIUS } from '@/lib/theme';
 import { useAuth } from '@/lib/useAuth';
 import { supabase } from '@/lib/supabase';
 import { TIER_CONFIG, Tier } from '@/lib/mock-data';
 import { getIntroductionContact, IntroductionContact } from '@/lib/introductionContact';
-import ContactReveal from '@/components/ContactReveal';
 import ScreenFrame from '@/components/ScreenFrame';
 import PageHead from '@/components/PageHead';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import AnimatedPressable from '@/components/AnimatedPressable';
+import { openInNewTab } from '@/lib/openLink';
 
 interface ShortlistedRow {
   roleId: string;
@@ -38,6 +38,8 @@ interface Connection {
   respondedAt: string | null;
   contact: IntroductionContact | null;
   summary: string;
+  candidateId: string | null;
+  videoIntroUrl: string | null;
 }
 
 // One-line descriptor under a candidate's name — experience level + their
@@ -132,7 +134,7 @@ export default function ConnectionsScreen({ persona }: { persona: 'candidate' | 
     // pre-acceptance on the Introductions screen.
     let query = supabase
       .from('introductions')
-      .select('id, role_id, responded_at, roles(title, tier, companies(industry, size_range)), candidates(experience_level, skill_tags)')
+      .select('id, role_id, candidate_id, responded_at, roles(title, tier, companies(industry, size_range)), candidates(experience_level, skill_tags, video_intro_url)')
       .eq('status', 'accepted')
       .order('responded_at', { ascending: false });
     if (persona === 'candidate') query = query.eq('candidate_id', candidateId);
@@ -158,6 +160,8 @@ export default function ConnectionsScreen({ persona }: { persona: 'candidate' | 
         respondedAt: row.responded_at,
         contact,
         summary,
+        candidateId: row.candidate_id ?? null,
+        videoIntroUrl: row.candidates?.video_intro_url ?? null,
       });
     }
     setConnections(rows);
@@ -258,8 +262,8 @@ export default function ConnectionsScreen({ persona }: { persona: 'candidate' | 
               <Text style={st.emptyTitle}>No connections yet</Text>
               <Text style={st.emptySub}>
                 {persona === 'candidate'
-                  ? 'When you accept an introduction, the company’s contact details show up here.'
-                  : 'When a candidate accepts your introduction, their contact details show up here.'}
+                  ? 'When you accept an introduction, it shows up here while you wait on an interview.'
+                  : 'When a candidate accepts your introduction, they show up here so you can set an interview.'}
               </Text>
             </View>
           ) : (
@@ -281,10 +285,36 @@ export default function ConnectionsScreen({ persona }: { persona: 'candidate' | 
                             </View>
                           </View>
                           <Text style={st.pendingText} numberOfLines={2}>{c.summary}</Text>
-                          {c.contact ? (
-                            <ContactReveal contact={c.contact} viewer={persona} />
+                          {persona === 'candidate' ? (
+                            <View style={st.statusRow}>
+                              <AppIcon name="time-outline" size={14} color={T.amber} />
+                              <Text style={st.statusText}>Awaiting interview</Text>
+                            </View>
                           ) : (
-                            <Text style={st.pendingText}>Contact details unavailable.</Text>
+                            <View style={st.connActions}>
+                              <AnimatedPressable
+                                style={st.connActionBtn}
+                                onPress={() => router.push({ pathname: '/(company)/interviews', params: { candidateId: c.candidateId ?? '', roleId: c.roleId } })}
+                                accessibilityRole="button"
+                                accessibilityLabel={`Set an interview with ${c.contact?.candidateName ?? 'this candidate'}`}
+                              >
+                                <AppIcon name="calendar-outline" size={14} color={T.textOnAccent} />
+                                <Text style={st.connActionTextPrimary}>Set Interview Now</Text>
+                              </AnimatedPressable>
+                              {c.videoIntroUrl ? (
+                                <AnimatedPressable
+                                  style={[st.connActionBtn, st.connActionBtnSecondary]}
+                                  onPress={() => openInNewTab(c.videoIntroUrl!)}
+                                  accessibilityRole="button"
+                                  accessibilityLabel={`Watch ${c.contact?.candidateName ?? 'candidate'}'s introduction video`}
+                                >
+                                  <AppIcon name="videocam-outline" size={14} color={T.textPrimary} />
+                                  <Text style={st.connActionTextSecondary}>Watch Introduction Video</Text>
+                                </AnimatedPressable>
+                              ) : (
+                                <Text style={st.noVideoText}>No introduction video uploaded yet.</Text>
+                              )}
+                            </View>
                           )}
                         </View>
                       </SwipeFadeContainer>
@@ -329,4 +359,15 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   tierPill: { paddingHorizontal: 9, paddingVertical: 3, borderRadius: 7 },
   tierText: { fontSize: 9, fontWeight: '700', letterSpacing: 0.4 },
   pendingText: { fontSize: 13, color: T.textSecondary },
+  statusRow: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: T.amberBg, borderRadius: RADIUS.chip, paddingHorizontal: 10, paddingVertical: 6, marginTop: 10, alignSelf: 'flex-start' },
+  statusText: { fontSize: 12, fontWeight: '700', color: T.amber },
+  connActions: { gap: 8, marginTop: 10 },
+  connActionBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+    height: 36, borderRadius: RADIUS.control, backgroundColor: T.accentSolid,
+  },
+  connActionTextPrimary: { fontSize: 12.5, fontWeight: '700', color: T.textOnAccent },
+  connActionBtnSecondary: { backgroundColor: T.surface, borderWidth: 1, borderColor: T.border },
+  connActionTextSecondary: { fontSize: 12.5, fontWeight: '700', color: T.textPrimary },
+  noVideoText: { fontSize: 11.5, color: T.textMuted, textAlign: 'center' },
 });

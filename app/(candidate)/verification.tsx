@@ -1,5 +1,6 @@
-import { useState, useCallback, useEffect, useMemo} from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { ActivityIndicator, StyleSheet, View, ScrollView, TextInput } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
 import { Text } from '@/components/Themed';
 import AppIcon, { AppIconName } from '@/components/AppIcon';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -211,6 +212,17 @@ export default function VerificationScreen() {
       uploadCV();
     }
   }, [requestAssessment, uploadCV]);
+
+  // Candidate home's checklist deep-links here with the step to act on
+  // directly, so tapping an incomplete item there opens the real upload/
+  // record/request action instead of just landing on a static page.
+  const { focusStep } = useLocalSearchParams<{ focusStep?: string }>();
+  const focusedOnce = useRef(false);
+  useEffect(() => {
+    if (!focusStep || focusedOnce.current) return;
+    focusedOnce.current = true;
+    toggleStep(focusStep);
+  }, [focusStep, toggleStep]);
 
   const savePortfolioLink = useCallback(async () => {
     if (!candidateId) return;

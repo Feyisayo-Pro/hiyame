@@ -425,18 +425,22 @@ export default function CompanyDashboardScreen() {
           <View style={styles.quickActionsRow}>
             <AnimatedPressable style={styles.quickActionCard} onPress={() => router.push('/(company)/create-role')}>
               <View style={[styles.quickActionIconWrap, { backgroundColor: T.accentBg }]}>
-                <AppIcon name="add-circle-outline" size={22} color={T.accent} />
+                <AppIcon name="add-circle-outline" size={20} color={T.accent} />
               </View>
-              <Text style={styles.quickActionTitle}>Post a Role</Text>
-              <Text style={styles.quickActionSubtitle}>Start a new shortlist</Text>
+              <View style={styles.quickActionTextBlock}>
+                <Text style={styles.quickActionTitle}>Post a Role</Text>
+                <Text style={styles.quickActionSubtitle} numberOfLines={1}>Start a new shortlist</Text>
+              </View>
             </AnimatedPressable>
 
             <AnimatedPressable style={styles.quickActionCard} onPress={() => router.push('/(company)/messages')}>
               <View style={[styles.quickActionIconWrap, { backgroundColor: T.indigoBg }]}>
-                <AppIcon name="people-outline" size={22} color={T.indigo} />
+                <AppIcon name="people-outline" size={20} color={T.indigo} />
               </View>
-              <Text style={styles.quickActionTitle}>Connections</Text>
-              <Text style={styles.quickActionSubtitle}>Accepted introductions</Text>
+              <View style={styles.quickActionTextBlock}>
+                <Text style={styles.quickActionTitle}>Connections</Text>
+                <Text style={styles.quickActionSubtitle} numberOfLines={1}>Accepted intros</Text>
+              </View>
             </AnimatedPressable>
           </View>
         </SwipeFadeContainer>
@@ -557,10 +561,11 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   emptyState: { alignItems: 'center', justifyContent: 'center', paddingVertical: 32, backgroundColor: T.card, borderRadius: RADIUS.card, borderWidth: 1, borderColor: T.border, ...ELEVATION.card },
   emptyStateText: { marginTop: 8, fontSize: 13, color: T.textMuted },
   quickActionsRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 24 },
-  quickActionCard: { width: '48%', backgroundColor: T.card, borderRadius: 16, borderWidth: 1, borderColor: T.border, padding: 16 },
-  quickActionIconWrap: { width: 42, height: 42, borderRadius: 12, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
-  quickActionTitle: { fontSize: 14, fontWeight: '700', color: T.textPrimary, marginBottom: 4 },
-  quickActionSubtitle: { fontSize: 12, color: T.textSecondary },
+  quickActionCard: { width: '48%', flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: T.card, borderRadius: RADIUS.card, borderWidth: 1, borderColor: T.border, padding: 12 },
+  quickActionIconWrap: { width: 38, height: 38, borderRadius: RADIUS.control, alignItems: 'center', justifyContent: 'center' },
+  quickActionTextBlock: { flex: 1, minWidth: 0 },
+  quickActionTitle: { fontSize: 13.5, fontWeight: '700', color: T.textPrimary },
+  quickActionSubtitle: { fontSize: 11.5, color: T.textSecondary, marginTop: 1 },
   atsGateWrap: { position: 'relative', marginBottom: 12 },
   atsRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: T.card, borderRadius: RADIUS.card, borderWidth: 1, borderColor: T.border, padding: 16, marginBottom: 0, ...ELEVATION.card },
   atsRowLocked: { opacity: 0.4 },
