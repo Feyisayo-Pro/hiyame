@@ -540,7 +540,17 @@ function CandidateCardView({ T, st, card, busy, onAccept, onSkip, onSave, onOpen
 
   return (
     <View style={st.card}>
-      <AnimatedPressable style={st.profileRow} onPress={onOpenDetail} accessibilityRole="button" accessibilityLabel={`View ${card.fullName}'s full profile`}>
+      <AnimatedPressable style={st.cardHeader} onPress={onOpenDetail} accessibilityRole="button" accessibilityLabel={`View ${card.fullName}'s full profile`}>
+        {card.score !== null ? (
+          <View style={st.scoreRing}>
+            <Text style={st.scoreText}>{card.score}%</Text>
+          </View>
+        ) : (
+          <View style={st.appliedPill}>
+            <Text style={st.appliedPillText}>Applied</Text>
+          </View>
+        )}
+
         {card.photoUrl ? (
           <Image source={{ uri: card.photoUrl }} style={st.photo} resizeMode="cover" />
         ) : (
@@ -549,68 +559,58 @@ function CandidateCardView({ T, st, card, busy, onAccept, onSkip, onSave, onOpen
           </View>
         )}
 
-        <View style={st.profileBody}>
-          <View style={st.nameRow}>
-            <Text style={st.candidateName} numberOfLines={1}>{card.fullName}</Text>
-            {card.score !== null ? (
-              <View style={st.scoreRing}>
-                <Text style={st.scoreText}>{card.score}%</Text>
-              </View>
-            ) : (
-              <View style={st.appliedPill}>
-                <Text style={st.appliedPillText}>Applied</Text>
-              </View>
-            )}
-          </View>
+        <Text style={st.candidateName} numberOfLines={1}>{card.fullName}</Text>
 
-          <View style={st.badgeRow}>
-            {vCount !== null ? (
-              <View style={[st.badge, vCount === 4 ? st.badgeVerified : st.badgeUnverified]}>
-                <AppIcon name={vCount === 4 ? 'shield-checkmark' : 'shield-outline'} size={ICON.xs} color={vCount === 4 ? T.emerald : T.textMuted} />
-                <Text style={[st.badgeText, { color: vCount === 4 ? T.emerald : T.textMuted }]}>{vCount}/4 verified</Text>
-              </View>
-            ) : card.verified === true ? (
-              <View style={[st.badge, st.badgeVerified]}>
-                <AppIcon name="shield-checkmark" size={ICON.xs} color={T.emerald} />
-                <Text style={[st.badgeText, { color: T.emerald }]}>Verified</Text>
-              </View>
-            ) : card.verified === false ? (
-              <View style={[st.badge, st.badgeUnverified]}>
-                <AppIcon name="shield-outline" size={ICON.xs} color={T.textMuted} />
-                <Text style={[st.badgeText, { color: T.textMuted }]}>Not yet verified</Text>
-              </View>
-            ) : null}
-          </View>
-
-          {meta ? <Text style={st.metaText} numberOfLines={1}>{meta}</Text> : null}
+        <View style={st.badgeRow}>
+          {vCount !== null ? (
+            <View style={[st.badge, vCount === 4 ? st.badgeVerified : st.badgeUnverified]}>
+              <AppIcon name={vCount === 4 ? 'shield-checkmark' : 'shield-outline'} size={ICON.xs} color={vCount === 4 ? T.emerald : T.textMuted} />
+              <Text style={[st.badgeText, { color: vCount === 4 ? T.emerald : T.textMuted }]}>{vCount}/4 verified</Text>
+            </View>
+          ) : card.verified === true ? (
+            <View style={[st.badge, st.badgeVerified]}>
+              <AppIcon name="shield-checkmark" size={ICON.xs} color={T.emerald} />
+              <Text style={[st.badgeText, { color: T.emerald }]}>Verified</Text>
+            </View>
+          ) : card.verified === false ? (
+            <View style={[st.badge, st.badgeUnverified]}>
+              <AppIcon name="shield-outline" size={ICON.xs} color={T.textMuted} />
+              <Text style={[st.badgeText, { color: T.textMuted }]}>Not yet verified</Text>
+            </View>
+          ) : null}
         </View>
+
+        {meta ? <Text style={st.metaText} numberOfLines={1}>{meta}</Text> : null}
       </AnimatedPressable>
 
-      <AnimatedPressable style={st.skillsRow} onPress={onOpenDetail} accessibilityRole="button" accessibilityLabel={`View ${card.fullName}'s full profile`}>
-        {card.skillTags.slice(0, 5).map((s) => (
+      <View style={st.cardSkillsRow}>
+        {card.skillTags.slice(0, 4).map((s) => (
           <View key={s} style={st.skillChip}>
             <Text style={st.skillText}>{s}</Text>
           </View>
         ))}
-        {card.skillTags.length > 5 && (
+        {card.skillTags.length > 4 && (
           <View style={st.skillChip}>
-            <Text style={st.skillText}>+{card.skillTags.length - 5}</Text>
+            <Text style={st.skillText}>+{card.skillTags.length - 4}</Text>
           </View>
         )}
+      </View>
+
+      <AnimatedPressable style={st.viewProfileBtn} onPress={onOpenDetail} accessibilityRole="button" accessibilityLabel={`View ${card.fullName}'s full profile — experience, skills, summary`}>
+        <Text style={st.viewProfileText}>View Full Profile</Text>
+        <AppIcon name="arrow-forward" size={13} color={T.accentDim} />
       </AnimatedPressable>
 
       <View style={st.actionsRow}>
-        <AnimatedPressable style={[st.actionBtn, st.skipBtn]} onPress={onSkip} disabled={busy} accessibilityRole="button" accessibilityLabel={card.score !== null ? `Skip ${card.fullName}` : `Reject ${card.fullName}'s application`}>
+        <AnimatedPressable style={st.iconActionBtn} onPress={onSkip} disabled={busy} accessibilityRole="button" accessibilityLabel={card.score !== null ? `Skip ${card.fullName}` : `Reject ${card.fullName}'s application`}>
           <AppIcon name="close" size={ICON.sm} color={T.danger} />
-          <Text style={st.skipText}>Skip</Text>
         </AnimatedPressable>
         {card.score !== null && (
-          <AnimatedPressable style={[st.actionBtn, st.saveBtn]} onPress={onSave} disabled={busy} accessibilityRole="button" accessibilityLabel={`Save ${card.fullName}`}>
+          <AnimatedPressable style={st.iconActionBtn} onPress={onSave} disabled={busy} accessibilityRole="button" accessibilityLabel={`Save ${card.fullName}`}>
             <AppIcon name="bookmark-outline" size={ICON.sm} color={T.accent} />
-            <Text style={st.saveText}>Save</Text>
           </AnimatedPressable>
         )}
-        <AnimatedPressable style={[st.actionBtn, st.acceptBtn]} onPress={onAccept} disabled={busy} accessibilityRole="button" accessibilityLabel={card.score !== null ? `Accept ${card.fullName}` : `Accept ${card.fullName}'s application`}>
+        <AnimatedPressable style={st.acceptBtn} onPress={onAccept} disabled={busy} accessibilityRole="button" accessibilityLabel={card.score !== null ? `Accept ${card.fullName}` : `Accept ${card.fullName}'s application`}>
           <AppIcon name="checkmark" size={ICON.sm} color={T.white} />
           <Text style={st.acceptText}>Accept</Text>
         </AnimatedPressable>
@@ -790,17 +790,15 @@ function CandidateDetailModal({ T, st, card, busy, onClose, onAccept, onSkip, on
               </ScrollView>
 
               <View style={[st.actionsRow, { marginTop: 16 }]}>
-                <AnimatedPressable style={[st.actionBtn, st.skipBtn]} onPress={onSkip} disabled={busy} accessibilityRole="button" accessibilityLabel={card.score !== null ? `Skip ${card.fullName}` : `Reject ${card.fullName}'s application`}>
+                <AnimatedPressable style={st.iconActionBtn} onPress={onSkip} disabled={busy} accessibilityRole="button" accessibilityLabel={card.score !== null ? `Skip ${card.fullName}` : `Reject ${card.fullName}'s application`}>
                   <AppIcon name="close" size={ICON.sm} color={T.danger} />
-                  <Text style={st.skipText}>Skip</Text>
                 </AnimatedPressable>
                 {card.score !== null && (
-                  <AnimatedPressable style={[st.actionBtn, st.saveBtn]} onPress={onSave} disabled={busy} accessibilityRole="button" accessibilityLabel={`Save ${card.fullName}`}>
+                  <AnimatedPressable style={st.iconActionBtn} onPress={onSave} disabled={busy} accessibilityRole="button" accessibilityLabel={`Save ${card.fullName}`}>
                     <AppIcon name="bookmark-outline" size={ICON.sm} color={T.accent} />
-                    <Text style={st.saveText}>Save</Text>
                   </AnimatedPressable>
                 )}
-                <AnimatedPressable style={[st.actionBtn, st.acceptBtn]} onPress={onAccept} disabled={busy} accessibilityRole="button" accessibilityLabel={card.score !== null ? `Accept ${card.fullName}` : `Accept ${card.fullName}'s application`}>
+                <AnimatedPressable style={st.acceptBtn} onPress={onAccept} disabled={busy} accessibilityRole="button" accessibilityLabel={card.score !== null ? `Accept ${card.fullName}` : `Accept ${card.fullName}'s application`}>
                   <AppIcon name="checkmark" size={ICON.sm} color={T.white} />
                   <Text style={st.acceptText}>Accept</Text>
                 </AnimatedPressable>
@@ -860,33 +858,30 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   gridItemHalf: { width: '48.5%' },
   gridItemThird: { width: '32%' },
   card: { flex: 1, backgroundColor: T.card, borderRadius: RADIUS.card, padding: 18, borderWidth: 1, borderColor: T.border, ...ELEVATION.card },
-  profileRow: { flexDirection: 'row', gap: 16, marginBottom: 16 },
-  photo: { width: 108, height: 108, borderRadius: 26, backgroundColor: T.surface },
+  cardHeader: { alignItems: 'center', marginBottom: 14, gap: 8 },
+  photo: { width: 128, height: 128, borderRadius: 32, backgroundColor: T.surface, marginTop: 4 },
   photoFallback: { alignItems: 'center', justifyContent: 'center' },
-  photoInitials: { fontSize: 32, fontWeight: '800', color: T.accentDim, letterSpacing: -0.5 },
-  profileBody: { flex: 1, minWidth: 0, gap: 8, justifyContent: 'center' },
-  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  candidateName: { flex: 1, fontSize: 17, fontWeight: '800', color: T.textPrimary, letterSpacing: -0.3 },
+  photoInitials: { fontSize: 36, fontWeight: '800', color: T.accentDim, letterSpacing: -0.5 },
+  candidateName: { fontSize: 17, fontWeight: '800', color: T.textPrimary, letterSpacing: -0.3, textAlign: 'center' },
   scoreRing: { minWidth: 46, height: 26, borderRadius: RADIUS.chip, backgroundColor: T.emeraldBg, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8 },
   appliedPill: { minHeight: 26, borderRadius: RADIUS.chip, backgroundColor: T.indigoBg, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 10 },
   appliedPillText: { fontSize: 11, fontWeight: '800', color: T.indigo, letterSpacing: -0.1 },
   scoreText: { fontSize: 12, fontWeight: '800', color: T.emerald, letterSpacing: -0.2 },
-  badgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  badgeRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 6 },
   badge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 3, borderRadius: RADIUS.chip },
   badgeVerified: { backgroundColor: T.emeraldBg },
   badgeUnverified: { backgroundColor: T.surface },
   badgeText: { fontSize: 10.5, fontWeight: '700', textTransform: 'capitalize', letterSpacing: 0.1 },
-  metaText: { fontSize: 12.5, color: T.textSecondary, fontWeight: '500' },
+  metaText: { fontSize: 12.5, color: T.textSecondary, fontWeight: '500', textAlign: 'center' },
   skillsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 16 },
+  cardSkillsRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 6, marginBottom: 14 },
   skillChip: { backgroundColor: T.surface, paddingHorizontal: 10, paddingVertical: 5, borderRadius: RADIUS.chip },
   skillText: { fontSize: 11.5, color: T.textSecondary, fontWeight: '600' },
+  viewProfileBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, height: 38, borderRadius: RADIUS.control, backgroundColor: T.surface, marginBottom: 12 },
+  viewProfileText: { fontSize: 13, fontWeight: '700', color: T.accentDim, letterSpacing: -0.1 },
   actionsRow: { flexDirection: 'row', gap: 8, marginTop: 'auto' },
-  actionBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, height: 42, borderRadius: RADIUS.control },
-  skipBtn: { backgroundColor: T.surface },
-  skipText: { fontSize: 14, fontWeight: '700', color: T.textSecondary, letterSpacing: -0.1 },
-  saveBtn: { backgroundColor: T.accentBg },
-  saveText: { fontSize: 14, fontWeight: '700', color: T.accentDim, letterSpacing: -0.1 },
-  acceptBtn: { backgroundColor: T.accent },
+  iconActionBtn: { width: 42, height: 42, alignItems: 'center', justifyContent: 'center', borderRadius: RADIUS.control, backgroundColor: T.surface },
+  acceptBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, height: 42, borderRadius: RADIUS.control, backgroundColor: T.accent },
   acceptText: { fontSize: 14, fontWeight: '700', color: T.white, letterSpacing: -0.1 },
   introducedRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: T.border },
   introducedCard: { marginBottom: 12 },
