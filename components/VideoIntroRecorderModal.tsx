@@ -8,6 +8,11 @@ import { uploadCandidateVideo } from '@/lib/uploadCandidateVideo';
 import AnimatedPressable from '@/components/AnimatedPressable';
 
 const MAX_SECONDS = 60;
+// Protects Supabase Storage from a handful of oversized uploads quietly
+// eating the project's quota — generous enough for a genuine ~60s webcam
+// clip (typically a few MB to ~20MB), but catches someone picking an
+// existing high-res file instead of a compressed intro clip.
+const MAX_VIDEO_MB = 100;
 
 // Live preview + playback need a real <video> element, which React Native
 // has no component for — same reasoning lib/uploadCandidatePhoto.ts already
@@ -232,6 +237,12 @@ export default function VideoIntroRecorderModal({ visible, onClose, onSubmitted 
   const submit = async () => {
     const blob = blobRef.current;
     if (!blob) return;
+    const mb = blob.size / (1024 * 1024);
+    if (mb > MAX_VIDEO_MB) {
+      notify('Video too large', `This file is ${mb.toFixed(0)}MB — please compress it to under ${MAX_VIDEO_MB}MB and try again.`);
+      setErrorMessage(`File is ${mb.toFixed(0)}MB, over the ${MAX_VIDEO_MB}MB limit. Compress it and re-select.`);
+      return;
+    }
     setStatus('uploading');
     try {
       const url = await uploadCandidateVideo(blob, mimeTypeRef.current);

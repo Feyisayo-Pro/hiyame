@@ -136,7 +136,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { data: pub } = admin.storage.from(kind.bucket).getPublicUrl(uploaded.name);
   const url = `${pub.publicUrl}?v=${Date.now()}`;
 
-  const { error: updateErr } = await admin.from('candidates').update({ [kind.column]: url }).eq('id', candidate.id);
+  const fieldUpdate: Record<string, unknown> = { [kind.column]: url };
+  // A real video now exists — any outstanding "please upload your video"
+  // request (api/notify-introduction.ts's kind: 'video_request') is resolved.
+  if (kindKey === 'video') fieldUpdate.video_requested_at = null;
+  const { error: updateErr } = await admin.from('candidates').update(fieldUpdate).eq('id', candidate.id);
   if (updateErr) return res.status(500).json({ error: updateErr.message });
 
   const { error: vrErr } = await admin

@@ -40,3 +40,20 @@ export async function notifyInterviewScheduled(interviewId: string): Promise<voi
     // swallow — a failed notification must not affect the flow
   }
 }
+
+// Unlike the two fire-and-forget calls above, a company's "Request Video"
+// action needs to tell the company whether it actually worked — throws on
+// any failure so the caller's own try/catch drives its UI feedback, same
+// shape as lib/aiAssist.ts's calls.
+export async function requestCandidateVideo(introductionId: string): Promise<void> {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) throw new Error('You need to be signed in.');
+  const res = await fetch('/api/notify-introduction', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ kind: 'video_request', introductionId }),
+  });
+  const payload = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(payload?.error || 'Could not request the video.');
+}

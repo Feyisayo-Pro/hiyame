@@ -1,5 +1,5 @@
 import { useCallback, useState, useMemo, useEffect } from 'react';
-import { ActivityIndicator, Image, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Image, Modal, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import { Text } from '@/components/Themed';
 import AppIcon, { AppIconName } from '@/components/AppIcon';
@@ -17,6 +17,7 @@ import { SkeletonRow } from '@/components/Skeleton';
 import PageHead from '@/components/PageHead';
 import { useAccountStatus } from '@/lib/useAccountStatus';
 import AnimatedPressable from '@/components/AnimatedPressable';
+import VideoIntroRecorderModal from '@/components/VideoIntroRecorderModal';
 
 // focusStep maps this component's DB-shaped keys to verification.tsx's own
 // short step keys, so tapping an incomplete item here can deep-link straight
@@ -61,6 +62,12 @@ export default function CandidateHomeScreen() {
   // leave `stats` at `null` forever (an infinite skeleton, no way out) — with
   // a minimal try/catch + a retry action, same UX outcome, none of the risk.
   const [loadError, setLoadError] = useState(false);
+  // A company asked for this candidate's video intro (ConnectionsScreen's
+  // "Request Video") and they haven't uploaded one yet — prompt them here,
+  // the first screen they land on each session.
+  const [videoRequestPending, setVideoRequestPending] = useState(false);
+  const [showVideoPrompt, setShowVideoPrompt] = useState(false);
+  const [showVideoRecorder, setShowVideoRecorder] = useState(false);
 
   const load = useCallback(async () => {
     if (!candidateId) { setStats(null); return; }
@@ -68,7 +75,7 @@ export default function CandidateHomeScreen() {
       const [s, { data: vrecs }, { data: me }] = await Promise.all([
         getCandidateStats(candidateId),
         supabase.from('verification_records').select('component, status').eq('candidate_id', candidateId),
-        supabase.from('candidates').select('tour_seen_at').eq('id', candidateId).maybeSingle(),
+        supabase.from('candidates').select('tour_seen_at, video_requested_at, video_intro_url').eq('id', candidateId).maybeSingle(),
       ]);
       // First run: send new candidates through the welcome walkthrough once.
       if (me && !me.tour_seen_at) {
@@ -78,6 +85,9 @@ export default function CandidateHomeScreen() {
       setStats(s);
       setPassedComponents(new Set((vrecs ?? []).filter((v) => v.status === 'passed').map((v) => v.component)));
       setLoadError(false);
+      const pending = !!me?.video_requested_at && !me?.video_intro_url;
+      setVideoRequestPending(pending);
+      if (pending) setShowVideoPrompt(true);
     } catch {
       setLoadError(true);
     }
@@ -314,6 +324,33 @@ export default function CandidateHomeScreen() {
         </SwipeFadeContainer>
       </ScrollView>
       </ScreenFrame>
+
+      <Modal visible={showVideoPrompt} animationType="slide" transparent onRequestClose={() => setShowVideoPrompt(false)}>
+        <View style={st.promptOverlay}>
+          <View style={st.promptCard}>
+            <View style={st.promptIconWrap}>
+              <AppIcon name="videocam-outline" size={24} color={T.accent} />
+            </View>
+            <Text style={st.promptTitle}>A company wants to see your video</Text>
+            <Text style={st.promptBody}>
+              A company you're connected with has asked for your video introduction before scheduling an interview. Record or upload one now — it only takes a minute.
+            </Text>
+            <AnimatedPressable style={st.promptPrimaryBtn} onPress={() => { setShowVideoPrompt(false); setShowVideoRecorder(true); }}>
+              <AppIcon name="videocam-outline" size={16} color={T.textOnAccent} />
+              <Text style={st.promptPrimaryText}>Add My Video Now</Text>
+            </AnimatedPressable>
+            <AnimatedPressable style={st.promptSecondaryBtn} onPress={() => setShowVideoPrompt(false)}>
+              <Text style={st.promptSecondaryText}>Not now</Text>
+            </AnimatedPressable>
+          </View>
+        </View>
+      </Modal>
+
+      <VideoIntroRecorderModal
+        visible={showVideoRecorder}
+        onClose={() => setShowVideoRecorder(false)}
+        onSubmitted={() => { setShowVideoRecorder(false); setVideoRequestPending(false); load(); }}
+      />
     </SafeAreaView>
   );
 }
@@ -390,4 +427,13 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   introSub: { fontSize: 12, color: T.textSecondary, marginTop: 1 },
   introBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
   introBadgeText: { fontSize: 10, fontWeight: '700', letterSpacing: 0.3 },
+  promptOverlay: { flex: 1, backgroundColor: T.overlay, alignItems: 'center', justifyContent: 'center', padding: 24 },
+  promptCard: { width: '100%', maxWidth: 400, backgroundColor: T.card, borderRadius: RADIUS.sheet, padding: 24, alignItems: 'center' },
+  promptIconWrap: { width: 52, height: 52, borderRadius: RADIUS.card, backgroundColor: T.accentBg, alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
+  promptTitle: { fontSize: 17, fontWeight: '800', color: T.textPrimary, textAlign: 'center', marginBottom: 8 },
+  promptBody: { fontSize: 13.5, color: T.textSecondary, textAlign: 'center', lineHeight: 20, marginBottom: 20 },
+  promptPrimaryBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: T.accentSolid, borderRadius: RADIUS.control, paddingVertical: 14, width: '100%' },
+  promptPrimaryText: { fontSize: 14, fontWeight: '700', color: T.textOnAccent },
+  promptSecondaryBtn: { paddingVertical: 12 },
+  promptSecondaryText: { fontSize: 13, fontWeight: '600', color: T.textMuted },
 });

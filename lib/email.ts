@@ -264,3 +264,15 @@ export function introductionAcceptedCandidateEmail(p: {
     ),
   };
 }
+
+export function videoRequestedEmail(p: { companyName: string }): { subject: string; html: string } {
+  return {
+    subject: `${p.companyName} would like to see your video introduction`,
+    html: shell(
+      'A company wants to see your video',
+      `<p style="margin:0 0 12px"><b>${esc(p.companyName)}</b> is reviewing your connection and would like to watch your video introduction before scheduling an interview.</p>
+       <p style="margin:0">Record or upload one — it only takes a minute.</p>`,
+      { label: 'Add my video', href: `${APP_URL}` },
+    ),
+  };
+}

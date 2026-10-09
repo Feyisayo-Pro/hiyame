@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { Modal, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import { SkeletonCard } from '@/components/Skeleton';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -15,6 +15,8 @@ import PageHead from '@/components/PageHead';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import AnimatedPressable from '@/components/AnimatedPressable';
 import { openInNewTab } from '@/lib/openLink';
+import { requestCandidateVideo } from '@/lib/requestNotify';
+import { notify } from '@/lib/notify';
 
 interface ShortlistedRow {
   roleId: string;
@@ -40,6 +42,7 @@ interface Connection {
   summary: string;
   candidateId: string | null;
   videoIntroUrl: string | null;
+  videoRequestedAt: string | null;
 }
 
 // One-line descriptor under a candidate's name — experience level + their
@@ -79,6 +82,8 @@ export default function ConnectionsScreen({ persona }: { persona: 'candidate' | 
 
   const [connections, setConnections] = useState<Connection[] | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [videoRequestTarget, setVideoRequestTarget] = useState<Connection | null>(null);
+  const [requestingVideo, setRequestingVideo] = useState(false);
   // Company-only: match_scores rows for the company's own roles that haven't
   // been introduced yet — the same "shortlist" data app/(company)/shortlist.tsx
   // shows per-role, aggregated here across every role so Connections is a
@@ -134,7 +139,7 @@ export default function ConnectionsScreen({ persona }: { persona: 'candidate' | 
     // pre-acceptance on the Introductions screen.
     let query = supabase
       .from('introductions')
-      .select('id, role_id, candidate_id, responded_at, roles(title, tier, companies(industry, size_range)), candidates(experience_level, skill_tags, video_intro_url)')
+      .select('id, role_id, candidate_id, responded_at, roles(title, tier, companies(industry, size_range)), candidates(experience_level, skill_tags, video_intro_url, video_requested_at)')
       .eq('status', 'accepted')
       .order('responded_at', { ascending: false });
     if (persona === 'candidate') query = query.eq('candidate_id', candidateId);
@@ -162,6 +167,7 @@ export default function ConnectionsScreen({ persona }: { persona: 'candidate' | 
         summary,
         candidateId: row.candidate_id ?? null,
         videoIntroUrl: row.candidates?.video_intro_url ?? null,
+        videoRequestedAt: row.candidates?.video_requested_at ?? null,
       });
     }
     setConnections(rows);
@@ -177,6 +183,21 @@ export default function ConnectionsScreen({ persona }: { persona: 'candidate' | 
     await Promise.all([load(), loadShortlisted()]);
     setRefreshing(false);
   }, [load, loadShortlisted]);
+
+  const handleRequestVideo = async () => {
+    if (!videoRequestTarget) return;
+    setRequestingVideo(true);
+    try {
+      await requestCandidateVideo(videoRequestTarget.introductionId);
+      notify('Video requested', `${videoRequestTarget.contact?.candidateName ?? 'The candidate'} has been notified.`);
+      setVideoRequestTarget(null);
+      await load();
+    } catch (e) {
+      notify('Could not request video', e instanceof Error ? e.message : 'Please try again.');
+    } finally {
+      setRequestingVideo(false);
+    }
+  };
 
   return (
     <SafeAreaView style={st.container} edges={['top', 'left', 'right']}>
@@ -312,7 +333,17 @@ export default function ConnectionsScreen({ persona }: { persona: 'candidate' | 
                                   <Text style={st.connActionTextSecondary}>Watch Introduction Video</Text>
                                 </AnimatedPressable>
                               ) : (
-                                <Text style={st.noVideoText}>No introduction video uploaded yet.</Text>
+                                <AnimatedPressable
+                                  style={[st.connActionBtn, st.connActionBtnSecondary]}
+                                  onPress={() => setVideoRequestTarget(c)}
+                                  accessibilityRole="button"
+                                  accessibilityLabel={`No video uploaded yet — request one from ${c.contact?.candidateName ?? 'this candidate'}`}
+                                >
+                                  <AppIcon name="videocam-outline" size={14} color={T.textMuted} />
+                                  <Text style={st.connActionTextSecondary}>
+                                    {c.videoRequestedAt ? 'Video Requested' : 'No Video — Tap to Request'}
+                                  </Text>
+                                </AnimatedPressable>
                               )}
                             </View>
                           )}
@@ -327,6 +358,39 @@ export default function ConnectionsScreen({ persona }: { persona: 'candidate' | 
         </ScrollView>
       )}
       </ScreenFrame>
+
+      <Modal visible={videoRequestTarget != null} animationType="slide" transparent onRequestClose={() => setVideoRequestTarget(null)}>
+        <View style={st.reqOverlay}>
+          <View style={st.reqCard}>
+            <View style={st.reqIconWrap}>
+              <AppIcon name="videocam-outline" size={22} color={T.textMuted} />
+            </View>
+            {videoRequestTarget?.videoRequestedAt ? (
+              <>
+                <Text style={st.reqTitle}>Already requested</Text>
+                <Text style={st.reqBody}>
+                  {videoRequestTarget.contact?.candidateName ?? 'This candidate'} was asked for their video introduction and hasn't uploaded one yet.
+                </Text>
+              </>
+            ) : (
+              <>
+                <Text style={st.reqTitle}>No video uploaded yet</Text>
+                <Text style={st.reqBody}>
+                  {videoRequestTarget?.contact?.candidateName ?? 'This candidate'} hasn't recorded a video introduction. You can ask them to add one.
+                </Text>
+              </>
+            )}
+            {!videoRequestTarget?.videoRequestedAt && (
+              <AnimatedPressable style={st.reqPrimaryBtn} onPress={handleRequestVideo} disabled={requestingVideo}>
+                <Text style={st.reqPrimaryText}>{requestingVideo ? 'Requesting…' : 'Request Video'}</Text>
+              </AnimatedPressable>
+            )}
+            <AnimatedPressable style={st.reqSecondaryBtn} onPress={() => setVideoRequestTarget(null)}>
+              <Text style={st.reqSecondaryText}>Close</Text>
+            </AnimatedPressable>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -370,4 +434,13 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   connActionBtnSecondary: { backgroundColor: T.surface, borderWidth: 1, borderColor: T.border },
   connActionTextSecondary: { fontSize: 12.5, fontWeight: '700', color: T.textPrimary },
   noVideoText: { fontSize: 11.5, color: T.textMuted, textAlign: 'center' },
+  reqOverlay: { flex: 1, backgroundColor: T.overlay, alignItems: 'center', justifyContent: 'center', padding: 24 },
+  reqCard: { width: '100%', maxWidth: 400, backgroundColor: T.card, borderRadius: RADIUS.sheet, padding: 24, alignItems: 'center' },
+  reqIconWrap: { width: 48, height: 48, borderRadius: RADIUS.card, backgroundColor: T.surface, alignItems: 'center', justifyContent: 'center', marginBottom: 14 },
+  reqTitle: { fontSize: 16, fontWeight: '800', color: T.textPrimary, textAlign: 'center', marginBottom: 8 },
+  reqBody: { fontSize: 13, color: T.textSecondary, textAlign: 'center', lineHeight: 19, marginBottom: 18 },
+  reqPrimaryBtn: { backgroundColor: T.accentSolid, borderRadius: RADIUS.control, paddingVertical: 13, width: '100%', alignItems: 'center' },
+  reqPrimaryText: { fontSize: 14, fontWeight: '700', color: T.textOnAccent },
+  reqSecondaryBtn: { paddingVertical: 12 },
+  reqSecondaryText: { fontSize: 13, fontWeight: '600', color: T.textMuted },
 });

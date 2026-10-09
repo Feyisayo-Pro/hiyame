@@ -8,6 +8,7 @@ import {
   introductionAcceptedCandidateEmail,
   interviewScheduledEmail,
   interviewScheduledAdminEmail,
+  videoRequestedEmail,
 } from '../lib/email';
 import { sendPushToUser } from '../lib/webPushSend';
 import { ADMIN_EMAILS } from '../lib/adminEmails';
@@ -51,6 +52,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   if (body?.kind === 'interview') {
     return handleInterviewNotify(admin, token, body, res);
+  }
+  if (body?.kind === 'video_request') {
+    return handleVideoRequest(admin, token, body, res);
   }
 
   const introductionId: unknown = body?.introductionId;
@@ -298,6 +302,69 @@ async function handleInterviewNotify(
   );
 
   await admin.from('interviews').update({ notified_scheduled_at: new Date().toISOString() }).eq('id', interview.id);
+  return res.status(200).json({ ok: true, results });
+}
+
+// kind: 'video_request' — a company asks a candidate they're connected to
+// (an accepted introduction) for their video introduction. Stamps
+// candidates.video_requested_at so the candidate-side home screen can
+// prompt them; cleared automatically the moment they actually upload one
+// (api/video-intro.ts's existing 'complete' handler for kind: 'video').
+async function handleVideoRequest(admin: SupabaseClient, token: string, body: any, res: VercelResponse) {
+  const introductionId: unknown = body?.introductionId;
+  if (typeof introductionId !== 'string' || introductionId.length < 10) {
+    return res.status(400).json({ error: 'introductionId is required.' });
+  }
+
+  const { data: userData, error: userErr } = await admin.auth.getUser(token);
+  if (userErr || !userData?.user) return res.status(401).json({ error: 'Invalid or expired session.' });
+  const authUserId = userData.user.id;
+
+  const { data: intro, error: introErr } = await admin
+    .from('introductions')
+    .select('id, role_id, candidate_id, status')
+    .eq('id', introductionId)
+    .maybeSingle();
+  if (introErr) return res.status(500).json({ error: introErr.message });
+  if (!intro) return res.status(404).json({ error: 'Introduction not found.' });
+  if (intro.status !== 'accepted') return res.status(409).json({ error: 'Introduction is not accepted.' });
+
+  const { data: role } = await admin.from('roles').select('company_id').eq('id', intro.role_id).maybeSingle();
+  if (!role) return res.status(404).json({ error: 'Role not found.' });
+
+  const { data: membership } = await admin
+    .from('company_users')
+    .select('id')
+    .eq('company_id', role.company_id)
+    .eq('auth_user_id', authUserId)
+    .maybeSingle();
+  if (!membership) return res.status(403).json({ error: 'Not authorised for this introduction.' });
+
+  const { data: candidate } = await admin
+    .from('candidates')
+    .select('email, auth_user_id, video_intro_url')
+    .eq('id', intro.candidate_id)
+    .maybeSingle();
+  if (!candidate) return res.status(404).json({ error: 'Candidate not found.' });
+  if (candidate.video_intro_url) return res.status(200).json({ skipped: 'candidate already has a video' });
+
+  const { data: company } = await admin.from('companies').select('legal_name, trading_name').eq('id', role.company_id).maybeSingle();
+  const companyName = company?.trading_name || company?.legal_name || 'A company';
+
+  await admin.from('candidates').update({ video_requested_at: new Date().toISOString() }).eq('id', intro.candidate_id);
+
+  const results: Record<string, unknown> = {};
+  if (candidate.email) {
+    results.email = await sendEmail({ to: candidate.email, ...videoRequestedEmail({ companyName }) });
+  }
+  if (candidate.auth_user_id) {
+    await sendPushToUser(admin, candidate.auth_user_id, {
+      title: 'Video introduction requested',
+      body: `${companyName} would like to see your video introduction.`,
+      url: '/(candidate)',
+    });
+  }
+
   return res.status(200).json({ ok: true, results });
 }
 
