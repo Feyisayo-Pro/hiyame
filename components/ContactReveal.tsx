@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Image, Linking, StyleSheet, View } from 'react-native';
 import AppIcon, { AppIconName } from '@/components/AppIcon';
 import { Text } from '@/components/Themed';
-import { useTheme, ThemePalette, RADIUS } from '@/lib/theme';
+import { useTheme, ThemePalette, RADIUS, ELEVATION } from '@/lib/theme';
 import type { IntroductionContact } from '@/lib/introductionContact';
 import AnimatedPressable from '@/components/AnimatedPressable';
 import { initials } from '@/lib/format';
@@ -27,8 +27,10 @@ export default function ContactReveal({
   return (
     <View style={st.card}>
       <View style={st.headRow}>
-        <AppIcon name="checkmark-circle" size={14} color={T.emerald} />
-        <Text style={st.headText}>Introduction accepted. You can now reach out directly</Text>
+        <View style={st.headBadge}>
+          <AppIcon name="checkmark" size={11} color={T.emerald} />
+        </View>
+        <Text style={st.headText}>Connected — you can reach out directly</Text>
       </View>
 
       {viewer === 'candidate' ? (
@@ -57,7 +59,7 @@ export default function ContactReveal({
           <Text style={st.subhead}>Hiring contact</Text>
           <Text style={st.contactName}>{contact.hiringContactName ?? 'Hiring Manager'}</Text>
           {contact.hiringContactEmail ? (
-            <Row icon="mail-outline" label={contact.hiringContactEmail} st={st} T={T}
+            <EmailButton label="Email hiring contact" st={st} T={T}
               onPress={() => open(`mailto:${contact.hiringContactEmail}`)} />
           ) : (
             <Text style={st.metaText}>No email on file yet.</Text>
@@ -71,10 +73,10 @@ export default function ContactReveal({
             </View>
             <Text style={st.name}>{contact.candidateName}</Text>
           </View>
-          {contact.candidateEmail ? (
-            <Row icon="mail-outline" label={contact.candidateEmail} st={st} T={T}
+          {contact.candidateEmail && (
+            <EmailButton label="Email candidate" st={st} T={T}
               onPress={() => open(`mailto:${contact.candidateEmail}`)} />
-          ) : null}
+          )}
           {contact.candidatePhone ? (
             <Row icon="call-outline" label={contact.candidatePhone} st={st} T={T}
               onPress={() => open(`tel:${contact.candidatePhone}`)} />
@@ -103,6 +105,24 @@ function Row({ icon, label, onPress, st, T }: {
   );
 }
 
+// Raw email addresses used to render as plain clickable text (e.g.
+// "temi@gmail.com") — reads as unpolished and exposes the address to
+// screenshots/scraping for no reason, since the mailto: action works just
+// as well behind a labeled button that never prints the address itself.
+function EmailButton({ label, onPress, st, T }: {
+  label: string;
+  onPress: () => void;
+  st: ReturnType<typeof makeStyles>;
+  T: ThemePalette;
+}) {
+  return (
+    <AnimatedPressable style={st.emailBtn} onPress={onPress} accessibilityRole="button" accessibilityLabel={label}>
+      <AppIcon name="mail-outline" size={14} color={T.textOnAccent} />
+      <Text style={st.emailBtnText}>{label}</Text>
+    </AnimatedPressable>
+  );
+}
+
 function withScheme(url: string): string {
   return /^https?:\/\//i.test(url) ? url : `https://${url}`;
 }
@@ -111,16 +131,27 @@ function cleanUrl(url: string): string {
 }
 
 const makeStyles = (T: ThemePalette) => StyleSheet.create({
+  // Was a solid emeraldBg fill edge-to-edge — read as a heavy, dated
+  // "banner" rather than a card. T.card + a thin accent-colored top border
+  // and a small badge (instead of a full-width green wash) carries the same
+  // "this succeeded" signal with far less visual weight.
   card: {
-    backgroundColor: T.emeraldBg,
+    backgroundColor: T.card,
     borderRadius: RADIUS.card,
     borderWidth: 1,
-    borderColor: T.emerald + '40',
-    padding: 14,
+    borderColor: T.border,
+    borderTopWidth: 3,
+    borderTopColor: T.emerald,
+    padding: 16,
     gap: 4,
+    ...ELEVATION.card,
   },
-  headRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
-  headText: { fontSize: 11, fontWeight: '700', color: T.emerald, flex: 1 },
+  headRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
+  headBadge: {
+    width: 18, height: 18, borderRadius: RADIUS.chip, backgroundColor: T.emeraldBg,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  headText: { fontSize: 12, fontWeight: '700', color: T.textSecondary, flex: 1 },
   companyHeadRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   companyLogoWrap: {
     width: 28, height: 28, borderRadius: RADIUS.chip, backgroundColor: T.emeraldBg,
@@ -128,7 +159,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   },
   companyLogo: { width: '100%', height: '100%' },
   candidateAvatarWrap: {
-    width: 32, height: 32, borderRadius: RADIUS.control, backgroundColor: T.card,
+    width: 32, height: 32, borderRadius: RADIUS.control, backgroundColor: T.emeraldBg,
     borderWidth: 1, borderColor: T.emerald + '40', alignItems: 'center', justifyContent: 'center',
   },
   candidateAvatarText: { fontSize: 12, fontWeight: '800', color: T.emerald },
@@ -139,4 +170,9 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   metaText: { fontSize: 12, color: T.textSecondary },
   linkRow: { flexDirection: 'row', alignItems: 'center', gap: 7, paddingVertical: 6 },
   linkText: { fontSize: 13, color: T.accentDim, fontWeight: '600', flexShrink: 1 },
+  emailBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7,
+    backgroundColor: T.accentSolid, borderRadius: RADIUS.control, height: 38, marginTop: 8,
+  },
+  emailBtnText: { fontSize: 13, fontWeight: '700', color: T.textOnAccent },
 });

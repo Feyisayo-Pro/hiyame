@@ -5,7 +5,7 @@ import { goBack } from '@/lib/goBack';
 import { Text } from '@/components/Themed';
 import AppIcon, { AppIconName } from '@/components/AppIcon';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useTheme, ThemePalette } from '@/lib/theme';
+import { useTheme, ThemePalette, RADIUS, ELEVATION } from '@/lib/theme';
 import { useAuth } from '@/lib/useAuth';
 import { supabase } from '@/lib/supabase';
 import { notify } from '@/lib/notify';
@@ -503,26 +503,26 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   label: { fontSize: 13, fontWeight: '700', color: T.textSecondary, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.3 },
   inputWrap: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
-    backgroundColor: T.surface, borderRadius: 14,
+    backgroundColor: T.surface, borderRadius: RADIUS.control,
     borderWidth: 1.5, borderColor: T.border,
     paddingHorizontal: 16, height: 52,
   },
   inputError: { borderColor: T.danger, backgroundColor: T.dangerBg },
   input: { flex: 1, fontSize: 15, color: T.textPrimary, fontWeight: '500' },
   errorText: { fontSize: 12, color: T.danger, fontWeight: '500', marginTop: 6, marginLeft: 4 },
-  textAreaWrap: { backgroundColor: T.surface, borderRadius: 14, borderWidth: 1.5, borderColor: T.border, paddingHorizontal: 16, paddingVertical: 12 },
+  textAreaWrap: { backgroundColor: T.surface, borderRadius: RADIUS.control, borderWidth: 1.5, borderColor: T.border, paddingHorizontal: 16, paddingVertical: 12 },
   textArea: { fontSize: 15, color: T.textPrimary, fontWeight: '500', minHeight: 110 },
   tierRow: { flexDirection: 'row', gap: 10 },
-  tierCard: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1.5, borderColor: T.border, borderRadius: 14, paddingVertical: 14, backgroundColor: T.surface },
+  tierCard: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1.5, borderColor: T.border, borderRadius: RADIUS.card, paddingVertical: 14, backgroundColor: T.surface },
   tierCardText: { fontSize: 14, fontWeight: '600', color: T.textSecondary },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: { paddingHorizontal: 14, paddingVertical: 9, borderRadius: 10, borderWidth: 1.5, borderColor: T.border, backgroundColor: T.surface },
+  chip: { paddingHorizontal: 14, paddingVertical: 9, borderRadius: RADIUS.chip, borderWidth: 1.5, borderColor: T.border, backgroundColor: T.surface },
   chipActive: { borderColor: T.accent, backgroundColor: T.accentBg },
   chipText: { fontSize: 13, fontWeight: '600', color: T.textSecondary, textTransform: 'capitalize' },
   chipTextActive: { color: T.accentDim, fontWeight: '700' },
-  addTagBtn: { width: 30, height: 30, borderRadius: 8, backgroundColor: T.accent, alignItems: 'center', justifyContent: 'center' },
+  addTagBtn: { width: 30, height: 30, borderRadius: RADIUS.chip, backgroundColor: T.accent, alignItems: 'center', justifyContent: 'center' },
   tagsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 },
-  tagChip: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: T.accentBg, borderWidth: 1, borderColor: T.accentBg20, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 },
+  tagChip: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: T.accentBg, borderWidth: 1, borderColor: T.accentBg20, paddingHorizontal: 12, paddingVertical: 6, borderRadius: RADIUS.chip },
   tagChipText: { fontSize: 13, fontWeight: '600', color: T.accentDim },
   submitButton: {
     backgroundColor: T.accentSolid, borderRadius: 50,
@@ -535,7 +535,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   aiButton: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
     backgroundColor: T.accentBg, borderWidth: 1.5, borderColor: T.accent + '40',
-    borderRadius: 14, paddingVertical: 13, marginBottom: 8,
+    borderRadius: RADIUS.card, paddingVertical: 13, marginBottom: 8,
   },
   aiButtonDisabled: { opacity: 0.5 },
   aiButtonText: { fontSize: 14, fontWeight: '700', color: T.accentDim },
