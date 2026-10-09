@@ -150,26 +150,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Best-effort AI extraction — never lets a failure here fail the upload
   // the candidate is waiting on. Only fills fields currently empty; never
   // overwrites anything the candidate already filled in themselves.
+  let cvExtraction: { ok: boolean; error?: string } | undefined;
   if (kindKey === 'cv') {
     try {
-      await extractAndFillFromCv(admin, candidate.id, kind.bucket, uploaded.name);
+      cvExtraction = await extractAndFillFromCv(admin, candidate.id, kind.bucket, uploaded.name);
     } catch (e) {
-      console.error('CV extraction failed:', e instanceof Error ? e.message : e);
+      cvExtraction = { ok: false, error: e instanceof Error ? e.message : String(e) };
+      console.error('CV extraction failed:', cvExtraction.error);
     }
   }
 
-  return res.status(200).json({ url });
+  return res.status(200).json({ url, ...(cvExtraction ? { cvExtraction } : {}) });
 }
 
-async function extractAndFillFromCv(admin: SupabaseClient, candidateId: string, bucket: string, fileName: string): Promise<void> {
+async function extractAndFillFromCv(admin: SupabaseClient, candidateId: string, bucket: string, fileName: string): Promise<{ ok: boolean; error?: string }> {
   const { data: fileBlob, error: downloadErr } = await admin.storage.from(bucket).download(fileName);
-  if (downloadErr || !fileBlob) return;
+  if (downloadErr || !fileBlob) return { ok: false, error: downloadErr?.message ?? 'download failed' };
 
   const arrayBuffer = await fileBlob.arrayBuffer();
   const pdfBase64 = Buffer.from(arrayBuffer).toString('base64');
 
   const result = await extractCvData(pdfBase64);
-  if (!result.ok || !result.data) return;
+  if (!result.ok || !result.data) return { ok: false, error: result.error ?? 'extraction failed' };
   const extracted = result.data;
 
   const { data: existing } = await admin
@@ -209,6 +211,8 @@ async function extractAndFillFromCv(admin: SupabaseClient, candidateId: string, 
     if ((count ?? 0) > 0) continue; // candidate already has entries here — leave them alone entirely
     await admin.from(table).insert(buildRows());
   }
+
+  return { ok: true };
 }
 
 function safeJson(s: string): any {
