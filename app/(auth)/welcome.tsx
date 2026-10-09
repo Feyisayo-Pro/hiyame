@@ -77,7 +77,7 @@ interface Stats {
 const FEATURES: { icon: import('@/components/AppIcon').AppIconName; title: string; desc: string }[] = [
   { icon: 'bar-chart', title: 'Ranked, verified shortlists', desc: "A scoring engine ranks every verified candidate against your role's real requirements." },
   { icon: 'checkmark-circle', title: 'Focus on interviews, not screening', desc: 'Every candidate you meet has already passed identity, video, and reference checks.' },
-  { icon: 'time', title: 'Timed introductions', desc: 'A real response window on every introduction that expires automatically if it lapses, no job board to keep refreshing.' },
+  { icon: 'time-outline', title: 'Timed introductions', desc: 'A real response window on every introduction that expires automatically if it lapses, no job board to keep refreshing.' },
   { icon: 'mail-outline', title: 'Direct contact on acceptance', desc: 'Accept an introduction and real contact details are revealed, no in-app inbox, no games.' },
   { icon: 'cash-outline', title: 'Transparent Naira pricing', desc: 'Simple plans in Naira, starting free. See Pricing for the full breakdown.' },
   { icon: 'shield-checkmark-outline', title: 'Verified professionals', desc: 'Identity, video introduction, skills, and reference checks, done once, not per application.' },

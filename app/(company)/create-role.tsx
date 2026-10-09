@@ -513,7 +513,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   textAreaWrap: { backgroundColor: T.surface, borderRadius: RADIUS.control, borderWidth: 1.5, borderColor: T.border, paddingHorizontal: 16, paddingVertical: 12 },
   textArea: { fontSize: 15, color: T.textPrimary, fontWeight: '500', minHeight: 110 },
   tierRow: { flexDirection: 'row', gap: 10 },
-  tierCard: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1.5, borderColor: T.border, borderRadius: RADIUS.card, paddingVertical: 14, backgroundColor: T.surface },
+  tierCard: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1.5, borderColor: T.border, borderRadius: RADIUS.control, paddingVertical: 14, backgroundColor: T.surface },
   tierCardText: { fontSize: 14, fontWeight: '600', color: T.textSecondary },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: { paddingHorizontal: 14, paddingVertical: 9, borderRadius: RADIUS.chip, borderWidth: 1.5, borderColor: T.border, backgroundColor: T.surface },

@@ -12,7 +12,7 @@ export const TIER_CONFIG: Record<Tier, {
   icon: string;      // Ionicons name
 }> = {
   corporate:   { label: 'Corporate',    color: '#D1FAE5', accent: '#059669', icon: 'business' },
-  short_term:  { label: 'Short-Term',   color: '#E0E7FF', accent: '#4F46E5', icon: 'time' },
+  short_term:  { label: 'Short-Term',   color: '#E0E7FF', accent: '#4F46E5', icon: 'time-outline' },
   gig:         { label: 'Gig',          color: '#F1F5F9', accent: '#64748B', icon: 'flash' },
 };
 

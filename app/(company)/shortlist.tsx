@@ -602,11 +602,11 @@ function CandidateCardView({ T, st, card, busy, onAccept, onSkip, onSave, onOpen
       </AnimatedPressable>
 
       <View style={st.actionsRow}>
-        <AnimatedPressable style={st.iconActionBtn} onPress={onSkip} disabled={busy} accessibilityRole="button" accessibilityLabel={card.score !== null ? `Skip ${card.fullName}` : `Reject ${card.fullName}'s application`}>
+        <AnimatedPressable style={[st.iconActionBtn, st.skipIconBtn]} onPress={onSkip} disabled={busy} accessibilityRole="button" accessibilityLabel={card.score !== null ? `Skip ${card.fullName}` : `Reject ${card.fullName}'s application`}>
           <AppIcon name="close" size={ICON.sm} color={T.danger} />
         </AnimatedPressable>
         {card.score !== null && (
-          <AnimatedPressable style={st.iconActionBtn} onPress={onSave} disabled={busy} accessibilityRole="button" accessibilityLabel={`Save ${card.fullName}`}>
+          <AnimatedPressable style={[st.iconActionBtn, st.saveIconBtn]} onPress={onSave} disabled={busy} accessibilityRole="button" accessibilityLabel={`Save ${card.fullName}`}>
             <AppIcon name="bookmark-outline" size={ICON.sm} color={T.accent} />
           </AnimatedPressable>
         )}
@@ -790,11 +790,11 @@ function CandidateDetailModal({ T, st, card, busy, onClose, onAccept, onSkip, on
               </ScrollView>
 
               <View style={[st.actionsRow, { marginTop: 16 }]}>
-                <AnimatedPressable style={st.iconActionBtn} onPress={onSkip} disabled={busy} accessibilityRole="button" accessibilityLabel={card.score !== null ? `Skip ${card.fullName}` : `Reject ${card.fullName}'s application`}>
+                <AnimatedPressable style={[st.iconActionBtn, st.skipIconBtn]} onPress={onSkip} disabled={busy} accessibilityRole="button" accessibilityLabel={card.score !== null ? `Skip ${card.fullName}` : `Reject ${card.fullName}'s application`}>
                   <AppIcon name="close" size={ICON.sm} color={T.danger} />
                 </AnimatedPressable>
                 {card.score !== null && (
-                  <AnimatedPressable style={st.iconActionBtn} onPress={onSave} disabled={busy} accessibilityRole="button" accessibilityLabel={`Save ${card.fullName}`}>
+                  <AnimatedPressable style={[st.iconActionBtn, st.saveIconBtn]} onPress={onSave} disabled={busy} accessibilityRole="button" accessibilityLabel={`Save ${card.fullName}`}>
                     <AppIcon name="bookmark-outline" size={ICON.sm} color={T.accent} />
                   </AnimatedPressable>
                 )}
@@ -880,7 +880,9 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   viewProfileBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, height: 38, borderRadius: RADIUS.control, backgroundColor: T.surface, marginBottom: 12 },
   viewProfileText: { fontSize: 13, fontWeight: '700', color: T.accentDim, letterSpacing: -0.1 },
   actionsRow: { flexDirection: 'row', gap: 8, marginTop: 'auto' },
-  iconActionBtn: { width: 42, height: 42, alignItems: 'center', justifyContent: 'center', borderRadius: RADIUS.control, backgroundColor: T.surface },
+  iconActionBtn: { width: 42, height: 42, alignItems: 'center', justifyContent: 'center', borderRadius: RADIUS.control, borderWidth: 1 },
+  skipIconBtn: { backgroundColor: T.dangerBg, borderColor: T.dangerBg },
+  saveIconBtn: { backgroundColor: T.accentBg, borderColor: T.accentBg },
   acceptBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, height: 42, borderRadius: RADIUS.control, backgroundColor: T.accent },
   acceptText: { fontSize: 14, fontWeight: '700', color: T.white, letterSpacing: -0.1 },
   introducedRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: T.border },
