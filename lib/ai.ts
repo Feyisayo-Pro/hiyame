@@ -68,20 +68,58 @@ function locationSentence(input: DraftJdInput): string {
   return '';
 }
 
+// Deterministic pick (not random) — the same inputs always draft the same
+// text, but two different roles posted back to back don't read like they
+// were stamped from the same template.
+function pick<T>(options: T[], seed: string): T {
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
+  return options[h % options.length];
+}
+
+const OVERVIEW_OPENERS = [
+  (opener: string, title: string, funcPhrase: string, loc: string) => `We're looking for ${opener} ${title}${funcPhrase} to join our team${loc}.`,
+  (opener: string, title: string, funcPhrase: string, loc: string) => `Our team is hiring ${opener} ${title}${funcPhrase}${loc}.`,
+  (opener: string, title: string, funcPhrase: string, loc: string) => `We're growing our ${funcPhrase ? funcPhrase.replace(' in ', '') : 'team'} and need ${opener} ${title}${loc}.`,
+];
+
+const SKILLS_SENTENCES = [
+  (skills: string) => `You'll bring hands-on expertise in ${skills} to help drive real impact from day one.`,
+  (skills: string) => `Day to day, you'll lean on ${skills} to get real work shipped.`,
+  (skills: string) => `Strong, practical experience with ${skills} will matter more here than credentials alone.`,
+];
+
+const RESPONSIBILITY_TEMPLATES = [
+  (s: string) => `Apply strong ${s} skills to deliver high-quality, reliable work.`,
+  (s: string) => `Own and continuously raise the bar on how we use ${s} day to day.`,
+  (s: string) => `Use ${s} to solve real problems for the team, not just in theory.`,
+  (s: string) => `Partner with the rest of the team to turn ${s}-related requirements into shipped work.`,
+];
+
+const REQUIREMENT_TEMPLATES = [
+  (s: string) => `Proven, hands-on experience with ${s}.`,
+  (s: string) => `Demonstrated track record delivering real work with ${s}.`,
+  (s: string) => `Comfortable working independently with ${s} day to day.`,
+];
+
 export async function draftJobDescription(input: DraftJdInput): Promise<AiResult<DraftJdOutput>> {
   const opener = (input.experienceLevel && LEVEL_OPENER[input.experienceLevel]) || 'a skilled';
   const funcPhrase = input.roleFunction ? ` in ${input.roleFunction}` : '';
   const empPhrase = input.employmentType === 'contract' ? 'a contract engagement' : 'a full-time role';
   const tierPhrase = TIER_PHRASE[input.tier];
   const topSkills = input.mustHave.slice(0, 3).join(', ');
+  const seed = `${input.title}|${input.tier}|${input.roleFunction ?? ''}`;
+
+  const openerLine = pick(OVERVIEW_OPENERS, seed)(opener, input.title, funcPhrase, locationSentence(input));
+  const skillsLine = topSkills ? pick(SKILLS_SENTENCES, seed + 'skills')(topSkills) : '';
 
   const overview = [
-    `We're looking for ${opener} ${input.title}${funcPhrase} to join our team${locationSentence(input)}.`,
+    openerLine,
     `This is ${empPhrase}${tierPhrase ? `, ${tierPhrase}` : ''}.`,
-    topSkills ? `You'll bring hands-on expertise in ${topSkills} to help drive real impact from day one.` : '',
+    skillsLine,
   ].filter(Boolean).join(' ');
 
-  const skillLines = input.mustHave.slice(0, 4).map((s) => `• Apply strong ${s} skills to deliver high-quality, reliable work.`);
+  const skillLines = input.mustHave.slice(0, 4).map((s, i) => `• ${RESPONSIBILITY_TEMPLATES[i % RESPONSIBILITY_TEMPLATES.length](s)}`);
   const genericLines = [
     '• Collaborate closely with cross-functional teammates to plan and execute on shared goals.',
     '• Take ownership of your area of work, from planning through delivery.',
@@ -93,7 +131,7 @@ export async function draftJobDescription(input: DraftJdInput): Promise<AiResult
   if (input.experienceLevel && LEVEL_YEARS[input.experienceLevel]) {
     reqLines.push(`• ${LEVEL_YEARS[input.experienceLevel]} of relevant experience.`);
   }
-  input.mustHave.forEach((s) => reqLines.push(`• Proven, hands-on experience with ${s}.`));
+  input.mustHave.forEach((s, i) => reqLines.push(`• ${REQUIREMENT_TEMPLATES[i % REQUIREMENT_TEMPLATES.length](s)}`));
   input.niceToHave.forEach((s) => reqLines.push(`• Familiarity with ${s} is a plus, not required.`));
   if (input.contractLength) reqLines.push(`• Available for a ${input.contractLength} engagement.`);
   reqLines.push('• Strong communication skills and the ability to work independently.');

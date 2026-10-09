@@ -34,6 +34,45 @@ const URGENCY_LEVELS = ['standard', 'urgent', 'immediate'] as const;
 // sites (badges on solid, more saturated backgrounds) weren't flagged.
 const TIER_TEXT_COLOR: Partial<Record<Tier, string>> = { corporate: '#047857' };
 
+// Popular role titles — one tap fills the title field, same "quick pick"
+// pattern LinkedIn Jobs and Indeed show above a blank title field to cut
+// down on typing for the most common postings.
+const TOP_ROLES = [
+  'Software Engineer', 'Product Manager', 'Sales Executive', 'Customer Support Representative',
+  'Data Analyst', 'Marketing Manager', 'Operations Manager', 'Accountant',
+  'HR Manager', 'Graphic Designer', 'Project Manager', 'Business Development Manager',
+];
+
+// Keyword → skill-suggestion chips, matched against whatever's typed in the
+// title field (not just the TOP_ROLES list, so a custom title like "Backend
+// Engineer" still gets tech suggestions). Same role as LinkedIn/Upwork's
+// skill auto-suggest when posting a job — tap to add instead of retyping.
+const SKILL_SUGGESTIONS: { keywords: string[]; skills: string[] }[] = [
+  { keywords: ['engineer', 'developer', 'backend', 'frontend', 'full stack', 'fullstack', 'software'], skills: ['JavaScript', 'TypeScript', 'React', 'Node.js', 'SQL', 'Git', 'REST APIs', 'AWS'] },
+  { keywords: ['data', 'analyst', 'scientist'], skills: ['SQL', 'Python', 'Excel', 'Power BI', 'Data Visualization', 'Statistics'] },
+  { keywords: ['sales', 'business development', 'account executive'], skills: ['CRM', 'Lead Generation', 'Negotiation', 'Cold Calling', 'Salesforce', 'Pipeline Management'] },
+  { keywords: ['support', 'customer service', 'customer success'], skills: ['Customer Service', 'Zendesk', 'Communication', 'Conflict Resolution', 'CRM'] },
+  { keywords: ['market', 'growth', 'content', 'social media', 'seo'], skills: ['SEO', 'Content Strategy', 'Google Analytics', 'Social Media', 'Email Marketing', 'Copywriting'] },
+  { keywords: ['operations', 'logistics', 'supply chain'], skills: ['Process Improvement', 'Vendor Management', 'Logistics', 'Project Management', 'Excel'] },
+  { keywords: ['account', 'finance', 'bookkeeper', 'auditor'], skills: ['Excel', 'QuickBooks', 'Financial Reporting', 'Reconciliation', 'Tax Compliance'] },
+  { keywords: ['hr', 'human resources', 'recruiter', 'talent'], skills: ['Recruitment', 'Onboarding', 'Employee Relations', 'HRIS', 'Performance Management'] },
+  { keywords: ['design', 'ux', 'ui', 'graphic'], skills: ['Figma', 'Adobe Creative Suite', 'Wireframing', 'Typography', 'User Research'] },
+  { keywords: ['product'], skills: ['Product Strategy', 'Roadmapping', 'User Research', 'Agile', 'Jira', 'A/B Testing'] },
+  { keywords: ['project manager', 'program manager'], skills: ['Agile', 'Scrum', 'Jira', 'Stakeholder Management', 'Risk Management'] },
+];
+
+function suggestSkillsFor(title: string): string[] {
+  const lower = title.trim().toLowerCase();
+  if (!lower) return [];
+  const matched = new Set<string>();
+  for (const group of SKILL_SUGGESTIONS) {
+    if (group.keywords.some((kw) => lower.includes(kw))) {
+      group.skills.forEach((s) => matched.add(s));
+    }
+  }
+  return Array.from(matched).slice(0, 8);
+}
+
 export default function CreateRoleScreen() {
   const T = useTheme();
   const st = useMemo(() => makeStyles(T), [T]);
@@ -92,6 +131,11 @@ export default function CreateRoleScreen() {
       setAiLoading(false);
     }
   };
+
+  const suggestedSkills = useMemo(
+    () => suggestSkillsFor(title).filter((s) => !mustHave.includes(s) && !niceToHave.includes(s)),
+    [title, mustHave, niceToHave]
+  );
 
   const addTag = (value: string, list: string[], setList: (s: string[]) => void, clear: () => void) => {
     const trimmed = value.trim();
@@ -210,6 +254,13 @@ export default function CreateRoleScreen() {
               />
             </View>
             {errors.title ? <Text style={st.errorText}>{errors.title}</Text> : null}
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={st.quickPickScroll} contentContainerStyle={st.quickPickRow}>
+              {TOP_ROLES.map((r) => (
+                <AnimatedPressable key={r} style={st.quickPickChip} onPress={() => { setTitle(r); setErrors((e) => ({ ...e, title: '' })); }}>
+                  <Text style={st.quickPickChipText}>{r}</Text>
+                </AnimatedPressable>
+              ))}
+            </ScrollView>
           </View>
 
           <View style={st.fieldWrap}>
@@ -301,6 +352,26 @@ export default function CreateRoleScreen() {
             onRemove={(s) => setMustHave(mustHave.filter((x) => x !== s))}
             error={errors.mustHave}
           />
+
+          {suggestedSkills.length > 0 && (
+            <View style={[st.fieldWrap, { marginTop: -14 }]}>
+              <Text style={st.suggestLabel}>Suggested for this role</Text>
+              <View style={st.chipRow}>
+                {suggestedSkills.map((s) => (
+                  <AnimatedPressable
+                    key={s}
+                    style={st.suggestChip}
+                    onPress={() => { setMustHave([...mustHave, s]); setErrors((e) => ({ ...e, mustHave: '' })); }}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Add suggested skill ${s}`}
+                  >
+                    <AppIcon name="add" size={12} color={T.accentDim} />
+                    <Text style={st.suggestChipText}>{s}</Text>
+                  </AnimatedPressable>
+                ))}
+              </View>
+            </View>
+          )}
 
           <TagField
             T={T} st={st} label="Nice-to-Have Skills"
@@ -515,6 +586,13 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   tierRow: { flexDirection: 'row', gap: 10 },
   tierCard: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1.5, borderColor: T.border, borderRadius: RADIUS.control, paddingVertical: 14, backgroundColor: T.surface },
   tierCardText: { fontSize: 14, fontWeight: '600', color: T.textSecondary },
+  quickPickScroll: { marginTop: 10 },
+  quickPickRow: { flexDirection: 'row', gap: 8, paddingRight: 4 },
+  quickPickChip: { paddingHorizontal: 12, paddingVertical: 7, borderRadius: RADIUS.pill, backgroundColor: T.surface, borderWidth: 1, borderColor: T.border },
+  quickPickChipText: { fontSize: 12.5, fontWeight: '600', color: T.textSecondary },
+  suggestLabel: { fontSize: 11.5, fontWeight: '700', color: T.textMuted, marginBottom: 8, letterSpacing: 0.2 },
+  suggestChip: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 12, paddingVertical: 8, borderRadius: RADIUS.chip, borderWidth: 1, borderStyle: 'dashed', borderColor: T.accent + '50', backgroundColor: 'transparent' },
+  suggestChipText: { fontSize: 12.5, fontWeight: '600', color: T.accentDim },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: { paddingHorizontal: 14, paddingVertical: 9, borderRadius: RADIUS.chip, borderWidth: 1.5, borderColor: T.border, backgroundColor: T.surface },
   chipActive: { borderColor: T.accent, backgroundColor: T.accentBg },
