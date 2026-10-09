@@ -238,12 +238,20 @@ function inferExperienceLevel(text: string): CvExtractOutput['experienceLevel'] 
   return null;
 }
 
+const SECTION_HEADER = /^(summary|profile|objective|about me|professional summary|skills|experience|work experience|education|certifications?|projects|references)\s*:?$/i;
+
 function extractSummary(text: string): string | null {
   const lines = text.split(/\r?\n/).map((l) => l.trim());
   const headerIdx = lines.findIndex((l) => /^(summary|profile|objective|about me|professional summary)\s*:?$/i.test(l));
   if (headerIdx === -1) return null;
-  const body = lines.slice(headerIdx + 1, headerIdx + 4).filter(Boolean).join(' ').trim();
-  return body.length > 20 ? body.slice(0, 400) : null;
+  const body: string[] = [];
+  for (let i = headerIdx + 1; i < Math.min(lines.length, headerIdx + 6) && body.length < 3; i++) {
+    if (!lines[i]) continue;
+    if (SECTION_HEADER.test(lines[i])) break;
+    body.push(lines[i]);
+  }
+  const joined = body.join(' ').trim();
+  return joined.length > 20 ? joined.slice(0, 400) : null;
 }
 
 function extractExperience(text: string): CvExtractedExperience[] {
