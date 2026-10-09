@@ -24,16 +24,28 @@ interface FieldProps {
 
 function webInputStyle(T: ThemePalette): CSSProperties {
   return {
+    // Native date/time inputs resist plain CSS more than a text input —
+    // browsers apply their own baseline chrome (background, border weight,
+    // intrinsic height) that a bare backgroundColor/border override doesn't
+    // fully replace, which is why this looked visibly different from the
+    // Meeting URL text field right next to it even with matching style
+    // props. appearance:none strips that baseline so the rest of the style
+    // actually wins; explicit height matches the sibling text input's
+    // implicit height (padding 12 top/bottom + 14px text) so the row
+    // doesn't look shorter/taller once the native chrome is gone. The
+    // picker-indicator icon itself isn't affected by appearance:none — it
+    // stays clickable.
+    WebkitAppearance: 'none',
+    appearance: 'none',
     display: 'block',
     width: '100%',
+    height: 44,
     boxSizing: 'border-box',
     border: `1.5px solid ${T.border}`,
     backgroundColor: T.surface,
     borderRadius: RADIUS.control,
     paddingLeft: 14,
     paddingRight: 14,
-    paddingTop: 12,
-    paddingBottom: 12,
     fontSize: 14,
     fontFamily: 'inherit',
     color: T.textPrimary,

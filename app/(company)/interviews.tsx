@@ -236,7 +236,10 @@ function ScheduleInterviewModal({ visible, companyId, onClose, onScheduled }: {
   const [meetingUrl, setMeetingUrl] = useState('');
   const [saving, setSaving] = useState(false);
 
-  // Role dropdown — this company's own posted roles, newest first.
+  // Role dropdown — this company's own posted roles, newest first. Only one
+  // role? Select it automatically — making someone tap the single available
+  // option before the candidate list will even load is pointless friction,
+  // and it's the common case for a company just getting started.
   useEffect(() => {
     if (!visible || !companyId) return;
     supabase
@@ -244,7 +247,11 @@ function ScheduleInterviewModal({ visible, companyId, onClose, onScheduled }: {
       .select('id, title')
       .eq('company_id', companyId)
       .order('created_at', { ascending: false })
-      .then(({ data }) => setRoles((data ?? []) as RoleOption[]));
+      .then(({ data }) => {
+        const list = (data ?? []) as RoleOption[];
+        setRoles(list);
+        if (list.length === 1) setSelectedRoleId(list[0].id);
+      });
   }, [visible, companyId]);
 
   // Candidate dropdown — only candidates with an *accepted* introduction for

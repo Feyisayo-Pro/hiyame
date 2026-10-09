@@ -2,9 +2,10 @@ import { useMemo } from 'react';
 import { Image, Linking, StyleSheet, View } from 'react-native';
 import AppIcon, { AppIconName } from '@/components/AppIcon';
 import { Text } from '@/components/Themed';
-import { useTheme, ThemePalette } from '@/lib/theme';
+import { useTheme, ThemePalette, RADIUS } from '@/lib/theme';
 import type { IntroductionContact } from '@/lib/introductionContact';
 import AnimatedPressable from '@/components/AnimatedPressable';
+import { initials } from '@/lib/format';
 
 // The revealed-contact card shown on an accepted introduction (architecture
 // doc §7.4). `viewer` decides which side's details are shown: a candidate sees
@@ -64,7 +65,12 @@ export default function ContactReveal({
         </>
       ) : (
         <>
-          <Text style={st.name}>{contact.candidateName}</Text>
+          <View style={st.companyHeadRow}>
+            <View style={st.candidateAvatarWrap}>
+              <Text style={st.candidateAvatarText}>{initials(contact.candidateName)}</Text>
+            </View>
+            <Text style={st.name}>{contact.candidateName}</Text>
+          </View>
           {contact.candidateEmail ? (
             <Row icon="mail-outline" label={contact.candidateEmail} st={st} T={T}
               onPress={() => open(`mailto:${contact.candidateEmail}`)} />
@@ -107,7 +113,7 @@ function cleanUrl(url: string): string {
 const makeStyles = (T: ThemePalette) => StyleSheet.create({
   card: {
     backgroundColor: T.emeraldBg,
-    borderRadius: 14,
+    borderRadius: RADIUS.card,
     borderWidth: 1,
     borderColor: T.emerald + '40',
     padding: 14,
@@ -117,10 +123,15 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   headText: { fontSize: 11, fontWeight: '700', color: T.emerald, flex: 1 },
   companyHeadRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   companyLogoWrap: {
-    width: 28, height: 28, borderRadius: 8, backgroundColor: T.emeraldBg,
+    width: 28, height: 28, borderRadius: RADIUS.chip, backgroundColor: T.emeraldBg,
     alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
   },
   companyLogo: { width: '100%', height: '100%' },
+  candidateAvatarWrap: {
+    width: 32, height: 32, borderRadius: RADIUS.control, backgroundColor: T.card,
+    borderWidth: 1, borderColor: T.emerald + '40', alignItems: 'center', justifyContent: 'center',
+  },
+  candidateAvatarText: { fontSize: 12, fontWeight: '800', color: T.emerald },
   name: { fontSize: 16, fontWeight: '800', color: T.textPrimary },
   subhead: { fontSize: 11, fontWeight: '700', color: T.textMuted, letterSpacing: 0.4, marginTop: 12, textTransform: 'uppercase' },
   contactName: { fontSize: 14, fontWeight: '600', color: T.textPrimary, marginTop: 2 },
