@@ -259,7 +259,7 @@ export default function CandidateHomeScreen() {
                     <View style={[st.checkIconWrap, done && st.checkIconDone]}>
                       <AppIcon name={item.icon} size={18} color={done ? T.emerald : T.accent} />
                     </View>
-                    <Text style={[st.checkLabel, done && st.checkLabelDone]} numberOfLines={1}>{item.label}</Text>
+                    <Text style={[st.checkLabel, done && st.checkLabelDone]}>{item.label}</Text>
                     <View style={[st.checkStatus, done ? st.checkStatusDone : st.checkStatusPending]}>
                       <Text style={[st.checkStatusText, done ? st.checkStatusTextDone : st.checkStatusTextPending]}>
                         {done ? 'Done' : 'Pending'}
@@ -404,8 +404,14 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   seeAllText: { fontSize: 13, fontWeight: '600', color: T.accentDim },
 
   checkGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  // flexBasis + flexGrow, not a plain width percentage — a percentage width
+  // on a flex-wrap child needs the container to have a definite resolved
+  // width to size against, which isn't always the case here depending on
+  // ancestor layout; flexBasis is a flex-sizing property so it doesn't have
+  // that ambiguity. Confirmed live: width:'48%' here collapsed to a sliver
+  // in one of the two row items on a real device, truncating every label.
   checkItem: {
-    width: '48%', backgroundColor: T.card, borderRadius: RADIUS.card, borderWidth: 1, borderColor: T.border,
+    flexGrow: 1, flexBasis: '46%', backgroundColor: T.card, borderRadius: RADIUS.card, borderWidth: 1, borderColor: T.border,
     padding: 12, gap: 8, ...ELEVATION.card,
   },
   checkIconWrap: { width: 32, height: 32, borderRadius: RADIUS.control, backgroundColor: T.surface, borderWidth: 1, borderColor: T.border, alignItems: 'center', justifyContent: 'center' },
