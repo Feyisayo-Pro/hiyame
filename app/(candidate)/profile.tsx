@@ -16,7 +16,7 @@ import PortfolioSection from '@/components/PortfolioSection';
 import ExperienceSection from '@/components/ExperienceSection';
 import EducationSection from '@/components/EducationSection';
 import CertificationsSection from '@/components/CertificationsSection';
-import { useTheme, useThemeToggle, ThemePalette, DISPLAY_FONT_FAMILY, RADIUS } from '@/lib/theme';
+import { useTheme, useThemeToggle, ThemePalette, DISPLAY_FONT_FAMILY, RADIUS, ELEVATION } from '@/lib/theme';
 import { SkeletonBlock } from '@/components/Skeleton';
 import { notify } from '@/lib/notify';
 import { formatNaira } from '@/lib/currency';
@@ -201,7 +201,14 @@ export default function CandidateProfileScreen() {
         {/* ── Summary ── */}
         {real?.summary ? (
           <View style={st.section}>
-            <Text style={st.sectionTitle}>Summary</Text>
+            <View style={st.sectionRow}>
+              <View style={st.sectionTitleRow}>
+                <View style={st.sectionIconWrap}>
+                  <AppIcon name="document-text-outline" size={14} color={T.accent} />
+                </View>
+                <Text style={st.sectionTitle}>Summary</Text>
+              </View>
+            </View>
             <Text style={st.summaryText}>{real.summary}</Text>
           </View>
         ) : null}
@@ -209,7 +216,12 @@ export default function CandidateProfileScreen() {
         {/* ── Core Skills ── */}
         <View style={st.section}>
           <View style={st.sectionRow}>
-            <Text style={st.sectionTitle}>Core Skills</Text>
+            <View style={st.sectionTitleRow}>
+              <View style={st.sectionIconWrap}>
+                <AppIcon name="code-slash-outline" size={14} color={T.accent} />
+              </View>
+              <Text style={st.sectionTitle}>Core Skills</Text>
+            </View>
             <View style={st.skillCount}>
               <Text style={st.skillCountText}>{coreSkills.length}</Text>
             </View>
@@ -246,7 +258,12 @@ export default function CandidateProfileScreen() {
         {/* ── Verification Checklist ── */}
         <View style={st.section}>
           <View style={st.sectionRow}>
-            <Text style={st.sectionTitle}>Verification Status</Text>
+            <View style={st.sectionTitleRow}>
+              <View style={st.sectionIconWrap}>
+                <AppIcon name="shield-checkmark-outline" size={14} color={T.accent} />
+              </View>
+              <Text style={st.sectionTitle}>Verification Status</Text>
+            </View>
             <AnimatedPressable onPress={() => router.push('/(candidate)/verification')} style={st.seeAll}>
               <Text style={st.seeAllText}>Manage</Text>
               <AppIcon name="arrow-forward" size={14} color={T.accent} />
@@ -408,12 +425,12 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
 
   /* Personal Card */
   personalCard: {
-    alignItems: 'center', marginHorizontal: 20, marginBottom: 24, padding: 24, borderRadius: 16,
-    backgroundColor: T.card, borderWidth: 1, borderColor: T.border,
+    alignItems: 'center', marginHorizontal: 20, marginBottom: 24, padding: 24, borderRadius: RADIUS.card,
+    backgroundColor: T.card, borderWidth: 1, borderColor: T.border, ...ELEVATION.card,
   },
   avatarWrap: { position: 'relative', marginBottom: 14 },
   avatar: {
-    width: 96, height: 96, borderRadius: 48, backgroundColor: T.surface,
+    width: 112, height: 112, borderRadius: 56, backgroundColor: T.surface,
     borderWidth: 2.5, borderColor: T.border,
     alignItems: 'center', justifyContent: 'center',
     overflow: 'hidden',
@@ -426,7 +443,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   cameraOverlay: {
-    position: 'absolute', bottom: 0, right: 0,
+    position: 'absolute', bottom: -2, right: -2,
     width: 26, height: 26, borderRadius: 13,
     backgroundColor: T.accent, alignItems: 'center', justifyContent: 'center',
     borderWidth: 2, borderColor: T.card,
@@ -445,6 +462,8 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   /* Section */
   section: { marginBottom: 24, paddingHorizontal: 20 },
   sectionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  sectionTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  sectionIconWrap: { width: 24, height: 24, borderRadius: RADIUS.chip, backgroundColor: T.accentBg, alignItems: 'center', justifyContent: 'center' },
   sectionTitle: { fontSize: 18, fontWeight: '800', color: T.textPrimary },
   summaryText: { fontSize: 14, lineHeight: 21, color: T.textSecondary, marginTop: 10 },
   seeAll: { flexDirection: 'row', alignItems: 'center', gap: 4 },
@@ -468,7 +487,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   progressBarFill: { height: 6, borderRadius: 3 },
 
   /* Checklist */
-  checklistCard: { borderRadius: RADIUS.card, backgroundColor: T.card, borderWidth: 1, borderColor: T.border, overflow: 'hidden' },
+  checklistCard: { borderRadius: RADIUS.card, backgroundColor: T.card, borderWidth: 1, borderColor: T.border, overflow: 'hidden', ...ELEVATION.card },
   checkItem: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 14 },
   checkItemBorder: { borderBottomWidth: 1, borderBottomColor: T.border },
   checkIconWrap: { width: 36, height: 36, borderRadius: RADIUS.control, alignItems: 'center', justifyContent: 'center' },
@@ -485,13 +504,13 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
 
   /* Stats */
   statsRow: { flexDirection: 'row', gap: 10, paddingHorizontal: 20, marginBottom: 24 },
-  statCard: { flex: 1, backgroundColor: T.card, borderRadius: RADIUS.card, borderWidth: 1, borderColor: T.border, padding: 14, alignItems: 'center' },
+  statCard: { flex: 1, backgroundColor: T.card, borderRadius: RADIUS.card, borderWidth: 1, borderColor: T.border, padding: 14, alignItems: 'center', ...ELEVATION.card },
   statIconWrap: { width: 32, height: 32, borderRadius: 8, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
   statValue: { fontSize: 22, fontWeight: '800', color: T.textPrimary, marginBottom: 2 },
   statLabel: { fontSize: 11, color: T.textMuted, fontWeight: '600' },
 
   /* Actions */
-  actionItem: { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: T.card, borderRadius: RADIUS.card, padding: 16, marginBottom: 8, borderWidth: 1, borderColor: T.border },
+  actionItem: { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: T.card, borderRadius: RADIUS.card, padding: 16, marginBottom: 8, borderWidth: 1, borderColor: T.border, ...ELEVATION.card },
   actionIconWrap: { width: 36, height: 36, borderRadius: RADIUS.control, backgroundColor: T.accentBg, alignItems: 'center', justifyContent: 'center' },
   actionContent: { flex: 1 },
   actionLabel: { fontSize: 15, fontWeight: '700', color: T.textPrimary },

@@ -7,7 +7,7 @@ import { router } from 'expo-router';
 import SwipeFadeContainer from '@/components/SwipeFadeContainer';
 import ScreenFrame from '@/components/ScreenFrame';
 import EditCompanyProfileModal, { CompanyEditable } from '@/components/EditCompanyProfileModal';
-import { useTheme, useThemeToggle, ThemePalette, DISPLAY_FONT_FAMILY, RADIUS } from '@/lib/theme';
+import { useTheme, useThemeToggle, ThemePalette, DISPLAY_FONT_FAMILY, RADIUS, ELEVATION } from '@/lib/theme';
 import { useAuth } from '@/lib/useAuth';
 import { useSubscription } from '@/lib/subscriptionStore';
 import { supabase } from '@/lib/supabase';
@@ -165,7 +165,12 @@ export default function CompanyProfileScreen() {
 
         {/* ── Company Information Fields ── */}
         <View style={st.section}>
-          <Text style={st.sectionTitle}>Company Information</Text>
+          <View style={st.sectionTitleRow}>
+            <View style={st.sectionIconWrap}>
+              <AppIcon name="business-outline" size={14} color={T.accent} />
+            </View>
+            <Text style={st.sectionTitle}>Company Information</Text>
+          </View>
 
           <View style={st.fieldCard}>
             <View style={st.fieldRow}>
@@ -237,7 +242,12 @@ export default function CompanyProfileScreen() {
 
         {/* ── Account Actions ── */}
         <View style={st.section}>
-          <Text style={st.sectionTitle}>Account</Text>
+          <View style={st.sectionTitleRow}>
+            <View style={st.sectionIconWrap}>
+              <AppIcon name="settings-outline" size={14} color={T.accent} />
+            </View>
+            <Text style={st.sectionTitle}>Account</Text>
+          </View>
 
           <AnimatedPressable style={st.actionItem} onPress={() => setShowEdit(true)}>
             <View style={[st.actionIconWrap, { backgroundColor: T.accentBg }]}>
@@ -337,13 +347,13 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
 
   /* Workspace Card */
   workspaceCard: {
-    marginHorizontal: 20, marginBottom: 24, padding: 20, borderRadius: 16,
-    backgroundColor: T.card, borderWidth: 1, borderColor: T.border,
+    marginHorizontal: 20, marginBottom: 24, padding: 20, borderRadius: RADIUS.card,
+    backgroundColor: T.card, borderWidth: 1, borderColor: T.border, ...ELEVATION.card,
   },
   wsTop: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 16 },
   wsAvatarWrap: { position: 'relative' },
   wsAvatar: {
-    width: 56, height: 56, borderRadius: 16, backgroundColor: T.accentBg,
+    width: 72, height: 72, borderRadius: 20, backgroundColor: T.accentBg,
     borderWidth: 1.5, borderColor: T.accentBg20,
     alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
   },
@@ -379,15 +389,16 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
 
   /* Section */
   section: { marginBottom: 24 },
+  sectionTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 20, marginBottom: 12 },
+  sectionIconWrap: { width: 24, height: 24, borderRadius: RADIUS.chip, backgroundColor: T.accentBg, alignItems: 'center', justifyContent: 'center' },
   sectionTitle: {
     fontSize: 16, fontWeight: '800', color: T.textPrimary,
-    paddingHorizontal: 20, marginBottom: 12,
   },
 
   /* Field Card */
   fieldCard: {
-    marginHorizontal: 20, borderRadius: 16, backgroundColor: T.card,
-    borderWidth: 1, borderColor: T.border, overflow: 'hidden',
+    marginHorizontal: 20, borderRadius: RADIUS.card, backgroundColor: T.card,
+    borderWidth: 1, borderColor: T.border, overflow: 'hidden', ...ELEVATION.card,
   },
   fieldRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 14, padding: 16 },
   fieldIconWrap: {
@@ -408,7 +419,7 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   slotHint: { fontSize: 11, color: T.textMuted, marginTop: 6 },
 
   /* Actions */
-  actionItem: { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: T.card, borderRadius: RADIUS.card, padding: 16, marginBottom: 8, borderWidth: 1, borderColor: T.border },
+  actionItem: { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: T.card, borderRadius: RADIUS.card, padding: 16, marginBottom: 8, borderWidth: 1, borderColor: T.border, ...ELEVATION.card },
   actionIconWrap: { width: 36, height: 36, borderRadius: RADIUS.control, alignItems: 'center', justifyContent: 'center' },
   actionContent: { flex: 1 },
   actionLabel: { fontSize: 15, fontWeight: '700', color: T.textPrimary },
