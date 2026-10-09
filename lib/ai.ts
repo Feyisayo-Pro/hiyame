@@ -1,75 +1,21 @@
-// Server-only. Calls Anthropic's Messages API directly via fetch — no SDK
-// dependency, same lightweight shape as lib/email.ts's Resend wrapper.
-// Requires ANTHROPIC_API_KEY in the environment (a Vercel project env var,
-// never committed, never EXPO_PUBLIC_ — same posture as RESEND_API_KEY).
-// Every exported function returns { ok: false, skipped: true } rather than
-// throwing when the key isn't set, so a deploy without it degrades to a
-// clear "not configured" response instead of a crash.
-
-const ANTHROPIC_ENDPOINT = 'https://api.anthropic.com/v1/messages';
-const MODEL = 'claude-haiku-4-5-20251001';
+// Home-grown "AI assist" engine — no external API, no API key, no per-call
+// cost. Replaces an earlier version that called the Anthropic API directly;
+// this is deterministic template/rule logic instead. Honest tradeoff: it
+// won't write as fluently as a real LLM, and CV extraction is keyword/regex
+// heuristics rather than true language understanding — but it's free, it
+// has no external dependency to configure, and it works today.
+//
+// Every exported function keeps the exact same name and return shape
+// ({ ok, data }) the Anthropic-backed version had, so api/ai-assist.ts and
+// api/video-intro.ts needed zero changes to switch over.
 
 interface AiResult<T> {
   ok: boolean;
   data?: T;
-  skipped?: boolean;
   error?: string;
 }
 
-type MessageContent = string | Array<Record<string, unknown>>;
-
-// The "assistant prefill" trick: seeding the assistant turn with "{" biases
-// the model into continuing valid JSON rather than wrapping it in prose or
-// a markdown fence, so the caller can JSON.parse the response directly.
-// Shared by every caller below — callJson for plain-text prompts, callJson
-// WithDocument for the CV-extraction path, which needs a `document` content
-// block instead of a plain string user turn.
-async function callAnthropicJson<T>(systemPrompt: string, userContent: MessageContent, maxTokens: number): Promise<AiResult<T>> {
-  const key = process.env.ANTHROPIC_API_KEY;
-  if (!key) return { ok: false, skipped: true, error: 'ANTHROPIC_API_KEY not set' };
-
-  let resp: Response;
-  try {
-    resp = await fetch(ANTHROPIC_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        'x-api-key': key,
-        'anthropic-version': '2023-06-01',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        max_tokens: maxTokens,
-        system: systemPrompt,
-        messages: [
-          { role: 'user', content: userContent },
-          { role: 'assistant', content: '{' },
-        ],
-      }),
-    });
-  } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : 'network error' };
-  }
-
-  const body = await resp.json().catch(() => null);
-  if (!resp.ok) return { ok: false, error: body?.error?.message ?? `Anthropic ${resp.status}` };
-
-  const text = body?.content?.[0]?.text;
-  if (typeof text !== 'string') return { ok: false, error: 'Unexpected response shape from Anthropic.' };
-
-  try {
-    // The prefill "{" was sent as the start of the assistant turn but isn't
-    // echoed back in the response text, so it has to be re-added before parsing.
-    const parsed = JSON.parse(`{${text}`) as T;
-    return { ok: true, data: parsed };
-  } catch {
-    return { ok: false, error: 'Could not parse the AI response.' };
-  }
-}
-
-function callJson<T>(systemPrompt: string, userPrompt: string, maxTokens: number): Promise<AiResult<T>> {
-  return callAnthropicJson<T>(systemPrompt, userPrompt, maxTokens);
-}
+// ───────────────────────── Job description drafting ─────────────────────
 
 export interface DraftJdInput {
   title: string;
@@ -94,34 +40,68 @@ export interface DraftJdOutput {
   requirements: string;
 }
 
-const NO_FABRICATION_RULE =
-  'Only use the facts given below. Never invent company name, culture, benefits, team size, funding, ' +
-  'or any other claim not explicitly provided — write around what is known rather than making something up.';
+const LEVEL_OPENER: Record<string, string> = {
+  junior: 'a motivated',
+  mid: 'an experienced',
+  senior: 'a seasoned',
+  lead: 'an accomplished, senior',
+};
+
+const LEVEL_YEARS: Record<string, string> = {
+  junior: '0–2 years',
+  mid: '2–5 years',
+  senior: '5–8 years',
+  lead: '8+ years',
+};
+
+const TIER_PHRASE: Record<string, string> = {
+  corporate: 'joining a growing team',
+  short_term: 'with a clearly defined scope and timeline',
+  gig: 'with flexible, project-based work',
+};
+
+function locationSentence(input: DraftJdInput): string {
+  const place = [input.locationCity, input.locationCountry].filter(Boolean).join(', ');
+  if (input.locationType === 'remote') return ', fully remote';
+  if (input.locationType === 'hybrid') return ` in a hybrid setup${place ? ` out of ${place}` : ''}`;
+  if (input.locationType === 'on_site') return ` on-site${place ? ` in ${place}` : ''}`;
+  return '';
+}
 
 export async function draftJobDescription(input: DraftJdInput): Promise<AiResult<DraftJdOutput>> {
-  const facts = [
-    `Title: ${input.title}`,
-    `Tier: ${input.tier}`,
-    input.roleFunction ? `Function: ${input.roleFunction}` : null,
-    `Must-have skills: ${input.mustHave.join(', ') || 'none given'}`,
-    input.niceToHave.length ? `Nice-to-have skills: ${input.niceToHave.join(', ')}` : null,
-    input.experienceLevel ? `Experience level: ${input.experienceLevel}` : null,
-    input.employmentType ? `Employment type: ${input.employmentType}` : null,
-    input.locationType ? `Location type: ${input.locationType}` : null,
-    input.locationCity || input.locationCountry ? `Location: ${[input.locationCity, input.locationCountry].filter(Boolean).join(', ')}` : null,
-    input.rateMin || input.rateMax ? `Rate: ${input.rateMin ?? '?'}–${input.rateMax ?? '?'} (${input.rateType ?? 'monthly'})` : null,
-    input.contractLength ? `Contract length: ${input.contractLength}` : null,
-  ].filter(Boolean).join('\n');
+  const opener = (input.experienceLevel && LEVEL_OPENER[input.experienceLevel]) || 'a skilled';
+  const funcPhrase = input.roleFunction ? ` in ${input.roleFunction}` : '';
+  const empPhrase = input.employmentType === 'contract' ? 'a contract engagement' : 'a full-time role';
+  const tierPhrase = TIER_PHRASE[input.tier];
+  const topSkills = input.mustHave.slice(0, 3).join(', ');
 
-  const system =
-    'You write concise, professional job descriptions for an African tech-hiring platform. ' +
-    NO_FABRICATION_RULE +
-    ' Respond with ONLY a JSON object, no markdown fences, no prose outside the JSON, matching exactly: ' +
-    '{"overview": string, "responsibilities": string, "requirements": string}. ' +
-    'Each value is plain text (no markdown), 2-4 sentences for overview, a short paragraph or a few sentences for the other two.';
+  const overview = [
+    `We're looking for ${opener} ${input.title}${funcPhrase} to join our team${locationSentence(input)}.`,
+    `This is ${empPhrase}${tierPhrase ? `, ${tierPhrase}` : ''}.`,
+    topSkills ? `You'll bring hands-on expertise in ${topSkills} to help drive real impact from day one.` : '',
+  ].filter(Boolean).join(' ');
 
-  return callJson<DraftJdOutput>(system, facts, 700);
+  const skillLines = input.mustHave.slice(0, 4).map((s) => `• Apply strong ${s} skills to deliver high-quality, reliable work.`);
+  const genericLines = [
+    '• Collaborate closely with cross-functional teammates to plan and execute on shared goals.',
+    '• Take ownership of your area of work, from planning through delivery.',
+    '• Communicate progress, blockers, and decisions clearly and proactively.',
+  ];
+  const responsibilities = [...skillLines, ...genericLines].join('\n');
+
+  const reqLines: string[] = [];
+  if (input.experienceLevel && LEVEL_YEARS[input.experienceLevel]) {
+    reqLines.push(`• ${LEVEL_YEARS[input.experienceLevel]} of relevant experience.`);
+  }
+  input.mustHave.forEach((s) => reqLines.push(`• Proven, hands-on experience with ${s}.`));
+  input.niceToHave.forEach((s) => reqLines.push(`• Familiarity with ${s} is a plus, not required.`));
+  if (input.contractLength) reqLines.push(`• Available for a ${input.contractLength} engagement.`);
+  reqLines.push('• Strong communication skills and the ability to work independently.');
+
+  return { ok: true, data: { overview, responsibilities, requirements: reqLines.join('\n') } };
 }
+
+// ───────────────────────── Role-boost suggestions ────────────────────────
 
 export interface BoostRoleInput {
   title: string;
@@ -142,31 +122,42 @@ export interface BoostRoleOutput {
 }
 
 export async function suggestRoleBoosts(input: BoostRoleInput): Promise<AiResult<BoostRoleOutput>> {
-  const facts = [
-    `Title: ${input.title}`,
-    `Tier: ${input.tier}`,
-    `Must-have skills (${input.requiredSkills.mustHave.length}): ${input.requiredSkills.mustHave.join(', ') || 'none'}`,
-    `Nice-to-have skills (${input.requiredSkills.niceToHave.length}): ${input.requiredSkills.niceToHave.join(', ') || 'none'}`,
-    input.experienceLevel ? `Experience level: ${input.experienceLevel}` : null,
-    input.locationType ? `Location type: ${input.locationType}` : null,
-    input.rateMin != null || input.rateMax != null ? `Rate range: ${input.rateMin ?? '?'}–${input.rateMax ?? '?'}` : 'Rate range: not set',
-    `Candidates matched so far: ${input.matchCount}`,
-    `Average match score: ${input.avgScore != null ? input.avgScore.toFixed(1) : 'n/a'}`,
-    `Candidates the company skipped: ${input.skippedCount}`,
-    `Candidates the company saved: ${input.savedCount}`,
-  ].join('\n');
+  const s: string[] = [];
+  const mustCount = input.requiredSkills.mustHave.length;
 
-  const system =
-    'You review a job posting\'s real performance data on a hiring platform and suggest concrete, specific ' +
-    'improvements to reach more matching candidates. ' +
-    NO_FABRICATION_RULE +
-    ' Ground every suggestion in the actual numbers given (e.g. a long must-have list, zero matches, a rate ' +
-    'below what the role\'s tier/experience level would need) — do not give generic hiring advice unrelated to ' +
-    'this data. Respond with ONLY a JSON object, no markdown fences, no prose outside the JSON, matching exactly: ' +
-    '{"suggestions": string[]}. 3 to 5 suggestions, each one short sentence, plain text.';
+  if (input.matchCount === 0) {
+    s.push('No candidates have matched this role yet — widening the must-have skills list or the experience level requirement usually surfaces more of the pool.');
+  }
+  if (mustCount > 5) {
+    s.push(`The must-have list has ${mustCount} skills — roles with 3–4 tightly-scoped requirements typically match more candidates. Consider moving the less critical ones to nice-to-have.`);
+  }
+  if (mustCount === 0) {
+    s.push('No must-have skills are set, so matching has nothing firm to score against — add at least 2–3 to get meaningful results.');
+  }
+  if (input.avgScore !== null && input.avgScore < 60) {
+    s.push(`Matched candidates average a ${Math.round(input.avgScore)}% fit — that's low. The required skill combination may be narrower than what's available in the current pool.`);
+  }
+  if (input.rateMin == null && input.rateMax == null) {
+    s.push("No rate range is set — candidates can't gauge fit on compensation before engaging. Adding one usually improves the quality of who applies or accepts.");
+  }
+  if (input.skippedCount > 3 && input.skippedCount > input.savedCount * 2) {
+    s.push("You've skipped far more candidates than you've saved on this role — that's often a sign the listed requirements don't quite match who you're actually looking for.");
+  }
+  if (input.requiredSkills.niceToHave.length === 0) {
+    s.push('No nice-to-have skills are listed — these help differentiate close-call candidates without hard-blocking anyone who lacks them.');
+  }
+  if (!input.experienceLevel) {
+    s.push('No experience level is set — candidates and the matching engine both use this as a key signal; adding one narrows the pool to people who are actually a fit.');
+  }
 
-  return callJson<BoostRoleOutput>(system, facts, 500);
+  if (s.length === 0) {
+    s.push('This role looks well-optimized — a solid must-have list, a set experience level, and healthy match activity. Nothing obvious to change right now.');
+  }
+
+  return { ok: true, data: { suggestions: s.slice(0, 5) } };
 }
+
+// ───────────────────────── CV extraction ──────────────────────────────
 
 export interface CvExtractedExperience {
   jobTitle: string;
@@ -201,28 +192,140 @@ export interface CvExtractOutput {
   certifications: CvExtractedCertification[];
 }
 
-// Claude reads the PDF directly as a document content block — no separate
-// text-extraction library needed. Dates are asked for in YYYY-MM-DD (or
-// null if the CV only gives a year/month); the caller is responsible for
-// only writing extracted data into fields that are currently empty.
+const SKILL_KEYWORDS = [
+  'JavaScript', 'TypeScript', 'Python', 'Java', 'C++', 'C#', 'Go', 'Golang', 'Rust', 'PHP', 'Ruby', 'Swift', 'Kotlin',
+  'React', 'React Native', 'Vue', 'Angular', 'Next.js', 'Node.js', 'Express', 'Django', 'Flask', 'Spring', 'Laravel',
+  'SQL', 'PostgreSQL', 'MySQL', 'MongoDB', 'Redis', 'GraphQL', 'REST API', 'AWS', 'Azure', 'GCP', 'Docker',
+  'Kubernetes', 'CI/CD', 'Git', 'Linux', 'DevOps', 'Terraform', 'HTML', 'CSS', 'Tailwind', 'Figma', 'Adobe XD',
+  'UI/UX Design', 'Product Management', 'Project Management', 'Agile', 'Scrum', 'Data Analysis', 'Data Science',
+  'Machine Learning', 'Excel', 'Power BI', 'Tableau', 'Salesforce', 'SEO', 'Digital Marketing', 'Content Writing',
+  'Copywriting', 'Social Media Marketing', 'Accounting', 'Bookkeeping', 'Financial Analysis', 'QuickBooks',
+  'Customer Service', 'Sales', 'Business Development', 'Human Resources', 'Recruitment', 'Payroll',
+  'Supply Chain', 'Logistics', 'Operations Management', 'Legal Research', 'Contract Management',
+  'Graphic Design', 'Video Editing', 'WordPress', 'Shopify', 'Email Marketing',
+];
+
+const SENIOR_KEYWORDS = /\b(lead|principal|head of|director|vp\b|chief)\b/i;
+const MID_SENIOR_KEYWORD = /\bsenior\b|\bsr\.?\b/i;
+const JUNIOR_KEYWORDS = /\bjunior\b|\bjr\.?\b|\bintern(ship)?\b|\bentry[- ]level\b/i;
+
+const DEGREE_KEYWORDS = /\b(bachelor'?s?|b\.?sc\.?|b\.?a\.?|b\.?eng\.?|master'?s?|m\.?sc\.?|m\.?a\.?|mba|ph\.?d\.?|doctorate|hnd|ond|diploma|associate'?s?)\b/i;
+const INSTITUTION_HINT = /\b(university|polytechnic|institute|college|school of)\b/i;
+const CERT_KEYWORDS = /\b(certified|certificate|certification|pmp\b|cfa\b|cpa\b|scrum master|itil\b|six sigma|aws certified)\b/i;
+const DATE_RANGE = /\b(19|20)\d{2}\b\s*[-–—to]+\s*(\b(19|20)\d{2}\b|present|current)/i;
+const YEAR = /\b(19|20)\d{2}\b/g;
+
+function extractSkills(text: string): string[] {
+  const found: string[] = [];
+  for (const skill of SKILL_KEYWORDS) {
+    const re = new RegExp(`\\b${skill.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+    if (re.test(text)) found.push(skill);
+  }
+  return found.slice(0, 15);
+}
+
+function inferExperienceLevel(text: string): CvExtractOutput['experienceLevel'] {
+  if (SENIOR_KEYWORDS.test(text)) return 'lead';
+  if (MID_SENIOR_KEYWORD.test(text)) return 'senior';
+  if (JUNIOR_KEYWORDS.test(text)) return 'junior';
+  const years = Array.from(text.matchAll(YEAR)).map((m) => parseInt(m[0], 10)).filter((y) => y >= 1970 && y <= new Date().getFullYear());
+  if (years.length >= 2) {
+    const span = Math.max(...years) - Math.min(...years);
+    if (span >= 8) return 'senior';
+    if (span >= 3) return 'mid';
+    return 'junior';
+  }
+  return null;
+}
+
+function extractSummary(text: string): string | null {
+  const lines = text.split(/\r?\n/).map((l) => l.trim());
+  const headerIdx = lines.findIndex((l) => /^(summary|profile|objective|about me|professional summary)\s*:?$/i.test(l));
+  if (headerIdx === -1) return null;
+  const body = lines.slice(headerIdx + 1, headerIdx + 4).filter(Boolean).join(' ').trim();
+  return body.length > 20 ? body.slice(0, 400) : null;
+}
+
+function extractExperience(text: string): CvExtractedExperience[] {
+  const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  const out: CvExtractedExperience[] = [];
+  for (const line of lines) {
+    const match = line.match(DATE_RANGE);
+    if (!match) continue;
+    const isCurrent = /present|current/i.test(match[0]);
+    const jobTitle = line.replace(DATE_RANGE, '').replace(/[|,·–—-]+$/g, '').trim();
+    if (!jobTitle || jobTitle.length < 3 || jobTitle.length > 100) continue;
+    const years = Array.from(match[0].matchAll(YEAR)).map((m) => m[0]);
+    out.push({
+      jobTitle,
+      companyName: null,
+      startDate: years[0] ? `${years[0]}-01-01` : null,
+      endDate: !isCurrent && years[1] ? `${years[1]}-01-01` : null,
+      isCurrent,
+      description: null,
+    });
+    if (out.length >= 5) break;
+  }
+  return out;
+}
+
+function extractEducation(text: string): CvExtractedEducation[] {
+  const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  const out: CvExtractedEducation[] = [];
+  for (let i = 0; i < lines.length; i++) {
+    if (!DEGREE_KEYWORDS.test(lines[i])) continue;
+    const institutionLine = INSTITUTION_HINT.test(lines[i]) ? lines[i] : [lines[i - 1], lines[i + 1]].find((l) => l && INSTITUTION_HINT.test(l));
+    out.push({
+      institution: institutionLine ?? 'Not specified',
+      qualification: lines[i].slice(0, 100),
+      fieldOfStudy: null,
+      startDate: null,
+      endDate: null,
+    });
+    if (out.length >= 3) break;
+  }
+  return out;
+}
+
+function extractCertifications(text: string): CvExtractedCertification[] {
+  const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  const out: CvExtractedCertification[] = [];
+  for (const line of lines) {
+    if (!CERT_KEYWORDS.test(line)) continue;
+    out.push({ name: line.slice(0, 120), issuingOrganization: null, issueDate: null, expiryDate: null });
+    if (out.length >= 3) break;
+  }
+  return out;
+}
+
 export async function extractCvData(pdfBase64: string): Promise<AiResult<CvExtractOutput>> {
-  const system =
-    'You extract structured data from an uploaded CV/résumé PDF for a hiring platform. ' +
-    'Only report what the document actually says — never invent a skill, employer, date, or qualification ' +
-    'that isn\'t genuinely there, and use null for anything not stated rather than guessing. ' +
-    'Respond with ONLY a JSON object, no markdown fences, no prose outside the JSON, matching exactly: ' +
-    '{"summary": string|null, "skillTags": string[], "experienceLevel": "junior"|"mid"|"senior"|"lead"|null, ' +
-    '"experience": [{"jobTitle": string, "companyName": string|null, "startDate": string|null, "endDate": string|null, "isCurrent": boolean, "description": string|null}], ' +
-    '"education": [{"institution": string, "qualification": string, "fieldOfStudy": string|null, "startDate": string|null, "endDate": string|null}], ' +
-    '"certifications": [{"name": string, "issuingOrganization": string|null, "issueDate": string|null, "expiryDate": string|null}]}. ' +
-    'Dates as YYYY-MM-DD when a day is known, YYYY-MM-01 when only month/year is known, or null. ' +
-    '"summary" is a 2-3 sentence professional summary synthesized from the CV (not copied verbatim). ' +
-    'experienceLevel is your best read of their overall seniority from the work history.';
+  let text: string;
+  try {
+    // Lazy import — pdf-parse pulls in a decent chunk of code, no reason to
+    // pay that cost for api/ai-assist.ts's other code paths that never touch it.
+    const { PDFParse } = await import('pdf-parse');
+    const buffer = Buffer.from(pdfBase64, 'base64');
+    const parser = new PDFParse({ data: new Uint8Array(buffer) });
+    const result = await parser.getText();
+    await parser.destroy();
+    text = result.text || '';
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : 'Could not read the PDF.' };
+  }
 
-  const content = [
-    { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: pdfBase64 } },
-    { type: 'text', text: 'Extract this CV into the JSON shape described in the system prompt.' },
-  ];
+  if (text.trim().length < 30) {
+    return { ok: false, error: 'Could not extract readable text from this PDF.' };
+  }
 
-  return callAnthropicJson<CvExtractOutput>(system, content, 1500);
+  return {
+    ok: true,
+    data: {
+      summary: extractSummary(text),
+      skillTags: extractSkills(text),
+      experienceLevel: inferExperienceLevel(text),
+      experience: extractExperience(text),
+      education: extractEducation(text),
+      certifications: extractCertifications(text),
+    },
+  };
 }

@@ -23,6 +23,7 @@
     "expo-status-bar": "~57.0.0",
     "expo-symbols": "~57.0.0",
     "moti": "^0.30.0",
+    "pdf-parse": "^2.4.5",
     "phosphor-react-native": "^3.0.6",
     "react": "19.2.3",
     "react-dom": "19.2.3",

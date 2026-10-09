@@ -100,7 +100,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
 
     if (!result.ok) {
-      if (result.skipped) return res.status(500).json({ error: "AI assist isn't configured yet." });
       return res.status(502).json({ error: result.error ?? 'AI request failed.' });
     }
 
@@ -143,7 +142,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   });
 
   if (!result.ok) {
-    if (result.skipped) return res.status(500).json({ error: "AI assist isn't configured yet." });
     return res.status(502).json({ error: result.error ?? 'AI request failed.' });
   }
 
