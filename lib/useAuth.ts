@@ -2,6 +2,8 @@ import React, { createContext, useContext, useEffect, useState, useCallback, Rea
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from './supabase';
 import { isAdminEmail } from './adminEmails';
+import { uploadCandidatePhotoBase64 } from './uploadCandidatePhoto';
+import { uploadCompanyLogoBase64 } from './uploadCompanyLogo';
 
 export type UserRole = 'candidate' | 'company' | 'admin' | null;
 
@@ -77,7 +79,7 @@ async function resolveRole(userId: string, email: string | null | undefined): Pr
 // different day/device — this finishes creating the profile row from that
 // stashed metadata, then re-resolves the role. Makes signup "self-healing"
 // regardless of when/where confirmation happens.
-async function completePendingSignup(userId: string): Promise<void> {
+async function completePendingSignup(userId: string, accessToken: string): Promise<void> {
   const { data: userData } = await supabase.auth.getUser();
   const meta = userData.user?.user_metadata as Record<string, unknown> | undefined;
   if (!meta?.pending_signup) return;
@@ -93,6 +95,19 @@ async function completePendingSignup(userId: string): Promise<void> {
       // for exactly this kind of categorization and was otherwise unused.
       function_tags: typeof meta.industry === 'string' && meta.industry ? [meta.industry] : [],
     });
+    // Profile photo is required at signup, but can only actually be uploaded
+    // once a real session exists (the API endpoint resolves the candidate
+    // row via auth.uid()) — the signup form already downscaled it into
+    // base64 and stashed it here alongside the rest of the pending-signup
+    // fields. Best-effort: a failure here shouldn't block the rest of
+    // signup from completing, since the candidate row above already exists.
+    if (typeof meta.photo_base64 === 'string' && typeof meta.photo_mime_type === 'string') {
+      try {
+        await uploadCandidatePhotoBase64(meta.photo_base64, meta.photo_mime_type, accessToken);
+      } catch (e) {
+        console.warn('Could not upload signup profile photo:', e);
+      }
+    }
   } else if (meta.pending_signup === 'company') {
     const { data: newCompanyId } = await supabase.rpc('create_company_and_claim', {
       company_data: {
@@ -123,6 +138,15 @@ async function completePendingSignup(userId: string): Promise<void> {
     if (typeof meta.contact_name === 'string' && meta.contact_name.trim()) {
       await supabase.from('company_users').update({ full_name: meta.contact_name.trim() }).eq('auth_user_id', userId);
     }
+    // Same required-at-signup, upload-once-a-session-exists pattern as the
+    // candidate photo above.
+    if (typeof meta.logo_base64 === 'string' && typeof meta.logo_mime_type === 'string') {
+      try {
+        await uploadCompanyLogoBase64(meta.logo_base64, meta.logo_mime_type, accessToken);
+      } catch (e) {
+        console.warn('Could not upload signup company logo:', e);
+      }
+    }
   }
   // Clear the flag so a later sign-in never re-runs this (insert would just fail
   // harmlessly on the unique auth_user_id constraint anyway, but this is cleaner).
@@ -152,7 +176,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       let resolved = await resolveRole(next.user.id, next.user.email);
       if (resolved.role === null) {
-        await completePendingSignup(next.user.id);
+        await completePendingSignup(next.user.id, next.access_token);
         if (cancelled) return;
         resolved = await resolveRole(next.user.id, next.user.email);
       }

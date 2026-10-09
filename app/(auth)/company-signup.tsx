@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback } from 'react';
 import {
   Animated,
+  Image,
   StyleSheet,
   TextInput,
   View,
@@ -23,6 +24,7 @@ import FormField, { NO_NATIVE_OUTLINE } from '@/components/FormField';
 import PasswordStrengthMeter from '@/components/PasswordStrengthMeter';
 import VerifyEmailModal from '@/components/VerifyEmailModal';
 import { useShake } from '@/lib/useShake';
+import { pickImageFile, downscaleToJpeg } from '@/lib/uploadCompanyLogo';
 import { DURATION } from '@/lib/motion';
 import PageHead from '@/components/PageHead';
 import AnimatedPressable from '@/components/AnimatedPressable';
@@ -164,9 +166,27 @@ export default function CompanySignupScreen() {
 
   // Step 3 — Bio & Branding
   const [bio, setBio] = useState('');
+  const [logo, setLogo] = useState<{ base64: string; mimeType: string } | null>(null);
+  const [logoBusy, setLogoBusy] = useState(false);
 
   // Step 4 — Tier Selection
   const [selectedTier, setSelectedTier] = useState<SubscriptionTier>('pilot');
+
+  const handlePickLogo = useCallback(async () => {
+    if (logoBusy) return;
+    setLogoBusy(true);
+    try {
+      const file = await pickImageFile();
+      if (!file) return;
+      const result = await downscaleToJpeg(file);
+      setLogo(result);
+      setErrors((e) => ({ ...e, logo: '' }));
+    } catch {
+      setErrors((e) => ({ ...e, logo: 'Could not read that image. Try a different file.' }));
+    } finally {
+      setLogoBusy(false);
+    }
+  }, [logoBusy]);
 
   const clearError = useCallback((key: string) => {
     setErrors((e) => {
@@ -223,6 +243,7 @@ export default function CompanySignupScreen() {
       if (!companySize) newErrors.companySize = 'Select company size';
     } else if (step === 3) {
       if (!bio.trim()) newErrors.bio = 'A brief description is required';
+      if (!logo) newErrors.logo = 'Add a company logo';
     }
     // Step 4 (tier) always valid — has a default
 
@@ -234,7 +255,7 @@ export default function CompanySignupScreen() {
     if (hasErrors) newErrors.general = 'Please fix the highlighted fields above.';
     setErrors(newErrors);
     return !hasErrors;
-  }, [step, contactName, email, password, companyName, industry, industryOther, companySize, bio]);
+  }, [step, contactName, email, password, companyName, industry, industryOther, companySize, bio, logo]);
 
   const handleNext = useCallback(async () => {
     if (!validateStep()) { shake(); return; }
@@ -268,6 +289,8 @@ export default function CompanySignupScreen() {
           website_url: website.trim(),
           description: bio.trim(),
           plan_tier: selectedTier,
+          logo_base64: logo?.base64 ?? null,
+          logo_mime_type: logo?.mimeType ?? null,
         },
       },
     });
@@ -286,7 +309,7 @@ export default function CompanySignupScreen() {
       return;
     }
     router.replace('/(company)');
-  }, [step, validateStep, shake, selectedTier, contactName, email, password, companyName, industry, industryOther, companySize, hqLocation, website, bio]);
+  }, [step, validateStep, shake, selectedTier, contactName, email, password, companyName, industry, industryOther, companySize, hqLocation, website, bio, logo]);
 
   const handleBack = useCallback(() => {
     if (step > 0) {
@@ -549,11 +572,27 @@ export default function CompanySignupScreen() {
         </View>
       </View>
 
-      <View style={st.infoCard}>
-        <AppIcon name="camera-outline" size={18} color={T.accent} />
-        <Text style={st.infoText}>
-          You can add your company logo once your account is created, from Settings.
-        </Text>
+      <View style={st.logoFieldWrap}>
+        <AnimatedPressable
+          style={[st.logoCircle, errors.logo && st.logoCircleError]}
+          onPress={handlePickLogo}
+          disabled={logoBusy}
+          accessibilityRole="button"
+          accessibilityLabel={logo ? 'Change company logo' : 'Add company logo'}
+        >
+          {logo ? (
+            <Image source={{ uri: `data:${logo.mimeType};base64,${logo.base64}` }} style={st.logoImage} />
+          ) : (
+            <AppIcon name="business-outline" size={26} color={T.textMuted} />
+          )}
+          <View style={st.logoBadge}>
+            <AppIcon name={logo ? 'create-outline' : 'add'} size={13} color={T.textOnAccent} />
+          </View>
+        </AnimatedPressable>
+        <Text style={st.logoLabel}>{logo ? 'Logo added' : 'Add a company logo *'}</Text>
+        {errors.logo ? <Text style={st.errorText}>{errors.logo}</Text> : (
+          <Text style={st.hintText}>Required — shown to candidates on your roles.</Text>
+        )}
       </View>
     </>
   );
@@ -739,6 +778,21 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   fieldWrap: { marginBottom: 22 },
   fieldWrapNoMargin: { marginBottom: 0 },
   fieldWrapMarginTop: { marginTop: 8, marginBottom: 0 },
+  logoFieldWrap: { alignItems: 'center', marginBottom: 16 },
+  logoCircle: {
+    width: 92, height: 92, borderRadius: 22,
+    backgroundColor: T.surface, borderWidth: 1.5, borderColor: T.border,
+    alignItems: 'center', justifyContent: 'center', overflow: 'visible',
+  },
+  logoCircleError: { borderColor: T.danger },
+  logoImage: { width: 92, height: 92, borderRadius: 22 },
+  logoBadge: {
+    position: 'absolute', right: -2, bottom: -2,
+    width: 26, height: 26, borderRadius: 13,
+    backgroundColor: T.accent, borderWidth: 2, borderColor: T.bg,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  logoLabel: { fontSize: 13, fontWeight: '700', color: T.textPrimary, marginTop: 10 },
   label: { fontSize: 13, fontWeight: '700', color: T.textSecondary, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.3 },
   input: { flex: 1, fontSize: 15, color: T.textPrimary, fontWeight: '500' },
   textAreaInner: { height: undefined, minHeight: 112, alignItems: 'flex-start', paddingVertical: 12 },

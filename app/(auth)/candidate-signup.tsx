@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import {
   Animated,
+  Image,
   StyleSheet,
   TextInput,
   View,
@@ -17,6 +18,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useCandidateProfile } from '@/lib/candidateProfile';
 import { useTheme, ThemePalette, DISPLAY_FONT_FAMILY, RADIUS } from '@/lib/theme';
 import { supabase } from '@/lib/supabase';
+import { pickImageFile, downscaleToJpeg } from '@/lib/uploadCandidatePhoto';
 import { friendlyAuthError, isAlreadyRegistered } from '@/lib/authErrors';
 import FormField, { NO_NATIVE_OUTLINE } from '@/components/FormField';
 import PasswordStrengthMeter from '@/components/PasswordStrengthMeter';
@@ -38,6 +40,8 @@ export default function CandidateSignupScreen() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [fullName, setFullName] = useState('');
+  const [photo, setPhoto] = useState<{ base64: string; mimeType: string } | null>(null);
+  const [photoBusy, setPhotoBusy] = useState(false);
   const [professionalTitle, setProfessionalTitle] = useState('');
   const [industry, setIndustry] = useState('');
   const [skillInput, setSkillInput] = useState('');
@@ -58,6 +62,22 @@ export default function CandidateSignupScreen() {
 
   const removeSkill = (skill: string) => {
     setCoreSkills(coreSkills.filter((s) => s !== skill));
+  };
+
+  const handlePickPhoto = async () => {
+    if (photoBusy) return;
+    setPhotoBusy(true);
+    try {
+      const file = await pickImageFile();
+      if (!file) return;
+      const result = await downscaleToJpeg(file);
+      setPhoto(result);
+      setErrors((e) => ({ ...e, photo: '' }));
+    } catch {
+      setErrors((e) => ({ ...e, photo: 'Could not read that image. Try a different file.' }));
+    } finally {
+      setPhotoBusy(false);
+    }
   };
 
   // Real-time (on-blur) validation — before this, every field stayed
@@ -108,6 +128,7 @@ export default function CandidateSignupScreen() {
       newErrors.password = 'Password must be at least 6 characters';
     }
     if (!fullName.trim()) newErrors.fullName = 'Full name is required';
+    if (!photo) newErrors.photo = 'Add a profile photo';
     if (!professionalTitle.trim()) newErrors.title = 'Professional title is required';
     if (!industry) newErrors.industry = 'Select your industry';
     if (coreSkills.length === 0) newErrors.skills = 'Add at least one core skill';
@@ -146,6 +167,8 @@ export default function CandidateSignupScreen() {
           industry,
           core_skills: coreSkills,
           target_min_rate: Number(rateInput),
+          photo_base64: photo?.base64 ?? null,
+          photo_mime_type: photo?.mimeType ?? null,
         },
       },
     });
@@ -207,6 +230,29 @@ export default function CandidateSignupScreen() {
               <Text style={st.subtitle}>
                 This information helps us match you with the right opportunities. You'll complete verification next.
               </Text>
+            </View>
+
+            <View style={st.photoFieldWrap}>
+              <AnimatedPressable
+                style={[st.photoCircle, errors.photo && st.photoCircleError]}
+                onPress={handlePickPhoto}
+                disabled={photoBusy}
+                accessibilityRole="button"
+                accessibilityLabel={photo ? 'Change profile photo' : 'Add profile photo'}
+              >
+                {photo ? (
+                  <Image source={{ uri: `data:${photo.mimeType};base64,${photo.base64}` }} style={st.photoImage} />
+                ) : (
+                  <AppIcon name="camera-outline" size={26} color={T.textMuted} />
+                )}
+                <View style={st.photoBadge}>
+                  <AppIcon name={photo ? 'create-outline' : 'add'} size={13} color={T.textOnAccent} />
+                </View>
+              </AnimatedPressable>
+              <Text style={st.photoLabel}>{photo ? 'Profile photo added' : 'Add a profile photo *'}</Text>
+              {errors.photo ? <Text style={st.errorText}>{errors.photo}</Text> : (
+                <Text style={st.photoHint}>Required — helps companies recognize you.</Text>
+              )}
             </View>
 
             <FormField label="Email Address" error={errors.email}>
@@ -457,6 +503,22 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   subtitle: { fontSize: 14, color: T.textSecondary, lineHeight: 20 },
   fieldWrap: { marginBottom: 22 },
   fieldWrapNoMargin: { marginBottom: 0 },
+  photoFieldWrap: { alignItems: 'center', marginBottom: 26 },
+  photoCircle: {
+    width: 92, height: 92, borderRadius: 46,
+    backgroundColor: T.surface, borderWidth: 1.5, borderColor: T.border,
+    alignItems: 'center', justifyContent: 'center', overflow: 'visible',
+  },
+  photoCircleError: { borderColor: T.danger },
+  photoImage: { width: 92, height: 92, borderRadius: 46 },
+  photoBadge: {
+    position: 'absolute', right: -2, bottom: -2,
+    width: 26, height: 26, borderRadius: 13,
+    backgroundColor: T.accent, borderWidth: 2, borderColor: T.bg,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  photoLabel: { fontSize: 13, fontWeight: '700', color: T.textPrimary, marginTop: 10 },
+  photoHint: { fontSize: 12, color: T.textMuted, marginTop: 2 },
   label: { fontSize: 13, fontWeight: '700', color: T.textSecondary, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.3 },
   inputWrap: {
     flexDirection: 'row', alignItems: 'center', gap: 10,

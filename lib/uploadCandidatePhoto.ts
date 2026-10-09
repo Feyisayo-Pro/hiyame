@@ -21,9 +21,19 @@ export async function pickAndUploadCandidatePhoto(): Promise<string> {
   if (!file) throw new Error('No photo selected.');
 
   const { base64, mimeType } = await downscaleToJpeg(file);
+  return uploadCandidatePhotoBase64(base64, mimeType);
+}
 
-  const { data } = await supabase.auth.getSession();
-  const token = data.session?.access_token;
+// Split out so the signup form can downscale + preview a photo (no session
+// exists yet to upload with) and lib/useAuth.ts's completePendingSignup can
+// upload that already-downscaled image the moment a real session shows up,
+// without reopening the file picker.
+export async function uploadCandidatePhotoBase64(base64: string, mimeType: string, accessToken?: string): Promise<string> {
+  let token = accessToken;
+  if (!token) {
+    const { data } = await supabase.auth.getSession();
+    token = data.session?.access_token;
+  }
   if (!token) throw new Error('You need to be signed in to upload a photo.');
 
   const res = await fetch('/api/upload-candidate-photo', {
@@ -36,7 +46,7 @@ export async function pickAndUploadCandidatePhoto(): Promise<string> {
   return body.url as string;
 }
 
-function pickImageFile(): Promise<File | null> {
+export function pickImageFile(): Promise<File | null> {
   return new Promise((resolve) => {
     const input = document.createElement('input');
     input.type = 'file';
@@ -48,7 +58,7 @@ function pickImageFile(): Promise<File | null> {
   });
 }
 
-function downscaleToJpeg(file: File): Promise<{ base64: string; mimeType: string }> {
+export function downscaleToJpeg(file: File): Promise<{ base64: string; mimeType: string }> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onerror = () => reject(new Error('Could not read the selected file.'));
