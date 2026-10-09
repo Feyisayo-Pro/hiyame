@@ -115,8 +115,9 @@ export default function CandidateInterviewsScreen() {
                     </View>
                     <View style={{ flexDirection: 'row', gap: 6 }}>
                       {i.candidateRescheduleCount < MAX_RESCHEDULES && (
-                        <AnimatedPressable style={st.rescheduleBtn} onPress={() => setRescheduleTarget(i)} hitSlop={6} accessibilityRole="button" accessibilityLabel="Reschedule interview">
-                          <AppIcon name="time-outline" size={16} color={T.amber} />
+                        <AnimatedPressable style={st.rescheduleBtn} onPress={() => setRescheduleTarget(i)} hitSlop={4} accessibilityRole="button" accessibilityLabel="Reschedule interview">
+                          <AppIcon name="time-outline" size={14} color={T.amber} />
+                          <Text style={st.rescheduleBtnText}>Reschedule</Text>
                         </AnimatedPressable>
                       )}
                       {i.meetingUrl && (
@@ -179,8 +180,9 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   rowIconWrap: { width: 36, height: 36, borderRadius: RADIUS.control, backgroundColor: T.accentBg, alignItems: 'center', justifyContent: 'center' },
   rowName: { fontSize: 14, fontWeight: '700', color: T.textPrimary },
   rowMeta: { fontSize: 12, color: T.textMuted, marginTop: 2 },
-  rescheduleBtn: { width: 34, height: 34, borderRadius: 8, backgroundColor: T.surface, alignItems: 'center', justifyContent: 'center' },
-  joinBtn: { backgroundColor: T.accentSolid, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 },
+  rescheduleBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, height: 34, paddingHorizontal: 10, borderRadius: RADIUS.pill, backgroundColor: T.amberBg },
+  rescheduleBtnText: { fontSize: 12, fontWeight: '700', color: T.amber },
+  joinBtn: { backgroundColor: T.accentSolid, paddingHorizontal: 12, paddingVertical: 8, borderRadius: RADIUS.pill },
   joinBtnText: { color: T.textOnAccent, fontWeight: '700', fontSize: 12 },
   statusPill: { backgroundColor: T.surface, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
   statusPillText: { fontSize: 11, fontWeight: '700', color: T.textMuted, textTransform: 'capitalize' },

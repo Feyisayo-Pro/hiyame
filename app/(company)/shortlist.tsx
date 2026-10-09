@@ -601,15 +601,17 @@ function CandidateCardView({ T, st, card, busy, onAccept, onSkip, onSave, onOpen
 
       <View style={st.actionsRow}>
         <AnimatedPressable style={[st.actionBtn, st.skipBtn]} onPress={onSkip} disabled={busy} accessibilityRole="button" accessibilityLabel={card.score !== null ? `Skip ${card.fullName}` : `Reject ${card.fullName}'s application`}>
-          <AppIcon name="close" size={ICON.md} color={T.danger} />
+          <AppIcon name="close" size={ICON.sm} color={T.danger} />
+          <Text style={st.skipText}>Skip</Text>
         </AnimatedPressable>
         {card.score !== null && (
           <AnimatedPressable style={[st.actionBtn, st.saveBtn]} onPress={onSave} disabled={busy} accessibilityRole="button" accessibilityLabel={`Save ${card.fullName}`}>
             <AppIcon name="bookmark-outline" size={ICON.sm} color={T.accent} />
+            <Text style={st.saveText}>Save</Text>
           </AnimatedPressable>
         )}
         <AnimatedPressable style={[st.actionBtn, st.acceptBtn]} onPress={onAccept} disabled={busy} accessibilityRole="button" accessibilityLabel={card.score !== null ? `Accept ${card.fullName}` : `Accept ${card.fullName}'s application`}>
-          <AppIcon name="checkmark" size={ICON.md} color={T.white} />
+          <AppIcon name="checkmark" size={ICON.sm} color={T.white} />
           <Text style={st.acceptText}>Accept</Text>
         </AnimatedPressable>
       </View>
@@ -789,15 +791,17 @@ function CandidateDetailModal({ T, st, card, busy, onClose, onAccept, onSkip, on
 
               <View style={[st.actionsRow, { marginTop: 16 }]}>
                 <AnimatedPressable style={[st.actionBtn, st.skipBtn]} onPress={onSkip} disabled={busy} accessibilityRole="button" accessibilityLabel={card.score !== null ? `Skip ${card.fullName}` : `Reject ${card.fullName}'s application`}>
-                  <AppIcon name="close" size={ICON.md} color={T.danger} />
+                  <AppIcon name="close" size={ICON.sm} color={T.danger} />
+                  <Text style={st.skipText}>Skip</Text>
                 </AnimatedPressable>
                 {card.score !== null && (
                   <AnimatedPressable style={[st.actionBtn, st.saveBtn]} onPress={onSave} disabled={busy} accessibilityRole="button" accessibilityLabel={`Save ${card.fullName}`}>
                     <AppIcon name="bookmark-outline" size={ICON.sm} color={T.accent} />
+                    <Text style={st.saveText}>Save</Text>
                   </AnimatedPressable>
                 )}
                 <AnimatedPressable style={[st.actionBtn, st.acceptBtn]} onPress={onAccept} disabled={busy} accessibilityRole="button" accessibilityLabel={card.score !== null ? `Accept ${card.fullName}` : `Accept ${card.fullName}'s application`}>
-                  <AppIcon name="checkmark" size={ICON.md} color={T.white} />
+                  <AppIcon name="checkmark" size={ICON.sm} color={T.white} />
                   <Text style={st.acceptText}>Accept</Text>
                 </AnimatedPressable>
               </View>
@@ -877,10 +881,12 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   skillChip: { backgroundColor: T.surface, paddingHorizontal: 10, paddingVertical: 5, borderRadius: RADIUS.chip },
   skillText: { fontSize: 11.5, color: T.textSecondary, fontWeight: '600' },
   actionsRow: { flexDirection: 'row', gap: 8, marginTop: 'auto' },
-  actionBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, height: 42, borderRadius: RADIUS.control },
-  skipBtn: { width: 44, backgroundColor: T.surface },
-  saveBtn: { width: 44, backgroundColor: T.accentBg },
-  acceptBtn: { minWidth: 128, paddingHorizontal: 24, backgroundColor: T.accent },
+  actionBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, height: 42, borderRadius: RADIUS.control },
+  skipBtn: { backgroundColor: T.surface },
+  skipText: { fontSize: 14, fontWeight: '700', color: T.textSecondary, letterSpacing: -0.1 },
+  saveBtn: { backgroundColor: T.accentBg },
+  saveText: { fontSize: 14, fontWeight: '700', color: T.accentDim, letterSpacing: -0.1 },
+  acceptBtn: { backgroundColor: T.accent },
   acceptText: { fontSize: 14, fontWeight: '700', color: T.white, letterSpacing: -0.1 },
   introducedRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: T.border },
   introducedCard: { marginBottom: 12 },

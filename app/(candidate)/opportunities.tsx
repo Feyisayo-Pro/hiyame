@@ -105,6 +105,10 @@ export default function OpportunitiesScreen() {
   const [accepted, setAccepted] = useState<AcceptedIntro[]>([]);
   const [myApplications, setMyApplications] = useState<MyApplication[]>([]);
   const [openRoles, setOpenRoles] = useState<OpenRole[] | null>(null);
+  // role_id -> score, for roles the matching engine actually scored this
+  // candidate against — splits "Open Roles" below into a personalized
+  // section vs. general browse, instead of one undifferentiated list.
+  const [matchScores, setMatchScores] = useState<Map<string, number>>(new Map());
   const [refreshing, setRefreshing] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [applyingId, setApplyingId] = useState<string | null>(null);
@@ -157,6 +161,13 @@ export default function OpportunitiesScreen() {
       });
     }
     setMyApplications(applications);
+
+    const { data: myScores } = await supabase
+      .from('match_scores')
+      .select('role_id, score')
+      .eq('candidate_id', candidateId)
+      .eq('excluded', false);
+    setMatchScores(new Map((myScores ?? []).map((s) => [s.role_id, s.score])));
 
     const { data: liveRoles } = await supabase
       .from('roles')
@@ -271,6 +282,9 @@ export default function OpportunitiesScreen() {
     await load();
   };
 
+  const matchedRoles = useMemo(() => (openRoles ?? []).filter((r) => matchScores.has(r.id)), [openRoles, matchScores]);
+  const generalRoles = useMemo(() => (openRoles ?? []).filter((r) => !matchScores.has(r.id)), [openRoles, matchScores]);
+
   return (
     <SafeAreaView style={st.container} edges={['top', 'left', 'right']}>
       <PageHead title="Jobs" />
@@ -301,61 +315,27 @@ export default function OpportunitiesScreen() {
             </View>
           )}
 
-          {openRoles.length > 0 && (
+          {matchedRoles.length > 0 && (
             <>
-              <Text style={st.sectionLabel}>OPEN ROLES</Text>
+              <Text style={st.sectionLabel}>MATCHED FOR YOU</Text>
+              <Text style={st.sectionHint}>Roles our matching engine scored against your profile.</Text>
               <View style={st.grid}>
-                {openRoles.map((role, i) => {
-                  const cfg = TIER_CONFIG[role.tier];
-                  const rate = role.rateMin || role.rateMax
-                    ? [role.rateMin && `from ${formatNaira(role.rateMin)}`, role.rateMax && `up to ${formatNaira(role.rateMax)}`].filter(Boolean).join(' · ')
-                    : null;
-                  return (
-                    <SwipeFadeContainer key={role.id} axis="y" offset={16} duration={DURATION.stagger} delay={Math.min(i, 8) * 40} style={[st.gridItem, gridItemStyle]}>
-                      <View style={st.card}>
-                        <View style={st.companyRow}>
-                          {role.companyLogoUrl ? (
-                            <Image source={{ uri: role.companyLogoUrl }} style={st.companyLogo} resizeMode="cover" />
-                          ) : (
-                            <View style={[st.companyLogo, st.companyLogoFallback]}>
-                              <Text style={st.companyLogoInitials}>{initials(role.companyName)}</Text>
-                            </View>
-                          )}
-                          <Text style={st.companyName} numberOfLines={1}>{role.companyName}</Text>
-                        </View>
-                        <Text style={st.roleTitle}>{role.title}</Text>
-                        <View style={[st.tierPill, { backgroundColor: cfg.accent + '14' }]}>
-                          <Text style={[st.tierText, { color: cfg.accent }]}>{cfg.label.toUpperCase()}</Text>
-                        </View>
-                        {role.mustHaveSkills.length > 0 && (
-                          <View style={st.skillsRow}>
-                            {role.mustHaveSkills.slice(0, 4).map((s) => (
-                              <View key={s} style={st.skillChip}>
-                                <Text style={st.skillText}>{s}</Text>
-                              </View>
-                            ))}
-                          </View>
-                        )}
-                        <Text style={st.metaText}>
-                          {[role.locationType, rate].filter(Boolean).join('  ·  ')}
-                        </Text>
-                        <AnimatedPressable
-                          style={[st.applyBtn, applyingId === role.id && { opacity: 0.7 }]}
-                          onPress={() => apply(role)}
-                          disabled={applyingId === role.id}
-                          accessibilityRole="button"
-                          accessibilityLabel={`Apply to ${role.title} at ${role.companyName}`}
-                        >
-                          {applyingId === role.id ? (
-                            <ActivityIndicator color={T.textOnAccent} size="small" />
-                          ) : (
-                            <Text style={st.applyBtnText}>Apply</Text>
-                          )}
-                        </AnimatedPressable>
-                      </View>
-                    </SwipeFadeContainer>
-                  );
-                })}
+                {matchedRoles.map((role, i) => (
+                  <OpenRoleCard key={role.id} role={role} index={i} score={matchScores.get(role.id) ?? null}
+                    gridItemStyle={gridItemStyle} applyingId={applyingId} onApply={apply} T={T} st={st} />
+                ))}
+              </View>
+            </>
+          )}
+
+          {generalRoles.length > 0 && (
+            <>
+              <Text style={st.sectionLabel}>{matchedRoles.length > 0 ? 'MORE OPEN ROLES' : 'OPEN ROLES'}</Text>
+              <View style={st.grid}>
+                {generalRoles.map((role, i) => (
+                  <OpenRoleCard key={role.id} role={role} index={i} score={null}
+                    gridItemStyle={gridItemStyle} applyingId={applyingId} onApply={apply} T={T} st={st} />
+                ))}
               </View>
             </>
           )}
@@ -464,6 +444,67 @@ export default function OpportunitiesScreen() {
   );
 }
 
+function OpenRoleCard({ role, index, score, gridItemStyle, applyingId, onApply, T, st }: {
+  role: OpenRole; index: number; score: number | null;
+  gridItemStyle: any; applyingId: string | null; onApply: (role: OpenRole) => void;
+  T: ThemePalette; st: ReturnType<typeof makeStyles>;
+}) {
+  const cfg = TIER_CONFIG[role.tier];
+  const rate = role.rateMin || role.rateMax
+    ? [role.rateMin && `from ${formatNaira(role.rateMin)}`, role.rateMax && `up to ${formatNaira(role.rateMax)}`].filter(Boolean).join(' · ')
+    : null;
+  return (
+    <SwipeFadeContainer axis="y" offset={16} duration={DURATION.stagger} delay={Math.min(index, 8) * 40} style={[st.gridItem, gridItemStyle]}>
+      <View style={st.card}>
+        <View style={st.companyRow}>
+          {role.companyLogoUrl ? (
+            <Image source={{ uri: role.companyLogoUrl }} style={st.companyLogo} resizeMode="cover" />
+          ) : (
+            <View style={[st.companyLogo, st.companyLogoFallback]}>
+              <Text style={st.companyLogoInitials}>{initials(role.companyName)}</Text>
+            </View>
+          )}
+          <Text style={st.companyName} numberOfLines={1}>{role.companyName}</Text>
+          {score !== null && (
+            <View style={st.matchBadge}>
+              <Text style={st.matchBadgeText}>{score}% match</Text>
+            </View>
+          )}
+        </View>
+        <Text style={st.roleTitle}>{role.title}</Text>
+        <View style={[st.tierPill, { backgroundColor: cfg.accent + '14' }]}>
+          <Text style={[st.tierText, { color: cfg.accent }]}>{cfg.label.toUpperCase()}</Text>
+        </View>
+        {role.mustHaveSkills.length > 0 && (
+          <View style={st.skillsRow}>
+            {role.mustHaveSkills.slice(0, 4).map((s) => (
+              <View key={s} style={st.skillChip}>
+                <Text style={st.skillText}>{s}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+        <Text style={st.metaText}>
+          {[role.locationType, rate].filter(Boolean).join('  ·  ')}
+        </Text>
+        <AnimatedPressable
+          style={[st.applyBtn, applyingId === role.id && { opacity: 0.7 }]}
+          onPress={() => onApply(role)}
+          disabled={applyingId === role.id}
+          accessibilityRole="button"
+          accessibilityLabel={`Apply to ${role.title} at ${role.companyName}`}
+        >
+          {applyingId === role.id ? (
+            <ActivityIndicator color={T.textOnAccent} size="small" />
+          ) : (
+            <Text style={st.applyBtnText}>Apply</Text>
+          )}
+        </AnimatedPressable>
+      </View>
+    </SwipeFadeContainer>
+  );
+}
+
 const makeStyles = (T: ThemePalette) => StyleSheet.create({
   container: { flex: 1, backgroundColor: T.bg },
   header: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 16 },
@@ -472,6 +513,9 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   centerFill: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   scroll: { paddingHorizontal: 20, paddingBottom: 32 },
   sectionLabel: { fontSize: 12, fontWeight: '800', color: T.textMuted, letterSpacing: 0.5, marginTop: 8, marginBottom: 10 },
+  sectionHint: { fontSize: 12, color: T.textMuted, marginTop: -6, marginBottom: 12 },
+  matchBadge: { backgroundColor: T.emeraldBg, borderRadius: RADIUS.chip, paddingHorizontal: 8, paddingVertical: 3 },
+  matchBadgeText: { fontSize: 10, fontWeight: '800', color: T.emerald },
   emptyBlock: { alignItems: 'center', paddingTop: 60, paddingHorizontal: 20 },
   emptyTitle: { fontSize: 17, fontWeight: '800', color: T.textPrimary, marginTop: 12, marginBottom: 6 },
   emptySub: { fontSize: 13, color: T.textSecondary, textAlign: 'center', lineHeight: 19 },

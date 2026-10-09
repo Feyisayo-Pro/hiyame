@@ -172,20 +172,24 @@ export default function CompanyInterviewsScreen() {
                   {i.status === 'scheduled' ? (
                     <View style={st.rowActions}>
                       {i.meetingUrl && (
-                        <AnimatedPressable style={st.rowActionBtn} onPress={() => openInNewTab(i.meetingUrl!)} hitSlop={7} accessibilityRole="button" accessibilityLabel="Open meeting link in a new tab">
-                          <AppIcon name="link" size={16} color={T.accent} />
+                        <AnimatedPressable style={[st.rowActionBtn, { backgroundColor: T.accentBg }]} onPress={() => openInNewTab(i.meetingUrl!)} hitSlop={4} accessibilityRole="button" accessibilityLabel="Open meeting link in a new tab">
+                          <AppIcon name="link" size={14} color={T.accent} />
+                          <Text style={[st.rowActionText, { color: T.accent }]}>Join</Text>
                         </AnimatedPressable>
                       )}
                       {i.companyRescheduleCount < MAX_RESCHEDULES && (
-                        <AnimatedPressable style={st.rowActionBtn} onPress={() => setRescheduleTarget(i)} hitSlop={7} accessibilityRole="button" accessibilityLabel="Reschedule interview">
-                          <AppIcon name="time-outline" size={16} color={T.amber} />
+                        <AnimatedPressable style={[st.rowActionBtn, { backgroundColor: T.amberBg }]} onPress={() => setRescheduleTarget(i)} hitSlop={4} accessibilityRole="button" accessibilityLabel="Reschedule interview">
+                          <AppIcon name="time-outline" size={14} color={T.amber} />
+                          <Text style={[st.rowActionText, { color: T.amber }]}>Reschedule</Text>
                         </AnimatedPressable>
                       )}
-                      <AnimatedPressable style={st.rowActionBtn} onPress={() => setStatus(i.id, 'completed')} hitSlop={7} accessibilityRole="button" accessibilityLabel="Mark interview completed">
-                        <AppIcon name="checkmark-circle-outline" size={16} color={T.emerald} />
+                      <AnimatedPressable style={[st.rowActionBtn, { backgroundColor: T.emeraldBg }]} onPress={() => setStatus(i.id, 'completed')} hitSlop={4} accessibilityRole="button" accessibilityLabel="Mark interview completed">
+                        <AppIcon name="checkmark-circle-outline" size={14} color={T.emerald} />
+                        <Text style={[st.rowActionText, { color: T.emerald }]}>Complete</Text>
                       </AnimatedPressable>
-                      <AnimatedPressable style={st.rowActionBtn} onPress={() => setStatus(i.id, 'cancelled')} hitSlop={7} accessibilityRole="button" accessibilityLabel="Cancel interview">
-                        <AppIcon name="close-circle-outline" size={16} color={T.danger} />
+                      <AnimatedPressable style={[st.rowActionBtn, { backgroundColor: T.dangerBg }]} onPress={() => setStatus(i.id, 'cancelled')} hitSlop={4} accessibilityRole="button" accessibilityLabel="Cancel interview">
+                        <AppIcon name="close-circle-outline" size={14} color={T.danger} />
+                        <Text style={[st.rowActionText, { color: T.danger }]}>Cancel</Text>
                       </AnimatedPressable>
                     </View>
                   ) : (
@@ -420,8 +424,9 @@ const makeStyles = (T: ThemePalette) => StyleSheet.create({
   rowIconWrap: { width: 36, height: 36, borderRadius: RADIUS.control, backgroundColor: T.accentBg, alignItems: 'center', justifyContent: 'center' },
   rowName: { fontSize: 14, fontWeight: '700', color: T.textPrimary },
   rowMeta: { fontSize: 12, color: T.textMuted, marginTop: 2 },
-  rowActions: { flexDirection: 'row', gap: 6 },
-  rowActionBtn: { width: 30, height: 30, borderRadius: 8, backgroundColor: T.surface, alignItems: 'center', justifyContent: 'center' },
+  rowActions: { flexDirection: 'row', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' },
+  rowActionBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, height: 30, paddingHorizontal: 10, borderRadius: RADIUS.pill },
+  rowActionText: { fontSize: 12, fontWeight: '700' },
   statusPill: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
   statusPillText: { fontSize: 11, fontWeight: '700', textTransform: 'capitalize' },
 
