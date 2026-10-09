@@ -306,9 +306,22 @@ function extractCertifications(text: string): CvExtractedCertification[] {
   return out;
 }
 
+// pdf-parse's PDFParse is built on pdfjs-dist, which expects a few browser
+// globals (DOMMatrix being the one that actually gets hit, for text-position
+// transforms) that plain Node — including Vercel's serverless runtime —
+// doesn't provide. Confirmed live: worked in local `tsx` runs (which must
+// pick up some ambient global), threw "DOMMatrix is not defined" in
+// production. Polyfilled once, lazily, only when actually needed.
+async function ensureDomMatrixPolyfill(): Promise<void> {
+  if (typeof (globalThis as any).DOMMatrix !== 'undefined') return;
+  const mod = await import('dommatrix');
+  (globalThis as any).DOMMatrix = (mod as any).default ?? mod;
+}
+
 export async function extractCvData(pdfBase64: string): Promise<AiResult<CvExtractOutput>> {
   let text: string;
   try {
+    await ensureDomMatrixPolyfill();
     // Lazy import — pdf-parse pulls in a decent chunk of code, no reason to
     // pay that cost for api/ai-assist.ts's other code paths that never touch it.
     const { PDFParse } = await import('pdf-parse');
