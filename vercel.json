@@ -2,6 +2,11 @@
   "outputDirectory": "dist",
   "cleanUrls": true,
   "trailingSlash": false,
+  "functions": {
+    "api/video-intro.ts": {
+      "includeFiles": "node_modules/pdfjs-dist/legacy/build/**"
+    }
+  },
   "rewrites": [
     {
       "source": "/employer-review/:token",
